@@ -1,3 +1,21 @@
+/**
+ * Shasanadesh Archive — documented pipeline file
+ *
+ * Pipeline stage: diagnostics
+ * Purpose: Run small capped sequence-neighborhood diagnostics; not a bulk discovery crawler.
+ *
+ * Invariants:
+ * - preserve source provenance and stable source/page identifiers
+ * - keep raw/native/OCR variants auditable instead of silently overwriting evidence
+ * - keep parameters explicit and documented when they affect corpus/search quality
+ *
+ * Project hand-off docs:
+ * - docs/PROJECT_MEMORY.md
+ * - docs/ARCHITECTURE.md
+ * - docs/CONFIGURATION.md
+ * - docs/DECISIONS.md
+ */
+
 import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";

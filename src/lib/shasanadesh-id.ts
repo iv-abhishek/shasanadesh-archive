@@ -1,3 +1,21 @@
+/**
+ * Shasanadesh Archive — documented pipeline file
+ *
+ * Pipeline stage: source identity
+ * Purpose: Encode/decode canonical Shasanadesh document IDs and URLs.
+ *
+ * Invariants:
+ * - preserve source provenance and stable source/page identifiers
+ * - keep raw/native/OCR variants auditable instead of silently overwriting evidence
+ * - keep parameters explicit and documented when they affect corpus/search quality
+ *
+ * Project hand-off docs:
+ * - docs/PROJECT_MEMORY.md
+ * - docs/ARCHITECTURE.md
+ * - docs/CONFIGURATION.md
+ * - docs/DECISIONS.md
+ */
+
 export interface ShasanadeshIdParts {
   sequence: number;
   departmentId: number;

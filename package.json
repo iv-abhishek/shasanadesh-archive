@@ -15,7 +15,13 @@
     "ingest:known": "tsx src/ingest-known.ts",
     "audit:text": "tsx src/audit-text-quality.ts",
     "ocr:needs": "tsx src/ocr-needs.ts",
-    "audit:ocr": "tsx src/audit-ocr.ts"
+    "audit:ocr": "tsx src/audit-ocr.ts",
+    "build:pages": "tsx src/build-page-corpus.ts",
+    "audit:pages": "tsx src/audit-page-corpus.ts",
+    "build:chunks": "tsx src/build-chunks.ts",
+    "audit:chunks": "tsx src/audit-chunks.ts",
+    "search": "tsx src/search-chunks.ts",
+    "audit:native-pages": "tsx src/audit-native-pages.ts"
   },
   "keywords": [],
   "author": "",

@@ -1,3 +1,21 @@
+/**
+ * Shasanadesh Archive — documented pipeline file
+ *
+ * Pipeline stage: dataset analysis
+ * Purpose: Summarize known ID patterns and validate the seed dataset.
+ *
+ * Invariants:
+ * - preserve source provenance and stable source/page identifiers
+ * - keep raw/native/OCR variants auditable instead of silently overwriting evidence
+ * - keep parameters explicit and documented when they affect corpus/search quality
+ *
+ * Project hand-off docs:
+ * - docs/PROJECT_MEMORY.md
+ * - docs/ARCHITECTURE.md
+ * - docs/CONFIGURATION.md
+ * - docs/DECISIONS.md
+ */
+
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { decodeShasanadeshId } from "./lib/shasanadesh-id.js";

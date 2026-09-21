@@ -110,3 +110,17 @@ The first milestone is to reliably download and verify a small set of real Gover
 This project is not an official Government of Uttar Pradesh or NIC project.
 
 Official documents should always be verified against their original government sources where available.
+
+## Development Hand-off Documentation
+
+Long-running project decisions and parameters are kept in the repository so the
+project does not depend on one chat session:
+
+- [`docs/PROJECT_MEMORY.md`](docs/PROJECT_MEMORY.md) — current state and durable context
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system architecture
+- [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — environment/config parameter names
+- [`docs/PRODUCT_PLAN.md`](docs/PRODUCT_PLAN.md) — product roadmap
+- [`docs/DECISIONS.md`](docs/DECISIONS.md) — architecture decisions
+- [`docs/CODE_COMMENTING.md`](docs/CODE_COMMENTING.md) — commenting conventions
+
+Never commit real credentials or secrets.
