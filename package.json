@@ -7,7 +7,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:download": "tsx src/test-download.ts",
     "decode": "tsx src/decode-id.ts",
-    "test:stability": "tsx src/test-stability.ts"
+    "test:stability": "tsx src/test-stability.ts",
+    "analyze:ids": "tsx src/analyze-known-ids.ts",
+    "verify:known": "tsx src/verify-known-ids.ts"
   },
   "keywords": [],
   "author": "",
