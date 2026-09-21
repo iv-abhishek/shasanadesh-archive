@@ -9,7 +9,11 @@
     "decode": "tsx src/decode-id.ts",
     "test:stability": "tsx src/test-stability.ts",
     "analyze:ids": "tsx src/analyze-known-ids.ts",
-    "verify:known": "tsx src/verify-known-ids.ts"
+    "verify:known": "tsx src/verify-known-ids.ts",
+    "probe": "tsx src/probe-neighborhood.ts",
+    "promote:probe": "tsx src/promote-probe-results.ts",
+    "ingest:known": "tsx src/ingest-known.ts",
+    "audit:text": "tsx src/audit-text-quality.ts"
   },
   "keywords": [],
   "author": "",
