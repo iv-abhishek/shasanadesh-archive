@@ -2,18 +2,41 @@ import { createHash } from "node:crypto";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+const BASE_URL =
+  "https://shasanadesh.up.gov.in/GO/ViewGOPDF_list_user.aspx?id1=";
+
 const documents = [
   {
     name: "personnel-2021",
-    url: "https://shasanadesh.up.gov.in/GO/ViewGOPDF_list_user.aspx?id1=NSMxNjMjMiMyMDIx",
+    id: "NSMxNjMjMiMyMDIx",
   },
   {
     name: "pwd-2025",
-    url: "https://shasanadesh.up.gov.in/GO/ViewGOPDF_list_user.aspx?id1=MTQjMzQjNiMyMDI1",
+    id: "MTQjMzQjNiMyMDI1",
   },
   {
     name: "secondary-education-2024",
-    url: "https://shasanadesh.up.gov.in/GO/ViewGOPDF_list_user.aspx?id1=MjIjNTAwMDIjMTAjMjAyNA%3D%3D",
+    id: "MjIjNTAwMDIjMTAjMjAyNA==",
+  },
+  {
+    name: "vocational-education-2023",
+    id: "MzkjMTgwIzEjMjAyMw==",
+  },
+  {
+    name: "medical-health-2020",
+    id: "MjUjMjAxIzIjMjAyMA==",
+  },
+  {
+    name: "personnel-2022",
+    id: "NCMxNjMjMSMyMDIy",
+  },
+  {
+    name: "ecourts-2017",
+    id: "MTcjNDYjMiMyMDE3",
+  },
+  {
+    name: "agriculture-2023",
+    id: "NjEjMzcjNSMyMDIz",
   },
 ];
 
@@ -27,7 +50,9 @@ function isPdf(buffer: Buffer) {
   return buffer.subarray(0, 5).toString("ascii") === "%PDF-";
 }
 
-async function downloadDocument(name: string, url: string) {
+async function downloadDocument(name: string, id: string) {
+  const url = BASE_URL + encodeURIComponent(id);
+
   console.log("\n--------------------------------");
   console.log(`Downloading: ${name}`);
   console.log(url);
@@ -47,7 +72,6 @@ async function downloadDocument(name: string, url: string) {
     });
 
     const buffer = Buffer.from(await response.arrayBuffer());
-
     const pdf = isPdf(buffer);
     const hash = sha256(buffer);
 
@@ -61,15 +85,11 @@ async function downloadDocument(name: string, url: string) {
 
     if (response.ok && pdf) {
       const filename = path.join(outputDir, `${hash}.pdf`);
-
       await writeFile(filename, buffer);
-
       console.log("SAVED:", filename);
     } else {
       const filename = path.join(outputDir, `${name}.response.html`);
-
       await writeFile(filename, buffer);
-
       console.log("NOT PDF");
       console.log("Response saved:", filename);
     }
@@ -79,13 +99,10 @@ async function downloadDocument(name: string, url: string) {
 }
 
 async function main() {
-  await mkdir(outputDir, {
-    recursive: true,
-  });
+  await mkdir(outputDir, { recursive: true });
 
   for (const document of documents) {
-    await downloadDocument(document.name, document.url);
-
+    await downloadDocument(document.name, document.id);
     await new Promise((resolve) => setTimeout(resolve, 3000));
   }
 }
