@@ -13,7 +13,9 @@
     "probe": "tsx src/probe-neighborhood.ts",
     "promote:probe": "tsx src/promote-probe-results.ts",
     "ingest:known": "tsx src/ingest-known.ts",
-    "audit:text": "tsx src/audit-text-quality.ts"
+    "audit:text": "tsx src/audit-text-quality.ts",
+    "ocr:needs": "tsx src/ocr-needs.ts",
+    "audit:ocr": "tsx src/audit-ocr.ts"
   },
   "keywords": [],
   "author": "",
