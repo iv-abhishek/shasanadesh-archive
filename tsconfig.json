@@ -5,12 +5,10 @@
     "moduleResolution": "NodeNext",
     "types": ["node"],
     "lib": ["ES2022", "DOM"],
-
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "noEmit": true
   },
-
   "include": ["src/**/*.ts"]
 }
