@@ -196,3 +196,102 @@ Exact strings matter in government records, so vector-only search is not accepta
 - Update project docs whenever architecture or parameters change.
 - Never put passwords, tokens, DB credentials, B2 application keys, or API keys in
   documentation, ChatGPT memory, or source control.
+
+## Selective OCR Repair Stage
+
+After the initial native-page quality audit, the repair strategy is:
+
+1. identify suspicious native pages
+2. OCR only those pages at 300 DPI with `hin+eng`
+3. compare native and OCR text using quality metrics
+4. retain both variants
+5. do not replace canonical page text until the comparison is reviewed
+
+Scripts:
+
+- `npm run compare:suspicious`
+- `npm run audit:selective-ocr`
+
+Default pilot:
+
+- quality threshold: `55`
+- maximum pages per run: `12`
+
+These are pilot parameters, not permanent production settings.
+
+## OCR Retrieval-Variant Rule
+
+Selective OCR pilot result:
+
+- 45 suspicious native-page candidates at threshold <=55
+- first 12 OCR comparisons all had much better Hindi readability scores
+- manual inspection found OCR can corrupt dates/numbers/identifiers even when prose
+  becomes substantially cleaner
+
+Therefore OCR is not automatically canonical.
+
+The retrieval corpus may contain parallel native/OCR variants for the same logical page.
+Search/reranking must deduplicate on `sourceId + pageNumber`.
+Critical numeric facts require source-page verification when variants disagree.
+
+## PostgreSQL / pgvector Foundation
+
+Planned relational identity:
+
+- document: `source_id`
+- logical page: `(source_id, page_number)`
+- page variant: native/OCR representation of a logical page
+- chunk: retrieval chunk tied to one page variant
+
+Important page field:
+
+- `numeric_conflict`: parallel native/OCR variants disagree on numeric tokens
+
+Embedding storage is initially a dimensionless pgvector `vector` column. The embedding
+dimension and ANN index will be added only after the embedding model is selected and
+evaluated.
+
+## Embedding Pilot
+
+Initial semantic-retrieval pilot:
+
+- model: `Qwen/Qwen3-Embedding-0.6B`
+- dimensions: `1024`
+- passage embeddings: no instruction
+- query embeddings: task instruction enabled
+- similarity: cosine
+- initial ANN index: pgvector HNSW
+- hybrid fusion: vector + PostgreSQL lexical/trigram using weighted RRF
+- final retrieval deduplication boundary: logical page (`source_id + page_number`)
+
+Do not treat this model or dimension as permanent until Hindi/English retrieval
+evaluation is complete.
+
+## Hybrid Retrieval Pilot Result
+
+The first Qwen3 embedding + PostgreSQL hybrid searches successfully retrieved:
+
+- Finance pay-fixation pages for `वेतन निर्धारण`
+- Agriculture solar-pump pages for `सोलर पम्प`
+- Medical & Health seniority rules for `medical officer seniority`
+
+The English Medical Officer query was particularly strong: seniority pages ranked at
+the top.
+
+The hybrid stage still admits some unrelated lower-ranked pages and frequently chooses
+OCR alternates on Hindi queries. Numeric-conflict warnings are correctly propagated.
+
+Next precision stage:
+
+- reranker: `Qwen/Qwen3-Reranker-0.6B`
+- rerank top 24 fused chunks
+- final deduplication by logical page
+- do not use reranker score as factual-verification confidence
+
+## RAG Service Milestone
+
+- retrieval service: port 8788
+- TypeScript RAG API: port 8787
+- generator: `LLM_BASE_URL` + `LLM_MODEL`
+- citation format: `[S1 p.<page>]`
+- numeric-conflict pages provide selected and canonical variants to generation

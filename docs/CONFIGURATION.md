@@ -91,3 +91,67 @@ Initial candidate: Qwen3-Reranker family.
 | `CRAWL_CONCURRENCY_PER_DOMAIN` | conservative, e.g. `1` |
 
 Respect public-site controls and do not automate CAPTCHA solving.
+
+## Local PostgreSQL Development
+
+The repository includes a Docker Compose development database using the pgvector
+PostgreSQL image.
+
+Local-only development connection example:
+
+```text
+postgresql://shasanadesh:shasanadesh_dev@localhost:5432/shasanadesh
+```
+
+This credential is only for the disposable local Docker development instance. Do not
+reuse it in any hosted or production environment.
+
+## PostgreSQL Without Docker
+
+Docker is optional for local development.
+
+If a local PostgreSQL server is already running, use:
+
+```bash
+npm run db:setup:local
+```
+
+This script:
+
+- connects to the existing local PostgreSQL server
+- creates the development `shasanadesh` role if missing
+- creates the `shasanadesh` database if missing
+- checks that pgvector is available
+- enables `vector` and `pg_trgm`
+
+Then export the printed `DATABASE_URL`.
+
+Use:
+
+```bash
+npm run db:check
+```
+
+before migrations whenever there is uncertainty about which PostgreSQL instance
+`DATABASE_URL` is reaching.
+
+## Embedding Pilot Configuration
+
+```text
+EMBEDDING_MODEL=Qwen/Qwen3-Embedding-0.6B
+EMBEDDING_DIMENSIONS=1024
+EMBEDDING_BATCH_SIZE=8
+```
+
+The local pilot uses a separate Python virtual environment at `.venv-embeddings/`.
+Model weights are downloaded only when embedding/search is first run.
+
+## Reranker Pilot Configuration
+
+```text
+RERANKER_MODEL=Qwen/Qwen3-Reranker-0.6B
+RERANK_CANDIDATES=24
+```
+
+The reranker uses the same `.venv-embeddings` Python environment during the local
+pilot.

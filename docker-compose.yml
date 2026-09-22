@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: shasanadesh-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: shasanadesh
+      POSTGRES_PASSWORD: shasanadesh_dev
+      POSTGRES_DB: shasanadesh
+    ports:
+      - "5432:5432"
+    volumes:
+      - shasanadesh_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shasanadesh -d shasanadesh"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  shasanadesh_pgdata:

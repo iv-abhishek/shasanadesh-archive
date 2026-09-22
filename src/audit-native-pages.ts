@@ -1,23 +1,17 @@
 /**
- * Shasanadesh Archive — documented pipeline file
+ * Shasanadesh Archive — native page text-quality audit.
  *
- * Pipeline stage: quality audit
- * Purpose: Flag suspicious native PDF text for selective OCR comparison.
- *
- * Invariants:
- * - preserve source provenance and stable source/page identifiers
- * - keep raw/native/OCR variants auditable instead of silently overwriting evidence
- * - keep parameters explicit and documented when they affect corpus/search quality
- *
- * Project hand-off docs:
- * - docs/PROJECT_MEMORY.md
- * - docs/ARCHITECTURE.md
- * - docs/CONFIGURATION.md
- * - docs/DECISIONS.md
+ * IMPORTANT:
+ * The score comes from src/lib/text-quality.ts, which is also used by selective
+ * OCR comparison. Do not duplicate scoring logic in this file.
  */
 
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
+import {
+  analyzeTextQuality,
+  type TextQualityMetrics,
+} from "./lib/text-quality.js";
 
 interface PageRecord {
   sourceId: string;
@@ -26,110 +20,16 @@ interface PageRecord {
   text: string;
 }
 
-interface Metrics {
+interface AuditRow extends TextQualityMetrics {
   sourceId: string;
   pageNumber: number;
-  chars: number;
-  devanagariChars: number;
-  combiningMarks: number;
-  markRatio: number;
-  tokenCount: number;
-  avgTokenLength: number;
-  singleCharDevanagariTokens: number;
-  singleCharRatio: number;
-  viramaVowelAnomalies: number;
-  replacementChars: number;
-  score: number;
-  classification: "ok" | "review" | "suspicious";
 }
 
 const documentsRoot = path.resolve("data/documents");
 
-function countMatches(text: string, regex: RegExp): number {
-  return [...text.matchAll(regex)].length;
-}
-
-function analyse(page: PageRecord): Metrics {
-  const text = page.text.normalize("NFC");
-  const chars = text.length;
-
-  const devanagariChars = countMatches(text, /[\u0900-\u097F]/gu);
-  const combiningMarks = countMatches(text, /\p{M}/gu);
-
-  const tokens =
-    text.match(/[\p{L}\p{M}\p{N}]+/gu) ?? [];
-
-  const devTokens = tokens.filter((token) =>
-    /[\u0900-\u097F]/u.test(token),
-  );
-
-  const singleCharDevanagariTokens = devTokens.filter((token) => {
-    const bases = token.match(/\p{L}/gu) ?? [];
-    return bases.length === 1 && token.length <= 2;
-  }).length;
-
-  const tokenCount = devTokens.length;
-  const avgTokenLength =
-    tokenCount > 0
-      ? devTokens.reduce((sum, token) => sum + token.length, 0) / tokenCount
-      : 0;
-
-  const singleCharRatio =
-    tokenCount > 0 ? singleCharDevanagariTokens / tokenCount : 0;
-
-  const markRatio =
-    devanagariChars > 0 ? combiningMarks / devanagariChars : 0;
-
-  // A virama immediately followed by a dependent vowel sign is a common
-  // symptom of broken PDF ToUnicode mappings, e.g. "्ेतन".
-  const viramaVowelAnomalies = countMatches(
-    text,
-    /\u094D[\u093E-\u094C\u0962\u0963]/gu,
-  );
-
-  const replacementChars = countMatches(text, /\uFFFD/gu);
-
-  let score = 100;
-
-  if (devanagariChars >= 100) {
-    if (markRatio < 0.07) score -= 25;
-    else if (markRatio < 0.10) score -= 12;
-
-    if (avgTokenLength > 0 && avgTokenLength < 2.6) score -= 20;
-    else if (avgTokenLength > 0 && avgTokenLength < 3.0) score -= 10;
-
-    score -= Math.min(30, singleCharRatio * 100);
-  }
-
-  score -= Math.min(35, viramaVowelAnomalies * 7);
-  score -= Math.min(30, replacementChars * 5);
-
-  score = Math.max(0, Math.round(score));
-
-  const classification: Metrics["classification"] =
-    score < 60 ? "suspicious" : score < 78 ? "review" : "ok";
-
-  return {
-    sourceId: page.sourceId,
-    pageNumber: page.pageNumber,
-    chars,
-    devanagariChars,
-    combiningMarks,
-    markRatio,
-    tokenCount,
-    avgTokenLength,
-    singleCharDevanagariTokens,
-    singleCharRatio,
-    viramaVowelAnomalies,
-    replacementChars,
-    score,
-    classification,
-  };
-}
-
 async function main() {
   const entries = await readdir(documentsRoot, { withFileTypes: true });
-  const rows: Metrics[] = [];
+  const rows: AuditRow[] = [];
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
@@ -153,7 +53,12 @@ async function main() {
 
     for (const page of pages) {
       if (page.textSource !== "native") continue;
-      rows.push(analyse(page));
+
+      rows.push({
+        sourceId: page.sourceId,
+        pageNumber: page.pageNumber,
+        ...analyzeTextQuality(page.text),
+      });
     }
   }
 

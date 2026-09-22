@@ -21,7 +21,28 @@
     "build:chunks": "tsx src/build-chunks.ts",
     "audit:chunks": "tsx src/audit-chunks.ts",
     "search": "tsx src/search-chunks.ts",
-    "audit:native-pages": "tsx src/audit-native-pages.ts"
+    "audit:native-pages": "tsx src/audit-native-pages.ts",
+    "compare:suspicious": "tsx src/compare-suspicious-pages.ts",
+    "audit:selective-ocr": "tsx src/audit-selective-ocr.ts",
+    "audit:ocr-conflicts": "tsx src/audit-selective-ocr-conflicts.ts",
+    "build:retrieval-variants": "tsx src/build-retrieval-variants.ts",
+    "build:retrieval-variant-chunks": "tsx src/build-retrieval-variant-chunks.ts",
+    "search:variants": "tsx src/search-retrieval-variants.ts",
+    "db:up": "docker compose up -d",
+    "db:down": "docker compose down",
+    "db:migrate": "tsx src/db/migrate.ts",
+    "db:load": "tsx src/db/load-corpus.ts",
+    "db:audit": "tsx src/db/audit.ts",
+    "db:check": "tsx src/db/check.ts",
+    "db:setup:local": "./scripts/setup-local-postgres.sh",
+    "embed:setup": "./scripts/setup-embedding-env.sh",
+    "embed:chunks": ".venv-embeddings/bin/python scripts/embed-chunks.py",
+    "search:hybrid": ".venv-embeddings/bin/python scripts/search-hybrid.py",
+    "rerank:setup": "./scripts/setup-reranker-env.sh",
+    "search:reranked": ".venv-embeddings/bin/python scripts/search-reranked.py",
+    "rag:setup": "./scripts/setup-rag-service.sh",
+    "retrieval:serve": ".venv-embeddings/bin/uvicorn services.retrieval_server:app --host 127.0.0.1 --port 8788 --loop asyncio",
+    "api:dev": "tsx src/api/server.ts"
   },
   "keywords": [],
   "author": "",
@@ -29,7 +50,15 @@
   "type": "commonjs",
   "devDependencies": {
     "@types/node": "^26.6.2",
+    "@types/pg": "^8.23.1",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "fastify": "^5.12.5",
+    "openai": "^7.20.0",
+    "pg": "^8.23.0",
+    "zod": "^4.6.5"
   }
 }
