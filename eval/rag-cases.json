@@ -1,0 +1,26 @@
+[
+  {
+    "id": "medical-officer-seniority",
+    "query": "medical officer seniority",
+    "language": "en",
+    "expectedSourceIds": ["25#201#2#2020"],
+    "expectedPagesBySource": {
+      "25#201#2#2020": [18, 19, 20, 15]
+    },
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "OCR-only medical document. Exact risky numerics should not be exposed without verification."
+  },
+  {
+    "id": "solar-pump-hindi",
+    "query": "सोलर पम्प",
+    "language": "hi",
+    "expectedSourceIds": ["61#37#5#2023"],
+    "expectedPagesBySource": {
+      "61#37#5#2023": [7, 2, 4, 5]
+    },
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "Mixed conflict/native evidence. Qualitative salvage is acceptable; generic fallback is not."
+  }
+]

@@ -1,5 +1,0 @@
-{
-  "/api/rag/pdf/route": "app/api/rag/pdf/route.js",
-  "/api/rag/search/route": "app/api/rag/search/route.js",
-  "/page": "app/page.js"
-}

@@ -5,13 +5,19 @@ node_modules/
 
 data/
 *.log
-
 .DS_Store
-
 dist/
 build/
 coverage/
-
 .playwright/
-
 .venv-embeddings/
+.venv-generator/
+# Frontend build/cache
+apps/web/.next/
+apps/web/tsconfig.tsbuildinfo
+# Python bytecode/cache
+__pycache__/
+*.py[cod]
+# Temporary local patch/backups
+*.pre-filters
+*.pre-search-ui
