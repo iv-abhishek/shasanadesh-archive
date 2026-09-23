@@ -179,3 +179,116 @@ status from retrieval provenance:
 Critical dates, amounts, percentages, rule numbers, GO numbers, and identifiers from
 `conflict` or `ocr_only_unverified` evidence require source-page or stronger
 vision/manual verification before being stated as authoritative fact.
+
+## ADR-020 — OpenAI-Compatible Generator Boundary
+
+The answer generator is accessed only through an OpenAI-compatible HTTP API.
+
+Local Apple Silicon development uses MLX LM with a small quantized Qwen model so the
+full RAG/chat path can be exercised on a laptop. Production model serving remains
+replaceable and may use vLLM or another OpenAI-compatible service.
+
+Embedding/reranker and generator Python environments remain separate to reduce
+dependency coupling.
+
+## ADR-021 — Disable Qwen Thinking for RAG Answer Streaming
+
+The local Qwen3 generator runs with chat-template `enable_thinking=false`.
+
+Without this setting, MLX may return generation in a `reasoning` field and exhaust the
+token budget before producing `message.content`. The RAG API streams only user-facing
+answer content and must not expose internal reasoning.
+
+## ADR-022 — Deterministic Answer Safety Gate
+
+Prompt instructions are not sufficient for citation or OCR-numeric safety.
+
+Before any generated answer text is released to the client, the TypeScript API now:
+
+1. buffers the complete model draft;
+2. validates citation syntax and source/page membership;
+3. requires numeric claims to carry a same-sentence/source-line citation;
+4. blocks uncaveated numeric claims supported only by `conflict`,
+   `ocr_only_unverified`, or `unverified` evidence;
+5. attempts one evidence-grounded repair;
+6. falls back to a conservative source-page review message if repair still fails.
+
+The final validated answer is then emitted over the existing SSE `token` contract in
+small text chunks. This deliberately trades first-token latency for a stronger
+"no unsafe token leaves the server" invariant.
+
+## ADR-024 — Bound Local RAG Context and MLX Prompt Cache
+
+The Apple Silicon development stack hit a Metal out-of-memory failure when a RAG prompt
+grew to roughly 27k tokens while MLX retained multiple prompt-cache sequences.
+
+For local development:
+
+- selected page text is clipped to 2,800 characters per evidence page;
+- an alternate canonical page copy is clipped to 1,400 characters;
+- chat retrieval defaults to four evidence pages;
+- MLX prompt cache is limited to one sequence;
+- the local generator defaults to port 8791.
+
+This is a laptop memory budget, not a production retrieval-quality target. Production
+should choose evidence budgets from measured retrieval/citation quality and available
+serving memory.
+
+## ADR-025 - Generation-safe numeric masking
+
+For `conflict`, `ocr_only_unverified`, and `unverified` evidence, exact numeric tokens
+remain in the corpus but are masked before answer generation. This keeps retrieval
+lossless while reducing accidental copying of OCR-corrupted critical values.
+
+## ADR-026 - Serialize shared local Apple GPU work
+
+Local MPS retrieval/reranking and MLX generation share the Apple GPU. With
+`LOCAL_GPU_SERIALIZE=1`, the API serializes those GPU operations. Production can set it
+to `0` when retrieval and generation use isolated workers/GPUs.
+
+## ADR-027 - Strict qualitative repair for unsafe numerics
+
+Internal numeric masks are not user-facing content. The deterministic answer validator
+now rejects leaked `UNVERIFIED_NUMERIC` placeholders.
+
+When validation reports an unsafe numeric claim, uncited numeric claim, or leaked mask,
+the single repair pass enters strict qualitative mode: exact numerics are omitted rather
+than copied, guessed, or reconstructed. Numeric characters are permitted only inside the
+required citation syntax. This is intended to preserve a useful qualitative answer while
+keeping the source-page verification boundary intact.
+
+## ADR-028 - Deterministic qualitative salvage before generic fallback
+
+If the single model repair still fails numeric safety, the API performs one deterministic
+salvage step before using the generic fallback. It does not rewrite facts. It retains only
+claim units that already have a valid supplied source/page citation, contain no internal
+mask placeholder, and contain no numeric token outside citation syntax.
+
+This preserves useful cited qualitative material while continuing to fail closed for
+unsafe numbers.
+
+For the local laptop profile, the first answer is capped at 600 tokens and the repair at
+450 tokens. Risky evidence also omits the alternate canonical page from generation to
+reduce duplicated context and Apple unified-memory pressure.
+
+## ADR-029 - Versioned RAG evaluation before frontend tuning
+
+RAG quality changes are evaluated against a fixed, version-controlled case set rather
+than individual manual prompts.
+
+The evaluator measures retrieval source/page hits, reciprocal rank, validated-answer
+rate, repair/salvage/fallback behavior, citation-page alignment, placeholder leakage,
+and latency. Local runs are sequential to preserve the shared Apple GPU stability
+invariant.
+
+Expected source/page labels must be verified from the corpus before they are added to
+the benchmark.
+
+## ADR-030 - Thin frontend after backend evaluation baseline
+
+The first frontend is a thin Next.js client over the existing API contract. It does not
+reimplement retrieval, verification, or answer-safety logic in the browser.
+
+The browser consumes only the stable SSE contract (`sources`, `token`, `done`, `error`),
+renders exact page citations and verification status, and links users back to original
+source pages. Backend safety remains authoritative.

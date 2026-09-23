@@ -36,11 +36,30 @@ VECTOR_WEIGHT = 1.0
 LEXICAL_WEIGHT = 1.2
 
 
+class SearchFilters(BaseModel):
+    department: str | None = Field(default=None, max_length=200)
+    go_number: str | None = Field(default=None, max_length=200)
+    source_id: str | None = Field(default=None, max_length=200)
+    date_from: str | None = Field(default=None, max_length=10)
+    date_to: str | None = Field(default=None, max_length=10)
+    verification_status: str | None = Field(default=None, max_length=40)
+
+
+class SearchFilters(BaseModel):
+    department: str | None = Field(default=None, max_length=200)
+    go_number: str | None = Field(default=None, max_length=200)
+    source_id: str | None = Field(default=None, max_length=200)
+    date_from: str | None = Field(default=None, max_length=10)
+    date_to: str | None = Field(default=None, max_length=10)
+    verification_status: str | None = Field(default=None, max_length=40)
+
+
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=4000)
     top_k: int = Field(default=5, ge=1, le=12)
     candidate_count: int = Field(default=50, ge=10, le=200)
     rerank_count: int = Field(default=24, ge=5, le=100)
+    filters: SearchFilters = Field(default_factory=SearchFilters)
 
 
 class Evidence(BaseModel):
@@ -157,45 +176,298 @@ def make_hit(row: dict[str, Any], lexical: bool = False) -> Hit:
     return hit
 
 
-def retrieve_hybrid(query: str, query_vector: str, candidate_count: int) -> list[Hit]:
+def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
+    clauses: list[str] = []
+    params: list[Any] = []
+
+    if filters.department:
+        clauses.append("d.department ILIKE %s")
+        params.append(f"%{filters.department.strip()}%")
+
+    if filters.go_number:
+        clauses.append("d.go_number ILIKE %s")
+        params.append(f"%{filters.go_number.strip()}%")
+
+    if filters.source_id:
+        clauses.append("d.source_id = %s")
+        params.append(filters.source_id.strip())
+
+    if filters.date_from:
+        clauses.append("d.go_date >= %s::date")
+        params.append(filters.date_from)
+
+    if filters.date_to:
+        clauses.append("d.go_date <= %s::date")
+        params.append(filters.date_to)
+
+    status = filters.verification_status
+
+    if status == "conflict":
+        clauses.append("p.numeric_conflict = TRUE")
+    elif status == "ocr_only_unverified":
+        clauses.append(
+            "("
+            "p.numeric_conflict = FALSE "
+            "AND NOT EXISTS ("
+            "SELECT 1 FROM page_variants pv_native "
+            "WHERE pv_native.source_id = c.source_id "
+            "AND pv_native.page_number = c.page_number "
+            "AND pv_native.variant_type = 'native'"
+            ") "
+            "AND EXISTS ("
+            "SELECT 1 FROM page_variants pv_ocr "
+            "WHERE pv_ocr.source_id = c.source_id "
+            "AND pv_ocr.page_number = c.page_number "
+            "AND pv_ocr.variant_type = 'ocr'"
+            ")"
+            ")"
+        )
+    elif status == "variants_agree":
+        clauses.append(
+            "("
+            "p.numeric_conflict = FALSE "
+            "AND EXISTS ("
+            "SELECT 1 FROM page_variants pv_native "
+            "WHERE pv_native.source_id = c.source_id "
+            "AND pv_native.page_number = c.page_number "
+            "AND pv_native.variant_type = 'native'"
+            ") "
+            "AND EXISTS ("
+            "SELECT 1 FROM page_variants pv_ocr "
+            "WHERE pv_ocr.source_id = c.source_id "
+            "AND pv_ocr.page_number = c.page_number "
+            "AND pv_ocr.variant_type = 'ocr'"
+            ")"
+            ")"
+        )
+    elif status == "native_primary":
+        clauses.append(
+            "("
+            "p.numeric_conflict = FALSE "
+            "AND EXISTS ("
+            "SELECT 1 FROM page_variants pv_native "
+            "WHERE pv_native.source_id = c.source_id "
+            "AND pv_native.page_number = c.page_number "
+            "AND pv_native.variant_type = 'native'"
+            ") "
+            "AND NOT EXISTS ("
+            "SELECT 1 FROM page_variants pv_ocr "
+            "WHERE pv_ocr.source_id = c.source_id "
+            "AND pv_ocr.page_number = c.page_number "
+            "AND pv_ocr.variant_type = 'ocr'"
+            ")"
+            ")"
+        )
+    elif status == "unverified":
+        clauses.append(
+            "("
+            "p.numeric_conflict = FALSE "
+            "AND NOT EXISTS ("
+            "SELECT 1 FROM page_variants pv_any "
+            "WHERE pv_any.source_id = c.source_id "
+            "AND pv_any.page_number = c.page_number "
+            "AND pv_any.variant_type IN ('native', 'ocr')"
+            ")"
+            ")"
+        )
+    elif status:
+        raise HTTPException(
+            status_code=400,
+            detail=f"unsupported verification_status: {status}",
+        )
+
+    if not clauses:
+        return "", []
+
+    return " AND " + " AND ".join(clauses), params
+
+
+def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
+    clauses: list[str] = []
+    params: list[Any] = []
+
+    if filters.department:
+        clauses.append("d.department ILIKE %s")
+        params.append(f"%{filters.department.strip()}%")
+
+    if filters.go_number:
+        clauses.append("d.go_number ILIKE %s")
+        params.append(f"%{filters.go_number.strip()}%")
+
+    if filters.source_id:
+        clauses.append("d.source_id = %s")
+        params.append(filters.source_id.strip())
+
+    if filters.date_from:
+        clauses.append("d.go_date >= %s::date")
+        params.append(filters.date_from)
+
+    if filters.date_to:
+        clauses.append("d.go_date <= %s::date")
+        params.append(filters.date_to)
+
+    status = filters.verification_status
+
+    if status == "conflict":
+        clauses.append("p.numeric_conflict = TRUE")
+    elif status == "ocr_only_unverified":
+        clauses.append(
+            "("
+            "p.numeric_conflict = FALSE "
+            "AND NOT EXISTS ("
+            "SELECT 1 FROM page_variants pv_native "
+            "WHERE pv_native.source_id = c.source_id "
+            "AND pv_native.page_number = c.page_number "
+            "AND pv_native.variant_type = 'native'"
+            ") "
+            "AND EXISTS ("
+            "SELECT 1 FROM page_variants pv_ocr "
+            "WHERE pv_ocr.source_id = c.source_id "
+            "AND pv_ocr.page_number = c.page_number "
+            "AND pv_ocr.variant_type = 'ocr'"
+            ")"
+            ")"
+        )
+    elif status == "variants_agree":
+        clauses.append(
+            "("
+            "p.numeric_conflict = FALSE "
+            "AND EXISTS ("
+            "SELECT 1 FROM page_variants pv_native "
+            "WHERE pv_native.source_id = c.source_id "
+            "AND pv_native.page_number = c.page_number "
+            "AND pv_native.variant_type = 'native'"
+            ") "
+            "AND EXISTS ("
+            "SELECT 1 FROM page_variants pv_ocr "
+            "WHERE pv_ocr.source_id = c.source_id "
+            "AND pv_ocr.page_number = c.page_number "
+            "AND pv_ocr.variant_type = 'ocr'"
+            ")"
+            ")"
+        )
+    elif status == "native_primary":
+        clauses.append(
+            "("
+            "p.numeric_conflict = FALSE "
+            "AND EXISTS ("
+            "SELECT 1 FROM page_variants pv_native "
+            "WHERE pv_native.source_id = c.source_id "
+            "AND pv_native.page_number = c.page_number "
+            "AND pv_native.variant_type = 'native'"
+            ") "
+            "AND NOT EXISTS ("
+            "SELECT 1 FROM page_variants pv_ocr "
+            "WHERE pv_ocr.source_id = c.source_id "
+            "AND pv_ocr.page_number = c.page_number "
+            "AND pv_ocr.variant_type = 'ocr'"
+            ")"
+            ")"
+        )
+    elif status == "unverified":
+        clauses.append(
+            "("
+            "p.numeric_conflict = FALSE "
+            "AND NOT EXISTS ("
+            "SELECT 1 FROM page_variants pv_any "
+            "WHERE pv_any.source_id = c.source_id "
+            "AND pv_any.page_number = c.page_number "
+            "AND pv_any.variant_type IN ('native', 'ocr')"
+            ")"
+            ")"
+        )
+    elif status:
+        raise HTTPException(
+            status_code=400,
+            detail=f"unsupported verification_status: {status}",
+        )
+
+    if not clauses:
+        return "", []
+
+    return " AND " + " AND ".join(clauses), params
+
+
+def retrieve_hybrid(
+    query: str,
+    query_vector: str,
+    candidate_count: int,
+    filters: SearchFilters,
+) -> list[Hit]:
     assert DATABASE_URL is not None
-    base_select = """
-      SELECT c.variant_chunk_id, c.variant_id, c.logical_page_id, c.source_id,
-             c.page_number, c.variant_type, c.canonical, c.text_content,
-             p.numeric_conflict, d.department, d.go_number, d.go_date, d.source_url,
-    """
+
+    base_select = (
+        "SELECT c.variant_chunk_id, c.variant_id, c.logical_page_id, c.source_id, "
+        "c.page_number, c.variant_type, c.canonical, c.text_content, "
+        "p.numeric_conflict, d.department, d.go_number, d.go_date, d.source_url, "
+    )
+
+    filter_sql, filter_params = build_filter_clause(filters)
 
     with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
+        vector_sql = (
+            base_select
+            + "1 - (c.embedding <=> %s::vector(1024)) AS score "
+            + "FROM chunks c "
+            + "JOIN pages p ON p.source_id = c.source_id "
+            + "AND p.page_number = c.page_number "
+            + "JOIN documents d ON d.source_id = c.source_id "
+            + "WHERE c.embedding IS NOT NULL "
+            + filter_sql
+            + " ORDER BY c.embedding <=> %s::vector(1024) "
+            + "LIMIT %s"
+        )
+
+        vector_params: list[Any] = [
+            query_vector,
+            *filter_params,
+            query_vector,
+            candidate_count,
+        ]
+
         vector_rows = conn.execute(
-            base_select + """
-              1 - (c.embedding <=> %s::vector(1024)) AS score
-            FROM chunks c
-            JOIN pages p ON p.source_id=c.source_id AND p.page_number=c.page_number
-            JOIN documents d ON d.source_id=c.source_id
-            WHERE c.embedding IS NOT NULL
-            ORDER BY c.embedding <=> %s::vector(1024)
-            LIMIT %s
-            """,
-            (query_vector, query_vector, candidate_count),
+            vector_sql,
+            vector_params,
         ).fetchall()
 
+        lexical_sql = (
+            base_select
+            + "("
+            + "CASE WHEN to_tsvector('simple', c.text_content) "
+            + "@@ plainto_tsquery('simple', %s) "
+            + "THEN ts_rank_cd("
+            + "to_tsvector('simple', c.text_content), "
+            + "plainto_tsquery('simple', %s)"
+            + ") ELSE 0 END "
+            + "+ similarity(c.text_content, %s) * 0.25"
+            + ") AS score "
+            + "FROM chunks c "
+            + "JOIN pages p ON p.source_id = c.source_id "
+            + "AND p.page_number = c.page_number "
+            + "JOIN documents d ON d.source_id = c.source_id "
+            + "WHERE ("
+            + "to_tsvector('simple', c.text_content) "
+            + "@@ plainto_tsquery('simple', %s) "
+            + "OR similarity(c.text_content, %s) > 0.01"
+            + ") "
+            + filter_sql
+            + " ORDER BY score DESC "
+            + "LIMIT %s"
+        )
+
+        lexical_params: list[Any] = [
+            query,
+            query,
+            query,
+            query,
+            query,
+            *filter_params,
+            candidate_count,
+        ]
+
         lexical_rows = conn.execute(
-            base_select + """
-              (CASE WHEN to_tsvector('simple', c.text_content)
-                         @@ plainto_tsquery('simple', %s)
-                THEN ts_rank_cd(to_tsvector('simple', c.text_content),
-                                plainto_tsquery('simple', %s))
-                ELSE 0 END
-               + similarity(c.text_content, %s) * 0.25) AS score
-            FROM chunks c
-            JOIN pages p ON p.source_id=c.source_id AND p.page_number=c.page_number
-            JOIN documents d ON d.source_id=c.source_id
-            WHERE to_tsvector('simple', c.text_content) @@ plainto_tsquery('simple', %s)
-               OR similarity(c.text_content, %s) > 0.01
-            ORDER BY score DESC
-            LIMIT %s
-            """,
-            (query, query, query, query, query, candidate_count),
+            lexical_sql,
+            lexical_params,
         ).fetchall()
 
     vector_hits = [make_hit(row) for row in vector_rows]
@@ -210,16 +482,19 @@ def retrieve_hybrid(query: str, query_vector: str, candidate_count: int) -> list
 
     for rank, hit in enumerate(lexical_hits, start=1):
         fused[hit.chunk_id] += LEXICAL_WEIGHT / (RRF_K + rank)
+
         if hit.chunk_id in hits:
             hits[hit.chunk_id].lexical_score = hit.lexical_score
         else:
             hits[hit.chunk_id] = hit
 
     result: list[Hit] = []
+
     for chunk_id in sorted(fused, key=fused.get, reverse=True):
         hit = hits[chunk_id]
         hit.fused_score = fused[chunk_id]
         result.append(hit)
+
     return result
 
 
@@ -278,7 +553,12 @@ def search(body: SearchRequest, request: Request):
         convert_to_numpy=True,
     )[0]
 
-    fused_hits = retrieve_hybrid(query, vector_literal(query_embedding), body.candidate_count)
+    fused_hits = retrieve_hybrid(
+        query,
+        vector_literal(query_embedding),
+        body.candidate_count,
+        body.filters,
+    )
     pool = fused_hits[: body.rerank_count]
 
     if not pool:
