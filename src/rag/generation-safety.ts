@@ -7,7 +7,7 @@ const RISKY = new Set<NumericVerificationStatus>([
 ]);
 
 const NUMERIC_RE =
-  /[0-9०-९]+(?:[.,:/-][0-9०-९]+)*/gu;
+  /[0-9०-९]+(?:[.,:/-][0-9०-९]+)*(?:\s*%)?/gu;
 
 export const UNVERIFIED_NUMERIC =
   "[UNVERIFIED_NUMERIC]";
@@ -26,10 +26,16 @@ export function prepareEvidenceTextForGeneration(
     return text;
   }
 
-  return text.replace(
-    NUMERIC_RE,
-    UNVERIFIED_NUMERIC,
-  );
+  // Generator-facing risky evidence must not contain the legacy placeholder token.
+  // Remove exact numeric spans instead of replacing them with a copyable sentinel.
+  // The model can still use surrounding qualitative text, while deterministic
+  // validation remains responsible for blocking unsafe numeric claims.
+  return text
+    .replace(NUMERIC_RE, "")
+    .replace(/\s+%/gu, "")
+    .replace(/[ \t]{2,}/gu, " ")
+    .replace(/\n[ \t]+/gu, "\n")
+    .trim();
 }
 
 export function prepareNumericMetadataForGeneration(

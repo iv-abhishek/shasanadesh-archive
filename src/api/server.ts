@@ -991,21 +991,13 @@ server.post(
       let repairValidationIssues:
         string[] = [];
 
-      // A placeholder-only failure is already safe to handle deterministically:
-      // buildQualitativeSalvage removes placeholder/numeric claim units and keeps
-      // only citation-valid qualitative material. Try that before paying for a
-      // second generator pass. Any failure still falls through to the existing
-      // LLM repair path unchanged.
-      const placeholderOnlyFailure =
-        !firstValidation.ok &&
-        firstValidation.issues.length > 0 &&
-        firstValidation.issues.every(
-          (issue) =>
-            issue.code ===
-            "internal_placeholder",
-        );
-
-      if (placeholderOnlyFailure) {
+      // Try deterministic qualitative salvage before LLM repair.
+      //
+      // The salvage function can only keep citation-valid, non-numeric,
+      // non-placeholder claim units, and the result must pass the same final
+      // validator. If salvage cannot produce a valid answer, fall through to
+      // the existing LLM repair path unchanged.
+      if (!finalValidation.ok) {
         const preRepairSalvage =
           buildQualitativeSalvage(
             firstDraft,

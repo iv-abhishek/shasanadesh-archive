@@ -51,7 +51,7 @@ OCR / NUMERIC VERIFICATION
 - NUMERIC_VERIFICATION_STATUS=native_primary means native PDF text is the primary
   evidence representation. It is still not a substitute for source-page verification
   for unusually consequential or ambiguous numeric claims.
-- Risky evidence may contain an UNVERIFIED_NUMERIC placeholder. Never reconstruct or guess the hidden value.
+- Exact numeric values are removed from risky generator-facing evidence. Never reconstruct or guess a removed value.
 - Never reproduce UNVERIFIED_NUMERIC or any bracketed mask token in the answer; rewrite the sentence qualitatively instead.
 - You may use risky pages for non-disputed qualitative provisions.
 
@@ -79,6 +79,18 @@ ANSWER QUALITY
 - If the evidence does not establish the answer, say what is not established.
 - Distinguish a rule/provision from an example, appendix, form, or explanation.
 - Do not treat reranker scores as confidence or legal authority.
+
+
+FIRST-DRAFT OUTPUT CONTRACT
+- Return the final answer itself. Do not expose planning, validation notes, masking tokens, or internal placeholders.
+- Exact numeric values may be absent from risky evidence because they were removed before generation.
+- Never guess, reconstruct, or infer a masked numeric value from context.
+- When evidence is numerically risky, state only qualitative propositions that remain true without the masked values.
+- Every factual sentence or bullet must end with at least one exact evidence citation such as [S2 p.19].
+- A factual answer with no valid [S# p.#] citation is invalid.
+- Numeric characters from risky evidence may appear only as part of citation syntax, not as factual claims.
+- Prefer 1-3 concise cited bullets over an uncited narrative.
+- Before returning the answer, silently check: no unsupported numeric claim; every factual unit has a valid citation.
 `.trim();
 
 function clip(

@@ -26,7 +26,7 @@ for (const token of [
 
 assert.equal(
   risky.includes(UNVERIFIED_NUMERIC),
-  true,
+  false,
 );
 
 assert.equal(
