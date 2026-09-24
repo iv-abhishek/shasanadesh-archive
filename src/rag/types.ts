@@ -22,6 +22,8 @@ export interface RetrievalEvidence {
   go_date: string | null;
   source_url: string;
   page_url: string;
+  retrieval_role?: "direct" | "neighbor";
+  anchor_page_number?: number | null;
   selected_variant: "native" | "ocr";
   selected_canonical: boolean;
   numeric_conflict: boolean;
@@ -39,6 +41,13 @@ export interface RetrievalResponse {
   reranker_model: string;
   scores_are_raw_logits: boolean;
   evidence: RetrievalEvidence[];
+  timings?: {
+    embedding_ms?: number;
+    hybrid_search_ms?: number;
+    rerank_ms?: number;
+    hydration_ms?: number;
+    total_ms?: number;
+  };
 }
 
 export interface ChatMessage {

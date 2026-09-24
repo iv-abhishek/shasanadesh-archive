@@ -296,6 +296,21 @@ export function buildAnswerRepairInstruction(
  *
  * This does not invent or rewrite facts. It only removes unsafe claim units.
  */
+
+const DEPENDENT_SALVAGE_START_RE =
+  /^(?:this|that|these|those|it)\s+(?:is|are|was|were|will\s+be|would\s+be)\s+(?:also\s+)?(?:followed|continued|then)\b|^(?:after\s+that|thereafter|furthermore|moreover)\b/i;
+
+function cleanSalvageUnit(
+  unit: string,
+): string {
+  return unit
+    .replace(
+      /^\s*(?:[-–—•*]+\s*)+/,
+      "",
+    )
+    .trim();
+}
+
 export function buildQualitativeSalvage(
   answer: string,
   evidence: RetrievalEvidence[],
@@ -346,10 +361,34 @@ export function buildQualitativeSalvage(
       continue;
     }
 
-    kept.push(unit);
+    const cleaned =
+      cleanSalvageUnit(
+        unit,
+      );
+
+    if (
+      !cleaned ||
+      DEPENDENT_SALVAGE_START_RE.test(
+        cleaned,
+      )
+    ) {
+      continue;
+    }
+
+    kept.push(cleaned);
   }
 
-  return kept.join(" ").trim();
+  if (kept.length <= 1) {
+    return kept[0] ?? "";
+  }
+
+  return kept
+    .map(
+      (item) =>
+        `• ${item}`,
+    )
+    .join("\n")
+    .trim();
 }
 
 export function buildConservativeFallback(

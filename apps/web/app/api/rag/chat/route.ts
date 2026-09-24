@@ -24,6 +24,16 @@ export async function POST(
           headers: {
             "content-type":
               "application/json",
+            ...(request.headers.get(
+              "cookie",
+            )
+              ? {
+                  cookie:
+                    request.headers.get(
+                      "cookie",
+                    )!,
+                }
+              : {}),
           },
           body,
           cache: "no-store",

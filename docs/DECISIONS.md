@@ -292,3 +292,147 @@ reimplement retrieval, verification, or answer-safety logic in the browser.
 The browser consumes only the stable SSE contract (`sources`, `token`, `done`, `error`),
 renders exact page citations and verification status, and links users back to original
 source pages. Backend safety remains authoritative.
+
+
+## ADR-033 - Separate scored evaluation cases from candidate discovery
+
+Only manually verified source/page expectations belong in the scored RAG benchmark.
+
+Corpus inventory output and candidate queries are discovery aids, not benchmark truth.
+This prevents benchmark growth from silently encoding guessed pages or model-generated
+labels.
+
+Retrieval-filter behavior is evaluated separately so a correct topical hit cannot hide a
+filter violation.
+
+
+## ADR-034 - Deterministic conversation-aware retrieval before model-based query planning
+
+Multi-turn chat sends recent user questions to the API. The API enriches retrieval only
+when the current question contains likely follow-up language.
+
+Phase 1 deliberately excludes previous assistant answers from retrieval context because
+generated text is not authoritative corpus evidence. The contextual retrieval query is
+constructed deterministically, preserving exact identifiers and avoiding an additional
+LLM call on the local shared GPU.
+
+A model-based query planner may replace the heuristic later, but only after multi-turn
+evaluation cases exist and identifier-preservation/factual-grounding regressions can be
+measured.
+
+
+## ADR-035 - Active-source stickiness and response-language preservation
+
+Likely follow-up questions inherit a retrieval hint from the most recent successful
+turn's dominant retrieved source. The hint constrains retrieval by exact source ID when
+available, or department as a weaker fallback.
+
+The hint comes from prior retrieval results, never from generated answer text. It is a
+retrieval constraint, not evidence. If the constrained retrieval returns no evidence,
+the system may retry the contextual query without the sticky filter.
+
+Response language is detected deterministically from the current user question. Hindi
+follow-ups should remain Hindi even when the retrieved corpus contains substantial
+English text.
+
+
+## ADR-036 - Persistent workspace profile and chat history before production authentication
+
+User working departments, preferred language, conversations, messages, and conversation
+state are persisted in PostgreSQL.
+
+Working department scope is a retrieval preference, not authorization. Production
+identity and document-access authorization remain a separate future layer.
+
+Department assignments are temporal (`valid_from` / `valid_to`) so officer transfers can
+be represented without destroying historical context.
+
+Conversation messages may store retrieved source metadata, but generated assistant text
+does not become corpus evidence.
+
+
+## ADR-037 - Local onboarding and persistent history through same-origin workspace APIs
+
+The development frontend stores only the workspace user UUID in browser local storage.
+Profile data and conversation history live in PostgreSQL.
+
+The browser talks to the workspace API through a same-origin Next.js proxy. This keeps
+the frontend deployment boundary consistent with the existing RAG chat/search proxies.
+
+Completed assistant turns persist the validated final answer, source-card metadata, and
+conversation state. Raw unsafe generator drafts are never persisted.
+
+This remains development identity, not authentication. Production identity and
+authorization will replace the local UUID mechanism.
+
+
+## ADR-038 - Route social turns before RAG and apply workspace department scope
+
+Short greetings, thanks, acknowledgements, and farewells are classified deterministically
+before retrieval. They receive a deterministic conversational response and do not invoke
+embedding, reranking, or generation. These turns are still persisted in chat history but
+do not change the active source, department, or topic state.
+
+Substantive chat retrieval follows this precedence:
+
+1. explicit source ID in the current question;
+2. explicit known department in the current question;
+3. active source for a likely follow-up;
+4. active department for a likely follow-up;
+5. the user's configured working departments;
+6. global corpus when the profile is global or the user explicitly requests all departments.
+
+Workspace department scope is an OR filter. It is a relevance boundary, not authorization.
+
+
+## ADR-039 - HttpOnly cookie-backed development sessions
+
+Development identity continuity uses an opaque random token stored in an HttpOnly,
+SameSite=Lax cookie. PostgreSQL stores only the SHA-256 hash of the token.
+
+Profile, department assignments, conversation history, and conversation state remain
+server-side. Browser localStorage is no longer the active identity mechanism; an old
+localStorage workspace UUID is accepted only once to migrate an existing development
+profile into a cookie session.
+
+The cookie is Secure in production mode and non-Secure on localhost development. The
+development profile selector is disabled in production mode.
+
+This is still not production authentication or authorization. A real identity provider
+can later replace `dev-login` while keeping the same session/profile boundary.
+
+
+## ADR-040 - Bounded adjacent-page expansion after retrieval
+
+Chat retrieval expands final reranked logical pages with a bounded set of adjacent pages
+from the same source document.
+
+Invariants:
+
+- semantic/vector/lexical retrieval and reranking choose direct pages first;
+- adjacent pages never displace a direct page;
+- expansion occurs only after logical-page deduplication;
+- `/api/search` remains unexpanded so ranking/evaluation semantics stay stable;
+- chat defaults to radius 1 with an overall evidence-page budget;
+- neighbor pages are marked `retrieval_role=neighbor`;
+- adjacency is context, not an assertion of relevance;
+- citations must point to the exact page supporting the claim;
+- neighbor pages retain the same OCR/numeric safety rules as direct pages.
+
+This is page-boundary expansion, not yet a parsed rule/section graph.
+
+
+## ADR-041 - Retrieval provenance, polished salvage, and stage latency
+
+Adjacent pages are explicitly distinguished from directly retrieved/reranked pages in the
+API and UI. Source cards show `Direct hit` or `Neighbor of p.N`; this is retrieval
+provenance, not a confidence score.
+
+Deterministic qualitative salvage strips leftover list punctuation, rejects obvious
+dependent continuation fragments such as "This is followed by ...", preserves only
+already safety-qualified cited claim units, and formats multiple surviving units as
+readable bullets.
+
+Latency diagnostics cover retrieval round-trip, embedding, hybrid search, reranking,
+evidence hydration, generation, repair, deterministic validation, and total chat time.
+These measurements are diagnostic, not SLAs.

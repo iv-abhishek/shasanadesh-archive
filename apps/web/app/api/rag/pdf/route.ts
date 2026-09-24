@@ -1,12 +1,23 @@
 import type { NextRequest } from "next/server";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const ALLOWED_HOST = "shasanadesh.up.gov.in";
 const ALLOWED_PATH = "/GO/ViewGOPDF_list_user.aspx";
+const SOURCE_ID_RE = /^\d+#\d+#\d+#\d+$/;
 
-function validateSourceUrl(raw: string): URL {
+function validateSourceId(value: string): string {
+  if (!SOURCE_ID_RE.test(value)) {
+    throw new Error("Unsupported source ID.");
+  }
+
+  return value;
+}
+
+function sourceIdFromUrl(raw: string): string {
   const parsed = new URL(raw);
 
   if (
@@ -17,93 +28,106 @@ function validateSourceUrl(raw: string): URL {
     throw new Error("Unsupported PDF source URL.");
   }
 
-  if (!parsed.searchParams.has("id1")) {
+  const encodedId = parsed.searchParams.get("id1");
+
+  if (!encodedId) {
     throw new Error("PDF source URL is missing id1.");
   }
 
-  parsed.hash = "";
-  return parsed;
+  const decoded = Buffer.from(encodedId, "base64").toString("utf8");
+
+  return validateSourceId(decoded);
+}
+
+function getSourceId(request: NextRequest): string {
+  const explicit = request.nextUrl.searchParams.get("sourceId");
+
+  if (explicit) {
+    return validateSourceId(explicit);
+  }
+
+  const rawUrl = request.nextUrl.searchParams.get("url");
+
+  if (!rawUrl) {
+    throw new Error("Missing sourceId or url parameter.");
+  }
+
+  return sourceIdFromUrl(rawUrl);
+}
+
+function archivePdfPath(sourceId: string): string {
+  const directoryName = sourceId.replaceAll("#", "-");
+
+  const candidates = [
+    path.resolve(
+      process.cwd(),
+      "data/documents",
+      directoryName,
+      "original.pdf",
+    ),
+    path.resolve(
+      process.cwd(),
+      "../../data/documents",
+      directoryName,
+      "original.pdf",
+    ),
+  ];
+
+  return candidates.find((candidate) => {
+    try {
+      require("node:fs").accessSync(candidate);
+      return true;
+    } catch {
+      return false;
+    }
+  }) ?? candidates[0];
 }
 
 export async function GET(request: NextRequest): Promise<Response> {
-  const raw = request.nextUrl.searchParams.get("url");
-
-  if (!raw) {
-    return Response.json(
-      { message: "Missing url parameter." },
-      { status: 400 },
-    );
-  }
-
-  let sourceUrl: URL;
+  let sourceId: string;
 
   try {
-    sourceUrl = validateSourceUrl(raw);
+    sourceId = getSourceId(request);
   } catch (error) {
     return Response.json(
       {
         message:
-          error instanceof Error ? error.message : String(error),
+          error instanceof Error
+            ? error.message
+            : String(error),
       },
       { status: 400 },
     );
   }
 
   try {
-    const headers = new Headers();
-    const range = request.headers.get("range");
+    const pdfPath = archivePdfPath(sourceId);
+    const pdf = await readFile(pdfPath);
 
-    if (range) {
-      headers.set("range", range);
+    if (pdf.subarray(0, 5).toString("ascii") !== "%PDF-") {
+      throw new Error("Archived file is not a PDF.");
     }
 
-    const upstream = await fetch(sourceUrl, {
-      method: "GET",
-      headers,
-      cache: "no-store",
-      redirect: "follow",
-    });
-
-    if (!upstream.ok) {
-      return Response.json(
-        { message: `Source PDF returned ${upstream.status}.` },
-        { status: 502 },
-      );
-    }
-
-    const responseHeaders = new Headers();
-
-    responseHeaders.set(
-      "content-type",
-      upstream.headers.get("content-type") ?? "application/pdf",
-    );
-    responseHeaders.set("cache-control", "private, max-age=300");
-    responseHeaders.set("content-disposition", "inline");
-
-    for (const name of [
-      "accept-ranges",
-      "content-range",
-      "content-length",
-      "etag",
-      "last-modified",
-    ]) {
-      const value = upstream.headers.get(name);
-      if (value) {
-        responseHeaders.set(name, value);
-      }
-    }
-
-    return new Response(upstream.body, {
-      status: upstream.status,
-      headers: responseHeaders,
+    return new Response(pdf, {
+      status: 200,
+      headers: {
+        "content-type": "application/pdf",
+        "content-length": String(pdf.length),
+        "content-disposition": "inline",
+        "cache-control": "private, max-age=300",
+      },
     });
   } catch (error) {
     return Response.json(
       {
-        message:
-          error instanceof Error ? error.message : String(error),
+        message: "Archived PDF is unavailable.",
+        sourceId,
+        detail:
+          error instanceof Error
+            ? error.message
+            : String(error),
       },
-      { status: 502 },
+      { status: 404 },
     );
   }
 }

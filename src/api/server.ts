@@ -19,6 +19,19 @@ import Fastify from "fastify";
 import OpenAI from "openai";
 import { z } from "zod";
 import {
+  registerWorkspaceRoutes,
+} from "../workspace/routes.js";
+import {
+  registerSessionRoutes,
+} from "../workspace/session-routes.js";
+import {
+  resolveSessionFromCookie,
+} from "../workspace/session-store.js";
+import {
+  getWorkspaceProfile,
+  listDepartments,
+} from "../workspace/store.js";
+import {
   getLocalGpuQueueStatus,
   runLocalGpuExclusive,
 } from "./local-gpu-queue.js";
@@ -39,6 +52,17 @@ import type {
 import {
   enrichRetrievalResponse,
 } from "../rag/verification.js";
+import {
+  buildConversationQueryPlan,
+  detectResponseLanguage,
+} from "../rag/conversation.js";
+import {
+  buildConversationalReply,
+  classifyConversationIntent,
+  extractExplicitSourceId,
+  findExplicitDepartment,
+  requestsGlobalScope,
+} from "../rag/intent-routing.js";
 
 const PORT = Number.parseInt(
   process.env.API_PORT ?? "8787",
@@ -60,6 +84,16 @@ const LLM_MODEL =
 
 const RAG_TOP_K = Number.parseInt(
   process.env.RAG_TOP_K ?? "5",
+  10,
+);
+
+const RAG_NEIGHBOR_RADIUS = Number.parseInt(
+  process.env.RAG_NEIGHBOR_RADIUS ?? "1",
+  10,
+);
+
+const RAG_MAX_EVIDENCE_PAGES = Number.parseInt(
+  process.env.RAG_MAX_EVIDENCE_PAGES ?? "7",
   10,
 );
 
@@ -95,6 +129,24 @@ server.register(cors, {
   origin: true,
 });
 
+registerWorkspaceRoutes(server);
+registerSessionRoutes(server);
+
+const ConversationStateSchema = z.object({
+  activeSourceId: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
+    .optional(),
+  activeDepartment: z
+    .string()
+    .trim()
+    .min(1)
+    .max(200)
+    .optional(),
+});
+
 const ChatBodySchema = z.object({
   messages: z
     .array(
@@ -107,6 +159,12 @@ const ChatBodySchema = z.object({
       }),
     )
     .min(1),
+  conversationState:
+    ConversationStateSchema.optional(),
+  workspaceUserId:
+    z.string()
+      .uuid()
+      .optional(),
 });
 
 const SearchFiltersSchema = z.object({
@@ -115,6 +173,16 @@ const SearchFiltersSchema = z.object({
     .trim()
     .min(1)
     .max(200)
+    .optional(),
+  departments: z
+    .array(
+      z.string()
+        .trim()
+        .min(1)
+        .max(200),
+    )
+    .min(1)
+    .max(12)
     .optional(),
   goNumber: z
     .string()
@@ -163,10 +231,17 @@ const SearchBodySchema = z.object({
     SearchFiltersSchema.optional(),
 });
 
+interface RetrievalOptions {
+  expandNeighbors?: boolean;
+  neighborRadius?: number;
+  maxEvidencePages?: number;
+}
+
 async function retrieve(
   query: string,
   topK = RAG_TOP_K,
   filters?: SearchFilters,
+  options?: RetrievalOptions,
 ): Promise<RetrievalResponse> {
   return runLocalGpuExclusive(
     "retrieval",
@@ -187,6 +262,8 @@ async function retrieve(
             filters: {
               department:
                 filters?.department,
+              departments:
+                filters?.departments,
               go_number:
                 filters?.goNumber,
               source_id:
@@ -198,6 +275,12 @@ async function retrieve(
               verification_status:
                 filters?.verificationStatus,
             },
+            expand_neighbors:
+              options?.expandNeighbors ?? false,
+            neighbor_radius:
+              options?.neighborRadius ?? 1,
+            max_evidence_pages:
+              options?.maxEvidencePages ?? 7,
           }),
         },
       );
@@ -371,18 +454,6 @@ server.post(
       });
     }
 
-    if (
-      !LLM_BASE_URL ||
-      !LLM_MODEL
-    ) {
-      return reply.code(503).send({
-        error:
-          "Generator is not configured. " +
-          "Set LLM_BASE_URL and LLM_MODEL. " +
-          "LLM_API_KEY is optional for local OpenAI-compatible servers.",
-      });
-    }
-
     const messages =
       parsed.data.messages as
         ChatMessage[];
@@ -402,30 +473,330 @@ server.post(
       });
     }
 
-    const query =
-      messages[lastUserIndex]
-        .content;
+    const conversationPlan =
+      buildConversationQueryPlan(
+        messages,
+        lastUserIndex,
+      );
 
-    const retrieval =
-      await retrieve(query);
+    const query =
+      conversationPlan
+        .currentQuery;
+
+    const responseLanguage =
+      detectResponseLanguage(
+        query,
+      );
+
+    const conversationIntent =
+      classifyConversationIntent(
+        query,
+      );
+
+    if (
+      conversationIntent.intent ===
+        "conversational" &&
+      conversationIntent.kind
+    ) {
+      const text =
+        buildConversationalReply(
+          conversationIntent.kind,
+          responseLanguage,
+        );
+
+      reply.hijack();
+
+      reply.raw.statusCode =
+        200;
+
+      reply.raw.setHeader(
+        "content-type",
+        "text/event-stream; charset=utf-8",
+      );
+
+      reply.raw.setHeader(
+        "cache-control",
+        "no-cache, no-transform",
+      );
+
+      reply.raw.setHeader(
+        "connection",
+        "keep-alive",
+      );
+
+      reply.raw.setHeader(
+        "x-accel-buffering",
+        "no",
+      );
+
+      reply.raw.write(
+        `event: sources\ndata: []\n\n`,
+      );
+
+      reply.raw.write(
+        `event: token\ndata: ${JSON.stringify({
+          text,
+        })}\n\n`,
+      );
+
+      reply.raw.write(
+        `event: done\ndata: ${JSON.stringify({
+          ok: true,
+          conversational:
+            true,
+          intent:
+            conversationIntent.kind,
+          responseLanguage,
+          citations: [],
+        })}\n\n`,
+      );
+
+      reply.raw.end();
+
+      return;
+    }
+
+    if (
+      !LLM_BASE_URL ||
+      !LLM_MODEL
+    ) {
+      return reply.code(503).send({
+        error:
+          "Generator is not configured. " +
+          "Set LLM_BASE_URL and LLM_MODEL. " +
+          "LLM_API_KEY is optional for local OpenAI-compatible servers.",
+      });
+    }
+
+    const conversationState =
+      parsed.data
+        .conversationState;
+
+    const cookieSession =
+      await resolveSessionFromCookie(
+        request.headers
+          .cookie,
+      );
+
+    const effectiveWorkspaceUserId =
+      cookieSession?.userId ??
+      parsed.data
+        .workspaceUserId;
+
+    let workspaceProfile:
+      Awaited<
+        ReturnType<
+          typeof getWorkspaceProfile
+        >
+      > | null =
+      cookieSession?.profile ??
+      null;
+
+    if (
+      !workspaceProfile &&
+      effectiveWorkspaceUserId
+    ) {
+      try {
+        workspaceProfile =
+          await getWorkspaceProfile(
+            effectiveWorkspaceUserId,
+          );
+      } catch (error) {
+        request.log.warn(
+          {
+            error,
+            workspaceUserId:
+              effectiveWorkspaceUserId,
+          },
+          "Workspace profile unavailable; continuing without profile scope.",
+        );
+      }
+    }
+
+    const knownDepartments =
+      workspaceProfile
+        ? await listDepartments()
+        : [];
+
+    const explicitSourceId =
+      extractExplicitSourceId(
+        query,
+      );
+
+    const explicitDepartment =
+      findExplicitDepartment(
+        query,
+        knownDepartments,
+      );
+
+    const globalScopeRequested =
+      requestsGlobalScope(
+        query,
+      );
+
+    const activeSourceId =
+      conversationPlan
+        .contextualized
+        ? conversationState
+            ?.activeSourceId
+        : undefined;
+
+    const activeDepartment =
+      conversationPlan
+        .contextualized &&
+      !activeSourceId
+        ? conversationState
+            ?.activeDepartment
+        : undefined;
+
+    let retrievalScope:
+      | "explicit_source"
+      | "explicit_department"
+      | "active_source"
+      | "active_department"
+      | "workspace_departments"
+      | "global" =
+      "global";
+
+    let retrievalFilters:
+      SearchFilters | undefined;
+
+    if (explicitSourceId) {
+      retrievalScope =
+        "explicit_source";
+
+      retrievalFilters = {
+        sourceId:
+          explicitSourceId,
+      };
+    } else if (
+      explicitDepartment
+    ) {
+      retrievalScope =
+        "explicit_department";
+
+      retrievalFilters = {
+        department:
+          explicitDepartment,
+      };
+    } else if (
+      activeSourceId
+    ) {
+      retrievalScope =
+        "active_source";
+
+      retrievalFilters = {
+        sourceId:
+          activeSourceId,
+      };
+    } else if (
+      activeDepartment
+    ) {
+      retrievalScope =
+        "active_department";
+
+      retrievalFilters = {
+        department:
+          activeDepartment,
+      };
+    } else if (
+      !globalScopeRequested &&
+      workspaceProfile
+        ?.defaultScope ===
+        "my_departments" &&
+      workspaceProfile
+        .departments.length >
+        0
+    ) {
+      retrievalScope =
+        "workspace_departments";
+
+      retrievalFilters = {
+        departments:
+          workspaceProfile
+            .departments,
+      };
+    }
+
+    let sourceStickinessApplied =
+      retrievalScope ===
+        "active_source" ||
+      retrievalScope ===
+        "active_department";
+
+    const retrievalStartedAt =
+      performance.now();
+
+    let retrieval =
+      await retrieve(
+        conversationPlan
+          .retrievalQuery,
+        RAG_TOP_K,
+        retrievalFilters,
+        {
+          expandNeighbors: true,
+          neighborRadius: RAG_NEIGHBOR_RADIUS,
+          maxEvidencePages: Math.max(
+            RAG_TOP_K,
+            RAG_MAX_EVIDENCE_PAGES,
+          ),
+        },
+      );
+
+    if (
+      sourceStickinessApplied &&
+      retrieval.evidence.length ===
+        0
+    ) {
+      const fallbackFilters:
+        SearchFilters | undefined =
+        !globalScopeRequested &&
+        workspaceProfile
+          ?.defaultScope ===
+          "my_departments" &&
+        workspaceProfile
+          .departments.length >
+          0
+          ? {
+              departments:
+                workspaceProfile
+                  .departments,
+            }
+          : undefined;
+
+      retrieval =
+        await retrieve(
+          conversationPlan
+            .retrievalQuery,
+          RAG_TOP_K,
+          fallbackFilters,
+          {
+            expandNeighbors: true,
+            neighborRadius: RAG_NEIGHBOR_RADIUS,
+            maxEvidencePages: Math.max(
+              RAG_TOP_K,
+              RAG_MAX_EVIDENCE_PAGES,
+            ),
+          },
+        );
+
+      sourceStickinessApplied =
+        false;
+
+      retrievalScope =
+        fallbackFilters
+          ? "workspace_departments"
+          : "global";
+    }
+
+    const retrievalMs =
+      performance.now() -
+      retrievalStartedAt;
 
     const evidenceContext =
       buildEvidenceContext(
         retrieval.evidence,
       );
-
-    const priorMessages =
-      messages
-        .slice(
-          0,
-          lastUserIndex,
-        )
-        .slice(-8)
-        .map((message) => ({
-          role: message.role,
-          content:
-            message.content,
-        }));
 
     const generatorMessages:
       GeneratorMessage[] = [
@@ -434,11 +805,37 @@ server.post(
           content:
             RAG_SYSTEM_PROMPT,
         },
-        ...priorMessages,
         {
           role: "user",
           content: [
-            "USER QUESTION:",
+            "CONVERSATION CONTEXT:",
+            conversationPlan
+              .contextualized
+              ? conversationPlan
+                  .priorUserQuestions
+                  .map(
+                    (
+                      item,
+                      index,
+                    ) =>
+                      `Previous user question ${index + 1}: ${item}`,
+                  )
+                  .join("\n")
+              : "No prior context needed for this question.",
+            "",
+            "IMPORTANT: conversation context and active-source hints are for resolving references only; they are not evidence.",
+            "",
+            "ACTIVE SOURCE HINT:",
+            activeSourceId ??
+              activeDepartment ??
+              "none",
+            "",
+            "RESPONSE LANGUAGE:",
+            responseLanguage === "hi"
+              ? "Hindi"
+              : "English",
+            "",
+            "CURRENT USER QUESTION:",
             query,
             "",
             "RETRIEVED EVIDENCE:",
@@ -526,23 +923,55 @@ server.post(
             item.selected_canonical,
           rerankScoreRaw:
             item.rerank_score_raw,
+          retrievalRole:
+            item.retrieval_role ??
+            "direct",
+          anchorPageNumber:
+            item.anchor_page_number ??
+            null,
         }),
       ),
     );
 
     try {
-      const firstDraft =
+      const generationStartedAt =
+      performance.now();
+
+    let validationMs = 0;
+    let repairMs = 0;
+
+    const validateCurrentAnswer = (
+      answer: string,
+    ) => {
+      const startedAt =
+        performance.now();
+
+      const result =
+        validateAnswer(
+          answer,
+          retrieval.evidence,
+        );
+
+      validationMs +=
+        performance.now() -
+        startedAt;
+
+      return result;
+    };
+
+    const firstDraft =
         await generateCompletion(
           openai,
           generatorMessages,
           LLM_TEMPERATURE,
         );
 
-      const firstValidation =
-        validateAnswer(
-          firstDraft,
-          retrieval.evidence,
-        );
+      const generationMs =
+      performance.now() -
+      generationStartedAt;
+
+    const firstValidation =
+        validateCurrentAnswer(firstDraft);
 
       let finalAnswer =
         firstDraft;
@@ -562,7 +991,45 @@ server.post(
       let repairValidationIssues:
         string[] = [];
 
-      if (!firstValidation.ok) {
+      // A placeholder-only failure is already safe to handle deterministically:
+      // buildQualitativeSalvage removes placeholder/numeric claim units and keeps
+      // only citation-valid qualitative material. Try that before paying for a
+      // second generator pass. Any failure still falls through to the existing
+      // LLM repair path unchanged.
+      const placeholderOnlyFailure =
+        !firstValidation.ok &&
+        firstValidation.issues.length > 0 &&
+        firstValidation.issues.every(
+          (issue) =>
+            issue.code ===
+            "internal_placeholder",
+        );
+
+      if (placeholderOnlyFailure) {
+        const preRepairSalvage =
+          buildQualitativeSalvage(
+            firstDraft,
+            retrieval.evidence,
+          );
+
+        if (preRepairSalvage) {
+          const salvageValidation =
+            validateCurrentAnswer(
+              preRepairSalvage,
+            );
+
+          if (salvageValidation.ok) {
+            usedQualitativeSalvage =
+              true;
+            finalAnswer =
+              preRepairSalvage;
+            finalValidation =
+              salvageValidation;
+          }
+        }
+      }
+
+      if (!finalValidation.ok) {
         repaired = true;
 
         const repairMessages:
@@ -582,7 +1049,10 @@ server.post(
             },
           ];
 
-        const repairedAnswer =
+        const repairStartedAt =
+        performance.now();
+
+      const repairedAnswer =
           await generateCompletion(
             openai,
             repairMessages,
@@ -590,11 +1060,12 @@ server.post(
             LLM_REPAIR_MAX_TOKENS,
           );
 
-        const repairedValidation =
-          validateAnswer(
-            repairedAnswer,
-            retrieval.evidence,
-          );
+        repairMs +=
+        performance.now() -
+        repairStartedAt;
+
+      const repairedValidation =
+          validateCurrentAnswer(repairedAnswer);
 
         repairValidationIssues =
           repairedValidation.issues.map(
@@ -617,10 +1088,7 @@ server.post(
 
         if (qualitativeSalvage) {
           const salvageValidation =
-            validateAnswer(
-              qualitativeSalvage,
-              retrieval.evidence,
-            );
+            validateCurrentAnswer(qualitativeSalvage);
 
           if (salvageValidation.ok) {
             usedQualitativeSalvage =
@@ -644,10 +1112,7 @@ server.post(
           );
 
         finalValidation =
-          validateAnswer(
-            finalAnswer,
-            retrieval.evidence,
-          );
+          validateCurrentAnswer(finalAnswer);
       }
 
       // A fallback is intentionally simple enough to pass the same deterministic
@@ -663,9 +1128,69 @@ server.post(
         finalAnswer,
       );
 
-      sendEvent(
+      const totalMs =
+      performance.now() -
+      retrievalStartedAt;
+
+    const ragTimings = {
+      retrievalMs:
+        Math.round(retrievalMs),
+      embeddingMs:
+        retrieval.timings
+          ?.embedding_ms ??
+        null,
+      hybridSearchMs:
+        retrieval.timings
+          ?.hybrid_search_ms ??
+        null,
+      rerankMs:
+        retrieval.timings
+          ?.rerank_ms ??
+        null,
+      hydrationMs:
+        retrieval.timings
+          ?.hydration_ms ??
+        null,
+      retrievalServiceMs:
+        retrieval.timings
+          ?.total_ms ??
+        null,
+      generationMs:
+        Math.round(
+          generationMs,
+        ),
+      repairMs:
+        Math.round(
+          repairMs,
+        ),
+      validationMs:
+        Math.round(
+          validationMs,
+        ),
+      totalMs:
+        Math.round(totalMs),
+    };
+
+    request.log.info(
+      {
+        query,
+        retrievalScope,
+        evidencePages:
+          retrieval.evidence.length,
+        repaired,
+        usedQualitativeSalvage,
+        usedFallback,
+        timings:
+          ragTimings,
+      },
+      "RAG chat timing",
+    );
+
+    sendEvent(
         "done",
         {
+        timings:
+          ragTimings,
           ok: true,
           validated: true,
           repaired,

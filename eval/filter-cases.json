@@ -1,0 +1,48 @@
+[
+  {
+    "id": "medical-department-filter",
+    "query": "seniority",
+    "topK": 4,
+    "filters": {
+      "department": "Medical and Health"
+    },
+    "expectedSourceIds": ["25#201#2#2020"],
+    "expectedPages": [18, 19, 17, 5],
+    "expectAll": {
+      "department": "Medical and Health"
+    },
+    "notes": "Verified manually against the live retrieval API."
+  },
+  {
+    "id": "solar-conflict-filter",
+    "query": "सोलर पम्प",
+    "topK": 12,
+    "filters": {
+      "sourceId": "61#37#5#2023",
+      "verificationStatus": "conflict"
+    },
+    "expectedSourceIds": ["61#37#5#2023"],
+    "expectedPages": [7, 2, 4],
+    "expectAll": {
+      "sourceId": "61#37#5#2023",
+      "verificationStatus": "conflict"
+    },
+    "notes": "Verified manually against the live retrieval API."
+  },
+  {
+    "id": "solar-native-primary-filter",
+    "query": "सोलर पम्प",
+    "topK": 12,
+    "filters": {
+      "sourceId": "61#37#5#2023",
+      "verificationStatus": "native_primary"
+    },
+    "expectedSourceIds": ["61#37#5#2023"],
+    "expectedPages": [3, 1, 5, 6, 8],
+    "expectAll": {
+      "sourceId": "61#37#5#2023",
+      "verificationStatus": "native_primary"
+    },
+    "notes": "Verified manually against the live retrieval API."
+  }
+]

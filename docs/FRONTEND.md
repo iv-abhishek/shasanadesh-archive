@@ -78,3 +78,10 @@ That route streams the backend response from:
 This removes browser CORS/origin coupling while preserving the backend SSE contract.
 `RAG_API_BASE_URL` is server-side configuration and is not exposed as a
 `NEXT_PUBLIC_*` variable.
+
+
+## Retrieval provenance and latency diagnostics
+
+Chat source cards distinguish direct retrieval hits from adjacent context pages. Answer
+cards expose a collapsed latency breakdown during development so slow retrieval,
+reranking, generation, and repair paths can be identified without guessing.

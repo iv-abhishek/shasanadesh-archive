@@ -3,6 +3,7 @@
 import {
   FormEvent,
   Fragment,
+  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -31,6 +32,25 @@ interface Source {
     "native" | "ocr";
   selectedCanonical: boolean;
   rerankScoreRaw: number;
+  matchedChunkText?: string;  retrievalRole?:
+    | "direct"
+    | "neighbor";
+  anchorPageNumber?:
+    number | null;
+
+}
+
+interface RagTimings {
+  retrievalMs?: number;
+  embeddingMs?: number | null;
+  hybridSearchMs?: number | null;
+  rerankMs?: number | null;
+  hydrationMs?: number | null;
+  retrievalServiceMs?: number | null;
+  generationMs?: number;
+  repairMs?: number;
+  validationMs?: number;
+  totalMs?: number;
 }
 
 interface DoneEvent {
@@ -42,6 +62,10 @@ interface DoneEvent {
   citations?: string[];
   firstValidationIssues?: string[];
   repairValidationIssues?: string[];
+  conversational?: boolean;
+  intent?: string;
+  retrievalScope?: string;  timings?: RagTimings;
+
 }
 
 interface ChatTurn {
@@ -52,6 +76,29 @@ interface ChatTurn {
   done: DoneEvent | null;
   error: string | null;
   elapsedMs: number | null;
+}
+
+interface ChatAppProps {
+  workspaceUserId?: string;
+  conversationId?: string | null;
+  onHistoryChanged?: () => void;
+}
+
+interface PersistedMessage {
+  id: string;
+  role:
+    | "user"
+    | "assistant";
+  content: string;
+  sources: unknown[];
+  metadata:
+    Record<string, unknown>;
+  createdAt: string;
+}
+
+interface PersistedConversationResponse {
+  messages:
+    PersistedMessage[];
 }
 
 interface ViewerState {
@@ -132,6 +179,24 @@ function parseSseBlock(
   };
 }
 
+function formatStageMs(
+  value:
+    number | null | undefined,
+): string {
+  if (
+    value === null ||
+    value === undefined
+  ) {
+    return "-";
+  }
+
+  if (value < 1000) {
+    return `${Math.round(value)} ms`;
+  }
+
+  return `${(value / 1000).toFixed(1)} s`;
+}
+
 function formatDuration(
   elapsedMs: number | null,
 ): string {
@@ -186,6 +251,362 @@ function statusClass(
   }
 
   return "badge";
+}
+
+async function workspaceJson<T>(
+  url: string,
+  init?: RequestInit,
+): Promise<T> {
+  const response =
+    await fetch(
+      url,
+      {
+        ...init,
+        cache: "no-store",
+      },
+    );
+
+  if (!response.ok) {
+    throw new Error(
+      `Workspace ${response.status}: ${await response.text()}`,
+    );
+  }
+
+  return (
+    await response.json()
+  ) as T;
+}
+
+function normalizePersistedSource(
+  value: unknown,
+): Source | null {
+  if (
+    !value ||
+    typeof value !==
+      "object"
+  ) {
+    return null;
+  }
+
+  const raw =
+    value as
+      Record<
+        string,
+        unknown
+      >;
+
+  if (
+    typeof raw.label !==
+      "string" ||
+    typeof raw.sourceId !==
+      "string" ||
+    typeof raw.pageNumber !==
+      "number"
+  ) {
+    return null;
+  }
+
+  return {
+    label:
+      raw.label,
+    sourceId:
+      raw.sourceId,
+    pageNumber:
+      raw.pageNumber,
+    department:
+      typeof raw.department ===
+        "string"
+        ? raw.department
+        : null,
+    goNumber:
+      typeof raw.goNumber ===
+        "string"
+        ? raw.goNumber
+        : null,
+    goDate:
+      typeof raw.goDate ===
+        "string"
+        ? raw.goDate
+        : null,
+    sourceUrl:
+      typeof raw.sourceUrl ===
+        "string"
+        ? raw.sourceUrl
+        : "",
+    pageUrl:
+      typeof raw.pageUrl ===
+        "string"
+        ? raw.pageUrl
+        : "",
+    numericConflict:
+      Boolean(
+        raw.numericConflict,
+      ),
+    numericVerificationStatus:
+      typeof raw
+        .numericVerificationStatus ===
+        "string"
+        ? raw
+            .numericVerificationStatus
+        : "unverified",
+    selectedVariant:
+      raw.selectedVariant ===
+        "ocr"
+        ? "ocr"
+        : "native",
+    selectedCanonical:
+      Boolean(
+        raw.selectedCanonical,
+      ),
+    rerankScoreRaw:
+      typeof raw
+        .rerankScoreRaw ===
+        "number"
+        ? raw.rerankScoreRaw
+        : 0,
+    matchedChunkText:
+      typeof raw
+        .matchedChunkText ===
+        "string"
+        ? raw
+            .matchedChunkText
+        : undefined,
+  };
+}
+
+function turnsFromPersistedMessages(
+  messages:
+    PersistedMessage[],
+): ChatTurn[] {
+  const turns:
+    ChatTurn[] = [];
+
+  let pending:
+    ChatTurn | null =
+    null;
+
+  for (
+    const message of messages
+  ) {
+    if (
+      message.role ===
+      "user"
+    ) {
+      if (pending) {
+        turns.push(
+          pending,
+        );
+      }
+
+      pending = {
+        id:
+          Date.parse(
+            message.createdAt,
+          ) ||
+          Date.now(),
+        question:
+          message.content,
+        answer: "",
+        sources: [],
+        done: null,
+        error: null,
+        elapsedMs: null,
+      };
+
+      continue;
+    }
+
+    if (!pending) {
+      continue;
+    }
+
+    const done =
+      message.metadata &&
+      typeof message.metadata ===
+        "object"
+        ? (
+            message.metadata as
+              DoneEvent
+          )
+        : null;
+
+    pending.answer =
+      message.content;
+
+    pending.sources =
+      message.sources
+        .map(
+          normalizePersistedSource,
+        )
+        .filter(
+          (
+            source,
+          ): source is Source =>
+            source !== null,
+        );
+
+    pending.done =
+      done;
+
+    turns.push(
+      pending,
+    );
+
+    pending = null;
+  }
+
+  if (pending) {
+    turns.push(
+      pending,
+    );
+  }
+
+  return turns;
+}
+
+function dominantSourceState(
+  sources: Source[],
+): {
+  activeSourceId?: string;
+  activeDepartment?: string;
+} {
+  const counts =
+    new Map<
+      string,
+      {
+        count: number;
+        department:
+          string | null;
+      }
+    >();
+
+  for (
+    const source of sources
+  ) {
+    const current =
+      counts.get(
+        source.sourceId,
+      );
+
+    counts.set(
+      source.sourceId,
+      {
+        count:
+          (current?.count ??
+            0) + 1,
+        department:
+          current?.department ??
+          source.department,
+      },
+    );
+  }
+
+  const selected =
+    [...counts.entries()]
+      .sort(
+        (
+          left,
+          right,
+        ) =>
+          right[1].count -
+          left[1].count,
+      )[0];
+
+  if (!selected) {
+    return {};
+  }
+
+  return {
+    activeSourceId:
+      selected[0],
+    activeDepartment:
+      selected[1]
+        .department ??
+      undefined,
+  };
+}
+
+function deriveConversationState(
+  turns: ChatTurn[],
+): {
+  activeSourceId?: string;
+  activeDepartment?: string;
+} | undefined {
+  const priorTurn =
+    [...turns]
+      .reverse()
+      .find(
+        (turn) =>
+          !turn.error &&
+          Boolean(
+            turn.answer.trim(),
+          ) &&
+          turn.sources.length >
+            0,
+      );
+
+  if (!priorTurn) {
+    return undefined;
+  }
+
+  const counts =
+    new Map<
+      string,
+      {
+        count: number;
+        department:
+          string | null;
+      }
+    >();
+
+  for (
+    const source of
+      priorTurn.sources
+  ) {
+    const current =
+      counts.get(
+        source.sourceId,
+      );
+
+    counts.set(
+      source.sourceId,
+      {
+        count:
+          (current?.count ?? 0) +
+          1,
+        department:
+          current?.department ??
+          source.department,
+      },
+    );
+  }
+
+  const ranked =
+    [...counts.entries()]
+      .sort(
+        (
+          left,
+          right,
+        ) =>
+          right[1].count -
+          left[1].count,
+      );
+
+  const selected =
+    ranked[0];
+
+  if (!selected) {
+    return undefined;
+  }
+
+  return {
+    activeSourceId:
+      selected[0],
+    activeDepartment:
+      selected[1]
+        .department ??
+      undefined,
+  };
 }
 
 function CitationText({
@@ -305,6 +726,24 @@ function SourceCard({
         </span>
       </div>
 
+      <div className="source-provenance">
+        <span
+          className={
+            source.retrievalRole ===
+            "neighbor"
+              ? "provenance-badge provenance-neighbor"
+              : "provenance-badge"
+          }
+        >
+          {source.retrievalRole ===
+          "neighbor"
+            ? source.anchorPageNumber
+              ? `Neighbor of p.${source.anchorPageNumber}`
+              : "Neighbor page"
+            : "Direct hit"}
+        </span>
+      </div>
+
       <div className="source-department">
         {source.department ??
           "Unknown department"}
@@ -390,14 +829,22 @@ function TurnView({
           <div className="answer-status">
             <span
               className={
-                turn.done.validated
-                  ? "badge badge-safe"
-                  : "badge badge-warning"
+                turn.done
+                  .conversational
+                  ? "badge"
+                  : turn.done
+                      .validated
+                    ? "badge badge-safe"
+                    : "badge badge-warning"
               }
             >
-              {turn.done.validated
-                ? "Validated"
-                : "Not validated"}
+              {turn.done
+                .conversational
+                ? "Conversation"
+                : turn.done
+                    .validated
+                  ? "Validated"
+                  : "Not validated"}
             </span>
 
             {turn.done.repaired ? (
@@ -419,6 +866,37 @@ function TurnView({
               </span>
             ) : null}
           </div>
+        ) : null}
+
+        {turn.done?.timings ? (
+          <details className="timing-details">
+            <summary>
+              Latency breakdown
+              {typeof turn.done.timings.totalMs ===
+              "number"
+                ? ` - ${(turn.done.timings.totalMs / 1000).toFixed(1)} s`
+                : ""}
+            </summary>
+
+            <div className="timing-grid">
+              <span>Retrieval</span>
+              <strong>{formatStageMs(turn.done.timings.retrievalMs)}</strong>
+              <span>Embedding</span>
+              <strong>{formatStageMs(turn.done.timings.embeddingMs)}</strong>
+              <span>Hybrid search</span>
+              <strong>{formatStageMs(turn.done.timings.hybridSearchMs)}</strong>
+              <span>Rerank</span>
+              <strong>{formatStageMs(turn.done.timings.rerankMs)}</strong>
+              <span>Hydration</span>
+              <strong>{formatStageMs(turn.done.timings.hydrationMs)}</strong>
+              <span>Generation</span>
+              <strong>{formatStageMs(turn.done.timings.generationMs)}</strong>
+              <span>Repair</span>
+              <strong>{formatStageMs(turn.done.timings.repairMs)}</strong>
+              <span>Validation</span>
+              <strong>{formatStageMs(turn.done.timings.validationMs)}</strong>
+            </div>
+          </details>
         ) : null}
       </div>
 
@@ -499,18 +977,131 @@ function SourceViewer({
   );
 }
 
-export function ChatApp() {
+export function ChatApp({
+  workspaceUserId,
+  conversationId,
+  onHistoryChanged,
+}: ChatAppProps = {}) {
   const [query, setQuery] =
     useState("");
 
   const [turns, setTurns] =
     useState<ChatTurn[]>([]);
 
+  const [
+    currentConversationId,
+    setCurrentConversationId,
+  ] =
+    useState<
+      string | null
+    >(
+      conversationId ??
+        null,
+    );
+
+  const [
+    historyLoading,
+    setHistoryLoading,
+  ] =
+    useState(
+      Boolean(
+        workspaceUserId &&
+        conversationId,
+      ),
+    );
+
   const [busy, setBusy] =
     useState(false);
 
   const [viewer, setViewer] =
     useState<ViewerState | null>(null);
+
+  useEffect(
+    () => {
+      let cancelled =
+        false;
+
+      const load =
+        async () => {
+          setCurrentConversationId(
+            conversationId ??
+              null,
+          );
+
+          if (
+            !workspaceUserId ||
+            !conversationId
+          ) {
+            setTurns([]);
+            setHistoryLoading(
+              false,
+            );
+            return;
+          }
+
+          setHistoryLoading(
+            true,
+          );
+
+          try {
+            const data =
+              await workspaceJson<
+                PersistedConversationResponse
+              >(
+                `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations/${encodeURIComponent(conversationId)}`,
+              );
+
+            if (!cancelled) {
+              setTurns(
+                turnsFromPersistedMessages(
+                  data.messages,
+                ),
+              );
+            }
+          } catch (
+            caught
+          ) {
+            if (!cancelled) {
+              setTurns([
+                {
+                  id:
+                    Date.now(),
+                  question:
+                    "Conversation history",
+                  answer: "",
+                  sources: [],
+                  done: null,
+                  error:
+                    caught instanceof Error
+                      ? caught.message
+                      : String(
+                          caught,
+                        ),
+                  elapsedMs:
+                    null,
+                },
+              ]);
+            }
+          } finally {
+            if (!cancelled) {
+              setHistoryLoading(
+                false,
+              );
+            }
+          }
+        };
+
+      void load();
+
+      return () => {
+        cancelled = true;
+      };
+    },
+    [
+      conversationId,
+      workspaceUserId,
+    ],
+  );
 
   const openSource =
     (source: Source) => {
@@ -556,6 +1147,72 @@ export function ChatApp() {
         ],
       );
 
+      let effectiveConversationId =
+        currentConversationId;
+
+      if (
+        workspaceUserId
+      ) {
+        try {
+          if (
+            !effectiveConversationId
+          ) {
+            const created =
+              await workspaceJson<{
+                id: string;
+              }>(
+                `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations`,
+                {
+                  method:
+                    "POST",
+                  headers: {
+                    "content-type":
+                      "application/json",
+                  },
+                  body:
+                    JSON.stringify({
+                      firstQuestion:
+                        question,
+                    }),
+                },
+              );
+
+            effectiveConversationId =
+              created.id;
+
+            setCurrentConversationId(
+              created.id,
+            );
+          }
+
+          await workspaceJson(
+            `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations/${encodeURIComponent(effectiveConversationId)}/messages`,
+            {
+              method:
+                "POST",
+              headers: {
+                "content-type":
+                  "application/json",
+              },
+              body:
+                JSON.stringify({
+                  role:
+                    "user",
+                  content:
+                    question,
+                }),
+            },
+          );
+        } catch (
+          persistenceError
+        ) {
+          console.warn(
+            "Could not persist user message.",
+            persistenceError,
+          );
+        }
+      }
+
       const update =
         (
           updater:
@@ -576,6 +1233,45 @@ export function ChatApp() {
           );
         };
 
+      const conversationMessages = [
+        ...turns
+          .filter(
+            (turn) =>
+              Boolean(
+                turn.answer.trim(),
+              ) &&
+              !turn.error,
+          )
+          .slice(-4)
+          .map(
+            (turn) => ({
+              role:
+                "user" as const,
+              content:
+                turn.question,
+            }),
+          ),
+        {
+          role:
+            "user" as const,
+          content:
+            question,
+        },
+      ];
+
+      const conversationState =
+        deriveConversationState(
+          turns,
+        );
+
+      let persistedAnswer =
+        "";
+      let persistedSources:
+        Source[] = [];
+      let persistedDone:
+        DoneEvent | null =
+        null;
+
       try {
         const response =
           await fetch(
@@ -587,13 +1283,10 @@ export function ChatApp() {
                   "application/json",
               },
               body: JSON.stringify({
-                messages: [
-                  {
-                    role: "user",
-                    content:
-                      question,
-                  },
-                ],
+                messages:
+                  conversationMessages,
+                conversationState,
+                workspaceUserId,
               }),
             },
           );
@@ -645,6 +1338,10 @@ export function ChatApp() {
                 }),
               );
 
+              persistedSources =
+                parsed.data as
+                  Source[];
+
               return;
             }
 
@@ -674,6 +1371,9 @@ export function ChatApp() {
                       text,
                   }),
                 );
+
+                persistedAnswer +=
+                  text;
               }
 
               return;
@@ -697,6 +1397,10 @@ export function ChatApp() {
                     started,
                 }),
               );
+
+              persistedDone =
+                parsed.data as
+                  DoneEvent;
 
               return;
             }
@@ -790,6 +1494,75 @@ export function ChatApp() {
             buffer,
           );
         }
+        if (
+          workspaceUserId &&
+          effectiveConversationId &&
+          persistedAnswer.trim()
+        ) {
+          try {
+            await workspaceJson(
+              `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations/${encodeURIComponent(effectiveConversationId)}/messages`,
+              {
+                method:
+                  "POST",
+                headers: {
+                  "content-type":
+                    "application/json",
+                },
+                body:
+                  JSON.stringify({
+                    role:
+                      "assistant",
+                    content:
+                      persistedAnswer,
+                    sources:
+                      persistedSources,
+                    metadata:
+                      persistedDone ??
+                      {},
+                  }),
+              },
+            );
+
+            if (
+              !(persistedDone as DoneEvent | null)
+                ?.conversational
+            ) {
+              const state =
+                dominantSourceState(
+                  persistedSources,
+                );
+
+              await workspaceJson(
+                `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations/${encodeURIComponent(effectiveConversationId)}/state`,
+                {
+                  method:
+                    "PUT",
+                  headers: {
+                    "content-type":
+                      "application/json",
+                  },
+                  body:
+                    JSON.stringify({
+                      ...state,
+                      topicSummary:
+                        question,
+                    }),
+                },
+              );
+            }
+
+            onHistoryChanged?.();
+          } catch (
+            persistenceError
+          ) {
+            console.warn(
+              "Could not persist assistant answer.",
+              persistenceError,
+            );
+          }
+        }
+
       } catch (error) {
         update(
           (turn) => ({
@@ -808,6 +1581,16 @@ export function ChatApp() {
         setBusy(false);
       }
     };
+
+  if (historyLoading) {
+    return (
+      <main className="shell">
+        <div className="muted">
+          Loading conversation…
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="shell">

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 from collections import defaultdict
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -12,6 +13,7 @@ from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 from psycopg.rows import dict_row
 from sentence_transformers import CrossEncoder, SentenceTransformer
+from services.neighbor_expansion import plan_neighbor_pages
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "Qwen/Qwen3-Embedding-0.6B")
@@ -38,6 +40,7 @@ LEXICAL_WEIGHT = 1.2
 
 class SearchFilters(BaseModel):
     department: str | None = Field(default=None, max_length=200)
+    departments: list[str] | None = None
     go_number: str | None = Field(default=None, max_length=200)
     source_id: str | None = Field(default=None, max_length=200)
     date_from: str | None = Field(default=None, max_length=10)
@@ -60,6 +63,9 @@ class SearchRequest(BaseModel):
     candidate_count: int = Field(default=50, ge=10, le=200)
     rerank_count: int = Field(default=24, ge=5, le=100)
     filters: SearchFilters = Field(default_factory=SearchFilters)
+    expand_neighbors: bool = False
+    neighbor_radius: int = Field(default=1, ge=0, le=2)
+    max_evidence_pages: int = Field(default=7, ge=1, le=16)
 
 
 class Evidence(BaseModel):
@@ -71,6 +77,8 @@ class Evidence(BaseModel):
     go_date: str | None
     source_url: str
     page_url: str
+    retrieval_role: str
+    anchor_page_number: int | None
     selected_variant: str
     selected_canonical: bool
     numeric_conflict: bool
@@ -87,6 +95,7 @@ class SearchResponse(BaseModel):
     reranker_model: str
     scores_are_raw_logits: bool
     evidence: list[Evidence]
+    timings: dict[str, float] = Field(default_factory=dict)
 
 
 @dataclass
@@ -107,6 +116,8 @@ class Hit:
     lexical_score: float | None = None
     fused_score: float = 0.0
     rerank_score: float = 0.0
+    retrieval_role: str = "direct"
+    anchor_page_number: int | None = None
 
 
 def choose_device() -> str:
@@ -183,6 +194,17 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
     if filters.department:
         clauses.append("d.department ILIKE %s")
         params.append(f"%{filters.department.strip()}%")
+
+    if filters.departments:
+        departments = [
+            item.strip()
+            for item in filters.departments
+            if item.strip()
+        ]
+
+        if departments:
+            clauses.append("d.department = ANY(%s)")
+            params.append(departments)
 
     if filters.go_number:
         clauses.append("d.go_number ILIKE %s")
@@ -498,6 +520,110 @@ def retrieve_hybrid(
     return result
 
 
+def load_neighbor_hits(
+    selected: list[Hit],
+    *,
+    radius: int,
+    max_total_pages: int,
+) -> list[Hit]:
+    assert DATABASE_URL is not None
+
+    plan = plan_neighbor_pages(
+        [(hit.source_id, hit.page_number) for hit in selected],
+        radius=radius,
+        max_total_pages=max_total_pages,
+    )
+
+    if not plan:
+        return []
+
+    hits: list[Hit] = []
+
+    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
+        for neighbor in plan:
+            row = conn.execute(
+                """
+                SELECT
+                  pv.variant_id,
+                  p.source_id,
+                  p.page_number,
+                  pv.variant_type,
+                  pv.canonical,
+                  pv.text_content,
+                  p.numeric_conflict,
+                  d.department,
+                  d.go_number,
+                  d.go_date,
+                  d.source_url
+                FROM pages p
+                JOIN documents d
+                  ON d.source_id = p.source_id
+                JOIN LATERAL (
+                  SELECT
+                    variant_id,
+                    variant_type,
+                    canonical,
+                    text_content
+                  FROM page_variants
+                  WHERE
+                    source_id = p.source_id
+                    AND page_number = p.page_number
+                  ORDER BY
+                    canonical DESC,
+                    CASE
+                      WHEN variant_type = 'native' THEN 0
+                      ELSE 1
+                    END,
+                    variant_id
+                  LIMIT 1
+                ) pv ON TRUE
+                WHERE
+                  p.source_id = %s
+                  AND p.page_number = %s
+                LIMIT 1
+                """,
+                (neighbor.source_id, neighbor.page_number),
+            ).fetchone()
+
+            if row is None:
+                continue
+
+            hits.append(
+                Hit(
+                    chunk_id=(
+                        "neighbor::"
+                        f"{row['source_id']}::"
+                        f"{row['page_number']}"
+                    ),
+                    variant_id=row["variant_id"],
+                    logical_page_id=(
+                        f"{row['source_id']}#"
+                        f"{row['page_number']}"
+                    ),
+                    source_id=row["source_id"],
+                    page_number=row["page_number"],
+                    variant_type=row["variant_type"],
+                    canonical=bool(row["canonical"]),
+                    text=row["text_content"],
+                    numeric_conflict=bool(row["numeric_conflict"]),
+                    department=row["department"],
+                    go_number=row["go_number"],
+                    go_date=(
+                        str(row["go_date"])
+                        if row["go_date"] is not None
+                        else None
+                    ),
+                    source_url=row["source_url"],
+                    fused_score=0.0,
+                    rerank_score=0.0,
+                    retrieval_role="neighbor",
+                    anchor_page_number=neighbor.anchor_page_number,
+                )
+            )
+
+    return hits
+
+
 def hydrate(hit: Hit, label: str) -> Evidence:
     assert DATABASE_URL is not None
     with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
@@ -526,6 +652,8 @@ def hydrate(hit: Hit, label: str) -> Evidence:
         go_date=hit.go_date,
         source_url=hit.source_url,
         page_url=f"{hit.source_url}#page={hit.page_number}",
+        retrieval_role=hit.retrieval_role,
+        anchor_page_number=hit.anchor_page_number,
         selected_variant=hit.variant_type,
         selected_canonical=hit.canonical,
         numeric_conflict=hit.numeric_conflict,
@@ -540,12 +668,14 @@ def hydrate(hit: Hit, label: str) -> Evidence:
 @app.post("/search", response_model=SearchResponse)
 def search(body: SearchRequest, request: Request):
     query = body.query.strip()
+    search_started_at = time.perf_counter()
     if not query:
         raise HTTPException(status_code=400, detail="query is empty")
 
     embedder: SentenceTransformer = request.app.state.embedder
     reranker: CrossEncoder = request.app.state.reranker
 
+    embedding_started_at = time.perf_counter()
     query_embedding = embedder.encode(
         [query],
         prompt=QUERY_PROMPT,
@@ -553,12 +683,23 @@ def search(body: SearchRequest, request: Request):
         convert_to_numpy=True,
     )[0]
 
+    embedding_ms = (
+        time.perf_counter()
+        - embedding_started_at
+    ) * 1000.0
+
+    hybrid_started_at = time.perf_counter()
     fused_hits = retrieve_hybrid(
         query,
         vector_literal(query_embedding),
         body.candidate_count,
         body.filters,
     )
+    hybrid_search_ms = (
+        time.perf_counter()
+        - hybrid_started_at
+    ) * 1000.0
+
     pool = fused_hits[: body.rerank_count]
 
     if not pool:
@@ -570,12 +711,18 @@ def search(body: SearchRequest, request: Request):
             evidence=[],
         )
 
+    rerank_started_at = time.perf_counter()
     scores = reranker.predict(
         [(query, hit.text) for hit in pool],
         batch_size=4,
         show_progress_bar=False,
         prompt_name="query",
     )
+
+    rerank_ms = (
+        time.perf_counter()
+        - rerank_started_at
+    ) * 1000.0
 
     for hit, score in zip(pool, scores, strict=True):
         hit.rerank_score = float(score)
@@ -592,10 +739,56 @@ def search(body: SearchRequest, request: Request):
         if len(selected) >= body.top_k:
             break
 
+    final_hits = selected
+
+    if (
+        body.expand_neighbors
+        and body.neighbor_radius > 0
+        and body.max_evidence_pages > len(selected)
+    ):
+        final_hits = [
+            *selected,
+            *load_neighbor_hits(
+                selected,
+                radius=body.neighbor_radius,
+                max_total_pages=body.max_evidence_pages,
+            ),
+        ]
+
+    hydration_started_at = time.perf_counter()
+
+    hydrated_evidence = [
+        hydrate(
+            hit,
+            f"S{i}",
+        )
+        for i, hit in enumerate(
+            final_hits,
+            start=1,
+        )
+    ]
+
+    hydration_ms = (
+        time.perf_counter()
+        - hydration_started_at
+    ) * 1000.0
+
+    retrieval_total_ms = (
+        time.perf_counter()
+        - search_started_at
+    ) * 1000.0
+
     return SearchResponse(
         query=query,
         embedding_model=EMBEDDING_MODEL,
         reranker_model=RERANKER_MODEL,
         scores_are_raw_logits=True,
-        evidence=[hydrate(hit, f"S{i}") for i, hit in enumerate(selected, start=1)],
+        evidence=hydrated_evidence,
+        timings={
+            "embedding_ms": embedding_ms,
+            "hybrid_search_ms": hybrid_search_ms,
+            "rerank_ms": rerank_ms,
+            "hydration_ms": hydration_ms,
+            "total_ms": retrieval_total_ms,
+        },
     )

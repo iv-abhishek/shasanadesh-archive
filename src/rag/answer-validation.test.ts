@@ -143,6 +143,33 @@ assert.equal(
   true,
 );
 
+
+const formattedQualitativeSalvage =
+  buildQualitativeSalvage(
+    [
+      "This is followed by other members [S1 p.1].",
+      "- The order describes seniority for the relevant cadre [S1 p.1].",
+      "- The appointing authority follows the relevant list [S1 p.1].",
+    ].join(" "),
+    riskyEvidence,
+  );
+
+assert.equal(
+  formattedQualitativeSalvage,
+  [
+    "\u2022 The order describes seniority for the relevant cadre [S1 p.1].",
+    "\u2022 The appointing authority follows the relevant list [S1 p.1].",
+  ].join("\n"),
+);
+
+assert.equal(
+  validateAnswer(
+    formattedQualitativeSalvage,
+    riskyEvidence,
+  ).ok,
+  true,
+);
+
 console.log(
   "answer-validation tests passed",
 );

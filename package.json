@@ -57,7 +57,15 @@
     "web:install": "npm --prefix apps/web install",
     "web:dev": "npm --prefix apps/web run dev",
     "web:build": "npm --prefix apps/web run build",
-    "web:typecheck": "npm --prefix apps/web run typecheck"
+    "web:typecheck": "npm --prefix apps/web run typecheck",
+    "eval:filters": "tsx src/eval/run-filter-eval.ts",
+    "eval:inventory": ".venv-embeddings/bin/python scripts/build-eval-inventory.py",
+    "eval:baseline": "npm run eval:rag:search && npm run eval:filters",
+    "test:rag-conversation": "tsx src/rag/conversation.test.ts",
+    "test:workspace-model": "tsx src/workspace/model.test.ts",
+    "test:rag-routing": "tsx src/rag/intent-routing.test.ts",
+    "test:session-cookie": "tsx src/workspace/session-cookie.test.ts",
+    "test:neighbor-expansion": "python3 services/neighbor_expansion_test.py"
   },
   "keywords": [],
   "author": "",

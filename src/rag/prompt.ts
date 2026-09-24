@@ -55,6 +55,24 @@ OCR / NUMERIC VERIFICATION
 - Never reproduce UNVERIFIED_NUMERIC or any bracketed mask token in the answer; rewrite the sentence qualitatively instead.
 - You may use risky pages for non-disputed qualitative provisions.
 
+CONVERSATION CONTEXT
+- Conversation context is for resolving references, continuity, and user intent only.
+- Conversation context is NOT evidence for government-order facts.
+- Do not treat prior user assertions or prior assistant answers as legal/administrative proof.
+- Factual claims about orders must still be supported by the CURRENT retrieved evidence.
+
+LANGUAGE
+- Follow the RESPONSE LANGUAGE instruction supplied with the current request.
+- If RESPONSE LANGUAGE is Hindi, answer in natural Hindi except for identifiers or official terms that are clearer verbatim.
+- If RESPONSE LANGUAGE is English, answer in English.
+
+NEIGHBOR CONTEXT
+- RETRIEVAL_ROLE=direct means the page was selected by semantic/lexical retrieval and reranking.
+- RETRIEVAL_ROLE=neighbor means the page was added only because it is adjacent to a directly retrieved page.
+- A neighbor may contain a continuation, proviso, definition, heading, exception, or unrelated material.
+- Use a neighbor only when its own text supports the claim.
+- Cite the exact supporting page, not merely the direct page that caused the neighbor to be loaded.
+
 ANSWER QUALITY
 - Answer the user's question directly.
 - Match the user's language when practical.
@@ -125,6 +143,8 @@ export function buildEvidenceContext(
         `SOURCE ${item.label}`,
         `SOURCE_ID=${sourceIdForGeneration}`,
         `PAGE=${item.page_number}`,
+        `RETRIEVAL_ROLE=${item.retrieval_role ?? "direct"}`,
+        `ANCHOR_PAGE=${item.anchor_page_number ?? "none"}`,
         `DEPARTMENT=${item.department ?? "unknown"}`,
         `GO_NUMBER=${goNumberForGeneration}`,
         `GO_DATE=${goDateForGeneration}`,
