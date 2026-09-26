@@ -1,35 +1,31 @@
 # Snapshot (generated)
 
-Generated 26 Sept 2026, 10:36 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
+Generated 26 Sept 2026, 10:43 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
 
 ## Git
 
 - Branch: `main`
-- HEAD: `90c3496 fix(ask): relevance gate, department fallback, honest "not found", cited-only sources`
+- HEAD: `859caaa fix(ask): answers never end mid-word; larger Hindi token budget`
 - Unpushed commits: 0
 
 Uncommitted files:
 
 ```
-M .env.example
- M README.md
- M apps/web/components/chat-app.tsx
- M docs/CONFIGURATION.md
+M README.md
  M docs/DECISIONS.md
  M handoff/LOG.md
  M handoff/STATUS.md
  M package.json
- M src/api/server.ts
- M src/rag/prompt.ts
+ M src/rag/answer-validation.test.ts
+ M src/rag/answer-validation.ts
 ?? scripts/shasanadesh-portal-bridge.mjs
 ?? src/ingest-portal.ts
-?? src/rag/truncation.test.ts
-?? src/rag/truncation.ts
 ```
 
 Recent commits:
 
 ```
+859caaa fix(ask): answers never end mid-word; larger Hindi token budget
 90c3496 fix(ask): relevance gate, department fallback, honest "not found", cited-only sources
 6a5a0c0 fix: build:pages skips routine orders; "Text indexed" means searchable chunks
 aac3e75 feat: classify orders before processing; Ask leaves out routine orders; Copy reference
@@ -44,7 +40,6 @@ a965553 feat(search): organise results by department; ID-based department matchi
 b51e84a fix(web): EN/HI toggle no longer turns green on hover
 6d5d23a feat(web): pin the chat composer to the bottom; configurable rerank count
 7f4b785 feat(workspace): officers may hold zero, one or several departments with additional charge
-47bb2f9 feat(web): live progress, formatted answers, sources grouped by order
 ```
 
 ## Corpus by source

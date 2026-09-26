@@ -124,11 +124,33 @@ function stripCitations(text: string): string {
   return text.replace(CITATION_RE, "");
 }
 
+/** True when a fragment is only citations and punctuation, with no words. */
+function isCitationOnly(text: string): boolean {
+  return !/[\p{L}\p{N}]/u.test(stripCitations(text));
+}
+
+/**
+ * Split an answer into claim units (sentences / lines). Models often put the
+ * citation after the full stop — "…दी गई है। [S1 p.1]" — so a citation-only
+ * fragment belongs to the sentence before it. Without this, the sentence looked
+ * uncited and the salvage pass kept bare "[S1 p.1]" bullets (26 Sept).
+ */
 function claimUnits(text: string): string[] {
-  return text
+  const parts = text
     .split(/(?<=[.!?।])\s+|\n+/u)
     .map((part) => part.trim())
     .filter(Boolean);
+
+  const units: string[] = [];
+  for (const part of parts) {
+    const bare = part.replace(/^\s*(?:[-–—•*]+|\d+[.)])\s*/, "");
+    if (units.length > 0 && isCitationOnly(bare)) {
+      units[units.length - 1] = `${units[units.length - 1]} ${bare}`;
+    } else {
+      units.push(part);
+    }
+  }
+  return units;
 }
 
 export function validateAnswer(
@@ -138,7 +160,8 @@ export function validateAnswer(
   const issues: AnswerValidationIssue[] = [];
   const trimmed = answer.trim();
 
-  if (!trimmed) {
+  // Citations with no words ("• [S1 p.1]" lines) are not an answer.
+  if (!trimmed || isCitationOnly(trimmed)) {
     return {
       ok: false,
       issues: [
@@ -435,6 +458,13 @@ export function buildQualitativeSalvage(
       cleanSalvageUnit(
         unit,
       );
+
+    // A kept unit must say something: at least a few words besides citations.
+    if (
+      (stripCitations(cleaned).match(/[\p{L}\p{M}]+/gu) ?? []).length < 3
+    ) {
+      continue;
+    }
 
     if (
       !cleaned ||

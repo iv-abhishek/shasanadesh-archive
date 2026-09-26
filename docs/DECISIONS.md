@@ -572,3 +572,13 @@ at 450 tokens and Devanagari uses several times more tokens per word than Englis
   and the answer is badged "Shortened" (`done.shortened`). Validation runs on the trimmed text.
 - The prompt asks for concise answers (about 6 bullets / 200 words), which also keeps
   generation time down on the laptop.
+
+## ADR-049 - A citation after the full stop belongs to its sentence
+
+26 Sept: a Hindi answer came back as five bullets of bare "[S1 p.1]". The model
+wrote "…दी गई है। [S1 p.1]"; the claim splitter cut after "।", so each sentence
+looked uncited (validation failed → salvage) and salvage kept the citation-only
+fragments. Now citation-only fragments are merged into the preceding claim unit,
+salvage keeps only units with at least three words besides citations, and an
+answer that is only citations fails validation as `empty_answer` (then repair or
+the safe fallback runs).

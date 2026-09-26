@@ -240,6 +240,34 @@ assert.equal(
   true,
 );
 
+// A citation after the full stop belongs to that sentence (26 Sept, Hindi).
+{
+  const hindi = [
+    "- शासनादेश के अंतर्गत बाउण्ड्रीवाल के निर्माण के लिए वित्तीय स्वीकृति दी गई है। [S1 p.1]",
+    "- कार्य की गुणवत्ता की जिम्मेदारी कार्यदायी संस्था की होगी। [S1 p.1]",
+  ].join("\n");
+  assert.equal(validateAnswer(hindi, riskyEvidence).ok, true);
+}
+
+// Salvage never returns citation-only bullets. The numeric sentences are
+// dropped; the qualitative one keeps its trailing citation.
+{
+  const draft = [
+    "- कुल 75 जनपदों के विद्यालयों हेतु धनराशि स्वीकृत की गई है। [S1 p.1]",
+    "- कार्य की गुणवत्ता की जिम्मेदारी कार्यदायी संस्था की होगी। [S1 p.1]",
+    "- धनराशि का 50 प्रतिशत प्रथम किश्त में दिया जायेगा। [S1 p.1]",
+  ].join("\n");
+  const salvage = buildQualitativeSalvage(draft, riskyEvidence);
+  assert.equal(salvage, "कार्य की गुणवत्ता की जिम्मेदारी कार्यदायी संस्था की होगी। [S1 p.1]");
+}
+
+// An "answer" of only citations is empty.
+{
+  const result = validateAnswer("• [S1 p.1]\n• [S1 p.1]", riskyEvidence);
+  assert.equal(result.ok, false);
+  assert.equal(result.issues[0].code, "empty_answer");
+}
+
 console.log(
   "answer-validation tests passed",
 );

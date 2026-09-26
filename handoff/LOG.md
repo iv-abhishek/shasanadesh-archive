@@ -2,6 +2,11 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 26 Sept 2026, 10:55 pm IST (Claude)
+
+- Retest of "Project Alankar" returned five bare "[S1 p.1]" bullets (qualitative salvage).
+  Cause: claim splitter separated "…है। [S1 p.1]". Fixed + tests (ADR-049).
+
 ## 26 Sept 2026, 10:50 pm IST (Claude)
 
 - "Project Alankar" Hindi answer was correct but cut mid-word (repair capped at 450 tokens).
