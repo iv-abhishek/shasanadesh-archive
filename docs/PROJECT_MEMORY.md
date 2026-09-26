@@ -360,3 +360,19 @@ Next precision stage:
 - The Python retrieval filter now has one `SearchFilters` model and one filter builder.
   Department-profile filters include documents whose metadata declares
   `jurisdiction: central`, while unknown-department Shasanadesh records remain excluded.
+
+### Maintenance pass — 2026-09-26
+
+- B2 state: 2 of 25 local captures are archived (`17#46#2#2017` and the DOE
+  GFR order); 23 Shasanadesh captures still need `npm run ingest:known` to
+  backfill, and the DOE manifest refresh is still pending. Use
+  `npm run b2:check` (read-only) to confirm reachability and stored objects.
+- New B2 uploads use `17-46-2-2017` style object names; the one earlier
+  object keeps its `17%2346%232%232017` name.
+- Numeric-conflict detection now normalises Devanagari digits; `db:load`
+  prunes stale variants/chunks for the loaded sources. Rebuild retrieval
+  variants/chunks and rerun `db:load` + `embed:chunks` to apply both.
+- Answer validation requires numbers to appear on a reliable cited page
+  (ADR-042). The PDF viewer serves every source ID, including DOE GFR.
+- `--force` re-downloads keep the previous capture under `captures/`.
+- One-shot root patch scripts were removed (still in git history).
