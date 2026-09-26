@@ -27,7 +27,9 @@ Set `DATABASE_URL` in the repository-root `.env` file (next to `package.json`),
 not in `apps/web/.env.local`. The root `.env` file is ignored by Git. The database
 migration, check, load, audit, and API development commands load this file; values
 already exported in the shell take precedence. Node.js 24.10 or newer is required
-for the optional env-file loading used by these commands.
+for the optional env-file loading used by these commands. The Python commands (`embed:chunks`,
+`retrieval:serve`, `search:hybrid`, `search:reranked`, `eval:inventory`) load
+the same `.env` through `scripts/with-env.mjs`, so no manual `export` is needed.
 
 For a hosted PostgreSQL database, copy its connection URI from that provider's
 project dashboard, usually under **Connect** or **Connection details**, and set it
