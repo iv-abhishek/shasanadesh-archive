@@ -125,8 +125,19 @@ const server = Fastify({
   logger: true,
 });
 
+// Browsers reach this API only through the same-origin Next.js proxy, so no
+// cross-origin access is needed by default. Set CORS_ORIGINS to a comma-
+// separated allowlist if another trusted origin must call the API directly.
+const CORS_ORIGINS = (process.env.CORS_ORIGINS ?? "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 server.register(cors, {
-  origin: true,
+  origin:
+    CORS_ORIGINS.length > 0
+      ? CORS_ORIGINS
+      : false,
 });
 
 registerWorkspaceRoutes(server);
@@ -578,10 +589,16 @@ server.post(
           .cookie,
       );
 
+    // A caller-supplied workspace UUID is only honoured in development, for
+    // scripts that call the API without a browser session. In production the
+    // HttpOnly session is the only identity source.
     const effectiveWorkspaceUserId =
       cookieSession?.userId ??
-      parsed.data
-        .workspaceUserId;
+      (process.env.NODE_ENV ===
+      "production"
+        ? undefined
+        : parsed.data
+            .workspaceUserId);
 
     let workspaceProfile:
       Awaited<

@@ -85,9 +85,19 @@ export function registerSessionRoutes(
           });
       }
 
+      // The profile picker is visible before sign-in, so it must not expose
+      // private profile details. Contact numbers are only returned to the
+      // profile's own session (via /api/session/me and the workspace routes).
+      const profiles =
+        await listDevelopmentProfiles();
+
       return {
-        profiles:
-          await listDevelopmentProfiles(),
+        profiles: profiles.map(
+          (profile) => ({
+            ...profile,
+            contactNumber: null,
+          }),
+        ),
       };
     },
   );

@@ -9,6 +9,7 @@ Do not place real secrets in this document.
 | `NODE_ENV` | runtime environment |
 | `APP_BASE_URL` | public application base URL |
 | `LOG_LEVEL` | application log level |
+| `CORS_ORIGINS` | optional comma-separated origins allowed to call the API directly; empty by default because browsers use the same-origin Next.js proxy |
 
 ## Database
 
