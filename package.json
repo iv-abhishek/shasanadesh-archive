@@ -71,7 +71,8 @@
     "b2:check": "node --env-file-if-exists=.env scripts/check-b2.mjs",
     "test:b2": "tsx src/storage/b2.test.ts",
     "test:capture-history": "tsx src/lib/capture-history.test.ts",
-    "dev:all": "node --env-file-if-exists=.env scripts/dev-all.mjs"
+    "dev:all": "node --env-file-if-exists=.env scripts/dev-all.mjs",
+    "feedback:report": "node --env-file-if-exists=.env --import tsx src/feedback-report.ts"
   },
   "keywords": [],
   "author": "",

@@ -29,6 +29,8 @@ import {
   saveConversationState,
   updateConversation,
   deleteConversation,
+  replaceAssistantMessage,
+  setMessageFeedback,
   updateWorkspaceUser,
 } from "./store.js";
 import {
@@ -146,6 +148,29 @@ const MessageSchema =
         z.unknown(),
       )
         .optional(),
+  });
+
+const FEEDBACK_REASONS = [
+  "incorrect",
+  "wrong_citation",
+  "not_relevant",
+  "incomplete",
+  "too_slow",
+  "other",
+] as const;
+
+const FeedbackSchema =
+  z.object({
+    rating: z.enum(["up", "down"]).nullable(),
+    reason: z.enum(FEEDBACK_REASONS).nullable().optional(),
+    comment: z.string().trim().max(1000).nullable().optional(),
+  });
+
+const ReplaceMessageSchema =
+  z.object({
+    content: z.string().trim().min(1),
+    sources: z.array(z.unknown()).optional(),
+    metadata: z.record(z.string(), z.unknown()).optional(),
   });
 
 const StateSchema =
@@ -651,6 +676,69 @@ export function registerWorkspaceRoutes(
         );
 
         return { ok: true };
+      } catch (error) {
+        return sendError(reply, error);
+      }
+    },
+  );
+
+  server.put<{
+    Params: {
+      userId: string;
+      conversationId: string;
+      messageId: string;
+    };
+  }>(
+    "/api/workspace/users/:userId/conversations/:conversationId/messages/:messageId/feedback",
+    async (request, reply) => {
+      const parsed = FeedbackSchema.safeParse(request.body);
+
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.flatten() });
+      }
+
+      try {
+        if (!(await authorizeWorkspaceUser(request, reply, request.params.userId))) return;
+
+        return {
+          feedback: await setMessageFeedback(
+            request.params.userId,
+            request.params.conversationId,
+            request.params.messageId,
+            parsed.data,
+          ),
+        };
+      } catch (error) {
+        return sendError(reply, error);
+      }
+    },
+  );
+
+  // Regenerate: replace an answer in place, keeping the old version in metadata.
+  server.put<{
+    Params: {
+      userId: string;
+      conversationId: string;
+      messageId: string;
+    };
+  }>(
+    "/api/workspace/users/:userId/conversations/:conversationId/messages/:messageId",
+    async (request, reply) => {
+      const parsed = ReplaceMessageSchema.safeParse(request.body);
+
+      if (!parsed.success) {
+        return reply.code(400).send({ error: parsed.error.flatten() });
+      }
+
+      try {
+        if (!(await authorizeWorkspaceUser(request, reply, request.params.userId))) return;
+
+        return await replaceAssistantMessage(
+          request.params.userId,
+          request.params.conversationId,
+          request.params.messageId,
+          parsed.data,
+        );
       } catch (error) {
         return sendError(reply, error);
       }

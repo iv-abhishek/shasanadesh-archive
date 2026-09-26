@@ -132,6 +132,27 @@ OCR-only, native/OCR agreement, numeric conflicts, exact source lookup, departme
 filters, rule/section identifiers, amounts/percentages, unsupported questions, and
 citation/source-page alignment.
 
+## User feedback
+
+Thumbs up / down votes (with an optional reason such as `wrong_citation` and a
+comment) are stored per answer in `message_feedback`. Review them with:
+
+```bash
+npm run feedback:report            # recent votes
+npm run feedback:report -- --down  # thumbs-down only
+```
+
+Treat thumbs-down answers as candidates: verify the correct source page
+against the original PDF before adding a case to `eval/rag-cases.json`.
+
+## Regenerate
+
+Regenerate re-runs the latest question with a warmer temperature
+(`LLM_REGENERATE_TEMPERATURE`, default 0.6) through the same citation and
+numeric safety gate. The saved answer is replaced in place; earlier versions
+are kept in the message's `metadata.previousVersions`, and any vote on the old
+answer is cleared.
+
 ## Baseline command
 
 Fast retrieval baseline plus filter regression checks:

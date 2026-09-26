@@ -124,6 +124,15 @@ const LLM_TEMPERATURE = Number.parseFloat(
   process.env.LLM_TEMPERATURE ?? "0.1",
 );
 
+// Regenerate uses a warmer temperature so the new draft can differ; the same
+// citation and numeric safety gate still applies to it.
+const REGENERATE_TEMPERATURE = Math.max(
+  LLM_TEMPERATURE,
+  Number.parseFloat(
+    process.env.LLM_REGENERATE_TEMPERATURE ?? "0.6",
+  ) || 0.6,
+);
+
 const LLM_REQUEST_TIMEOUT_MS = Number.parseInt(
   process.env.LLM_REQUEST_TIMEOUT_MS ?? "1200000",
   10,
@@ -188,6 +197,10 @@ const ChatBodySchema = z.object({
   workspaceUserId:
     z.string()
       .uuid()
+      .optional(),
+  // Regenerate asks the model for a fresh draft of the same question.
+  regenerate:
+    z.boolean()
       .optional(),
 });
 
@@ -1145,7 +1158,9 @@ server.post(
         await generateCompletion(
           openai,
           generatorMessages,
-          LLM_TEMPERATURE,
+          parsed.data.regenerate
+            ? REGENERATE_TEMPERATURE
+            : LLM_TEMPERATURE,
         );
 
       const generationMs =

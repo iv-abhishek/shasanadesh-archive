@@ -53,6 +53,12 @@ export interface ConversationSummary {
   updatedAt: string;
 }
 
+export interface MessageFeedback {
+  rating: "up" | "down";
+  reason: string | null;
+  comment: string | null;
+}
+
 export interface ConversationMessage {
   id: string;
   role:
@@ -63,6 +69,7 @@ export interface ConversationMessage {
   metadata:
     Record<string, unknown>;
   createdAt: string;
+  feedback?: MessageFeedback | null;
 }
 
 export interface ConversationState {
@@ -968,20 +975,28 @@ export async function getConversation(
       metadata:
         Record<string, unknown>;
       created_at: Date;
+      feedback_rating: "up" | "down" | null;
+      feedback_reason: string | null;
+      feedback_comment: string | null;
     }>(
       `
         SELECT
-          id,
-          role,
-          content,
-          sources,
-          metadata,
-          created_at
-        FROM conversation_messages
-        WHERE conversation_id = $1
+          m.id,
+          m.role,
+          m.content,
+          m.sources,
+          m.metadata,
+          m.created_at,
+          f.rating AS feedback_rating,
+          f.reason AS feedback_reason,
+          f.comment AS feedback_comment
+        FROM conversation_messages m
+        LEFT JOIN message_feedback f
+          ON f.message_id = m.id
+        WHERE m.conversation_id = $1
         ORDER BY
-          created_at,
-          id
+          m.created_at,
+          m.id
       `,
       [conversationId],
     );
@@ -1051,6 +1066,17 @@ export async function getConversation(
           createdAt:
             row.created_at
               .toISOString(),
+          feedback:
+            row.feedback_rating
+              ? {
+                  rating:
+                    row.feedback_rating,
+                  reason:
+                    row.feedback_reason,
+                  comment:
+                    row.feedback_comment,
+                }
+              : null,
         }),
       ),
     state:
@@ -1084,4 +1110,173 @@ export async function getConversation(
               null,
           },
   };
+}
+
+function notFound(message: string): Error {
+  return Object.assign(new Error(message), { statusCode: 404 });
+}
+
+async function assertAssistantMessage(
+  userId: string,
+  conversationId: string,
+  messageId: string,
+): Promise<void> {
+  await assertConversationOwner(userId, conversationId);
+
+  const result = await pool.query(
+    `
+      SELECT 1
+      FROM conversation_messages
+      WHERE id = $1
+        AND conversation_id = $2
+        AND role = 'assistant'
+    `,
+    [messageId, conversationId],
+  );
+
+  if (!result.rowCount) {
+    throw notFound("Answer not found in this conversation.");
+  }
+}
+
+/**
+ * Record, change or clear (rating = null) the user's vote on one answer.
+ */
+export async function setMessageFeedback(
+  userId: string,
+  conversationId: string,
+  messageId: string,
+  input: {
+    rating: "up" | "down" | null;
+    reason?: string | null;
+    comment?: string | null;
+  },
+): Promise<MessageFeedback | null> {
+  await assertAssistantMessage(userId, conversationId, messageId);
+
+  if (input.rating === null) {
+    await pool.query(
+      "DELETE FROM message_feedback WHERE message_id = $1",
+      [messageId],
+    );
+    return null;
+  }
+
+  const result = await pool.query<{
+    rating: "up" | "down";
+    reason: string | null;
+    comment: string | null;
+  }>(
+    `
+      INSERT INTO message_feedback (
+        message_id, user_id, rating, reason, comment
+      )
+      VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (message_id) DO UPDATE SET
+        rating = EXCLUDED.rating,
+        reason = EXCLUDED.reason,
+        comment = EXCLUDED.comment,
+        updated_at = NOW()
+      RETURNING rating, reason, comment
+    `,
+    [
+      messageId,
+      userId,
+      input.rating,
+      input.rating === "down" ? input.reason?.trim() || null : null,
+      input.comment?.trim() || null,
+    ],
+  );
+
+  return result.rows[0];
+}
+
+/**
+ * Replace a regenerated answer in place. The previous answer is kept in
+ * metadata.previousVersions for audit, and any vote on it is cleared because
+ * it applied to the old text.
+ */
+export async function replaceAssistantMessage(
+  userId: string,
+  conversationId: string,
+  messageId: string,
+  input: {
+    content: string;
+    sources?: unknown[];
+    metadata?: Record<string, unknown>;
+  },
+): Promise<ConversationMessage> {
+  await assertAssistantMessage(userId, conversationId, messageId);
+
+  const content = input.content.trim();
+  if (!content) {
+    throw new Error("Message content is required.");
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const result = await client.query<{
+      id: string;
+      role: "user" | "assistant";
+      content: string;
+      sources: unknown[];
+      metadata: Record<string, unknown>;
+      created_at: Date;
+    }>(
+      `
+        UPDATE conversation_messages
+        SET
+          content = $2,
+          sources = $3::jsonb,
+          metadata = $4::jsonb || jsonb_build_object(
+            'previousVersions',
+            COALESCE(metadata->'previousVersions', '[]'::jsonb) ||
+              jsonb_build_array(jsonb_build_object(
+                'content', content,
+                'sources', sources,
+                'replacedAt', NOW()
+              ))
+          )
+        WHERE id = $1
+        RETURNING id, role, content, sources, metadata, created_at
+      `,
+      [
+        messageId,
+        content,
+        JSON.stringify(input.sources ?? []),
+        JSON.stringify(input.metadata ?? {}),
+      ],
+    );
+
+    await client.query(
+      "DELETE FROM message_feedback WHERE message_id = $1",
+      [messageId],
+    );
+
+    await client.query(
+      "UPDATE conversations SET updated_at = NOW() WHERE id = $1",
+      [conversationId],
+    );
+
+    await client.query("COMMIT");
+
+    const row = result.rows[0];
+    return {
+      id: row.id,
+      role: row.role,
+      content: row.content,
+      sources: row.sources,
+      metadata: row.metadata,
+      createdAt: row.created_at.toISOString(),
+      feedback: null,
+    };
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
 }
