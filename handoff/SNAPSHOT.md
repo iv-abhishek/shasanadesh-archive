@@ -1,29 +1,52 @@
 # Snapshot (generated)
 
-Generated 26 Sept 2026, 7:57 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
+Generated 26 Sept 2026, 8:11 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
 
 ## Git
 
 - Branch: `main`
-- HEAD: `7c6ba03 docs: product roadmap — Ask-only for end users, guideline-focused corpus, daily sync`
-- Unpushed commits: 1
+- HEAD: `2bc6720 docs(roadmap): confirm decisions — all-department audience, UP core first, hosting plan`
+- Unpushed commits: 2
 
 Uncommitted files:
 
 ```
 M README.md
+ M apps/web/app/globals.css
+ M apps/web/components/browse-orders.tsx
+ M apps/web/components/chat-app.tsx
+ M apps/web/components/search-app.tsx
+ M docs/DECISIONS.md
+ M docs/FRONTEND.md
  M docs/ROADMAP.md
  M handoff/LOG.md
  M handoff/PLAN.md
  M handoff/STATUS.md
  M package.json
+ M services/retrieval_server.py
+ M src/api/server.ts
+ M src/build-retrieval-variant-chunks.ts
+ M src/compare-suspicious-pages.ts
+ M src/db/load-corpus.ts
+ M src/documents/browse.test.ts
+ M src/documents/browse.ts
+ M src/documents/routes.ts
+ M src/ocr-needs.ts
+?? apps/web/lib/go-reference.test.ts
+?? apps/web/lib/go-reference.ts
+?? datasets/README-classification-overrides.md
+?? datasets/classification-overrides.jsonl
+?? db/migrations/007_document_classification.sql
 ?? scripts/shasanadesh-portal-bridge.mjs
+?? src/classify-orders.ts
+?? src/classify/
 ?? src/ingest-portal.ts
 ```
 
 Recent commits:
 
 ```
+2bc6720 docs(roadmap): confirm decisions — all-department audience, UP core first, hosting plan
 7c6ba03 docs: product roadmap — Ask-only for end users, guideline-focused corpus, daily sync
 ce703d2 feat(search): "Browse all orders" — portal-style complete listing with filters and pages
 a965553 feat(search): organise results by department; ID-based department matching; handoff files
@@ -38,7 +61,6 @@ b51e84a fix(web): EN/HI toggle no longer turns green on hover
 7a9eb61 feat(api): stream progress events; faster reranking and smaller prompts
 093f523 fix(web): clear service errors with Retry; stop saving failed questions
 5f69739 feat: npm run dev:all starts the whole local stack
-00ff2a8 fix: load .env for the Python embedding, retrieval and search commands
 ```
 
 ## Corpus by source

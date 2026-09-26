@@ -23,6 +23,7 @@ interface Facets {
   departments: DepartmentFacet[];
   sections: Array<{ name: string; count: number }>;
   categories: Array<{ name: string; count: number }>;
+  tiers?: Array<{ tier: string; count: number }>;
 }
 
 export interface BrowseRow {
@@ -39,6 +40,9 @@ export interface BrowseRow {
   sourceUrl: string;
   indexed: boolean;
   inB2: boolean;
+  tier: "A" | "B" | "C" | null;
+  docType: string | null;
+  classificationConfidence: "high" | "low" | null;
 }
 
 interface BrowseResult {
@@ -58,6 +62,8 @@ interface Filters {
   dateFrom: string;
   dateTo: string;
   mine: boolean;
+  /** "", "A", "B", "C", "AB" (what Ask uses) or "none" (not classified). */
+  tier: string;
 }
 
 const EMPTY: Filters = {
@@ -70,7 +76,21 @@ const EMPTY: Filters = {
   dateFrom: "",
   dateTo: "",
   mine: false,
+  tier: "",
 };
+
+const TIER_LABELS: Record<string, string> = {
+  A: "A · generally applicable",
+  B: "B · useful in context",
+  C: "C · routine / individual",
+  none: "Not classified yet",
+};
+
+/** Short badge text for a row's tier. */
+const TIER_BADGE: Record<string, string> = { A: "Tier A", B: "Tier B", C: "Tier C" };
+
+const tierFilter = (tier: string): string[] | undefined =>
+  tier === "AB" ? ["A", "B"] : tier ? [tier] : undefined;
 
 async function post<T>(action: "browse" | "facets", body: unknown): Promise<T> {
   const response = await fetch(`/api/rag/documents/${action}`, {
@@ -165,6 +185,7 @@ export function BrowseOrders({
         ...(applied.text.trim() ? { text: applied.text.trim() } : {}),
         ...(applied.dateFrom ? { dateFrom: applied.dateFrom } : {}),
         ...(applied.dateTo ? { dateTo: applied.dateTo } : {}),
+        ...(tierFilter(applied.tier) ? { tiers: tierFilter(applied.tier) } : {}),
         page,
         pageSize,
         sort,
@@ -253,6 +274,18 @@ export function BrowseOrders({
               <option value="">All categories</option>
               {(facets?.categories ?? []).map((item) => (
                 <option key={item.name} value={item.name}>{item.name} ({item.count})</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Usefulness (tier)
+            <select value={draft.tier} onChange={(event) => choose({ tier: event.target.value })}>
+              <option value="">All tiers</option>
+              <option value="AB">A + B · what Ask uses</option>
+              {(facets?.tiers ?? []).map((item) => (
+                <option key={item.tier} value={item.tier}>
+                  {TIER_LABELS[item.tier] ?? item.tier} ({item.count})
+                </option>
               ))}
             </select>
           </label>
@@ -352,6 +385,16 @@ export function BrowseOrders({
                       <span className={row.indexed ? "badge badge-safe" : "badge"} title={row.indexed ? "Its text can be searched and asked about." : "Listed and archived, but its text is not indexed yet."}>
                         {row.indexed ? "Text indexed" : "Listed only"}
                       </span>
+                      {row.tier ? (
+                        <span
+                          className={`badge tier-badge tier-${row.tier.toLowerCase()}`}
+                          title={`${TIER_LABELS[row.tier]} · ${row.docType ?? "type unknown"}${row.classificationConfidence === "low" ? " · low confidence, needs review" : ""}`}
+                        >
+                          {TIER_BADGE[row.tier]}
+                          {row.classificationConfidence === "low" ? " ?" : ""}
+                        </span>
+                      ) : null}
+                      {row.docType ? <span className="browse-sub">{row.docType.replace(/-/g, " ")}</span> : null}
                       {row.pageCount ? <span className="browse-sub">{row.pageCount} p.</span> : null}
                     </span>
                   </td>

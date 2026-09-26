@@ -3342,3 +3342,59 @@ h1 {
     padding-top: 8px !important;
   }
 }
+
+/* Classification tier badges in the internal archive console. */
+.tier-badge.tier-a {
+  background: var(--accent-soft, rgba(46, 139, 87, 0.16));
+  color: var(--accent);
+}
+
+.tier-badge.tier-b {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.tier-badge.tier-c {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+/* Source card footer: reference line for letters + official link. */
+.source-group-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  margin-top: 10px;
+}
+
+.source-group-foot .source-id {
+  margin-left: auto;
+}
+
+.source-reference {
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.source-reference:hover {
+  border-color: var(--accent);
+}
+
+.source-official {
+  color: var(--accent);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.source-official:hover {
+  text-decoration: underline;
+}

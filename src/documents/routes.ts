@@ -26,6 +26,7 @@ const FiltersSchema = z.object({
   text: text(300),
   dateFrom: isoDate,
   dateTo: isoDate,
+  tiers: z.array(z.enum(["A", "B", "C", "none"])).max(4).optional(),
 });
 
 const BrowseSchema = FiltersSchema.extend({

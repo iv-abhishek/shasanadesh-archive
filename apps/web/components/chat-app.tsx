@@ -16,6 +16,7 @@ import {
   formatAppTime,
 } from "../lib/app-time";
 import { formatGoDate, sourceCollectionLabel } from "../lib/sources";
+import { formatGoReference } from "../lib/go-reference";
 
 type VerificationStatus =
   | "conflict"
@@ -1176,12 +1177,45 @@ function evidenceSummary(pages: Source[]): { label: string; className: string } 
 
 function SourceGroupCard({
   group,
+  language,
   onOpenSource,
 }: {
   group: SourceGroup;
+  /** Language of the answer; the reference line is written in it. */
+  language: "hi" | "en";
   onOpenSource: (source: Source) => void;
 }) {
   const [showNearby, setShowNearby] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const first = group.pages[0];
+  // Every page carries the order's metadata; take the first value recorded.
+  const pick = <K extends "goNumber" | "goDate" | "documentTitle" | "department">(key: K) =>
+    group.pages.map((page) => page[key]).find((value) => Boolean(value)) ?? null;
+  const reference = first
+    ? formatGoReference(
+        {
+          sourceId: group.sourceId,
+          goNumber: pick("goNumber"),
+          goDate: pick("goDate"),
+          documentTitle: pick("documentTitle"),
+          department: pick("department"),
+        },
+        language,
+      )
+    : null;
+  // Citations point to the issuing government site, not to our archived copy.
+  const officialUrl = first?.sourceUrl && /^https:\/\//.test(first.sourceUrl) ? first.sourceUrl : null;
+
+  const copyReference = async () => {
+    if (!reference) return;
+    try {
+      await copyToClipboard(reference);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1800);
+    } catch {
+      setCopied(false);
+    }
+  };
   const mainPages = group.pages.filter(
     (page) => page.cited || page.retrievalRole !== "neighbor",
   );
@@ -1242,7 +1276,24 @@ function SourceGroupCard({
         {showNearby ? nearbyPages.map(chip) : null}
       </div>
 
-      <div className="source-id">{group.sourceId}</div>
+      <div className="source-group-foot">
+        {reference ? (
+          <button
+            type="button"
+            className="source-reference"
+            onClick={copyReference}
+            title={`Copy for your letter: ${reference}`}
+          >
+            {copied ? "Copied ✓" : language === "hi" ? "संदर्भ कॉपी करें" : "Copy reference"}
+          </button>
+        ) : null}
+        {officialUrl ? (
+          <a className="source-official" href={officialUrl} target="_blank" rel="noreferrer">
+            {language === "hi" ? "आधिकारिक प्रति ↗" : "Official copy ↗"}
+          </a>
+        ) : null}
+        <span className="source-id">{group.sourceId}</span>
+      </div>
     </section>
   );
 }
@@ -1650,6 +1701,7 @@ function TurnView({
               <SourceGroupCard
                 key={group.sourceId}
                 group={group}
+                language={speechLanguageFor(turn.answer) === "hi-IN" ? "hi" : "en"}
                 onOpenSource={onOpenSource}
               />
             ))}

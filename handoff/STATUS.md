@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 26 Sept 2026, 8:10 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 26 Sept 2026, 8:45 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -14,7 +14,7 @@ _Last updated: 26 Sept 2026, 8:10 pm IST (Claude). Update at every milestone and
 `docs/ROADMAP.md` (Phase 0–5), decisions **confirmed** 26 Sept (§7): all-department staff
 audience (public allowed); UP core first, then central; narrow orders excluded from Ask;
 NIC request at launch; hosting = model API for the pilot, India GPU later (§9).
-Current phase: **Phase 0**.
+Current phase: **Phase 0**, with Phase 1 started (classification rules pass done).
 
 ## What works
 
@@ -27,6 +27,12 @@ Current phase: **Phase 0**.
 - Search › Search inside orders: results grouped by department (English and Hindi names of one Shasanadesh
   department are merged by department ID), department chips, "Search only here",
   close vs. less-relevant split, readable snippets, portal dates and subjects.
+- **Order classification (ADR-046):** `npm run classify:orders` gives every listed/captured
+  order a type and tier (A generally applicable / B context / C routine). On 1,025 listings:
+  A 25, B 48, C 977 (58 low confidence). `db:load` stores it (migration 007); chat leaves out
+  confident tier C; OCR/chunking skip it; the console has a tier filter ("A + B · what Ask uses").
+- **Copy reference** on answer source cards ("शासनादेश संख्या …, दिनांक DD.MM.YYYY") plus an
+  **Official copy ↗** link to the issuing site.
 - Department filters (chat scope and Search) match by Shasanadesh department ID
   as well as by name (ADR-044).
 - Source adapters exist and are separated by collection: `shasanadesh-up`,
@@ -58,7 +64,9 @@ Current phase: **Phase 0**.
 
 ```
 git push
-npm run db:load                           # makes the 653 portal orders appear in Browse
+npm run db:migrate                        # adds documents.doc_type / tier (migration 007)
+npm run classify:orders                   # classify all listed + captured orders
+npm run db:load                           # portal orders appear in Browse, with tiers
 npm run compare:suspicious -- --max 100   # repeat until no "Remaining" line
 npm run build:retrieval-variants
 npm run build:retrieval-variant-chunks
@@ -69,6 +77,9 @@ npm run dev:all
 
 ## Next work (Claude)
 
+- Classification pass 2: local-model pass over low-confidence orders (subject + first page),
+  then a review action in the console that writes `datasets/classification-overrides.jsonl`.
+- Phase 0 eval set: 100–150 real questions with the correct page (needs the indexed corpus).
 - Bilingual department registry (department ID → English + Hindi name) and a deduplicated profile picker.
 - When ingestion resumes: a per-department capture plan and completeness reconciliation,
   batch db:load + embed for portal captures, and a local-disk policy.

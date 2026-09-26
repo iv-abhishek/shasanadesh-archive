@@ -42,4 +42,11 @@ assert.deepEqual(buildBrowseWhere({}), { sql: "", params: [] });
   assert.doesNotMatch(sql, /Agriculture|कृषि|61\/2023/);
 }
 
+// Tiers: known values only; "none" means not classified yet.
+{
+  const { sql, params } = buildBrowseWhere({ tiers: ["A", "none", "X"] });
+  assert.match(sql, /d\.tier = ANY\(\$1\) OR d\.tier IS NULL/);
+  assert.deepEqual(params, [["A"]]);
+}
+
 console.log("browse filter tests passed");

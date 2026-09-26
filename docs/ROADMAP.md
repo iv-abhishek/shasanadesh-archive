@@ -100,7 +100,8 @@ runs on a small server, not the MacBook Air.
 - **Exit:** eval baseline recorded; STATUS/PLAN current.
 
 ### Phase 1: Corpus quality and classification (~3–4 weeks)
-- Document type + tier (§4); bilingual department registry (department ID → English + Hindi).
+- Document type + tier (§4): **rules pass done 26 Sept** (`npm run classify:orders`,
+  ADR-046); model pass and review workflow next. Bilingual department registry (department ID → English + Hindi).
 - Normalised metadata: issuer, jurisdiction (central/state), document type, dates.
 - Resume UP backfill **department by department**: capture the full listing first,
   classify it, then fully process tier A/B. Start with departments rich in common
@@ -128,7 +129,7 @@ runs on a small server, not the MacBook Air.
 - Citations open the official link; archived copy as a labelled fallback; disclaimer.
 - Conversation quality: follow-ups, "explain simply", Hindi throughout, and answer templates
   for "what is the procedure / who is competent / what is the limit".
-- **Citation line for letters:** a "Copy reference" button that gives the ready-to-paste
+- **Citation line for letters (done 26 Sept, ADR-046):** a "Copy reference" button that gives the ready-to-paste
   reference, e.g. "शासनादेश संख्या 61/2023/37-5, दिनांक 15 सितम्बर 2023", with the
   official link. This is the core daily use case.
 - **Narrow orders:** when a question is about one specific order (a person, a project, a

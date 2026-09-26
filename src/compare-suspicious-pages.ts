@@ -29,6 +29,7 @@ import {
   normalizeText,
   type TextQualityMetrics,
 } from "./lib/text-quality.js";
+import { describeGate, loadProcessingGate } from "./classify/processing-gate.js";
 
 const execFileAsync = promisify(execFile);
 const documentsRoot = path.resolve("data/documents");
@@ -175,6 +176,8 @@ async function main() {
   });
 
   let alreadyDone = 0;
+  const gate = loadProcessingGate();
+  const routine = new Set<string>();
   const candidates: Array<{
     documentDir: string;
     page: PageRecord;
@@ -200,6 +203,10 @@ async function main() {
 
     for (const page of pages) {
       if (page.textSource !== "native") continue;
+      if (gate.skips(page.sourceId)) {
+        routine.add(page.sourceId);
+        continue;
+      }
 
       const native = analyzeTextQuality(page.text);
 
@@ -240,6 +247,7 @@ async function main() {
   console.log("========================");
   console.log(`Threshold:       <= ${threshold}`);
   console.log(`Already OCR'd:   ${alreadyDone}${redo ? "" : " (skipped; pass --redo to include)"}`);
+  console.log(describeGate(gate, routine.size));
   console.log(`Candidates:      ${candidates.length}`);
   console.log(`Selected pages:  ${selected.length}`);
   console.log();

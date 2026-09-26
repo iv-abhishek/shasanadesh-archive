@@ -8,6 +8,7 @@
 import { createHash } from "node:crypto";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import { describeGate, loadProcessingGate } from "./classify/processing-gate.js";
 
 const inputPath = path.resolve(
   "data/corpus/retrieval-pages.jsonl",
@@ -114,8 +115,15 @@ async function main() {
     .map((line) => JSON.parse(line) as RetrievalPageVariant);
 
   const chunks: VariantChunk[] = [];
+  // Routine orders (tier C) are not chunked, so they are never embedded.
+  const gate = loadProcessingGate();
+  const routine = new Set<string>();
 
   for (const page of variants) {
+    if (gate.skips(page.sourceId)) {
+      routine.add(page.sourceId);
+      continue;
+    }
     chunk(page.text).forEach((text, index) => {
       chunks.push({
         variantChunkId: `${page.variantId}:c${index + 1}`,
@@ -142,6 +150,7 @@ async function main() {
   console.log("========================");
   console.log(`Page variants: ${variants.length}`);
   console.log(`Chunks:        ${chunks.length}`);
+  console.log(describeGate(gate, routine.size));
   console.log(`Output:        ${outputPath}`);
 }
 

@@ -258,6 +258,9 @@ const SearchFiltersSchema = z.object({
       "unverified",
     ])
     .optional(),
+  // Include tier C (routine/individual orders). The internal Search page sets
+  // this; chat never does.
+  includeRoutine: z.boolean().optional(),
 });
 
 type SearchFilters = z.infer<
@@ -412,6 +415,8 @@ async function retrieve(
                 filters?.dateTo,
               verification_status:
                 filters?.verificationStatus,
+              include_routine:
+                filters?.includeRoutine ?? false,
             },
             expand_neighbors:
               options?.expandNeighbors ?? false,

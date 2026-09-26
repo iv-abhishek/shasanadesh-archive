@@ -35,6 +35,7 @@ import {
   PDFTOPPM_BIN,
   TESSERACT_BIN,
 } from "./lib/tool-config.js";
+import { describeGate, loadProcessingGate } from "./classify/processing-gate.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -230,6 +231,9 @@ async function main() {
   let skip = 0;
   let fail = 0;
   let matched = false;
+  // An explicitly requested source ID is always processed.
+  const gate = loadProcessingGate();
+  let routine = 0;
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
@@ -247,6 +251,10 @@ async function main() {
 
     if (sourceId && metadata.sourceId !== sourceId) continue;
     matched = true;
+    if (!sourceId && gate.skips(metadata.sourceId)) {
+      routine++;
+      continue;
+    }
 
     const result = await ocrDocument(dir, metadata, force);
 
@@ -260,6 +268,7 @@ async function main() {
   }
 
   console.log("\n=================");
+  console.log(describeGate(gate, routine));
   console.log("OCR summary");
   console.log("=================");
   console.log(`OCR completed: ${ocr}`);

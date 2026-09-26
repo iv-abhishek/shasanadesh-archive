@@ -60,6 +60,10 @@ class SearchFilters(BaseModel):
     date_from: str | None = Field(default=None, max_length=10)
     date_to: str | None = Field(default=None, max_length=10)
     verification_status: str | None = Field(default=None, max_length=40)
+    # Tier C ("routine or individual" orders: sanctions, releases, one person or
+    # place) is left out of chat by default when the classifier is confident.
+    # The internal Search console and explicit source-ID lookups include it.
+    include_routine: bool = False
 
 
 class SearchRequest(BaseModel):
@@ -239,6 +243,12 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
             )
             params.extend([INVISIBLE_JOINERS, departments, INVISIBLE_JOINERS, departments])
 
+    if not filters.include_routine and not filters.source_id:
+        clauses.append(
+            "(d.tier IS DISTINCT FROM 'C' "
+            "OR COALESCE(d.classification->>'confidence', 'low') <> 'high')"
+        )
+
     if filters.go_number:
         clauses.append("d.go_number ILIKE %s")
         params.append(f"%{filters.go_number.strip()}%")
@@ -343,6 +353,22 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
     return " AND " + " AND ".join(clauses), params
 
 
+_ITERATIVE_SCAN: bool | None = None
+
+
+def pgvector_supports_iterative_scan(conn: psycopg.Connection) -> bool:
+    """True when the installed pgvector (>= 0.8.0) has hnsw.iterative_scan."""
+    global _ITERATIVE_SCAN
+    if _ITERATIVE_SCAN is None:
+        row = conn.execute(
+            "SELECT extversion FROM pg_extension WHERE extname = 'vector'"
+        ).fetchone()
+        version = str((row or {}).get("extversion") or "0")
+        parts = [int(part) for part in version.split(".")[:2] if part.isdigit()]
+        _ITERATIVE_SCAN = tuple(parts + [0, 0])[:2] >= (0, 8)
+    return _ITERATIVE_SCAN
+
+
 def retrieve_hybrid(
     query: str,
     query_vector: str,
@@ -368,6 +394,13 @@ def retrieve_hybrid(
             "SELECT set_config('hnsw.ef_search', %s, true)",
             (str(ef_search),),
         )
+        # Filters (e.g. leaving out routine orders) are applied after the HNSW
+        # scan; with most rows filtered out, a single scan can return too few.
+        # pgvector >= 0.8 can keep scanning until LIMIT rows pass the filter.
+        if filter_sql and pgvector_supports_iterative_scan(conn):
+            conn.execute(
+                "SELECT set_config('hnsw.iterative_scan', 'strict_order', true)"
+            )
 
         vector_sql = (
             base_select

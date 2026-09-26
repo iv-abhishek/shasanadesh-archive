@@ -445,6 +445,60 @@ async function pruneStaleRows(
   };
 }
 
+/**
+ * Copy data/corpus/classification.jsonl (npm run classify:orders) into
+ * documents.doc_type / tier / classification. Orders not in the file keep
+ * NULL (treated as "not classified": Ask still uses them).
+ */
+async function loadClassification(client: PoolClient): Promise<number> {
+  const file = path.resolve("data/corpus/classification.jsonl");
+  let content: string;
+  try {
+    content = await readFile(file, "utf8");
+  } catch {
+    return 0;
+  }
+
+  const ids: string[] = [];
+  const types: string[] = [];
+  const tiers: string[] = [];
+  const details: string[] = [];
+  for (const line of content.split("\n")) {
+    if (!line.trim()) continue;
+    const record = JSON.parse(line) as {
+      sourceId: string;
+      docType: string;
+      tier: string;
+      confidence: string;
+      reasons: string[];
+      rulesVersion: string;
+      override?: unknown;
+    };
+    ids.push(record.sourceId);
+    types.push(record.docType);
+    tiers.push(record.tier);
+    details.push(JSON.stringify({
+      confidence: record.confidence,
+      reasons: record.reasons,
+      rulesVersion: record.rulesVersion,
+      ...(record.override ? { override: record.override } : {}),
+    }));
+  }
+
+  if (!ids.length) return 0;
+  const result = await client.query(
+    `
+    UPDATE documents d
+    SET doc_type = c.doc_type, tier = c.tier, classification = c.details::jsonb
+    FROM unnest($1::text[], $2::text[], $3::text[], $4::text[])
+      AS c(source_id, doc_type, tier, details)
+    WHERE d.source_id = c.source_id
+    `,
+    [ids, types, tiers, details],
+  );
+  return result.rowCount ?? 0;
+}
+
 async function main() {
   const pool = createPool();
   const client = await pool.connect();
@@ -463,6 +517,7 @@ async function main() {
     await client.query("BEGIN");
 
     const documents = await loadDocuments(client);
+    const classified = await loadClassification(client);
     const pageStats = await loadPagesAndVariants(client);
     const chunkStats = await loadChunks(client);
     const chunks = chunkStats.count;
@@ -503,6 +558,7 @@ async function main() {
     console.log("Corpus loaded into PostgreSQL");
     console.log("=============================");
     console.log(`Documents:          ${documents}`);
+    console.log(`Classified:         ${classified}${classified ? "" : " (run npm run classify:orders first)"}`);
     console.log(`Logical pages:      ${pageStats.pages}`);
     console.log(`Page variants:      ${pageStats.variants}`);
     console.log(`Numeric conflicts:  ${pageStats.conflicts}`);

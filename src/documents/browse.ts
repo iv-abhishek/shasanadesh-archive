@@ -37,6 +37,8 @@ export interface BrowseFilters {
   text?: string;
   dateFrom?: string;
   dateTo?: string;
+  /** Classification tiers to show ("A", "B", "C", or "none" for unclassified). */
+  tiers?: string[];
 }
 
 export interface BrowseRequest extends BrowseFilters {
@@ -61,6 +63,10 @@ export interface BrowseRow {
   /** True once the order's pages are loaded, i.e. it is searchable by text. */
   indexed: boolean;
   inB2: boolean;
+  /** Classifier result (npm run classify:orders); null until classified. */
+  tier: "A" | "B" | "C" | null;
+  docType: string | null;
+  classificationConfidence: "high" | "low" | null;
 }
 
 export interface BrowseResult {
@@ -141,6 +147,15 @@ export function buildBrowseWhere(filters: BrowseFilters): { sql: string; params:
     }
   }
 
+  const tiers = (filters.tiers ?? []).filter((tier) => ["A", "B", "C", "none"].includes(tier));
+  if (tiers.length) {
+    const parts: string[] = [];
+    const named = tiers.filter((tier) => tier !== "none");
+    if (named.length) parts.push(`d.tier = ANY(${param(named)})`);
+    if (tiers.includes("none")) parts.push("d.tier IS NULL");
+    clauses.push(`(${parts.join(" OR ")})`);
+  }
+
   const isoDate = /^\d{4}-\d{2}-\d{2}$/;
   if (filters.dateFrom && isoDate.test(filters.dateFrom)) clauses.push(`d.go_date >= ${param(filters.dateFrom)}::date`);
   if (filters.dateTo && isoDate.test(filters.dateTo)) clauses.push(`d.go_date <= ${param(filters.dateTo)}::date`);
@@ -171,7 +186,10 @@ export async function browseDocuments(pool: Pool, request: BrowseRequest): Promi
         d.page_count,
         d.source_url,
         EXISTS (SELECT 1 FROM pages p WHERE p.source_id = d.source_id) AS indexed,
-        (d.metadata->'storage'->'raw'->>'fileId') IS NOT NULL AS in_b2
+        (d.metadata->'storage'->'raw'->>'fileId') IS NOT NULL AS in_b2,
+        d.tier,
+        d.doc_type,
+        d.classification->>'confidence' AS classification_confidence
       FROM documents d
       ${where}
       ORDER BY d.go_date ${order} NULLS LAST, d.source_id
@@ -198,6 +216,9 @@ export async function browseDocuments(pool: Pool, request: BrowseRequest): Promi
       sourceUrl: row.source_url,
       indexed: row.indexed,
       inB2: row.in_b2,
+      tier: row.tier ?? null,
+      docType: row.doc_type ?? null,
+      classificationConfidence: row.classification_confidence ?? null,
     })),
   };
 }
@@ -215,6 +236,8 @@ export interface BrowseFacets {
   /** Sections and categories, limited to the chosen departments when given. */
   sections: Array<{ name: string; count: number }>;
   categories: Array<{ name: string; count: number }>;
+  /** Orders per tier ("none" = not classified yet), within the chosen departments. */
+  tiers: Array<{ tier: string; count: number }>;
 }
 
 /** Drop-down choices with counts, like the portal's department/section lists. */
@@ -267,6 +290,11 @@ export async function browseFacets(
     providerWhere.params,
   );
 
+  const tierCounts = await pool.query<{ tier: string; count: string }>(
+    `SELECT COALESCE(d.tier, 'none') AS tier, COUNT(*)::text AS count FROM documents d ${scoped.sql} GROUP BY 1 ORDER BY 1`,
+    scoped.params,
+  );
+
   return {
     total: Number(total.rows[0]?.count ?? 0),
     departments: departments.rows.map((row) => ({
@@ -276,5 +304,6 @@ export async function browseFacets(
     })),
     sections: await listOf(SECTION_SQL),
     categories: await listOf(CATEGORY_SQL),
+    tiers: tierCounts.rows.map((row) => ({ tier: row.tier, count: Number(row.count) })),
   };
 }

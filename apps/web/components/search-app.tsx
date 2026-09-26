@@ -517,6 +517,8 @@ export function SearchApp({
       ...(dateFrom ? { dateFrom } : {}),
       ...(dateTo ? { dateTo } : {}),
       ...(verificationStatus ? { verificationStatus } : {}),
+      // Internal console: search every order, including routine ones (tier C).
+      includeRoutine: true,
     };
 
     try {

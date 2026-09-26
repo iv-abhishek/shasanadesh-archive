@@ -506,3 +506,29 @@ table with exact filters, a total and pagination. Department choices are keyed
 by Shasanadesh department ID (ADR-044). The listing includes orders whose text
 is not indexed yet and marks them, so archive coverage is visible before
 embedding catches up.
+
+## ADR-046 - Orders are classified before heavy processing; Ask leaves out confident routine orders
+
+Most Shasanadesh orders are routine or individual (on 1,025 listings: ~38%
+financial sanctions/releases, ~57% one person, place, project, company or case).
+They are useful to the few people concerned, who use the portal, but they drown
+the generally applicable guidance officials need in Ask.
+
+- `npm run classify:orders` assigns a document type and a tier from the listing
+  (subject first, portal category as a weak hint; `src/classify/rules.ts`), writes
+  `data/corpus/classification.jsonl`, and applies human corrections from the
+  tracked `datasets/classification-overrides.jsonl`. `db:load` copies it into
+  `documents.doc_type / tier / classification` (migration 007).
+- Tier A = generally applicable, B = useful in context, C = routine/individual.
+- Heavy steps (`ocr:needs`, `compare:suspicious`, `build:retrieval-variant-chunks`
+  → embeddings) skip tier C with high confidence; `--include-routine` overrides.
+  PDFs and metadata are still archived in B2 and browsable.
+- Chat retrieval excludes tier C with high confidence (`include_routine=false`);
+  low-confidence C stays in until reviewed. The internal Search tab and explicit
+  source-ID lookups include everything. With a filter present, pgvector ≥ 0.8
+  iterative index scans are enabled so filtered vector search still fills LIMIT.
+- Nothing is deleted; tiers are settings that can be corrected.
+
+Answer source cards carry a "Copy reference" line (e.g. "शासनादेश संख्या …,
+दिनांक DD.MM.YYYY") built only from recorded metadata, and an "Official copy"
+link to the issuing site.

@@ -133,7 +133,11 @@ badge says whether they can also be searched and asked about. Backed by
 `POST /api/documents/browse` and `/api/documents/facets`
 (`src/documents/`), proxied through `/api/rag/documents/*`.
 
-**Search inside orders** ranks pages by meaning. Search asks the retrieval service for up to 24 pages (the reranked pool) and
+Each row shows the classifier's tier (A/B/C, "?" when low confidence) and document
+type, and the "Usefulness (tier)" filter includes "A + B · what Ask uses", which is
+how to review what the classifier kept out of Ask (ADR-046).
+
+**Search inside orders** ranks pages by meaning (all tiers). Search asks the retrieval service for up to 24 pages (the reranked pool) and
 organises them:
 
 - **by department** — sections in relevance order (a department is placed by
@@ -148,6 +152,13 @@ organises them:
   if every matched page is garbled a note says to open the page);
 - **close vs. less relevant** — orders far below the best reranker score are
   collapsed under "less relevant orders".
+
+## Source cards in answers
+
+Each cited order's card has **Copy reference**, which copies the line officials paste into
+letters ("शासनादेश संख्या 61/2023/37-5, दिनांक 15.09.2023" / "G.O. No. …, dated …", in
+the answer's language, from recorded metadata only; `lib/go-reference.ts`), and
+**Official copy ↗**, which links to the issuing government site.
 
 ## Dates and times
 

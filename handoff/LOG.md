@@ -2,6 +2,15 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 26 Sept 2026, 8:45 pm IST (Claude)
+
+- Built the order classifier (rules on listing subject/category; 20 hand-labelled tests),
+  `npm run classify:orders`, overrides file, migration 007, db:load step, processing gate for
+  OCR/chunking, chat exclusion of confident tier C (+ pgvector iterative scan), console tier
+  filter and badges, and "Copy reference" / "Official copy" on answer source cards.
+  Tested: unit tests, embedded Postgres against the 679 real orders (59 visible to Ask),
+  browser checks. ADR-046.
+
 ## 26 Sept 2026, 8:10 pm IST (Claude)
 
 - Abhishek confirmed: GOs are public; users are all-department staff (IAS, officials, DEOs,
