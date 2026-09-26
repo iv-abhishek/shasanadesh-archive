@@ -1,31 +1,42 @@
 import type { NextRequest } from "next/server";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const ALLOWED_HOST = "shasanadesh.up.gov.in";
-const ALLOWED_PATH = "/GO/ViewGOPDF_list_user.aspx";
-const SOURCE_ID_RE = /^\d+#\d+#\d+#\d+$/;
+// Serves archived original PDFs for the in-app source viewer.
+//
+// Source IDs come from every registered provider:
+//   - Shasanadesh: four numeric fields joined by "#" (stored as a-b-c-d)
+//   - other adapters (e.g. doe-gfr-<hash>): lowercase letters, digits, hyphens
+// Both patterns exclude path separators and "..", so the resolved path always
+// stays inside data/documents.
+const SHASANADESH_ID_RE = /^\d+#\d+#\d+#\d+$/;
+const ADAPTER_ID_RE = /^[a-z0-9][a-z0-9-]{0,100}$/;
+
+const SHASANADESH_HOST = "shasanadesh.up.gov.in";
+const SHASANADESH_PATH = "/GO/ViewGOPDF_list_user.aspx";
 
 function validateSourceId(value: string): string {
-  if (!SOURCE_ID_RE.test(value)) {
+  if (!SHASANADESH_ID_RE.test(value) && !ADAPTER_ID_RE.test(value)) {
     throw new Error("Unsupported source ID.");
   }
 
   return value;
 }
 
-function sourceIdFromUrl(raw: string): string {
+// Legacy links passed the official Shasanadesh URL instead of a source ID.
+function sourceIdFromShasanadeshUrl(raw: string): string {
   const parsed = new URL(raw);
 
   if (
     parsed.protocol !== "https:" ||
-    parsed.hostname !== ALLOWED_HOST ||
-    parsed.pathname !== ALLOWED_PATH
+    parsed.hostname !== SHASANADESH_HOST ||
+    parsed.pathname !== SHASANADESH_PATH
   ) {
-    throw new Error("Unsupported PDF source URL.");
+    throw new Error("Unsupported PDF source URL. Pass sourceId instead.");
   }
 
   const encodedId = parsed.searchParams.get("id1");
@@ -34,9 +45,7 @@ function sourceIdFromUrl(raw: string): string {
     throw new Error("PDF source URL is missing id1.");
   }
 
-  const decoded = Buffer.from(encodedId, "base64").toString("utf8");
-
-  return validateSourceId(decoded);
+  return validateSourceId(Buffer.from(encodedId, "base64").toString("utf8"));
 }
 
 function getSourceId(request: NextRequest): string {
@@ -52,35 +61,19 @@ function getSourceId(request: NextRequest): string {
     throw new Error("Missing sourceId or url parameter.");
   }
 
-  return sourceIdFromUrl(rawUrl);
+  return sourceIdFromShasanadeshUrl(rawUrl);
 }
 
 function archivePdfPath(sourceId: string): string {
   const directoryName = sourceId.replaceAll("#", "-");
 
+  // The dev server may run from apps/web or from the repository root.
   const candidates = [
-    path.resolve(
-      process.cwd(),
-      "data/documents",
-      directoryName,
-      "original.pdf",
-    ),
-    path.resolve(
-      process.cwd(),
-      "../../data/documents",
-      directoryName,
-      "original.pdf",
-    ),
+    path.resolve(process.cwd(), "data/documents", directoryName, "original.pdf"),
+    path.resolve(process.cwd(), "../../data/documents", directoryName, "original.pdf"),
   ];
 
-  return candidates.find((candidate) => {
-    try {
-      require("node:fs").accessSync(candidate);
-      return true;
-    } catch {
-      return false;
-    }
-  }) ?? candidates[0];
+  return candidates.find((candidate) => existsSync(candidate)) ?? candidates[0];
 }
 
 export async function GET(request: NextRequest): Promise<Response> {
@@ -90,19 +83,13 @@ export async function GET(request: NextRequest): Promise<Response> {
     sourceId = getSourceId(request);
   } catch (error) {
     return Response.json(
-      {
-        message:
-          error instanceof Error
-            ? error.message
-            : String(error),
-      },
+      { message: error instanceof Error ? error.message : String(error) },
       { status: 400 },
     );
   }
 
   try {
-    const pdfPath = archivePdfPath(sourceId);
-    const pdf = await readFile(pdfPath);
+    const pdf = await readFile(archivePdfPath(sourceId));
 
     if (pdf.subarray(0, 5).toString("ascii") !== "%PDF-") {
       throw new Error("Archived file is not a PDF.");
@@ -122,10 +109,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       {
         message: "Archived PDF is unavailable.",
         sourceId,
-        detail:
-          error instanceof Error
-            ? error.message
-            : String(error),
+        detail: error instanceof Error ? error.message : String(error),
       },
       { status: 404 },
     );

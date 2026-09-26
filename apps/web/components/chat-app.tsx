@@ -149,7 +149,7 @@ interface ViewerState {
 
 function pdfProxyUrl(source: Source): string {
   return (
-    `/api/rag/pdf?url=${encodeURIComponent(source.sourceUrl)}` +
+    `/api/rag/pdf?sourceId=${encodeURIComponent(source.sourceId)}` +
     `#page=${source.pageNumber}&zoom=page-width`
   );
 }
@@ -424,6 +424,17 @@ function normalizePersistedSource(
         ? raw
             .matchedChunkText
         : undefined,
+    // Keep retrieval provenance when a saved conversation is reopened so
+    // neighbour pages are not shown as direct hits.
+    retrievalRole:
+      raw.retrievalRole === "neighbor"
+        ? "neighbor"
+        : "direct",
+    anchorPageNumber:
+      typeof raw.anchorPageNumber ===
+        "number"
+        ? raw.anchorPageNumber
+        : null,
   };
 }
 

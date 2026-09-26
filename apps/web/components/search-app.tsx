@@ -37,6 +37,7 @@ interface SearchResponse {
 
 interface ViewerItem {
   label: string;
+  sourceId: string;
   pageNumber: number;
   department: string | null;
   sourceUrl: string;
@@ -84,8 +85,8 @@ function pdfProxyUrl(
   item: ViewerItem,
 ): string {
   return (
-    `/api/rag/pdf?url=${encodeURIComponent(
-      item.sourceUrl,
+    `/api/rag/pdf?sourceId=${encodeURIComponent(
+      item.sourceId,
     )}` +
     `#page=${item.pageNumber}&zoom=page-width`
   );
@@ -481,6 +482,8 @@ export function SearchApp() {
                 setViewer({
                   label:
                     result.label,
+                  sourceId:
+                    result.source_id,
                   pageNumber:
                     result.page_number,
                   department:
