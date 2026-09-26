@@ -2,6 +2,13 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 26 Sept 2026, 7:45 pm IST (Claude)
+
+- Search page: new default tab "Browse all orders", a portal-style listing of every
+  order matching department/section/category/GO number/subject words/dates, with totals
+  and pages (`src/documents/`, `/api/documents/browse|facets`, ADR-045). Tested
+  against the real 679 local order records (embedded Postgres) and in the browser at desktop and phone widths.
+
 ## 26 Sept 2026, 7:20 pm IST (Claude)
 
 - Search page: grouped by department (merged by Shasanadesh department ID),

@@ -15,6 +15,7 @@ import {
   shasanadeshDepartmentId,
   sourceCollectionLabel,
 } from "../lib/sources";
+import { BrowseOrders, type BrowseRow } from "./browse-orders";
 
 type VerificationStatus =
   | "conflict"
@@ -54,8 +55,8 @@ interface ViewerItem {
   department: string | null;
   sourceUrl: string;
   pageUrl: string;
-  verificationStatus:
-    VerificationStatus;
+  /** Absent when the viewer is opened from the browse list (no page evidence). */
+  verificationStatus?: VerificationStatus;
 }
 
 function statusLabel(
@@ -121,10 +122,8 @@ function SearchViewer({
             </div>
 
             <div className="viewer-title">
-              {item.department ??
-                "Government order"}{" "}
-              · {item.label} · p.
-              {item.pageNumber}
+              {item.department ?? "Government order"}
+              {item.label ? ` · ${item.label}` : ""} · p.{item.pageNumber}
             </div>
           </div>
 
@@ -139,17 +138,11 @@ function SearchViewer({
         </div>
 
         <div className="viewer-actions">
-          <span
-            className={
-              statusClass(
-                item.verificationStatus,
-              )
-            }
-          >
-            {statusLabel(
-              item.verificationStatus,
-            )}
-          </span>
+          {item.verificationStatus ? (
+            <span className={statusClass(item.verificationStatus)}>
+              {statusLabel(item.verificationStatus)}
+            </span>
+          ) : <span />}
 
           <a
             className="viewer-original"
@@ -445,6 +438,8 @@ export function SearchApp({
   /** The officer's departments, for the "My departments" scope. */
   scopeDepartments?: string[];
 }) {
+  /** "browse" lists every order matching the filters (portal-style); "search" ranks pages by meaning. */
+  const [mode, setMode] = useState<"browse" | "search">("browse");
   const [query, setQuery] = useState("");
   const [lastQuery, setLastQuery] = useState("");
   const [scope, setScope] = useState<"all" | "mine">("all");
@@ -567,6 +562,16 @@ export function SearchApp({
 
   const orderCount = groups.strong.length + groups.weak.length;
 
+  const openOrder = (row: BrowseRow) =>
+    setViewer({
+      label: row.goNumber ? `GO ${row.goNumber}` : row.sourceId,
+      sourceId: row.sourceId,
+      pageNumber: 1,
+      department: row.department,
+      sourceUrl: row.sourceUrl,
+      pageUrl: row.sourceUrl,
+    });
+
   return (
     <main className="shell">
       <header className="topbar">
@@ -574,155 +579,192 @@ export function SearchApp({
           <div className="eyebrow">Uttar Pradesh Government Orders</div>
           <h1>Search Orders</h1>
         </div>
-        <div className="topbar-note">Hybrid retrieval · database filters</div>
+        <div className="topbar-note">{mode === "browse" ? "All orders · portal-style filters" : "Hybrid retrieval · database filters"}</div>
       </header>
 
-      <section className="intro search-intro">
-        <h2>Search the archived orders directly.</h2>
-        <p>
-          Finds matching pages in Hindi or English and groups them by department, then by order.
-          Filters are applied before matching, so a narrow filter can return fewer results.
-        </p>
-      </section>
+      <div className="search-mode-tabs" role="tablist" aria-label="Search mode">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "browse"}
+          className={mode === "browse" ? "active" : ""}
+          onClick={() => setMode("browse")}
+        >
+          Browse all orders
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === "search"}
+          className={mode === "search" ? "active" : ""}
+          onClick={() => setMode("search")}
+        >
+          Search inside orders
+        </button>
+      </div>
 
-      <form className="search-workbench" onSubmit={submit}>
-        <div className="search-query-row">
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search orders, rules or provisions… (Hindi or English)"
-          />
-          <button type="submit" disabled={busy || !query.trim()}>
-            {busy ? "Searching…" : "Search"}
-          </button>
-        </div>
+      {mode === "browse" ? (
+        <>
+          <section className="intro search-intro">
+            <h2>Browse all archived orders.</h2>
+            <p>
+              Lists all orders that match the filters, newest first, like the Shasanadesh portal:
+              department, section, category, GO number, subject words and dates. Orders appear here as
+              soon as they are archived, even before their text is indexed for search.
+            </p>
+          </section>
+          <BrowseOrders scopeDepartments={scopeDepartments} onOpen={openOrder} />
+        </>
+      ) : (
+        <>
+        <section className="intro search-intro">
+          <h2>Search the archived orders directly.</h2>
+          <p>
+            Finds matching pages in Hindi or English and groups them by department, then by order.
+            Filters are applied before matching, so a narrow filter can return fewer results.
+          </p>
+        </section>
 
-        <div className="search-options-row">
-          {scopeDepartments.length > 0 ? (
-            <div className="search-scope" role="group" aria-label="Search scope">
-              <button
-                type="button"
-                className={scope === "all" ? "active" : ""}
-                aria-pressed={scope === "all"}
-                onClick={() => setScope("all")}
-              >
-                All departments
-              </button>
-              <button
-                type="button"
-                className={scope === "mine" ? "active" : ""}
-                aria-pressed={scope === "mine"}
-                onClick={() => setScope("mine")}
-                title={scopeDepartments.join(", ")}
-              >
-                My departments ({scopeDepartments.length})
-              </button>
-            </div>
-          ) : <span />}
-        </div>
-
-        <details className="search-filters" open={activeFilterCount > 0 || undefined}>
-          <summary>Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</summary>
-          <div className="retrieval-filters">
-            <label>
-              Archive
-              <select value={provider} onChange={(event) => setProvider(event.target.value)}>
-                <option value="">All archives</option>
-                {SOURCE_COLLECTIONS.map((collection) => (
-                  <option key={collection.provider} value={collection.provider}>{collection.label}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              Department
-              <input value={department} onChange={(event) => setDepartment(event.target.value)} placeholder="e.g. Medical and Health" />
-            </label>
-            <label>
-              GO / order number
-              <input value={goNumber} onChange={(event) => setGoNumber(event.target.value)} placeholder="contains…" />
-            </label>
-            <label>
-              Source ID
-              <input value={sourceId} onChange={(event) => setSourceId(event.target.value)} placeholder="exact source id" />
-            </label>
-            <label>
-              From date
-              <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
-            </label>
-            <label>
-              To date
-              <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
-            </label>
-            <label>
-              Evidence status
-              <select value={verificationStatus} onChange={(event) => setVerificationStatus(event.target.value)}>
-                <option value="">Any</option>
-                <option value="native_primary">Native text</option>
-                <option value="variants_agree">Variants agree</option>
-                <option value="ocr_only_unverified">OCR-only</option>
-                <option value="conflict">Numeric conflict</option>
-                <option value="unverified">Unverified</option>
-              </select>
-            </label>
+        <form className="search-workbench" onSubmit={submit}>
+          <div className="search-query-row">
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search orders, rules or provisions… (Hindi or English)"
+            />
+            <button type="submit" disabled={busy || !query.trim()}>
+              {busy ? "Searching…" : "Search"}
+            </button>
           </div>
-        </details>
-      </form>
 
-      {searched || error ? (
-        <div className="search-summary">
-          <span>
-            {orderCount} order{orderCount === 1 ? "" : "s"} · {results.length} page{results.length === 1 ? "" : "s"}
-            {groups.weak.length ? ` · ${groups.strong.length} close match${groups.strong.length === 1 ? "" : "es"}` : ""}
-          </span>
-          {elapsedMs !== null ? <span>{(elapsedMs / 1000).toFixed(1)} s</span> : null}
-        </div>
-      ) : null}
+          <div className="search-options-row">
+            {scopeDepartments.length > 0 ? (
+              <div className="search-scope" role="group" aria-label="Search scope">
+                <button
+                  type="button"
+                  className={scope === "all" ? "active" : ""}
+                  aria-pressed={scope === "all"}
+                  onClick={() => setScope("all")}
+                >
+                  All departments
+                </button>
+                <button
+                  type="button"
+                  className={scope === "mine" ? "active" : ""}
+                  aria-pressed={scope === "mine"}
+                  onClick={() => setScope("mine")}
+                  title={scopeDepartments.join(", ")}
+                >
+                  My departments ({scopeDepartments.length})
+                </button>
+              </div>
+            ) : <span />}
+          </div>
 
-      {error ? <div className="error-box">{error}</div> : null}
+          <details className="search-filters" open={activeFilterCount > 0 || undefined}>
+            <summary>Filters{activeFilterCount ? ` (${activeFilterCount})` : ""}</summary>
+            <div className="retrieval-filters">
+              <label>
+                Archive
+                <select value={provider} onChange={(event) => setProvider(event.target.value)}>
+                  <option value="">All archives</option>
+                  {SOURCE_COLLECTIONS.map((collection) => (
+                    <option key={collection.provider} value={collection.provider}>{collection.label}</option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Department
+                <input value={department} onChange={(event) => setDepartment(event.target.value)} placeholder="e.g. Medical and Health" />
+              </label>
+              <label>
+                GO / order number
+                <input value={goNumber} onChange={(event) => setGoNumber(event.target.value)} placeholder="contains…" />
+              </label>
+              <label>
+                Source ID
+                <input value={sourceId} onChange={(event) => setSourceId(event.target.value)} placeholder="exact source id" />
+              </label>
+              <label>
+                From date
+                <input type="date" value={dateFrom} onChange={(event) => setDateFrom(event.target.value)} />
+              </label>
+              <label>
+                To date
+                <input type="date" value={dateTo} onChange={(event) => setDateTo(event.target.value)} />
+              </label>
+              <label>
+                Evidence status
+                <select value={verificationStatus} onChange={(event) => setVerificationStatus(event.target.value)}>
+                  <option value="">Any</option>
+                  <option value="native_primary">Native text</option>
+                  <option value="variants_agree">Variants agree</option>
+                  <option value="ocr_only_unverified">OCR-only</option>
+                  <option value="conflict">Numeric conflict</option>
+                  <option value="unverified">Unverified</option>
+                </select>
+              </label>
+            </div>
+          </details>
+        </form>
 
-      {searched && !error && results.length === 0 ? (
-        <div className="search-empty">No pages matched. Try fewer filters or the Hindi term.</div>
-      ) : null}
+        {searched || error ? (
+          <div className="search-summary">
+            <span>
+              {orderCount} order{orderCount === 1 ? "" : "s"} · {results.length} page{results.length === 1 ? "" : "s"}
+              {groups.weak.length ? ` · ${groups.strong.length} close match${groups.strong.length === 1 ? "" : "es"}` : ""}
+            </span>
+            {elapsedMs !== null ? <span>{(elapsedMs / 1000).toFixed(1)} s</span> : null}
+          </div>
+        ) : null}
 
-      {facets.length > 1 ? (
-        <div className="search-facets" role="group" aria-label="Filter results by department">
-          <button
-            type="button"
-            className={facet === null ? "active" : ""}
-            aria-pressed={facet === null}
-            onClick={() => setFacet(null)}
-          >
-            All departments <span>{orderCount}</span>
-          </button>
-          {facets.map((item) => (
+        {error ? <div className="error-box">{error}</div> : null}
+
+        {searched && !error && results.length === 0 ? (
+          <div className="search-empty">No pages matched. Try fewer filters or the Hindi term.</div>
+        ) : null}
+
+        {facets.length > 1 ? (
+          <div className="search-facets" role="group" aria-label="Filter results by department">
             <button
               type="button"
-              key={item.key}
-              className={facet === item.key ? "active" : ""}
-              aria-pressed={facet === item.key}
-              onClick={() => setFacet(facet === item.key ? null : item.key)}
+              className={facet === null ? "active" : ""}
+              aria-pressed={facet === null}
+              onClick={() => setFacet(null)}
             >
-              {item.label} <span>{item.orders}</span>
+              All departments <span>{orderCount}</span>
             </button>
-          ))}
-        </div>
-      ) : null}
+            {facets.map((item) => (
+              <button
+                type="button"
+                key={item.key}
+                className={facet === item.key ? "active" : ""}
+                aria-pressed={facet === item.key}
+                onClick={() => setFacet(facet === item.key ? null : item.key)}
+              >
+                {item.label} <span>{item.orders}</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
 
-      <DepartmentSections
-        sections={strongSections}
-        terms={terms}
-        onOpen={open}
-        onSearchWithin={department.trim() ? undefined : searchWithin}
-      />
+        <DepartmentSections
+          sections={strongSections}
+          terms={terms}
+          onOpen={open}
+          onSearchWithin={department.trim() ? undefined : searchWithin}
+        />
 
-      {weakCount > 0 ? (
-        <details className="search-weaker" open={strongSections.length === 0 || undefined}>
-          <summary>
-            {weakCount} less relevant order{weakCount === 1 ? "" : "s"}
-          </summary>
-          <DepartmentSections sections={weakSections} terms={terms} onOpen={open} />
-        </details>
-      ) : null}
+        {weakCount > 0 ? (
+          <details className="search-weaker" open={strongSections.length === 0 || undefined}>
+            <summary>
+              {weakCount} less relevant order{weakCount === 1 ? "" : "s"}
+            </summary>
+            <DepartmentSections sections={weakSections} terms={terms} onOpen={open} />
+          </details>
+        ) : null}
+        </>
+      )}
 
       {viewer ? <SearchViewer item={viewer} onClose={() => setViewer(null)} /> : null}
     </main>

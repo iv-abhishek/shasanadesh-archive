@@ -3008,3 +3008,337 @@ h1 {
 .feedback-submit:hover {
   background: var(--action-hover);
 }
+
+/* ---------------------------------------------------------------------------
+   Search page: mode tabs and the portal-style "Browse all orders" listing
+   --------------------------------------------------------------------------- */
+
+.search-mode-tabs {
+  display: inline-flex;
+  justify-self: start;
+  align-self: flex-start;
+  width: fit-content;
+  gap: 2px;
+  margin-top: 18px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.search-mode-tabs button {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  padding: 7px 16px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.search-mode-tabs button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.browse-filters .retrieval-filters {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.browse-filters .retrieval-filters label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.browse-filters select:disabled {
+  opacity: 0.6;
+}
+
+.browse-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.browse-mine {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+  font-size: 0.84rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.browse-buttons {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.browse-buttons button[type="submit"] {
+  border: 0;
+  background: var(--action);
+  color: var(--action-text);
+  border-radius: 11px;
+  padding: 9px 18px;
+  font-weight: 730;
+  cursor: pointer;
+}
+
+.browse-buttons button[type="submit"]:hover:not(:disabled) {
+  background: var(--action-hover);
+}
+
+.browse-buttons button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+.browse-clear {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  border-radius: 11px;
+  padding: 8px 14px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.browse-clear:hover {
+  color: var(--text);
+  background: var(--hover-surface);
+}
+
+.browse-summary {
+  align-items: center;
+}
+
+.browse-view-options {
+  display: inline-flex;
+  gap: 6px;
+}
+
+.browse-view-options select {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+}
+
+.browse-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow-x: auto;
+  transition: opacity 120ms ease;
+}
+
+.browse-table-wrap.is-loading {
+  opacity: 0.55;
+}
+
+.browse-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.86rem;
+}
+
+.browse-table th {
+  position: sticky;
+  top: 0;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.browse-table td {
+  padding: 11px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  color: var(--text);
+}
+
+.browse-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.browse-table tbody tr:hover td {
+  background: var(--hover-surface);
+}
+
+.browse-serial,
+.browse-date {
+  white-space: nowrap;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.browse-table td strong {
+  display: block;
+  font-weight: 700;
+}
+
+.browse-sub {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.browse-table td:nth-child(3) {
+  min-width: 190px;
+}
+
+.browse-go {
+  min-width: 170px;
+  max-width: 230px;
+  overflow-wrap: anywhere;
+}
+
+.browse-subject {
+  min-width: 260px;
+  line-height: 1.5;
+}
+
+.browse-flags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.browse-flags .browse-sub {
+  display: inline;
+  margin: 0;
+}
+
+.browse-open button {
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--text);
+  border-radius: 9px;
+  padding: 6px 11px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.browse-open button:hover {
+  border-color: var(--accent);
+}
+
+.browse-pager {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 4px;
+  margin: 16px 0 8px;
+}
+
+.browse-pager button {
+  min-width: 36px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 9px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.browse-pager button.active {
+  background: var(--action);
+  border-color: var(--action);
+  color: var(--action-text);
+}
+
+.browse-pager button:disabled:not(.active) {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.browse-gap {
+  color: var(--muted);
+  padding: 0 4px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 900px) {
+  .browse-filters .retrieval-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Phones: each order becomes a stacked card instead of a wide table row. */
+@media (max-width: 640px) {
+  .browse-filters .retrieval-filters {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .browse-table thead {
+    display: none;
+  }
+
+  .browse-table,
+  .browse-table tbody,
+  .browse-table tr,
+  .browse-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .browse-table tr {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .browse-table td {
+    padding: 3px 0;
+    border: 0;
+  }
+
+  .browse-serial {
+    display: none !important;
+  }
+
+  .browse-subject {
+    min-width: 0;
+  }
+
+  .browse-go {
+    max-width: none;
+  }
+
+  .browse-open {
+    padding-top: 8px !important;
+  }
+}

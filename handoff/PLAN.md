@@ -15,6 +15,8 @@ edit it here and say why (with the date) under "Route changes".
 - Done (26 Sept): grouped by department → order, department chips,
   "Search only here", readable snippets, portal subject/date, ID-based
   department matching (ADR-044).
+- Done (26 Sept, evening): "Browse all orders" tab, a portal-style complete listing with
+  filters, counts and pagination (ADR-045).
 - Next: a bilingual department registry (table keyed by Shasanadesh department
   ID with English and Hindi names), used by the profile picker, chat scope and
   Search labels; then department and date facets computed server-side over all

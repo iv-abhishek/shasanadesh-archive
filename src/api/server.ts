@@ -15,6 +15,7 @@
  */
 
 import cors from "@fastify/cors";
+import { registerDocumentRoutes } from "../documents/routes.js";
 import Fastify from "fastify";
 import OpenAI from "openai";
 import { z } from "zod";
@@ -164,6 +165,7 @@ server.register(cors, {
 
 registerWorkspaceRoutes(server);
 registerSessionRoutes(server);
+registerDocumentRoutes(server);
 
 const ConversationStateSchema = z.object({
   activeSourceId: z

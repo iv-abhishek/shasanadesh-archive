@@ -1,39 +1,40 @@
 # Snapshot (generated)
 
-Generated 26 Sept 2026, 7:12 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
+Generated 26 Sept 2026, 7:25 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
 
 ## Git
 
 - Branch: `main`
-- HEAD: `1b139de Shasanadesh ingestion`
+- HEAD: `a965553 feat(search): organise results by department; ID-based department matching; handoff files`
 - Unpushed commits: 0
 
 Uncommitted files:
 
 ```
 M README.md
- M apps/web/app/globals.css
- M apps/web/components/search-app.tsx
- M apps/web/lib/sources.ts
- M docs/DECISIONS.md
- M docs/FRONTEND.md
- M package.json
- M scripts/handoff-snapshot.mjs
- M services/retrieval_server.py
- M src/api/server.ts
- M src/db/load-corpus.ts
-?? handoff/LOG.md
-?? handoff/PLAN.md
-?? handoff/STATUS.md
+A  apps/web/app/api/rag/documents/[action]/route.ts
+M  apps/web/app/globals.css
+A  apps/web/components/browse-orders.tsx
+M  apps/web/components/search-app.tsx
+M  docs/DECISIONS.md
+M  docs/FRONTEND.md
+M  handoff/LOG.md
+M  handoff/PLAN.md
+ M handoff/SNAPSHOT.md
+M  handoff/STATUS.md
+MM package.json
+M  src/api/server.ts
+A  src/documents/browse.test.ts
+A  src/documents/browse.ts
+A  src/documents/routes.ts
 ?? scripts/shasanadesh-portal-bridge.mjs
 ?? src/ingest-portal.ts
-?? src/lib/go-date.test.ts
-?? src/lib/go-date.ts
 ```
 
 Recent commits:
 
 ```
+a965553 feat(search): organise results by department; ID-based department matching; handoff files
 1b139de Shasanadesh ingestion
 68e944e feat: IST display time zone, legacy-font garble detection, Hindi fallback
 7c9926b feat(web): question timestamps and answer actions (copy, listen, feedback, regenerate)
@@ -48,7 +49,6 @@ b51e84a fix(web): EN/HI toggle no longer turns green on hover
 00ff2a8 fix: load .env for the Python embedding, retrieval and search commands
 4036e07 docs: record 2026-09-26 maintenance state and follow-up commands
 1f676ef perf(retrieval): widen HNSW scan and reuse one connection; pin dependencies
-5677dc3 fix(ingest): keep capture history on --force; honour crawl and OCR settings
 ```
 
 ## Corpus by source

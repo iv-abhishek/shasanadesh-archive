@@ -495,3 +495,14 @@ document title shown in results.
 A bilingual department registry (one canonical record per department ID with
 English and Hindi names) is still to be built; until then the profile picker
 can list both spellings.
+
+## ADR-045 - Browsing is a metadata listing, separate from semantic search
+
+Officers also need the portal's kind of search: "everything from this
+department/section between these dates", complete and countable. Semantic
+search cannot give that (it returns the top reranked pages, not all matches),
+so the Search page's default tab lists orders straight from the `documents`
+table with exact filters, a total and pagination. Department choices are keyed
+by Shasanadesh department ID (ADR-044). The listing includes orders whose text
+is not indexed yet and marks them, so archive coverage is visible before
+embedding catches up.

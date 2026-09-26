@@ -120,7 +120,20 @@ This removes browser CORS/origin coupling while preserving the backend SSE contr
 
 ## Search page
 
-Search asks the retrieval service for up to 24 pages (the reranked pool) and
+The page has two tabs.
+
+**Browse all orders** (default) works like the Shasanadesh portal's own
+search: it lists *every* archived order matching the filters, newest first,
+with the total count, 25/50/100 rows per page and page numbers. Filters:
+archive, department (merged English/Hindi names with counts), section and
+category (lists follow the chosen department), GO number, subject words (all
+must appear), date range and "Only my departments". Orders appear as soon as
+their metadata is loaded (`npm run db:load`); a "Text indexed" / "Listed only"
+badge says whether they can also be searched and asked about. Backed by
+`POST /api/documents/browse` and `/api/documents/facets`
+(`src/documents/`), proxied through `/api/rag/documents/*`.
+
+**Search inside orders** ranks pages by meaning. Search asks the retrieval service for up to 24 pages (the reranked pool) and
 organises them:
 
 - **by department** — sections in relevance order (a department is placed by

@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 26 Sept 2026, 7:20 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 26 Sept 2026, 7:45 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -14,7 +14,10 @@ _Last updated: 26 Sept 2026, 7:20 pm IST (Claude). Update at every milestone and
 - Local stack: `npm run dev:all` (Postgres, retrieval :8788, MLX generator :8791, API :8787, web :3000).
 - Chat: live progress, validated answers with page citations, Hindi fallback, a
   "why the safety check stepped in" panel, copy/listen/feedback/regenerate, and IST timestamps.
-- Search: results grouped by department (English and Hindi names of one Shasanadesh
+- Search › **Browse all orders** (default tab): every order matching the filters, like the
+  portal: department → section → category, GO number, subject words, dates, my departments;
+  total count and pages. Needs `npm run db:load` to show the portal captures.
+- Search › Search inside orders: results grouped by department (English and Hindi names of one Shasanadesh
   department are merged by department ID), department chips, "Search only here",
   close vs. less-relevant split, readable snippets, portal dates and subjects.
 - Department filters (chat scope and Search) match by Shasanadesh department ID
@@ -48,6 +51,7 @@ _Last updated: 26 Sept 2026, 7:20 pm IST (Claude). Update at every milestone and
 
 ```
 git push
+npm run db:load                           # makes the 653 portal orders appear in Browse
 npm run compare:suspicious -- --max 100   # repeat until no "Remaining" line
 npm run build:retrieval-variants
 npm run build:retrieval-variant-chunks
