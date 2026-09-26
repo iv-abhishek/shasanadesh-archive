@@ -118,6 +118,24 @@ This removes browser CORS/origin coupling while preserving the backend SSE contr
 `NEXT_PUBLIC_*` variable.
 
 
+## Search page
+
+Search asks the retrieval service for up to 24 pages (the reranked pool) and
+organises them:
+
+- **by department** — sections in relevance order (a department is placed by
+  its best order), with department chips above the results to show one
+  department at a time, and "Search only here" to rerun the query filtered to
+  that department. Shasanadesh orders are grouped by the department ID in their
+  source ID, so English and Hindi spellings of one department share a section
+  (ADR-044);
+- **then by order** — one card per order with its subject/title, GO number,
+  date and archive, the matching pages as chips, and a snippet from the
+  best-ranked page whose text layer is readable (legacy-font pages are skipped;
+  if every matched page is garbled a note says to open the page);
+- **close vs. less relevant** — orders far below the best reranker score are
+  collapsed under "less relevant orders".
+
 ## Dates and times
 
 All date/time display goes through `apps/web/lib/app-time.ts`, which formats in

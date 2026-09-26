@@ -268,7 +268,7 @@ const SearchBodySchema = z.object({
     .number()
     .int()
     .min(1)
-    .max(12)
+    .max(24)
     .optional(),
   filters:
     SearchFiltersSchema.optional(),

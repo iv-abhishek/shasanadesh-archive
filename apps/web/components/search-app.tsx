@@ -9,8 +9,10 @@ import {
 } from "react";
 import {
   SOURCE_COLLECTIONS,
+  departmentKey,
   formatGoDate,
   looksGarbled,
+  shasanadeshDepartmentId,
   sourceCollectionLabel,
 } from "../lib/sources";
 
@@ -175,6 +177,9 @@ function SearchViewer({
 
 interface OrderGroup {
   sourceId: string;
+  /** Normalised department (or archive name when the order has none). */
+  departmentKey: string;
+  departmentLabel: string;
   title: string;
   subtitle: string[];
   pages: Evidence[];
@@ -195,12 +200,24 @@ function groupByOrder(results: Evidence[]): OrderGroup[] {
       continue;
     }
     const collection = sourceCollectionLabel(result.source_id);
+    // Orders are shown under their department, so the card title is the
+    // order's own subject/title, falling back to its GO number or ID.
+    const department = result.department?.trim() || null;
+    const departmentId = shasanadeshDepartmentId(result.source_id);
     groups.set(result.source_id, {
       sourceId: result.source_id,
-      title: result.document_title || result.department || collection,
+      departmentKey:
+        departmentId !== null
+          ? `shasanadesh-department:${departmentId}`
+          : department
+            ? departmentKey(department)
+            : `archive:${collection}`,
+      departmentLabel: department ?? collection,
+      title:
+        result.document_title?.trim() ||
+        (result.go_number ? `GO ${result.go_number}` : `Order ${result.source_id}`),
       subtitle: [
-        result.document_title && result.department ? result.department : null,
-        result.go_number ? `GO ${result.go_number}` : null,
+        result.document_title && result.go_number ? `GO ${result.go_number}` : null,
         formatGoDate(result.go_date),
         collection,
       ].filter((value): value is string => Boolean(value)),
@@ -235,6 +252,44 @@ function splitByRelevance(groups: OrderGroup[]): { strong: OrderGroup[]; weak: O
   return strong.length > 0
     ? { strong, weak: groups.filter((group) => !isStrong(group.score)) }
     : { strong: groups.slice(0, 1), weak: groups.slice(1) };
+}
+
+interface DepartmentSection {
+  key: string;
+  /** Every spelling seen for this department, e.g. "कृषि विभाग · Agriculture". */
+  label: string;
+  /** One name to search with; the filter widens it by department ID. */
+  searchName: string;
+  orders: OrderGroup[];
+  pageCount: number;
+}
+
+/**
+ * Group orders by department, keeping the relevance order: a department is
+ * placed by its best order, and orders inside it stay best-first.
+ */
+function groupByDepartment(orders: OrderGroup[]): DepartmentSection[] {
+  const sections = new Map<string, DepartmentSection & { names: Map<string, string> }>();
+  for (const order of orders) {
+    const section = sections.get(order.departmentKey) ?? {
+      key: order.departmentKey,
+      label: "",
+      searchName: order.departmentLabel,
+      orders: [],
+      pageCount: 0,
+      names: new Map<string, string>(),
+    };
+    section.orders.push(order);
+    section.pageCount += order.pages.length;
+    // Keep one spelling per name, ignoring zero-width joiners and case.
+    const nameKey = departmentKey(order.departmentLabel);
+    if (!section.names.has(nameKey)) section.names.set(nameKey, order.departmentLabel);
+    sections.set(order.departmentKey, section);
+  }
+  return [...sections.values()].map(({ names, ...section }) => ({
+    ...section,
+    label: [...names.values()].join(" · "),
+  }));
 }
 
 function orderStatus(pages: Evidence[]): { label: string; className: string } {
@@ -288,13 +343,18 @@ function OrderCard({
   onOpen: (page: Evidence) => void;
 }) {
   const status = orderStatus(group.pages);
-  const snippet = cleanSnippet(group.best.matched_chunk_text);
-  const garbled = looksGarbled(snippet);
+  // Show the best-ranked page whose text layer is readable; a legacy-font page
+  // would only show mojibake. Pages are in page order, so rank them first.
+  const byRank = [group.best, ...group.pages.filter((page) => page !== group.best)];
+  const readable = byRank.find((page) => !looksGarbled(page.matched_chunk_text));
+  const snippetPage = readable ?? group.best;
+  const snippet = cleanSnippet(snippetPage.matched_chunk_text);
+  const garbled = !readable;
 
   return (
     <article className="search-result-card">
       <div className="search-result-head">
-        <button type="button" className="search-result-title" onClick={() => onOpen(group.best)}>
+        <button type="button" className="search-result-title" onClick={() => onOpen(snippetPage)}>
           <strong>{group.title}</strong>
           {group.subtitle.length ? <span>{group.subtitle.join(" · ")}</span> : null}
         </button>
@@ -306,7 +366,12 @@ function OrderCard({
           The text layer of p.{group.best.page_number} is damaged (old font encoding). Open the page to read it.
         </p>
       ) : (
-        <p className="search-snippet">{highlight(snippet, terms)}</p>
+        <p className="search-snippet">
+          {snippetPage !== group.best ? (
+            <span className="search-snippet-page">p.{snippetPage.page_number} · </span>
+          ) : null}
+          {highlight(snippet, terms)}
+        </p>
       )}
 
       <div className="page-chips">
@@ -328,6 +393,49 @@ function OrderCard({
         <span className="source-id">{group.sourceId}</span>
       </div>
     </article>
+  );
+}
+
+function DepartmentSections({
+  sections,
+  terms,
+  onOpen,
+  onSearchWithin,
+}: {
+  sections: DepartmentSection[];
+  terms: string[];
+  onOpen: (page: Evidence) => void;
+  onSearchWithin?: (department: string) => void;
+}) {
+  return (
+    <>
+      {sections.map((section) => (
+        <section key={section.key} className="search-department" aria-label={section.label}>
+          <header className="search-department-head">
+            <h3>{section.label}</h3>
+            <span className="search-department-count">
+              {section.orders.length} order{section.orders.length === 1 ? "" : "s"} · {section.pageCount} page
+              {section.pageCount === 1 ? "" : "s"}
+            </span>
+            {onSearchWithin && !section.key.startsWith("archive:") ? (
+              <button
+                type="button"
+                className="search-within"
+                onClick={() => onSearchWithin(section.searchName)}
+                title={`Run this search again, only in ${section.label}`}
+              >
+                Search only here
+              </button>
+            ) : null}
+          </header>
+          <div className="search-result-list">
+            {section.orders.map((group) => (
+              <OrderCard key={group.sourceId} group={group} terms={terms} onOpen={onOpen} />
+            ))}
+          </div>
+        </section>
+      ))}
+    </>
   );
 }
 
@@ -353,16 +461,49 @@ export function SearchApp({
   const [error, setError] = useState<string | null>(null);
   const [elapsedMs, setElapsedMs] = useState<number | null>(null);
   const [viewer, setViewer] = useState<ViewerItem | null>(null);
+  /** Department chip selected in the results (client-side, no new search). */
+  const [facet, setFacet] = useState<string | null>(null);
 
   const activeFilterCount = [provider, department, goNumber, sourceId, dateFrom, dateTo, verificationStatus]
     .filter((value) => value.trim()).length;
   const groups = useMemo(() => splitByRelevance(groupByOrder(results)), [results]);
+  const facets = useMemo(
+    () => groupByDepartment([...groups.strong, ...groups.weak]).map((section) => ({
+      key: section.key,
+      label: section.label,
+      orders: section.orders.length,
+    })),
+    [groups],
+  );
+  const inFacet = (group: OrderGroup) => !facet || group.departmentKey === facet;
+  const strongSections = useMemo(
+    () => groupByDepartment(groups.strong.filter(inFacet)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groups, facet],
+  );
+  const weakSections = useMemo(
+    () => groupByDepartment(groups.weak.filter(inFacet)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groups, facet],
+  );
+  const weakCount = weakSections.reduce((sum, section) => sum + section.orders.length, 0);
   const terms = useMemo(() => queryTerms(lastQuery), [lastQuery]);
 
-  const submit = async (event: FormEvent) => {
+  const submit = (event: FormEvent) => {
     event.preventDefault();
+    void runSearch();
+  };
+
+  /** "Search only here": rerun the same query filtered to one department. */
+  const searchWithin = (departmentName: string) => {
+    setDepartment(departmentName);
+    void runSearch({ department: departmentName });
+  };
+
+  const runSearch = async (override: { department?: string } = {}) => {
     const trimmed = query.trim();
     if (!trimmed || busy) return;
+    const departmentFilter = (override.department ?? department).trim();
 
     setBusy(true);
     setError(null);
@@ -370,8 +511,8 @@ export function SearchApp({
 
     // An explicit department filter wins over the scope toggle.
     const filters = {
-      ...(department.trim()
-        ? { department: department.trim() }
+      ...(departmentFilter
+        ? { department: departmentFilter }
         : scope === "mine" && scopeDepartments.length
           ? { departments: scopeDepartments }
           : {}),
@@ -387,7 +528,8 @@ export function SearchApp({
       const response = await fetch("/api/rag/search", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ query: trimmed, topK: 12, filters }),
+        // 24 pages (the reranked pool) so several departments can show up.
+        body: JSON.stringify({ query: trimmed, topK: 24, filters }),
       });
 
       if (!response.ok) {
@@ -401,6 +543,7 @@ export function SearchApp({
 
       const data = (await response.json()) as SearchResponse;
       setResults(data.evidence);
+      setFacet(null);
       setLastQuery(trimmed);
       setSearched(true);
     } catch (caught) {
@@ -437,8 +580,8 @@ export function SearchApp({
       <section className="intro search-intro">
         <h2>Search the archived orders directly.</h2>
         <p>
-          Finds matching pages in Hindi or English and groups them by order. Filters are applied
-          before matching, so a narrow filter can return fewer results.
+          Finds matching pages in Hindi or English and groups them by department, then by order.
+          Filters are applied before matching, so a narrow filter can return fewer results.
         </p>
       </section>
 
@@ -541,22 +684,43 @@ export function SearchApp({
         <div className="search-empty">No pages matched. Try fewer filters or the Hindi term.</div>
       ) : null}
 
-      <section className="search-result-list">
-        {groups.strong.map((group) => (
-          <OrderCard key={group.sourceId} group={group} terms={terms} onOpen={open} />
-        ))}
-      </section>
+      {facets.length > 1 ? (
+        <div className="search-facets" role="group" aria-label="Filter results by department">
+          <button
+            type="button"
+            className={facet === null ? "active" : ""}
+            aria-pressed={facet === null}
+            onClick={() => setFacet(null)}
+          >
+            All departments <span>{orderCount}</span>
+          </button>
+          {facets.map((item) => (
+            <button
+              type="button"
+              key={item.key}
+              className={facet === item.key ? "active" : ""}
+              aria-pressed={facet === item.key}
+              onClick={() => setFacet(facet === item.key ? null : item.key)}
+            >
+              {item.label} <span>{item.orders}</span>
+            </button>
+          ))}
+        </div>
+      ) : null}
 
-      {groups.weak.length > 0 ? (
-        <details className="search-weaker">
+      <DepartmentSections
+        sections={strongSections}
+        terms={terms}
+        onOpen={open}
+        onSearchWithin={department.trim() ? undefined : searchWithin}
+      />
+
+      {weakCount > 0 ? (
+        <details className="search-weaker" open={strongSections.length === 0 || undefined}>
           <summary>
-            {groups.weak.length} less relevant order{groups.weak.length === 1 ? "" : "s"}
+            {weakCount} less relevant order{weakCount === 1 ? "" : "s"}
           </summary>
-          <section className="search-result-list">
-            {groups.weak.map((group) => (
-              <OrderCard key={group.sourceId} group={group} terms={terms} onOpen={open} />
-            ))}
-          </section>
+          <DepartmentSections sections={weakSections} terms={terms} onOpen={open} />
         </details>
       ) : null}
 

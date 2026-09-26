@@ -472,3 +472,26 @@ skips pages that already have an OCR file (`--redo` to include them), accepts
 
 Dates are shown in a configured zone (`NEXT_PUBLIC_APP_TIME_ZONE`, reports:
 `APP_TIME_ZONE`, both default `Asia/Kolkata`); storage stays UTC.
+
+## ADR-044 - Departments are matched by Shasanadesh department ID, not only by name
+
+Older captures name departments in English ("Agriculture"); portal captures
+use the listing's Hindi name ("कृषि विभाग"), sometimes with zero-width joiners.
+The Shasanadesh ID ("sequence#departmentId#section#year") carries the same
+numeric department ID for both. Therefore:
+
+- the department filters in the retrieval service strip joiners and widen a
+  name match to every document sharing that name's `department_id`, so a
+  profile scoped to "Agriculture" also finds कृषि विभाग orders (chat and Search);
+- the Search page groups orders by department ID and shows every spelling seen
+  ("Agriculture · कृषि विभाग"); other collections group by department name or,
+  when there is none, by archive.
+
+Portal listing dates (`DD/MM/YYYY`, day first) are converted to ISO for
+`documents.go_date` so date filters cover portal captures; the raw value stays
+in `documents.metadata`. Portal captures use the order's subject as the
+document title shown in results.
+
+A bilingual department registry (one canonical record per department ID with
+English and Hindi names) is still to be built; until then the profile picker
+can list both spellings.

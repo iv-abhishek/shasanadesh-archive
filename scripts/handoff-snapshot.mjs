@@ -67,6 +67,28 @@ if (existsSync(documentsRoot)) {
 }
 
 const crawlState = readJson(path.join(root, "data/crawl/shasanadesh-state.json"));
+
+// Portal capture (npm run portal:bridge + ingest:portal): listing progress and
+// importer outcomes. The importer's status log is append-only, so the last
+// entry per order is its current state.
+const portalDir = path.join(root, "data/portal-capture");
+const portalInventory = countLines(path.join(portalDir, "inventory.jsonl"));
+const portalPages = countLines(path.join(portalDir, "pages.jsonl"));
+const portalStates = new Map();
+const statusFile = path.join(portalDir, "ingest-status.jsonl");
+if (existsSync(statusFile)) {
+  for (const line of readFileSync(statusFile, "utf8").split("\n")) {
+    if (!line.trim()) continue;
+    try {
+      const row = JSON.parse(line);
+      portalStates.set(row.sourceId, row.state);
+    } catch {
+      // Ignore a partly written last line.
+    }
+  }
+}
+const portalCount = (state) => [...portalStates.values()].filter((value) => value === state).length;
+const portalStored = portalCount("stored") + portalCount("skipped");
 const queueFile = path.join(root, "datasets/submissions.jsonl");
 
 const lines = [
@@ -106,6 +128,16 @@ const lines = [
   crawlState
     ? `- Shasanadesh crawl: ${crawlState.totals?.found ?? 0} found, ${crawlState.totals?.requests ?? 0} requests, last run ${crawlState.lastRunAt ?? "never"}`
     : "- Shasanadesh crawl: not started",
+  "",
+  "## Shasanadesh portal capture",
+  "",
+  portalInventory
+    ? [
+        `- Listing: ${portalInventory} unique orders from ${portalPages} result pages`,
+        `- In B2: ${portalStored} · not yet stored: ${portalInventory - portalStored - portalCount("unavailable")} · retrying: ${portalCount("retry")} · unavailable (404/410): ${portalCount("unavailable")}`,
+        `- Listing complete: ${existsSync(path.join(portalDir, "complete.json")) ? "yes" : "no"}`,
+      ].join("\n")
+    : "- Not started",
   "",
 ];
 

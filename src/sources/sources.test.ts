@@ -13,7 +13,7 @@ import { mergeListings, parseGovOrderTable } from "./uppolice.js";
 import { parseRobots, robotsAllows } from "./http.js";
 import { listSourceAdapters } from "./registry.js";
 
-const fixture = (name: string) => readFileSync(path.join(import.meta.dirname, "fixtures", name), "utf8");
+const fixture = (name: string) => readFileSync(path.join(__dirname, "fixtures", name), "utf8");
 
 // --- Raj Bhavan -------------------------------------------------------------
 {

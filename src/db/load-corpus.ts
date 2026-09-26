@@ -26,6 +26,7 @@ import {
 import path from "node:path";
 import type { PoolClient } from "pg";
 import { createPool } from "./client.js";
+import { toIsoGoDate } from "../lib/go-date.js";
 
 const documentsRoot = path.resolve("data/documents");
 const retrievalPagesPath = path.resolve(
@@ -99,12 +100,8 @@ function sameStringSet(a: string[], b: string[]): boolean {
   return true;
 }
 
-function toDateOrNull(value?: string | null): string | null {
-  if (!value) return null;
-
-  // Current known metadata uses YYYY-MM-DD. Avoid guessing if it does not.
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
-}
+// ISO or the portal's day-first DD/MM/YYYY; anything else stays null.
+const toDateOrNull = toIsoGoDate;
 
 async function loadDocuments(client: PoolClient): Promise<number> {
   const entries = await readdir(documentsRoot, {

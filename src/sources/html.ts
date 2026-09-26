@@ -54,9 +54,12 @@ const MONTHS = ["january", "february", "march", "april", "may", "june", "july", 
 export function parseEnglishLongDate(value: string): string | null {
   const match = value.match(/\b([A-Za-z]+)\s+(\d{1,2}),\s*(\d{4})\b/);
   if (!match) return null;
-  const month = MONTHS.indexOf(match[1].toLowerCase());
+  // Listings use both "August" and "Aug"/"Sept"; accept a 3+ letter prefix.
+  const token = match[1].toLowerCase();
+  const month = token.length >= 3 ? MONTHS.findIndex((name) => name.startsWith(token)) : -1;
   const year = Number(match[3]);
-  if (month < 0 || year < 1947) return null;
+  const day = Number(match[2]);
+  if (month < 0 || year < 1947 || day < 1 || day > 31) return null;
   return `${match[3]}-${String(month + 1).padStart(2, "0")}-${match[2].padStart(2, "0")}`;
 }
 

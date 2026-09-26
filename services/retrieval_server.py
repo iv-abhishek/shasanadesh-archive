@@ -64,7 +64,9 @@ class SearchFilters(BaseModel):
 
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=4000)
-    top_k: int = Field(default=5, ge=1, le=12)
+    # Chat uses a handful of pages; the Search page asks for up to 24 so it can
+    # group results by department. Pages come from the same reranked pool.
+    top_k: int = Field(default=5, ge=1, le=24)
     candidate_count: int = Field(default=50, ge=10, le=200)
     rerank_count: int = Field(default=24, ge=5, le=100)
     filters: SearchFilters = Field(default_factory=SearchFilters)
@@ -195,24 +197,47 @@ def make_hit(row: dict[str, Any], lexical: bool = False) -> Hit:
     return hit
 
 
+# Zero-width non-joiner and joiner; stripped before comparing department names.
+INVISIBLE_JOINERS = "\u200c\u200d"
+
+
 def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
     clauses: list[str] = []
     params: list[Any] = []
 
+    # Department names are not unique across languages: older captures say
+    # "Agriculture", portal captures say "कृषि विभाग" (sometimes with zero-width
+    # joiners). Shasanadesh IDs carry a numeric department ID that is the same
+    # for both, so a name match is widened to every document sharing that ID.
     if filters.department:
-        clauses.append("d.department ILIKE %s")
-        params.append(f"%{filters.department.strip()}%")
+        name = filters.department.strip().replace("\u200c", "").replace("\u200d", "")
+        pattern = f"%{name}%"
+        clauses.append(
+            "(translate(d.department, %s, '') ILIKE %s "
+            "OR d.department_id IN ("
+            "SELECT DISTINCT dd.department_id FROM documents dd "
+            "WHERE dd.department_id IS NOT NULL "
+            "AND translate(dd.department, %s, '') ILIKE %s))"
+        )
+        params.extend([INVISIBLE_JOINERS, pattern, INVISIBLE_JOINERS, pattern])
 
     if filters.departments:
         departments = [
-            item.strip()
+            item.strip().replace("\u200c", "").replace("\u200d", "")
             for item in filters.departments
             if item.strip()
         ]
 
         if departments:
-            clauses.append("(d.department = ANY(%s) OR d.metadata->>'jurisdiction' = 'central')")
-            params.append(departments)
+            clauses.append(
+                "(translate(d.department, %s, '') = ANY(%s) "
+                "OR d.department_id IN ("
+                "SELECT DISTINCT dd.department_id FROM documents dd "
+                "WHERE dd.department_id IS NOT NULL "
+                "AND translate(dd.department, %s, '') = ANY(%s)) "
+                "OR d.metadata->>'jurisdiction' = 'central')"
+            )
+            params.extend([INVISIBLE_JOINERS, departments, INVISIBLE_JOINERS, departments])
 
     if filters.go_number:
         clauses.append("d.go_number ILIKE %s")
@@ -330,7 +355,7 @@ def retrieve_hybrid(
         "SELECT c.variant_chunk_id, c.variant_id, c.logical_page_id, c.source_id, "
         "c.page_number, c.variant_type, c.canonical, c.text_content, "
         "p.numeric_conflict, d.department, d.go_number, d.go_date, d.source_url, "
-        "NULLIF(d.metadata->>'title', '') AS document_title, "
+        "COALESCE(NULLIF(d.metadata->>'title', ''), NULLIF(d.metadata->'portal'->>'subject', '')) AS document_title, "
     )
 
     filter_sql, filter_params = build_filter_clause(filters)
@@ -472,7 +497,11 @@ def load_neighbor_hits(
                   d.go_number,
                   d.go_date,
                   d.source_url,
-                  NULLIF(d.metadata->>'title', '') AS document_title
+                  -- Portal captures carry the order's subject instead of a title.
+                  COALESCE(
+                    NULLIF(d.metadata->>'title', ''),
+                    NULLIF(d.metadata->'portal'->>'subject', '')
+                  ) AS document_title
                 FROM pages p
                 JOIN documents d
                   ON d.source_id = p.source_id

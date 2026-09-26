@@ -31,10 +31,41 @@ export function sourceCollectionLabel(sourceId: string): string {
   return COLLECTION_LABELS.find(({ prefix }) => sourceId.startsWith(prefix))?.label ?? "Shasanadesh";
 }
 
-/** "2023-09-15" → "15 Sept 2023"; anything else is returned unchanged. */
+/**
+ * Grouping key for a department name. Portal names carry zero-width joiners
+ * and varying spaces ("चिकित्‍सा शिक्षा"), so the same department must not split
+ * into two groups because of invisible characters or letter case.
+ */
+export function departmentKey(name: string): string {
+  return name
+    .normalize("NFC")
+    .replace(/[\u200B-\u200D\uFEFF]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLocaleLowerCase();
+}
+
+/**
+ * Shasanadesh IDs are "sequence#departmentId#sectionId#year". The department
+ * ID is the same whether the listing named the department in English
+ * ("Agriculture") or Hindi ("कृषि विभाग"), so it is the reliable grouping key.
+ */
+export function shasanadeshDepartmentId(sourceId: string): number | null {
+  const match = /^\d+#(\d+)#\d+#\d{4}$/.exec(sourceId);
+  return match ? Number(match[1]) : null;
+}
+
+/** "2023-09-15" or "15/09/2023" → "15 Sept 2023"; anything else is returned unchanged. */
 export function formatGoDate(value: string | null | undefined): string | null {
   if (!value) return null;
-  return /^\d{4}-\d{2}-\d{2}$/.test(value) ? formatDayKey(value, true) : value;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return formatDayKey(value, true);
+  // Portal listing dates are day-first: "26/09/2026".
+  const dayFirst = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(value);
+  if (dayFirst) {
+    const [, day, month, year] = dayFirst;
+    return formatDayKey(`${year}-${month.padStart(2, "0")}-${day.padStart(2, "0")}`, true);
+  }
+  return value;
 }
 
 /**
