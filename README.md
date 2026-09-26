@@ -122,6 +122,18 @@ Install dependencies:
 npm install
 ```
 
+Start the whole local app (PostgreSQL must already be running):
+
+```bash
+npm run dev:all
+```
+
+This starts the MLX generator (:8791), retrieval service (:8788), RAG API
+(:8787) and web app (:3000) with labelled logs, reuses any that are already
+running, and stops them all on Ctrl+C. Use `npm run dev:all -- --no-generator`
+when `LLM_BASE_URL`/`LLM_MODEL` in `.env` point at a hosted model. Then open
+http://127.0.0.1:3000.
+
 Run TypeScript files with:
 
 ```bash

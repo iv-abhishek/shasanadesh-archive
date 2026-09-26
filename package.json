@@ -70,7 +70,8 @@
     "test:numeric-tokens": "tsx src/lib/numeric-tokens.test.ts",
     "b2:check": "node --env-file-if-exists=.env scripts/check-b2.mjs",
     "test:b2": "tsx src/storage/b2.test.ts",
-    "test:capture-history": "tsx src/lib/capture-history.test.ts"
+    "test:capture-history": "tsx src/lib/capture-history.test.ts",
+    "dev:all": "node --env-file-if-exists=.env scripts/dev-all.mjs"
   },
   "keywords": [],
   "author": "",

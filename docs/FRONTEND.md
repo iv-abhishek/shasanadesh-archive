@@ -46,11 +46,17 @@ Copy the local environment template:
 cp apps/web/.env.local.example apps/web/.env.local
 ```
 
-Start the frontend:
+Start the frontend together with every backend service:
 
 ```bash
-npm run web:dev
+npm run dev:all
 ```
+
+or only the frontend with `npm run web:dev`.
+
+When a service is down, the chat names it (API :8787, retrieval :8788,
+generator :8791 or PostgreSQL) and offers Retry. Failed questions are not
+saved; a conversation is written to history only after an answer completes.
 
 Then open:
 
