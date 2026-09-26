@@ -2,6 +2,13 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 26 Sept 2026, 8:00 pm IST (Claude)
+
+- Product direction from Abhishek: Ask only for end users; Search is internal; focus on
+  central + UP guidelines; routine GOs not useful; daily ingestion after backfill; cite
+  official links. Wrote docs/ROADMAP.md. Measured: ~57% of 654 portal captures are
+  financial sanctions/budget; only 6 are tagged as guidelines by the portal.
+
 ## 26 Sept 2026, 7:45 pm IST (Claude)
 
 - Search page: new default tab "Browse all orders", a portal-style listing of every

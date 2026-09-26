@@ -1,5 +1,8 @@
 # Plan
 
+The product roadmap (phases, decisions, open questions) is [docs/ROADMAP.md](../docs/ROADMAP.md).
+This file tracks the current route per workstream.
+
 The roadmap and the current route for each workstream. When a route changes,
 edit it here and say why (with the date) under "Route changes".
 
@@ -66,6 +69,12 @@ edit it here and say why (with the date) under "Route changes".
   `docs/CODE_COMMENTING.md`. Do not do a mass rewrite; comment as we go.
 
 ## Route changes
+
+- 26 Sept 2026, 7:45 pm: product direction set: Ask is the only end-user surface,
+  Search/Browse is internal; corpus focus is guidelines (central + UP); routine orders
+  are classified into tiers and excluded from Ask by default; citations link to
+  official URLs; daily sync after backfill. Roadmap drafted in docs/ROADMAP.md,
+  with 5 open decisions awaiting Abhishek.
 
 - 26 Sept 2026: the search page is organised by department (Abhishek's request).
   Ingestion was paused by Abhishek after 1,025 orders were listed and 653 stored in B2.

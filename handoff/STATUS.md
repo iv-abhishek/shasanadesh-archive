@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 26 Sept 2026, 7:45 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 26 Sept 2026, 8:00 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -8,6 +8,11 @@ _Last updated: 26 Sept 2026, 7:45 pm IST (Claude). Update at every milestone and
 2. **Model question**: can Qwen3.8-27B run usefully on the M5 MacBook Air? Answered (see PLAN.md › Models).
 3. **Ingestion is ON HOLD.** Do not start `ingest:portal`, `portal:bridge`,
    `ingest:source*` or any crawl until Abhishek says so.
+
+## Roadmap
+
+Drafted in `docs/ROADMAP.md` (Phase 0–5). **Waiting on Abhishek** for the 5 open decisions in
+§7 (launch audience, central-first vs UP-first, hosting budget, tier B/C in Ask, NIC request).
 
 ## What works
 

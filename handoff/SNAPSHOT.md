@@ -1,32 +1,24 @@
 # Snapshot (generated)
 
-Generated 26 Sept 2026, 7:25 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
+Generated 26 Sept 2026, 7:47 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
 
 ## Git
 
 - Branch: `main`
-- HEAD: `a965553 feat(search): organise results by department; ID-based department matching; handoff files`
+- HEAD: `ce703d2 feat(search): "Browse all orders" — portal-style complete listing with filters and pages`
 - Unpushed commits: 0
 
 Uncommitted files:
 
 ```
 M README.md
-A  apps/web/app/api/rag/documents/[action]/route.ts
-M  apps/web/app/globals.css
-A  apps/web/components/browse-orders.tsx
-M  apps/web/components/search-app.tsx
-M  docs/DECISIONS.md
-M  docs/FRONTEND.md
-M  handoff/LOG.md
-M  handoff/PLAN.md
- M handoff/SNAPSHOT.md
-M  handoff/STATUS.md
-MM package.json
-M  src/api/server.ts
-A  src/documents/browse.test.ts
-A  src/documents/browse.ts
-A  src/documents/routes.ts
+ M docs/PRODUCT_PLAN.md
+ M docs/PRODUCT_VISION.md
+ M handoff/LOG.md
+ M handoff/PLAN.md
+ M handoff/STATUS.md
+ M package.json
+?? docs/ROADMAP.md
 ?? scripts/shasanadesh-portal-bridge.mjs
 ?? src/ingest-portal.ts
 ```
@@ -34,6 +26,7 @@ A  src/documents/routes.ts
 Recent commits:
 
 ```
+ce703d2 feat(search): "Browse all orders" — portal-style complete listing with filters and pages
 a965553 feat(search): organise results by department; ID-based department matching; handoff files
 1b139de Shasanadesh ingestion
 68e944e feat: IST display time zone, legacy-font garble detection, Hindi fallback
@@ -48,7 +41,6 @@ b51e84a fix(web): EN/HI toggle no longer turns green on hover
 5f69739 feat: npm run dev:all starts the whole local stack
 00ff2a8 fix: load .env for the Python embedding, retrieval and search commands
 4036e07 docs: record 2026-09-26 maintenance state and follow-up commands
-1f676ef perf(retrieval): widen HNSW scan and reuse one connection; pin dependencies
 ```
 
 ## Corpus by source

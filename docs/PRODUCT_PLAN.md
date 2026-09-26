@@ -1,5 +1,8 @@
 # Product Plan
 
+> **Superseded for planning by [ROADMAP.md](ROADMAP.md) (26 Sept 2026).** Kept for the
+> pilot-completion criteria and history.
+
 This plan reflects the current code and the product direction in
 [PRODUCT_VISION.md](PRODUCT_VISION.md). It replaces the original phase list, which
 described search, RAG, and the UI as future work even though a local MVP now exists.

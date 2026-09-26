@@ -3,6 +3,14 @@
 **Status:** Working product direction, reviewed 2026-09-25  
 **Companion docs:** [Product plan](PRODUCT_PLAN.md), [Architecture](ARCHITECTURE.md), [Workspace](WORKSPACE.md)
 
+## Direction update (26 Sept 2026)
+
+End users get **Ask** only; the Search/Browse page is an internal archive console.
+The corpus focus is generally applicable **guidelines, rules, procedures and
+circulars** from central ministries and UP. Routine orders (budget releases,
+individual sanctions, jail orders) are archived but excluded from Ask by
+default. Citations link to the official source. See [ROADMAP.md](ROADMAP.md).
+
 ## Purpose
 
 Build a dependable, bilingual research assistant for government orders and related
