@@ -7,6 +7,7 @@
  */
 
 import { createPool } from "./db/client.js";
+import { APP_TIME_ZONE, formatAppTimestamp } from "./lib/app-time.js";
 
 function option(name: string): string | undefined {
   const index = process.argv.indexOf(name);
@@ -60,6 +61,7 @@ async function main(): Promise<void> {
 
     console.log("Answer feedback");
     console.log("===============");
+    console.log(`Times shown in ${APP_TIME_ZONE}`);
     console.log(
       totals.rows.map((row) => `${row.rating === "up" ? "👍" : "👎"} ${row.count}`).join("   ") || "No feedback yet.",
     );
@@ -68,7 +70,7 @@ async function main(): Promise<void> {
       const clip = (text: string | null, max: number) =>
         (text ?? "").replace(/\s+/g, " ").slice(0, max);
       console.log(
-        `\n${row.rating === "up" ? "👍" : "👎"} ${row.updated_at.toISOString().slice(0, 16).replace("T", " ")}` +
+        `\n${row.rating === "up" ? "👍" : "👎"} ${formatAppTimestamp(row.updated_at)}` +
           (row.reason ? `  reason: ${row.reason}` : ""),
       );
       console.log(`   Q: ${clip(row.question, 160)}`);

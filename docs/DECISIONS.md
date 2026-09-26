@@ -457,3 +457,18 @@ Follow-up detection is narrower: Hindi conjunctions (और, तो, लेक�
 only signal a follow-up at the start of a question, "यह/वह" only when followed
 by a document noun, and English "that" only when it refers to an order, rule
 or similar. This stops standalone questions inheriting the previous source.
+
+## ADR-043 - Legacy-font garble counts as suspicious; display time zone is configured
+
+Some native PDFs were produced from legacy (Krutidev-style) fonts through a
+broken ToUnicode map: U+200D appears where spaces belong, U+0904 "ऄ" replaces
+"अ", and letters are dropped ("पंप" becomes " म्"). The old ratios scored some of
+these pages above the selective-OCR threshold, so only part of such a document
+was OCR'd and Hindi questions about it failed validation. The shared scorer now
+penalises dense zero-width joiners (>=20 and >2% of Devanagari characters) and
+U+0904, which puts those pages first in `compare:suspicious`. That script now
+skips pages that already have an OCR file (`--redo` to include them), accepts
+`--max` up to 500 and merges its report across runs.
+
+Dates are shown in a configured zone (`NEXT_PUBLIC_APP_TIME_ZONE`, reports:
+`APP_TIME_ZONE`, both default `Asia/Kolkata`); storage stays UTC.

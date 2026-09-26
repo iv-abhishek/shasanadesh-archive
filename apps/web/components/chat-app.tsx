@@ -9,6 +9,12 @@ import {
   useRef,
   useState,
 } from "react";
+import {
+  appDayKey,
+  formatAppDateTimeFull,
+  formatAppDay,
+  formatAppTime,
+} from "../lib/app-time";
 
 type VerificationStatus =
   | "conflict"
@@ -298,6 +304,76 @@ function parseSseBlock(
     event,
     data,
   };
+}
+
+const VALIDATION_ISSUE_LABELS: Record<string, string> = {
+  empty_answer: "The draft was empty",
+  missing_citation: "A statement had no page citation",
+  invalid_citation: "A citation pointed to a page that was not retrieved",
+  uncited_numeric_claim: "A number was given without a citation",
+  unsafe_numeric_claim:
+    "A number came from a page whose native and OCR text disagree",
+  unsupported_numeric_claim: "A number does not appear on the cited page",
+  internal_placeholder: "The draft contained an internal placeholder",
+};
+
+function summarizeValidationIssues(
+  codes: string[] | undefined,
+): Array<{ label: string; count: number }> {
+  const counts = new Map<string, number>();
+
+  for (const code of codes ?? []) {
+    const label = VALIDATION_ISSUE_LABELS[code] ?? code.replace(/_/g, " ");
+    counts.set(label, (counts.get(label) ?? 0) + 1);
+  }
+
+  return [...counts].map(([label, count]) => ({ label, count }));
+}
+
+function SafetyCheckDetails({ done }: { done: DoneEvent }) {
+  const first = summarizeValidationIssues(done.firstValidationIssues);
+  const afterRepair = summarizeValidationIssues(done.repairValidationIssues);
+
+  if (first.length === 0 && afterRepair.length === 0) return null;
+
+  const outcome = done.usedFallback
+    ? "The repaired draft still failed, so a safe fallback was shown instead."
+    : done.usedQualitativeSalvage
+      ? "Only the statements that passed the checks were kept."
+      : done.repaired
+        ? "The draft was repaired and the repaired answer passed."
+        : null;
+
+  return (
+    <details className="timing-details safety-details">
+      <summary>Why the safety check stepped in</summary>
+      <div className="safety-issue-block">
+        <span className="safety-issue-heading">First draft</span>
+        <ul>
+          {first.map((issue) => (
+            <li key={issue.label}>
+              {issue.label}
+              {issue.count > 1 ? ` (${issue.count}×)` : ""}
+            </li>
+          ))}
+        </ul>
+      </div>
+      {afterRepair.length > 0 ? (
+        <div className="safety-issue-block">
+          <span className="safety-issue-heading">After repair</span>
+          <ul>
+            {afterRepair.map((issue) => (
+              <li key={issue.label}>
+                {issue.label}
+                {issue.count > 1 ? ` (${issue.count}×)` : ""}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+      {outcome ? <p className="safety-outcome">{outcome}</p> : null}
+    </details>
+  );
 }
 
 function formatStageMs(
@@ -1191,17 +1267,15 @@ const FEEDBACK_REASONS: Array<{ value: string; label: string }> = [
 function formatTurnTime(timestamp: number): { short: string; full: string; iso: string } {
   const date = new Date(timestamp);
   const now = new Date();
-  const sameDay = date.toDateString() === now.toDateString();
-  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  const day = date.toLocaleDateString(undefined, {
-    day: "numeric",
-    month: "short",
-    ...(date.getFullYear() !== now.getFullYear() ? { year: "numeric" as const } : {}),
-  });
+  const time = formatAppTime(date);
+  const dayKey = appDayKey(date);
+  const todayKey = appDayKey(now);
 
   return {
-    short: sameDay ? time : `${day}, ${time}`,
-    full: date.toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" }),
+    short: dayKey === todayKey
+      ? time
+      : `${formatAppDay(date, dayKey.slice(0, 4) !== todayKey.slice(0, 4))}, ${time}`,
+    full: formatAppDateTimeFull(date),
     iso: date.toISOString(),
   };
 }
@@ -1525,6 +1599,8 @@ function TurnView({
             ) : null}
           </div>
         ) : null}
+
+        {turn.done ? <SafetyCheckDetails done={turn.done} /> : null}
 
         {turn.done?.timings ? (
           <details className="timing-details">

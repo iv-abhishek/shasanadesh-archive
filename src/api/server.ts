@@ -1300,6 +1300,7 @@ server.post(
         finalAnswer =
           buildConservativeFallback(
             retrieval.evidence,
+            responseLanguage,
           );
 
         finalValidation =

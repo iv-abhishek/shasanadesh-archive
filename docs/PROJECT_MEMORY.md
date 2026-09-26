@@ -247,6 +247,12 @@ Default pilot:
 
 These are pilot parameters, not permanent production settings.
 
+Pages that already have an `ocr-selective/page-NNN.txt` are skipped on later
+runs, so repeat `npm run compare:suspicious -- --max 100` until it reports no
+remaining candidates, then rebuild variants, chunks, `db:load` and
+`embed:chunks`. Legacy-font garble (dense U+200D, U+0904) scores near 0 and is
+processed first (ADR-043).
+
 ## OCR Retrieval-Variant Rule
 
 Selective OCR pilot result:

@@ -9,7 +9,23 @@ Do not place real secrets in this document.
 | `NODE_ENV` | runtime environment |
 | `APP_BASE_URL` | public application base URL |
 | `LOG_LEVEL` | application log level |
+| `APP_TIME_ZONE` | IANA zone used when reports print dates (default `Asia/Kolkata`); stored timestamps stay UTC |
 | `CORS_ORIGINS` | optional comma-separated origins allowed to call the API directly; empty by default because browsers use the same-origin Next.js proxy |
+
+## Display time zone (web app)
+
+Set in `apps/web/.env.local` (see `apps/web/.env.local.example`):
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_APP_TIME_ZONE` | IANA zone for question times and the Today/Yesterday history groups (default `Asia/Kolkata`) |
+| `NEXT_PUBLIC_APP_LOCALE` | locale for date/time formatting (default `en-IN`) |
+
+Timestamps are stored and exchanged as UTC instants; only their display uses
+this zone, so hosting on a UTC server or opening the app from another country
+does not move a question to the wrong day. `NEXT_PUBLIC_*` values are inlined at
+build time: rebuild after changing them. Invalid values fall back to the
+defaults.
 
 ## Database
 

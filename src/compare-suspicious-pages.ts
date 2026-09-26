@@ -9,6 +9,7 @@
 
 import { execFile } from "node:child_process";
 import {
+  access,
   mkdir,
   readFile,
   readdir,
@@ -90,6 +91,15 @@ function recommend(
   return "manual-review";
 }
 
+async function fileExists(filePath: string): Promise<boolean> {
+  try {
+    await access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 async function renderAndOcrPage(
   documentDir: string,
   sourceId: string,
@@ -152,15 +162,19 @@ async function renderAndOcrPage(
 async function main() {
   const maxPages = getNumberArg("max", 12);
   const threshold = getNumberArg("threshold", 55);
+  // By default pages that already have a selective OCR file are skipped, so
+  // repeated runs work through the backlog instead of redoing the worst pages.
+  const redo = process.argv.includes("--redo");
 
-  if (maxPages < 1 || maxPages > 100) {
-    throw new Error("--max must be between 1 and 100");
+  if (maxPages < 1 || maxPages > 500) {
+    throw new Error("--max must be between 1 and 500");
   }
 
   const entries = await readdir(documentsRoot, {
     withFileTypes: true,
   });
 
+  let alreadyDone = 0;
   const candidates: Array<{
     documentDir: string;
     page: PageRecord;
@@ -189,6 +203,20 @@ async function main() {
 
       const native = analyzeTextQuality(page.text);
 
+      if (
+        !redo &&
+        (await fileExists(
+          path.join(
+            documentDir,
+            "ocr-selective",
+            `page-${String(page.pageNumber).padStart(3, "0")}.txt`,
+          ),
+        ))
+      ) {
+        alreadyDone++;
+        continue;
+      }
+
       if (native.score <= threshold) {
         candidates.push({
           documentDir,
@@ -211,6 +239,7 @@ async function main() {
   console.log("Selective OCR comparison");
   console.log("========================");
   console.log(`Threshold:       <= ${threshold}`);
+  console.log(`Already OCR'd:   ${alreadyDone}${redo ? "" : " (skipped; pass --redo to include)"}`);
   console.log(`Candidates:      ${candidates.length}`);
   console.log(`Selected pages:  ${selected.length}`);
   console.log();
@@ -260,11 +289,32 @@ async function main() {
     }
   }
 
+  // Merge with earlier runs so the report covers every page ever compared.
+  const merged = new Map<string, ComparisonRecord>();
+
+  try {
+    for (const line of (await readFile(reportPath, "utf8")).split("\n")) {
+      if (!line.trim()) continue;
+      const record = JSON.parse(line) as ComparisonRecord;
+      merged.set(`${record.sourceId}#${record.pageNumber}`, record);
+    }
+  } catch {
+    // No earlier report.
+  }
+
+  for (const record of comparisons) {
+    merged.set(`${record.sourceId}#${record.pageNumber}`, record);
+  }
+
+  const reportRows = [...merged.values()].sort(
+    (a, b) =>
+      a.sourceId.localeCompare(b.sourceId) || a.pageNumber - b.pageNumber,
+  );
+
   await writeFile(
     reportPath,
-    comparisons
-      .map((record) => JSON.stringify(record))
-      .join("\n") + (comparisons.length ? "\n" : ""),
+    reportRows.map((record) => JSON.stringify(record)).join("\n") +
+      (reportRows.length ? "\n" : ""),
     "utf8",
   );
 
@@ -280,7 +330,12 @@ async function main() {
   console.log(
     `Manual review:  ${comparisons.filter((r) => r.recommendation === "manual-review").length}`,
   );
-  console.log(`Report:         ${reportPath}`);
+  console.log(`Report:         ${reportPath} (${reportRows.length} pages total)`);
+  if (candidates.length > selected.length) {
+    console.log(
+      `Remaining:      ${candidates.length - selected.length} candidate pages; run again to continue.`,
+    );
+  }
 }
 
 main().catch((error) => {

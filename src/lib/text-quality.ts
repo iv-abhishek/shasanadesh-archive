@@ -16,6 +16,15 @@ export interface TextQualityMetrics {
   singleCharRatio: number;
   viramaVowelAnomalies: number;
   replacementChars: number;
+  /** Zero-width joiners/non-joiners (U+200C/U+200D). */
+  joinerChars: number;
+  /** Joiners per Devanagari character. */
+  joinerRatio: number;
+  /**
+   * Letters that ordinary Hindi text almost never uses (currently U+0904 "ऄ").
+   * Broken legacy-font mappings emit it in place of "अ".
+   */
+  rareLetterChars: number;
   score: number;
   classification: "ok" | "review" | "suspicious";
 }
@@ -81,6 +90,15 @@ export function analyzeTextQuality(textInput: string): TextQualityMetrics {
 
   const replacementChars = countMatches(text, /\uFFFD/gu);
 
+  // Legacy Krutidev-style fonts exported through a broken ToUnicode map put
+  // U+200D where spaces belong and U+0904 where "अ" belongs, and drop letters
+  // (e.g. "पंप" becomes " म्"). The text looks plausible to the ratios above,
+  // so these two signals are scored separately.
+  const joinerChars = countMatches(text, /[\u200C\u200D]/gu);
+  const joinerRatio =
+    devanagariChars > 0 ? joinerChars / devanagariChars : 0;
+  const rareLetterChars = countMatches(text, /\u0904/gu);
+
   let score = 100;
 
   if (devanagariChars >= 100) {
@@ -98,6 +116,14 @@ export function analyzeTextQuality(textInput: string): TextQualityMetrics {
   score -= Math.min(35, viramaVowelAnomalies * 7);
   score -= Math.min(30, replacementChars * 5);
 
+  // A handful of joiners is legitimate (half-forms, some names). Dozens at a
+  // rate above 2% of Devanagari characters is a broken font mapping.
+  if (joinerChars >= 20 && joinerRatio > 0.02) {
+    score -= Math.min(50, 20 + Math.round(joinerRatio * 150));
+  }
+
+  score -= Math.min(30, rareLetterChars * 3);
+
   score = Math.max(0, Math.round(score));
 
   const classification: TextQualityMetrics["classification"] =
@@ -114,6 +140,9 @@ export function analyzeTextQuality(textInput: string): TextQualityMetrics {
     singleCharRatio,
     viramaVowelAnomalies,
     replacementChars,
+    joinerChars,
+    joinerRatio,
+    rareLetterChars,
     score,
     classification,
   };

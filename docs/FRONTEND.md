@@ -118,8 +118,19 @@ This removes browser CORS/origin coupling while preserving the backend SSE contr
 `NEXT_PUBLIC_*` variable.
 
 
+## Dates and times
+
+All date/time display goes through `apps/web/lib/app-time.ts`, which formats in
+`NEXT_PUBLIC_APP_TIME_ZONE` (default `Asia/Kolkata`) instead of the browser's or
+host's zone. Do not call `toLocaleString()` without it.
+
 ## Retrieval provenance and latency diagnostics
 
 Chat source cards distinguish direct retrieval hits from adjacent context pages. Answer
 cards expose a collapsed latency breakdown during development so slow retrieval,
 reranking, generation, and repair paths can be identified without guessing.
+
+When the first draft fails the safety gate, a "Why the safety check stepped in"
+panel lists the validation issues in plain words (first draft and after
+repair) and whether repair, salvage or the fallback produced the final answer.
+The conservative fallback is written in Hindi for Hindi questions.

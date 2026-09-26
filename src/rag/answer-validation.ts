@@ -463,18 +463,30 @@ export function buildQualitativeSalvage(
 
 export function buildConservativeFallback(
   evidence: RetrievalEvidence[],
+  language: "en" | "hi" = "en",
 ): string {
+  const hi = language === "hi";
+
   if (evidence.length === 0) {
-    return (
-      "I could not retrieve evidence sufficient to answer this question from the archived government-order corpus."
-    );
+    return hi
+      ? "संग्रहित शासनादेशों में इस प्रश्न का उत्तर देने के लिए पर्याप्त साक्ष्य नहीं मिला।"
+      : "I could not retrieve evidence sufficient to answer this question from the archived government-order corpus.";
   }
 
   const first = evidence[0];
+  const citation = `[${first.label} p.${first.page_number}]`;
+
+  if (hi) {
+    return [
+      "संबंधित शासनादेश के पृष्ठ मिले, लेकिन तैयार किया गया उत्तर उद्धरण और संख्या-सत्यापन की सुरक्षा जाँच में पास नहीं हुआ।",
+      `कृपया मूल स्रोत पृष्ठ सीधे देखें ${citation}।`,
+      "OCR से पढ़े गए या परस्पर भिन्न पाठ वाले पृष्ठों की कोई भी तिथि, राशि, प्रतिशत, नियम संख्या, स्तर या शासनादेश संख्या उपयोग से पहले मूल पृष्ठ से अवश्य मिला लें।",
+    ].join(" ");
+  }
 
   return [
     "Relevant government-order evidence was retrieved, but a fully generated answer did not pass the citation and numeric-verification safety checks.",
-    `Please review the original source page directly [${first.label} p.${first.page_number}].`,
+    `Please review the original source page directly ${citation}.`,
     "Any critical date, amount, percentage, rule number, level, Government Order number, or identifier from OCR-only or conflicting extraction should be verified against the original page before it is relied upon.",
   ].join(" ");
 }

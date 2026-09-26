@@ -13,6 +13,7 @@ import {
 import {
   SearchApp,
 } from "./search-app";
+import { appDayKey, formatDayKey, previousDayKey } from "../lib/app-time";
 
 interface WorkspaceProfile {
   id: string;
@@ -42,31 +43,23 @@ interface ConversationSummary {
 }
 
 function conversationDateGroups(items: ConversationSummary[]) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const yesterday = new Date(today);
-  yesterday.setDate(yesterday.getDate() - 1);
+  // Day boundaries follow the configured app zone (IST by default), not the
+  // browser's or the host's zone.
+  const todayKey = appDayKey(new Date());
+  const yesterdayKey = previousDayKey(todayKey);
   const grouped = new Map<string, ConversationSummary[]>();
 
   for (const conversation of items) {
-    const date = new Date(conversation.updatedAt);
-    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    const key = appDayKey(conversation.updatedAt);
     grouped.set(key, [...(grouped.get(key) ?? []), conversation]);
   }
 
   return [...grouped.entries()].map(([key, conversations]) => {
-    const [year, month, day] = key.split("-").map(Number);
-    const date = new Date(year, month - 1, day);
-    const dateTime = date.getTime();
-    const label = dateTime === today.getTime()
+    const label = key === todayKey
       ? "Today"
-      : dateTime === yesterday.getTime()
+      : key === yesterdayKey
         ? "Yesterday"
-        : date.toLocaleDateString(undefined, {
-          month: "short",
-          day: "numeric",
-          ...(year !== today.getFullYear() ? { year: "numeric" as const } : {}),
-        });
+        : formatDayKey(key, key.slice(0, 4) !== todayKey.slice(0, 4));
     return { key, label, conversations };
   });
 }
