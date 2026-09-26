@@ -267,6 +267,10 @@ async function uploadObject(
   let lastError: unknown;
 
   for (let attempt = 1; attempt <= 5; attempt++) {
+    if (attempt > 1) {
+      // Back off before retrying transient network / 5xx / expired-token errors.
+      await new Promise((resolve) => setTimeout(resolve, 1000 * 2 ** (attempt - 2)));
+    }
     try {
       const target = await getUploadTarget(activeContext, attempt > 1);
       const response = await fetch(target.uploadUrl, {
@@ -335,7 +339,24 @@ async function uploadObject(
   );
 }
 
-function encodedPathSegment(value: string): string {
+/**
+ * Object-name segment for a source or capture ID.
+ *
+ * Shasanadesh IDs contain "#", which previously went through
+ * encodeURIComponent and produced literal "%23" folder names in the bucket.
+ * "#" is now mapped to "-", matching the local data/documents directory names.
+ */
+function objectPathSegment(value: string): string {
+  const segment = value.replaceAll("#", "-");
+  if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,200}$/.test(segment)) {
+    throw new Error(`Unsupported characters in B2 object path segment: ${value}`);
+  }
+  return segment;
+}
+
+// Name scheme used before objectPathSegment; kept so existing objects can
+// still have their manifests refreshed in place.
+function legacyPathSegment(value: string): string {
   return encodeURIComponent(value);
 }
 
@@ -352,8 +373,8 @@ export async function storeCaptureInB2(input: {
     throw new Error("B2 collection names may contain lowercase letters, digits, and hyphens only.");
   }
   const archivePrefix = `${ARCHIVE_ROOT}${collection}/`;
-  const sourcePath = encodedPathSegment(input.sourceId);
-  const capturePath = encodedPathSegment(input.captureId);
+  const sourcePath = objectPathSegment(input.sourceId);
+  const capturePath = objectPathSegment(input.captureId);
   const rawKey = `${archivePrefix}raw/${sourcePath}/${capturePath}.pdf`;
   const metadataKey = `${archivePrefix}processed/${sourcePath}/${capturePath}.metadata.json`;
 
@@ -403,13 +424,24 @@ export async function refreshCaptureManifestInB2(input: {
   }
 
   const archivePrefix = ARCHIVE_ROOT + collection + "/";
-  const sourcePath = encodedPathSegment(input.sourceId);
-  const capturePath = encodedPathSegment(input.captureId);
-  const rawKey = archivePrefix + "raw/" + sourcePath + "/" + capturePath + ".pdf";
-  const metadataKey = archivePrefix + "processed/" + sourcePath + "/" + capturePath + ".metadata.json";
-  if (input.storage.raw.key !== rawKey) {
+  // Accept the current name scheme and the legacy percent-encoded one, and
+  // keep writing the manifest next to whichever raw object already exists.
+  const keySchemes = [objectPathSegment, legacyPathSegment].map((segment) => {
+    const sourcePath = segment(input.sourceId);
+    const capturePath = segment(input.captureId);
+    return {
+      rawKey: archivePrefix + "raw/" + sourcePath + "/" + capturePath + ".pdf",
+      metadataKey:
+        archivePrefix + "processed/" + sourcePath + "/" + capturePath + ".metadata.json",
+    };
+  });
+  const matchedScheme = keySchemes.find(
+    (scheme) => scheme.rawKey === input.storage.raw.key,
+  );
+  if (!matchedScheme) {
     throw new Error("The B2 raw-object key does not match the capture being refreshed.");
   }
+  const metadataKey = matchedScheme.metadataKey;
 
   const remoteManifest = {
     ...input.metadata,

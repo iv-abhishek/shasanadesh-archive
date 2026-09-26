@@ -67,7 +67,9 @@
     "test:session-cookie": "tsx src/workspace/session-cookie.test.ts",
     "test:neighbor-expansion": "python3 services/neighbor_expansion_test.py",
     "ingest:doe-gfr": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts doe-gfr",
-    "test:numeric-tokens": "tsx src/lib/numeric-tokens.test.ts"
+    "test:numeric-tokens": "tsx src/lib/numeric-tokens.test.ts",
+    "b2:check": "node --env-file-if-exists=.env scripts/check-b2.mjs",
+    "test:b2": "tsx src/storage/b2.test.ts"
   },
   "keywords": [],
   "author": "",

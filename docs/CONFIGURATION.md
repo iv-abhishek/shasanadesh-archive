@@ -70,6 +70,18 @@ archive/<collection>/processed/<source-id>/<capture-id>.metadata.json
 Example collections: `shasanadesh` and `doe-gfr`.
 ```
 
+Object names use the local directory form of the source ID (`#` becomes `-`),
+for example `archive/shasanadesh/raw/17-46-2-2017/<capture-id>.pdf`. Objects
+uploaded before this change keep their original percent-encoded names
+(`17%2346%232%232017`); manifest refreshes still write next to them.
+
+Run `npm run b2:check` to verify the archive without changing anything: it
+lists local captures that are not yet in B2 or have a pending manifest
+refresh, confirms the key can authorise and upload to the configured bucket,
+and, when the key has `readFiles` or `listFiles`, re-checks each stored
+object's size and SHA-1. `npm run b2:check -- --offline` runs only the local
+audit. B2_ENDPOINT and B2_REGION are S3-API settings and are not used.
+
 This initial integration supports single uploads up to 5 GB. Derived page, OCR, and chunk
 artifacts are not uploaded yet. For a bucket-restricted key, do not use a filename prefix
 that excludes either the `raw/` or `processed/` path.
