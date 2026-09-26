@@ -8,7 +8,11 @@ Its job is to exercise the frozen RAG API contract before visual/product polish.
 
 - English/Hindi question input
 - SSE `sources`, `token`, `done`, and `error` handling
-- validated answer display
+- live progress while an answer is prepared (searching, reading, writing,
+  re-checking) with elapsed seconds
+- validated answer display with bullet / numbered lists, headings and bold
+- sources grouped into one card per order, with page chips: cited pages
+  first, other matches next, neighbouring pages collapsed behind "+N nearby"
 - clickable `[S# p.#]` citations
 - source cards linking to exact PDF pages
 - OCR/numeric verification badges

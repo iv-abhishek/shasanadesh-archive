@@ -20,6 +20,7 @@ type VerificationStatus =
 interface Source {
   label: string;
   sourceId: string;
+  documentTitle?: string | null;
   pageNumber: number;
   department: string | null;
   goNumber: string | null;
@@ -77,6 +78,7 @@ interface ChatTurn {
   done: DoneEvent | null;
   error: string | null;
   elapsedMs: number | null;
+  status?: string | null;
 }
 
 interface ChatAppProps {
@@ -485,6 +487,10 @@ function normalizePersistedSource(
         : undefined,
     // Keep retrieval provenance when a saved conversation is reopened so
     // neighbour pages are not shown as direct hits.
+    documentTitle:
+      typeof raw.documentTitle === "string"
+        ? raw.documentTitle
+        : null,
     retrievalRole:
       raw.retrievalRole === "neighbor"
         ? "neighbor"
@@ -815,85 +821,334 @@ function CitationText({
   );
 }
 
-function SourceCard({
-  source,
+// ---------------------------------------------------------------------------
+// Live progress while an answer is being prepared.
+// ---------------------------------------------------------------------------
+
+function ProgressIndicator({
+  label,
+  startedAt,
+}: {
+  label: string | null | undefined;
+  startedAt: number;
+}) {
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const seconds = Math.max(0, Math.floor((now - startedAt) / 1000));
+
+  return (
+    <div className="answer-progress" role="status" aria-live="polite">
+      <span className="progress-spinner" aria-hidden="true" />
+      <span className="progress-label">
+        {label ?? "Connecting"}…
+      </span>
+      <span className="progress-elapsed">{seconds}s</span>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Answer formatting: paragraphs, bullet / numbered lists, headings and bold,
+// with [S# p.#] citations kept clickable. Deliberately small: generated text
+// is rendered as React nodes, never as raw HTML.
+// ---------------------------------------------------------------------------
+
+type AnswerBlock =
+  | { kind: "paragraph"; lines: string[] }
+  | { kind: "heading"; text: string }
+  | { kind: "bullets"; items: string[] }
+  | { kind: "numbers"; items: string[] };
+
+const BULLET_RE = /^\s*[-*•–]\s+(.*)$/u;
+const NUMBER_RE = /^\s*\d{1,2}[.)]\s+(.*)$/u;
+const HEADING_RE = /^\s*#{1,4}\s+(.*)$/u;
+
+function parseAnswerBlocks(text: string): AnswerBlock[] {
+  const blocks: AnswerBlock[] = [];
+
+  for (const rawLine of text.replace(/\r\n/g, "\n").split("\n")) {
+    const line = rawLine.trimEnd();
+    const last = blocks[blocks.length - 1];
+
+    if (!line.trim()) {
+      blocks.push({ kind: "paragraph", lines: [] });
+      continue;
+    }
+
+    const heading = line.match(HEADING_RE);
+    const bullet = line.match(BULLET_RE);
+    const numbered = line.match(NUMBER_RE);
+
+    if (heading) {
+      blocks.push({ kind: "heading", text: heading[1] });
+    } else if (bullet) {
+      if (last?.kind === "bullets") last.items.push(bullet[1]);
+      else blocks.push({ kind: "bullets", items: [bullet[1]] });
+    } else if (numbered) {
+      if (last?.kind === "numbers") last.items.push(numbered[1]);
+      else blocks.push({ kind: "numbers", items: [numbered[1]] });
+    } else if (last?.kind === "paragraph") {
+      last.lines.push(line.trim());
+    } else {
+      blocks.push({ kind: "paragraph", lines: [line.trim()] });
+    }
+  }
+
+  return blocks.filter(
+    (block) => block.kind !== "paragraph" || block.lines.length > 0,
+  );
+}
+
+function InlineText({
+  text,
+  sources,
   onOpenSource,
 }: {
-  source: Source;
+  text: string;
+  sources: Source[];
   onOpenSource: (source: Source) => void;
 }) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+
   return (
-    <button
-      className="source-card source-card-button"
-      type="button"
-      onClick={() => onOpenSource(source)}
-    >
-      <div className="source-card-top">
-        <strong>
-          {source.label} · p.
-          {source.pageNumber}
-        </strong>
+    <>
+      {parts.map((part, index) =>
+        part.startsWith("**") && part.endsWith("**") && part.length > 4 ? (
+          <strong key={index}>
+            <CitationText
+              text={part.slice(2, -2)}
+              sources={sources}
+              onOpenSource={onOpenSource}
+            />
+          </strong>
+        ) : (
+          <CitationText
+            key={index}
+            text={part}
+            sources={sources}
+            onOpenSource={onOpenSource}
+          />
+        ),
+      )}
+    </>
+  );
+}
 
-        <span
-          className={
-            statusClass(
-              source
-                .numericVerificationStatus,
-            )
-          }
-        >
-          {statusLabel(
-            source
-              .numericVerificationStatus,
-          )}
-        </span>
+function FormattedAnswer({
+  text,
+  sources,
+  onOpenSource,
+}: {
+  text: string;
+  sources: Source[];
+  onOpenSource: (source: Source) => void;
+}) {
+  const blocks = useMemo(() => parseAnswerBlocks(text), [text]);
+  const inline = (value: string) => (
+    <InlineText text={value} sources={sources} onOpenSource={onOpenSource} />
+  );
+
+  return (
+    <div className="formatted-answer">
+      {blocks.map((block, index) => {
+        switch (block.kind) {
+          case "heading":
+            return <h4 key={index}>{inline(block.text)}</h4>;
+          case "bullets":
+            return (
+              <ul key={index}>
+                {block.items.map((item, itemIndex) => (
+                  <li key={itemIndex}>{inline(item)}</li>
+                ))}
+              </ul>
+            );
+          case "numbers":
+            return (
+              <ol key={index}>
+                {block.items.map((item, itemIndex) => (
+                  <li key={itemIndex}>{inline(item)}</li>
+                ))}
+              </ol>
+            );
+          default:
+            return (
+              <p key={index}>
+                {block.lines.map((line, lineIndex) => (
+                  <Fragment key={lineIndex}>
+                    {lineIndex > 0 ? <br /> : null}
+                    {inline(line)}
+                  </Fragment>
+                ))}
+              </p>
+            );
+        }
+      })}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Sources grouped by order: one card per document with page chips.
+// Cited pages come first, then other direct hits; neighbouring context pages
+// are collapsed behind "+N nearby".
+// ---------------------------------------------------------------------------
+
+const RISKY_STATUSES = new Set([
+  "conflict",
+  "ocr_only_unverified",
+  "unverified",
+]);
+
+function citedKeys(answer: string): Set<string> {
+  const keys = new Set<string>();
+  for (const match of answer.matchAll(/\[(S\d+)\s+p\.(\d+)\]/g)) {
+    keys.add(`${match[1]}:${Number.parseInt(match[2], 10)}`);
+  }
+  return keys;
+}
+
+interface SourceGroup {
+  sourceId: string;
+  title: string;
+  subtitle: string[];
+  pages: Array<Source & { cited: boolean }>;
+  anyCited: boolean;
+}
+
+function groupSources(sources: Source[], answer: string): SourceGroup[] {
+  const cited = citedKeys(answer);
+  const groups = new Map<string, SourceGroup>();
+
+  for (const source of sources) {
+    let group = groups.get(source.sourceId);
+
+    if (!group) {
+      const subtitle = [
+        source.documentTitle && source.department ? source.department : null,
+        source.goNumber ? `GO ${source.goNumber}` : null,
+        source.goDate,
+      ].filter((value): value is string => Boolean(value));
+
+      group = {
+        sourceId: source.sourceId,
+        title:
+          source.documentTitle ||
+          source.department ||
+          "Government order",
+        subtitle,
+        pages: [],
+        anyCited: false,
+      };
+      groups.set(source.sourceId, group);
+    }
+
+    const isCited = cited.has(`${source.label}:${source.pageNumber}`);
+    group.pages.push({ ...source, cited: isCited });
+    group.anyCited ||= isCited;
+  }
+
+  const rank = (page: Source & { cited: boolean }) =>
+    page.cited ? 0 : page.retrievalRole === "neighbor" ? 2 : 1;
+
+  return [...groups.values()]
+    .map((group) => ({
+      ...group,
+      pages: [...group.pages].sort(
+        (left, right) =>
+          rank(left) - rank(right) || left.pageNumber - right.pageNumber,
+      ),
+    }))
+    .sort((left, right) => Number(right.anyCited) - Number(left.anyCited));
+}
+
+function evidenceSummary(pages: Source[]): { label: string; className: string } {
+  const statuses = new Set(pages.map((page) => page.numericVerificationStatus));
+
+  if (statuses.size === 1) {
+    const [status] = [...statuses];
+    return { label: statusLabel(status), className: statusClass(status) };
+  }
+
+  return [...statuses].some((status) => RISKY_STATUSES.has(status))
+    ? { label: "Mixed evidence", className: "badge badge-warning" }
+    : { label: "Native text", className: "badge badge-safe" };
+}
+
+function SourceGroupCard({
+  group,
+  onOpenSource,
+}: {
+  group: SourceGroup;
+  onOpenSource: (source: Source) => void;
+}) {
+  const [showNearby, setShowNearby] = useState(false);
+  const mainPages = group.pages.filter(
+    (page) => page.cited || page.retrievalRole !== "neighbor",
+  );
+  const nearbyPages = group.pages.filter(
+    (page) => !page.cited && page.retrievalRole === "neighbor",
+  );
+  const summary = evidenceSummary(group.pages);
+  const mixed = new Set(group.pages.map((page) => page.numericVerificationStatus)).size > 1;
+
+  const chip = (page: Source & { cited: boolean }) => {
+    const role = page.cited
+      ? "Cited in the answer"
+      : page.retrievalRole === "neighbor"
+        ? `Next to p.${page.anchorPageNumber ?? "?"}`
+        : "Matched your question";
+
+    return (
+      <button
+        type="button"
+        key={`${page.label}-${page.pageNumber}`}
+        className={[
+          "page-chip",
+          page.cited ? "page-chip-cited" : page.retrievalRole === "neighbor" ? "page-chip-nearby" : "page-chip-direct",
+          mixed && RISKY_STATUSES.has(page.numericVerificationStatus) ? "page-chip-risky" : "",
+        ].join(" ").trim()}
+        title={`${page.label} · ${role} · ${statusLabel(page.numericVerificationStatus)} — open page ${page.pageNumber}`}
+        onClick={() => onOpenSource(page)}
+      >
+        p.{page.pageNumber}
+        <small>{page.label}</small>
+      </button>
+    );
+  };
+
+  return (
+    <section className={group.anyCited ? "source-group source-group-cited" : "source-group"}>
+      <div className="source-group-head">
+        <div className="source-group-title">
+          <strong>{group.title}</strong>
+          {group.subtitle.length ? (
+            <span>{group.subtitle.join(" · ")}</span>
+          ) : null}
+        </div>
+        <span className={summary.className}>{summary.label}</span>
       </div>
 
-      <div className="source-provenance">
-        <span
-          className={
-            source.retrievalRole ===
-            "neighbor"
-              ? "provenance-badge provenance-neighbor"
-              : "provenance-badge"
-          }
-        >
-          {source.retrievalRole ===
-          "neighbor"
-            ? source.anchorPageNumber
-              ? `Neighbor of p.${source.anchorPageNumber}`
-              : "Neighbor page"
-            : "Direct hit"}
-        </span>
-      </div>
-
-      <div className="source-department">
-        {source.department ??
-          "Unknown department"}
-      </div>
-
-      <div className="source-meta">
-        <span>
-          {source.selectedVariant.toUpperCase()}
-        </span>
-
-        {source.goDate ? (
-          <span>
-            {source.goDate}
-          </span>
+      <div className="page-chips">
+        {mainPages.map(chip)}
+        {nearbyPages.length > 0 && !showNearby ? (
+          <button
+            type="button"
+            className="page-chip page-chip-more"
+            onClick={() => setShowNearby(true)}
+          >
+            +{nearbyPages.length} nearby
+          </button>
         ) : null}
-
-        {source.goNumber ? (
-          <span>
-            GO {source.goNumber}
-          </span>
-        ) : null}
+        {showNearby ? nearbyPages.map(chip) : null}
       </div>
 
-      <div className="source-id">
-        {source.sourceId}
-      </div>
-    </button>
+      <div className="source-id">{group.sourceId}</div>
+    </section>
   );
 }
 
@@ -944,17 +1199,16 @@ function TurnView({
         ) : (
           <div className="answer-text">
             {turn.answer ? (
-              <CitationText
+              <FormattedAnswer
                 text={turn.answer}
                 sources={turn.sources}
                 onOpenSource={onOpenSource}
               />
-            ) : (
-              <span className="muted">
-                Retrieving evidence
-                and generating a
-                validated answer…
-              </span>
+            ) : turn.done ? null : (
+              <ProgressIndicator
+                label={turn.status}
+                startedAt={turn.id}
+              />
             )}
           </div>
         )}
@@ -1041,16 +1295,14 @@ function TurnView({
             Sources
           </div>
 
-          <div className="source-grid">
-            {turn.sources.map(
-              (source) => (
-                <SourceCard
-                  key={`${source.label}-${source.pageNumber}`}
-                  source={source}
-                  onOpenSource={onOpenSource}
-                />
-              ),
-            )}
+          <div className="source-groups">
+            {groupSources(turn.sources, turn.answer).map((group) => (
+              <SourceGroupCard
+                key={group.sourceId}
+                group={group}
+                onOpenSource={onOpenSource}
+              />
+            ))}
           </div>
         </div>
       ) : null}
@@ -1527,6 +1779,18 @@ export function ChatApp({
               );
 
             if (!parsed) {
+              return;
+            }
+
+            if (
+              parsed.event === "status" &&
+              parsed.data &&
+              typeof parsed.data === "object"
+            ) {
+              const label = (parsed.data as { label?: unknown }).label;
+              if (typeof label === "string") {
+                update((turn) => ({ ...turn, status: label }));
+              }
               return;
             }
 
