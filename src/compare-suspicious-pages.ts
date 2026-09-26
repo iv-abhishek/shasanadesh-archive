@@ -16,6 +16,12 @@ import {
   writeFile,
 } from "node:fs/promises";
 import path from "node:path";
+import {
+  OCR_DPI,
+  OCR_LANGS,
+  PDFTOPPM_BIN,
+  TESSERACT_BIN,
+} from "./lib/tool-config.js";
 import { promisify } from "node:util";
 import {
   analyzeTextQuality,
@@ -101,7 +107,7 @@ async function renderAndOcrPage(
   const textPath = `${ocrBase}.txt`;
 
   await execFileAsync(
-    "pdftoppm",
+    PDFTOPPM_BIN,
     [
       "-f",
       String(pageNumber),
@@ -110,7 +116,7 @@ async function renderAndOcrPage(
       "-singlefile",
       "-png",
       "-r",
-      "300",
+      String(OCR_DPI),
       pdfPath,
       renderBase,
     ],
@@ -118,12 +124,12 @@ async function renderAndOcrPage(
   );
 
   await execFileAsync(
-    "tesseract",
+    TESSERACT_BIN,
     [
       pngPath,
       ocrBase,
       "-l",
-      "hin+eng",
+      OCR_LANGS,
       "--oem",
       "1",
       "--psm",

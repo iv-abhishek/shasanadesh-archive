@@ -6,6 +6,8 @@ import { promisify } from "node:util";
 import { isB2Enabled, storeCaptureInB2, type B2CaptureStorage } from "./storage/b2.js";
 import { getSourceAdapter } from "./sources/registry.js";
 import type { SourceAdapter, SourceDocument } from "./sources/types.js";
+import { preservePreviousCapture } from "./lib/capture-history.js";
+import { PDFINFO_BIN, PDFTOTEXT_BIN, crawlDelayMs, crawlerUserAgent } from "./lib/tool-config.js";
 
 const execFileAsync = promisify(execFile);
 const MAX_PDF_BYTES = 500_000_000;
@@ -46,7 +48,7 @@ function hasB2Capture(
 
 async function extractPdfInfo(pdfPath: string): Promise<{ available: boolean; pages: number | null }> {
   try {
-    const { stdout } = await execFileAsync("pdfinfo", [pdfPath], { maxBuffer: 5 * 1024 * 1024 });
+    const { stdout } = await execFileAsync(PDFINFO_BIN, [pdfPath], { maxBuffer: 5 * 1024 * 1024 });
     const match = stdout.match(/^Pages:\s+(\d+)/m);
     return { available: true, pages: match ? Number.parseInt(match[1], 10) : null };
   } catch {
@@ -61,7 +63,7 @@ async function extractText(pdfPath: string, textPath: string): Promise<{
   normalizedTextSha256: string | null;
 }> {
   try {
-    await execFileAsync("pdftotext", ["-layout", "-enc", "UTF-8", pdfPath, textPath]);
+    await execFileAsync(PDFTOTEXT_BIN, ["-layout", "-enc", "UTF-8", pdfPath, textPath]);
     const text = await readFile(textPath, "utf8");
     const normalized = text
       .replace(/\r\n/g, "\n")
@@ -97,7 +99,7 @@ async function downloadPdf(record: SourceDocument, adapter: SourceAdapter): Prom
   const response = await fetch(record.downloadUrl, {
     redirect: "follow",
     headers: {
-      "User-Agent": process.env.CRAWLER_USER_AGENT?.trim() || "ShasanadeshArchive/0.1 (government document research)",
+      "User-Agent": crawlerUserAgent(),
       Accept: "application/pdf,application/octet-stream;q=0.9,*/*;q=0.5",
       "Accept-Language": "en-IN,en;q=0.9,hi;q=0.8",
     },
@@ -193,6 +195,8 @@ async function ingestOne(
 
     console.log("\nINGEST " + record.sourceId + " | " + record.title);
     const response = await downloadPdf(record, adapter);
+    // Keep the earlier capture when re-downloading with --force.
+    const previousCaptures = force ? await preservePreviousCapture(sourceDir) : null;
     await writeFile(pdfPath, response.bytes);
     const pdfInfo = await extractPdfInfo(pdfPath);
     const text = await extractText(pdfPath, textPath);
@@ -209,6 +213,7 @@ async function ingestOne(
       language: record.language,
       goDate: record.goDate,
       goNumber: record.goNumber,
+      ...(previousCaptures ? { previousCaptures } : {}),
       capture: {
         downloadedAt: new Date().toISOString(),
         captureId: randomUUID(),
@@ -294,8 +299,7 @@ async function main(): Promise<void> {
     if (result === "skipped") skipped++;
     if (result === "failed") failed++;
     if (index < selectedRecords.length - 1 && result !== "skipped") {
-      const requested = Number.parseInt(process.env.CRAWL_DELAY_MS ?? "3000", 10);
-      await new Promise((resolve) => setTimeout(resolve, Number.isFinite(requested) ? Math.max(1000, requested) : 3000));
+      await new Promise((resolve) => setTimeout(resolve, crawlDelayMs()));
     }
   }
 

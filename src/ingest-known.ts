@@ -35,6 +35,13 @@ import {
   storeCaptureInB2,
   type B2CaptureStorage,
 } from "./storage/b2.js";
+import { preservePreviousCapture } from "./lib/capture-history.js";
+import {
+  PDFINFO_BIN,
+  PDFTOTEXT_BIN,
+  crawlDelayMs,
+  crawlerUserAgent,
+} from "./lib/tool-config.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -144,7 +151,7 @@ async function extractPdfInfo(pdfPath: string): Promise<{
   raw: string | null;
 }> {
   try {
-    const { stdout } = await execFileAsync("pdfinfo", [pdfPath], {
+    const { stdout } = await execFileAsync(PDFINFO_BIN, [pdfPath], {
       maxBuffer: 5 * 1024 * 1024,
     });
 
@@ -174,7 +181,7 @@ async function extractText(
   normalizedTextSha256: string | null;
 }> {
   try {
-    await execFileAsync("pdftotext", [
+    await execFileAsync(PDFTOTEXT_BIN, [
       "-layout",
       "-enc",
       "UTF-8",
@@ -268,8 +275,9 @@ async function ingestOne(
     const response = await fetch(sourceUrl, {
       redirect: "follow",
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/140 Safari/537.36",
+        // Identify the archive honestly. SHASANADESH_USER_AGENT can override
+        // this if the site ever requires a different client string.
+        "User-Agent": crawlerUserAgent(process.env.SHASANADESH_USER_AGENT),
         Accept: "application/pdf,text/html;q=0.9,*/*;q=0.8",
         "Accept-Language": "hi-IN,hi;q=0.9,en-IN;q=0.8,en;q=0.7",
       },
@@ -288,6 +296,11 @@ async function ingestOne(
       return "failed";
     }
 
+    // Keep the earlier capture when re-downloading with --force.
+    const previousCaptures = force
+      ? await preservePreviousCapture(sourceDir)
+      : null;
+
     await writeFile(pdfPath, buffer);
 
     const pdfInfo = await extractPdfInfo(pdfPath);
@@ -305,6 +318,7 @@ async function ingestOne(
       evidenceUrl: record.evidenceUrl,
 
       idParts: decoded.parts,
+      ...(previousCaptures ? { previousCaptures } : {}),
 
       capture: {
         downloadedAt: new Date().toISOString(),
@@ -386,7 +400,7 @@ async function main() {
     if (result === "failed") failed++;
 
     if (index < records.length - 1 && result !== "skipped") {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, crawlDelayMs()));
     }
   }
 

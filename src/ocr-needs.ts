@@ -29,6 +29,12 @@ import path from "node:path";
 import { promisify } from "node:util";
 import type { B2CaptureStorage } from "./storage/b2.js";
 import { saveDocumentMetadata } from "./storage/document-metadata.js";
+import {
+  OCR_DPI,
+  OCR_LANGS,
+  PDFTOPPM_BIN,
+  TESSERACT_BIN,
+} from "./lib/tool-config.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -114,8 +120,8 @@ async function ocrDocument(
     const prefix = path.join(pagesDir, "page");
 
     await execFileAsync(
-      "pdftoppm",
-      ["-png", "-r", "300", pdfPath, prefix],
+      PDFTOPPM_BIN,
+      ["-png", "-r", String(OCR_DPI), pdfPath, prefix],
       { maxBuffer: 20 * 1024 * 1024 },
     );
 
@@ -140,12 +146,12 @@ async function ocrDocument(
       console.log(`  page ${i + 1}/${images.length}`);
 
       await execFileAsync(
-        "tesseract",
+        TESSERACT_BIN,
         [
           imagePath,
           outputBase,
           "-l",
-          "hin+eng",
+          OCR_LANGS,
           "--oem",
           "1",
           "--psm",
@@ -170,8 +176,8 @@ async function ocrDocument(
       required: true,
       completed: true,
       engine: "tesseract",
-      languages: ["hin", "eng"],
-      dpi: 300,
+      languages: OCR_LANGS.split("+"),
+      dpi: OCR_DPI,
       textBytes: Buffer.byteLength(combined, "utf8"),
       textSha256: combined.length > 0 ? sha256(combined) : null,
       normalizedTextSha256:
@@ -210,11 +216,11 @@ async function main() {
   const force = process.argv.includes("--force");
   const sourceId = requestedSourceId();
 
-  if (!(await commandExists("pdftoppm"))) {
+  if (!(await commandExists(PDFTOPPM_BIN))) {
     throw new Error("pdftoppm not found");
   }
 
-  if (!(await commandExists("tesseract"))) {
+  if (!(await commandExists(TESSERACT_BIN))) {
     throw new Error("tesseract not found");
   }
 

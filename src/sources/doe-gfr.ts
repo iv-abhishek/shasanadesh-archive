@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { SourceAdapter, SourceDocument, SourceLanguage } from "./types.js";
+import { crawlDelayMs, crawlerUserAgent } from "../lib/tool-config.js";
 
 const DOE_ORIGIN = "https://doe.gov.in";
 const LISTINGS = [
@@ -159,16 +160,14 @@ function listingPages(seed: string, html: string): string[] {
 }
 
 async function delay(): Promise<void> {
-  const requested = Number.parseInt(process.env.CRAWL_DELAY_MS ?? "3000", 10);
-  const milliseconds = Number.isFinite(requested) ? Math.max(1000, requested) : 3000;
-  await new Promise((resolve) => setTimeout(resolve, milliseconds));
+  await new Promise((resolve) => setTimeout(resolve, crawlDelayMs()));
 }
 
 async function fetchListing(url: string): Promise<{ html: string; url: string }> {
   const response = await fetch(url, {
     redirect: "follow",
     headers: {
-      "User-Agent": process.env.CRAWLER_USER_AGENT?.trim() || "ShasanadeshArchive/0.1 (government document research)",
+      "User-Agent": crawlerUserAgent(),
       Accept: "text/html,application/xhtml+xml;q=0.9,*/*;q=0.5",
       "Accept-Language": "en-IN,en;q=0.9,hi;q=0.8",
     },

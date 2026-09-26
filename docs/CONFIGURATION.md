@@ -125,6 +125,10 @@ Initial candidate: Qwen3-Reranker family.
 | `TESSERACT_BIN` | `/opt/homebrew/bin/tesseract` |
 | `PDFTOPPM_BIN` | `/opt/homebrew/bin/pdftoppm` |
 | `PDFTOTEXT_BIN` | `/opt/homebrew/bin/pdftotext` |
+| `PDFINFO_BIN` | `pdfinfo` (from `PATH`) |
+
+All OCR and PDF tool settings are optional; without them the tools are taken
+from `PATH`, OCR uses `hin+eng`, and pages are rendered at 300 DPI.
 
 ## Government source ingestion
 
@@ -135,6 +139,13 @@ Initial candidate: Qwen3-Reranker family.
 | `DOE_GFR_MAX_PAGES` | maximum listing pages per DOE current/archive listing; default `3`, maximum `20` |
 | `SHASANADESH_BASE_URL` | `https://shasanadesh.up.gov.in` |
 | `CRAWL_CONCURRENCY_PER_DOMAIN` | conservative, e.g. `1` |
+| `SHASANADESH_USER_AGENT` | optional override of `CRAWLER_USER_AGENT` for Shasanadesh downloads only |
+
+Both ingesters wait at least 3 seconds between downloads (`CRAWL_DELAY_MS`
+raises that). Re-downloading with `--force` copies the previous
+`original.pdf` and `metadata.json` to `captures/<capture-id>/` in the document
+directory and records them under `previousCaptures`, so earlier captures are
+never overwritten.
 
 The first registered external source is the Department of Expenditure GFR collection.
 Run `npm run ingest:doe-gfr` to discover and capture its current and archive listings.

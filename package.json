@@ -69,7 +69,8 @@
     "ingest:doe-gfr": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts doe-gfr",
     "test:numeric-tokens": "tsx src/lib/numeric-tokens.test.ts",
     "b2:check": "node --env-file-if-exists=.env scripts/check-b2.mjs",
-    "test:b2": "tsx src/storage/b2.test.ts"
+    "test:b2": "tsx src/storage/b2.test.ts",
+    "test:capture-history": "tsx src/lib/capture-history.test.ts"
   },
   "keywords": [],
   "author": "",

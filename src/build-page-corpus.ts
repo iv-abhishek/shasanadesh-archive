@@ -29,6 +29,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import type { B2CaptureStorage } from "./storage/b2.js";
 import { saveDocumentMetadata } from "./storage/document-metadata.js";
+import { PDFTOTEXT_BIN } from "./lib/tool-config.js";
 
 const execFileAsync = promisify(execFile);
 const documentsRoot = path.resolve("data/documents");
@@ -99,7 +100,7 @@ async function extractNativePage(
   pageNumber: number,
 ): Promise<string> {
   const { stdout } = await execFileAsync(
-    "pdftotext",
+    PDFTOTEXT_BIN,
     [
       "-f",
       String(pageNumber),
