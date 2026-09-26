@@ -10,6 +10,13 @@
  * Numeric conflict is computed at the logical-page level by comparing the
  * native and OCR numeric-token sets. This is a warning for downstream answer
  * generation; it is not an automatic correctness judgment.
+ *
+ * The local corpus files are the source of truth for every source they
+ * contain. After upserting, rows for those sources that are no longer in the
+ * corpus (for example a native canonical variant replaced by OCR, or a page
+ * that now produces fewer chunks) are deleted in the same transaction, so
+ * stale text cannot keep competing in retrieval. Documents that are absent
+ * from the corpus files are left untouched.
  */
 
 import {
@@ -204,9 +211,18 @@ async function loadDocuments(client: PoolClient): Promise<number> {
   return count;
 }
 
+interface PageLoadStats {
+  pages: number;
+  variants: number;
+  conflicts: number;
+  sourceIds: string[];
+  pageKeys: string[];
+  variantIds: string[];
+}
+
 async function loadPagesAndVariants(
   client: PoolClient,
-): Promise<{ pages: number; variants: number; conflicts: number }> {
+): Promise<PageLoadStats> {
   const variants = (await readFile(retrievalPagesPath, "utf8"))
     .split("\n")
     .filter(Boolean)
@@ -314,10 +330,15 @@ async function loadPagesAndVariants(
     pages: grouped.size,
     variants: variants.length,
     conflicts: conflictCount,
+    sourceIds: [...new Set(variants.map((row) => row.sourceId))],
+    pageKeys: [...grouped.keys()],
+    variantIds: variants.map((row) => row.variantId),
   };
 }
 
-async function loadChunks(client: PoolClient): Promise<number> {
+async function loadChunks(
+  client: PoolClient,
+): Promise<{ count: number; chunkIds: string[] }> {
   const chunks = (await readFile(retrievalChunksPath, "utf8"))
     .split("\n")
     .filter(Boolean)
@@ -374,7 +395,57 @@ async function loadChunks(client: PoolClient): Promise<number> {
     );
   }
 
-  return chunks.length;
+  return {
+    count: chunks.length,
+    chunkIds: chunks.map((chunk) => chunk.variantChunkId),
+  };
+}
+
+/**
+ * Delete rows for the loaded sources that the current corpus no longer
+ * produces. Chunks go first, then variants, then logical pages.
+ */
+async function pruneStaleRows(
+  client: PoolClient,
+  pageStats: PageLoadStats,
+  chunkIds: string[],
+): Promise<{ chunks: number; variants: number; pages: number }> {
+  if (pageStats.sourceIds.length === 0) {
+    return { chunks: 0, variants: 0, pages: 0 };
+  }
+
+  const chunks = await client.query(
+    `
+    DELETE FROM chunks
+    WHERE source_id = ANY($1::text[])
+      AND NOT (variant_chunk_id = ANY($2::text[]))
+    `,
+    [pageStats.sourceIds, chunkIds],
+  );
+
+  const variants = await client.query(
+    `
+    DELETE FROM page_variants
+    WHERE source_id = ANY($1::text[])
+      AND NOT (variant_id = ANY($2::text[]))
+    `,
+    [pageStats.sourceIds, pageStats.variantIds],
+  );
+
+  const pages = await client.query(
+    `
+    DELETE FROM pages
+    WHERE source_id = ANY($1::text[])
+      AND NOT ((source_id || '#' || page_number::text) = ANY($2::text[]))
+    `,
+    [pageStats.sourceIds, pageStats.pageKeys],
+  );
+
+  return {
+    chunks: chunks.rowCount ?? 0,
+    variants: variants.rowCount ?? 0,
+    pages: pages.rowCount ?? 0,
+  };
 }
 
 async function main() {
@@ -396,7 +467,13 @@ async function main() {
 
     const documents = await loadDocuments(client);
     const pageStats = await loadPagesAndVariants(client);
-    const chunks = await loadChunks(client);
+    const chunkStats = await loadChunks(client);
+    const chunks = chunkStats.count;
+    const pruned = await pruneStaleRows(
+      client,
+      pageStats,
+      chunkStats.chunkIds,
+    );
 
     await client.query(
       `
@@ -419,6 +496,7 @@ async function main() {
         chunks,
         JSON.stringify({
           numericConflictPages: pageStats.conflicts,
+          pruned,
         }),
       ],
     );
@@ -432,6 +510,10 @@ async function main() {
     console.log(`Page variants:      ${pageStats.variants}`);
     console.log(`Numeric conflicts:  ${pageStats.conflicts}`);
     console.log(`Variant chunks:     ${chunks}`);
+    console.log(
+      `Stale rows removed: ${pruned.chunks} chunks, ` +
+        `${pruned.variants} variants, ${pruned.pages} pages`,
+    );
     console.log(`Ingestion run ID:   ${runId}`);
   } catch (error) {
     await client.query("ROLLBACK");
