@@ -2,6 +2,12 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 26 Sept 2026, 10:50 pm IST (Claude)
+
+- "Project Alankar" Hindi answer was correct but cut mid-word (repair capped at 450 tokens).
+  Added per-language budgets, full-budget repair, trim-to-last-sentence on finish_reason=length,
+  "Shortened" badge, concise-answer prompt rule (ADR-048).
+
 ## 26 Sept 2026, 10:35 pm IST (Claude)
 
 - Abhishek tested Ask after the pipeline run: the Hindi solar-pump guideline answer was right

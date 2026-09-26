@@ -82,6 +82,8 @@ interface DoneEvent {
   noEvidenceReason?: "no_relevant_pages" | "model_found_no_answer";
   /** Nothing close in the officer's departments, so all departments were searched. */
   scopeFallback?: boolean;
+  /** The answer hit the length limit and was cut back to its last full sentence. */
+  shortened?: boolean;
   /** Best reranker relevance (0–1) among direct pages, for calibration. */
   bestRelevance?: number;
 
@@ -1644,6 +1646,15 @@ function TurnView({
 
             {turn.done.noEvidence ? (
               <span className="badge badge-warning">No matching order</span>
+            ) : null}
+
+            {turn.done.shortened ? (
+              <span
+                className="badge badge-warning"
+                title="The answer reached the length limit and was cut back to its last complete sentence. Ask a follow-up (e.g. 'बाकी शर्तें बताएं') for the rest."
+              >
+                Shortened
+              </span>
             ) : null}
 
             {turn.done.scopeFallback ? (

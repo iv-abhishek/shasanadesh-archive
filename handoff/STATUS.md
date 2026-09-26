@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 26 Sept 2026, 10:35 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 26 Sept 2026, 10:50 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -38,6 +38,8 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   ("Searched all departments"); still nothing → fixed "no matching order" answer without
   sources. Only cited orders are shown under an answer; others behind a toggle. The
   latency panel shows "Best match" for calibration.
+- Answers never end mid-word (ADR-048): Hindi token budget 1800, repair gets the full
+  budget, length-stopped answers are trimmed to the last full sentence and badged "Shortened".
 - Department picker: one choice per department (English name preferred).
 - Department filters (chat scope and Search) match by Shasanadesh department ID
   as well as by name (ADR-044).

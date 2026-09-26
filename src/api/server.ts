@@ -65,6 +65,7 @@ import {
   requestsGlobalScope,
 } from "../rag/intent-routing.js";
 import { assessRelevance, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
+import { trimIncompleteAnswer } from "../rag/truncation.js";
 
 const PORT = Number.parseInt(
   process.env.API_PORT ?? "8787",
@@ -126,10 +127,22 @@ const LLM_MAX_TOKENS = Number.parseInt(
   10,
 );
 
-const LLM_REPAIR_MAX_TOKENS = Number.parseInt(
-  process.env.LLM_REPAIR_MAX_TOKENS ?? "450",
+// Devanagari costs several times more tokens per word than English, so Hindi
+// answers get a larger budget (26 Sept: Hindi answers were cut mid-word at 900).
+const LLM_MAX_TOKENS_HI = Number.parseInt(
+  process.env.LLM_MAX_TOKENS_HI ?? "1800",
   10,
 );
+
+// The repair pass rewrites the whole answer, so by default it gets the same
+// budget as the first draft. Set LLM_REPAIR_MAX_TOKENS to cap it (faster).
+const LLM_REPAIR_MAX_TOKENS = process.env.LLM_REPAIR_MAX_TOKENS
+  ? Number.parseInt(process.env.LLM_REPAIR_MAX_TOKENS, 10)
+  : null;
+
+function answerTokenBudget(language: "en" | "hi"): number {
+  return language === "hi" ? LLM_MAX_TOKENS_HI : LLM_MAX_TOKENS;
+}
 
 const LLM_TEMPERATURE = Number.parseFloat(
   process.env.LLM_TEMPERATURE ?? "0.1",
@@ -468,7 +481,7 @@ async function generateCompletion(
   messages: GeneratorMessage[],
   temperature: number,
   maxTokens = LLM_MAX_TOKENS,
-): Promise<string> {
+): Promise<{ text: string; truncated: boolean }> {
   return runLocalGpuExclusive(
     "generation",
     async () => {
@@ -498,18 +511,28 @@ async function generateCompletion(
       }
 
       let answer = "";
+      let finishReason: string | null = null;
 
       for await (const chunk of upstream) {
-        const token =
-          chunk.choices[0]
-            ?.delta?.content;
+        const choice = chunk.choices[0];
+        const token = choice?.delta?.content;
 
         if (token) {
           answer += token;
         }
+        if (choice?.finish_reason) {
+          finishReason = choice.finish_reason;
+        }
       }
 
-      return answer.trim();
+      // Stopped by max_tokens: cut back to the last complete sentence/bullet
+      // rather than returning a half word (src/rag/truncation.ts).
+      if (finishReason === "length") {
+        const trimmed = trimIncompleteAnswer(answer);
+        return { text: trimmed || answer.trim(), truncated: true };
+      }
+
+      return { text: answer.trim(), truncated: false };
     },
   );
 }
@@ -1275,14 +1298,21 @@ server.post(
         : undefined,
     );
 
-    const firstDraft =
+    const tokenBudget =
+      answerTokenBudget(responseLanguage);
+
+    const firstCompletion =
         await generateCompletion(
           openai,
           generatorMessages,
           parsed.data.regenerate
             ? REGENERATE_TEMPERATURE
             : LLM_TEMPERATURE,
+          tokenBudget,
         );
+
+    const firstDraft =
+      firstCompletion.text;
 
       const generationMs =
       performance.now() -
@@ -1300,6 +1330,10 @@ server.post(
 
       let finalAnswer =
         firstDraft;
+
+      // True when the answer shown was shortened at the token limit.
+      let shortened =
+        firstCompletion.truncated;
 
       let finalValidation =
         firstValidation;
@@ -1371,13 +1405,16 @@ server.post(
         const repairStartedAt =
         performance.now();
 
-      const repairedAnswer =
+      const repairCompletion =
           await generateCompletion(
             openai,
             repairMessages,
             0,
-            LLM_REPAIR_MAX_TOKENS,
+            LLM_REPAIR_MAX_TOKENS ?? tokenBudget,
           );
+
+      const repairedAnswer =
+        repairCompletion.text;
 
         repairMs +=
         performance.now() -
@@ -1393,6 +1430,9 @@ server.post(
 
         finalAnswer =
           repairedAnswer;
+
+        shortened =
+          repairCompletion.truncated;
 
         finalValidation =
           repairedValidation;
@@ -1523,6 +1563,11 @@ server.post(
               (issue) => issue.code,
             ),
           repairValidationIssues,
+          // Salvage and fallback texts are built whole, never shortened.
+          shortened:
+            shortened &&
+            !usedFallback &&
+            !usedQualitativeSalvage,
           scopeFallback,
           retrievalScope,
           bestRelevance:

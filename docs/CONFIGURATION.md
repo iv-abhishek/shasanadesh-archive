@@ -112,6 +112,12 @@ that excludes either the `raw/` or `processed/` path.
 | `LLM_BASE_URL` | OpenAI-compatible inference URL |
 | `LLM_API_KEY` | optional/local or hosted auth |
 | `LLM_MODEL` | selected generator model |
+| `LLM_MAX_TOKENS` | answer token budget for English questions (default `900`) |
+| `LLM_MAX_TOKENS_HI` | answer token budget for Hindi questions (default `1800`; Devanagari needs several times more tokens per word) |
+| `LLM_REPAIR_MAX_TOKENS` | optional cap for the repair pass; unset = same budget as the first draft |
+
+If an answer still reaches its budget, it is cut back to the last complete sentence or
+bullet (`src/rag/truncation.ts`) and badged "Shortened" rather than ending mid-word.
 
 Initial candidate: Qwen3.6 family served by vLLM.
 

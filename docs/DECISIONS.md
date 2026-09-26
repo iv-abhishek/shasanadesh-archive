@@ -558,3 +558,17 @@ forced citations onto that sentence, and two unrelated orders were shown.
 
 The threshold is uncalibrated; the answer's latency panel shows "Best match" so
 good and bad questions can be compared before tuning it.
+
+## ADR-048 - Answers never end mid-word; Hindi gets a larger token budget
+
+26 Sept: a correct Hindi answer ended "… कार्य की विशिष": the repair pass was capped
+at 450 tokens and Devanagari uses several times more tokens per word than English
+(the first draft's 900 also cut the solar-pump answer). Now:
+
+- Hindi questions use `LLM_MAX_TOKENS_HI` (default 1800), English `LLM_MAX_TOKENS` (900);
+  the repair pass gets the same budget unless `LLM_REPAIR_MAX_TOKENS` caps it.
+- When generation stops with `finish_reason = length`, the text is cut back to its last
+  complete sentence or bullet, a dangling "…निम्नलिखित शर्तें दी गई हैं:" lead-in is dropped,
+  and the answer is badged "Shortened" (`done.shortened`). Validation runs on the trimmed text.
+- The prompt asks for concise answers (about 6 bullets / 200 words), which also keeps
+  generation time down on the laptop.
