@@ -93,9 +93,12 @@ FIRST-DRAFT OUTPUT CONTRACT
 - Before returning the answer, silently check: no unsupported numeric claim; every factual unit has a valid citation.
 `.trim();
 
+const DIRECT_PAGE_CHARS = 2800;
+const NEIGHBOR_PAGE_CHARS = 1200;
+
 function clip(
   text: string,
-  maxChars = 2800,
+  maxChars = DIRECT_PAGE_CHARS,
 ): string {
   if (text.length <= maxChars) {
     return text;
@@ -167,9 +170,17 @@ export function buildEvidenceContext(
         `GENERATION_NUMERICS_MASKED=${generationNumericsMasked ? "YES" : "NO"}`,
       ].join("\n");
 
+      // Neighbour pages are context only, so they get a smaller budget. Long
+      // prompts dominate local generation time (prefill), especially for
+      // token-heavy Hindi OCR text.
       const selected = [
         "SELECTED PAGE TEXT:",
-        clip(selectedGenerationText),
+        clip(
+          selectedGenerationText,
+          item.retrieval_role === "neighbor"
+            ? NEIGHBOR_PAGE_CHARS
+            : DIRECT_PAGE_CHARS,
+        ),
       ].join("\n");
 
       const canonicalDiffers =

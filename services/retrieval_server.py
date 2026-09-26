@@ -34,6 +34,9 @@ RERANK_INSTRUCTION = (
 )
 
 RRF_K = 60
+# Cross-encoder batch size. Larger batches keep the Apple GPU busier; 24
+# candidates at batch 4 meant six sequential passes.
+RERANK_BATCH_SIZE = int(os.getenv("RERANK_BATCH_SIZE", "12"))
 # pgvector's HNSW scan returns at most hnsw.ef_search rows (default 40), and
 # metadata filters are applied after the scan, so a filtered search could
 # return far fewer than candidate_count rows. Widen the scan per query.
@@ -67,6 +70,7 @@ class SearchRequest(BaseModel):
 class Evidence(BaseModel):
     label: str
     source_id: str
+    document_title: str | None = None
     page_number: int
     department: str | None
     go_number: str | None
@@ -109,6 +113,7 @@ class Hit:
     go_number: str | None
     go_date: str | None
     source_url: str
+    document_title: str | None = None
     lexical_score: float | None = None
     fused_score: float = 0.0
     rerank_score: float = 0.0
@@ -177,6 +182,7 @@ def make_hit(row: dict[str, Any], lexical: bool = False) -> Hit:
         go_number=row["go_number"],
         go_date=str(row["go_date"]) if row["go_date"] is not None else None,
         source_url=row["source_url"],
+        document_title=row.get("document_title"),
     )
     if lexical:
         hit.lexical_score = float(row["score"])
@@ -312,6 +318,7 @@ def retrieve_hybrid(
         "SELECT c.variant_chunk_id, c.variant_id, c.logical_page_id, c.source_id, "
         "c.page_number, c.variant_type, c.canonical, c.text_content, "
         "p.numeric_conflict, d.department, d.go_number, d.go_date, d.source_url, "
+        "NULLIF(d.metadata->>'title', '') AS document_title, "
     )
 
     filter_sql, filter_params = build_filter_clause(filters)
@@ -452,7 +459,8 @@ def load_neighbor_hits(
                   d.department,
                   d.go_number,
                   d.go_date,
-                  d.source_url
+                  d.source_url,
+                  NULLIF(d.metadata->>'title', '') AS document_title
                 FROM pages p
                 JOIN documents d
                   ON d.source_id = p.source_id
@@ -512,6 +520,7 @@ def load_neighbor_hits(
                         else None
                     ),
                     source_url=row["source_url"],
+                    document_title=row["document_title"],
                     fused_score=0.0,
                     rerank_score=0.0,
                     retrieval_role="neighbor",
@@ -542,6 +551,7 @@ def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
     return Evidence(
         label=label,
         source_id=hit.source_id,
+        document_title=hit.document_title,
         page_number=hit.page_number,
         department=hit.department,
         go_number=hit.go_number,
@@ -646,7 +656,7 @@ def search(body: SearchRequest, request: Request):
     rerank_started_at = time.perf_counter()
     scores = reranker.predict(
         [(query, hit.text) for hit in pool],
-        batch_size=4,
+        batch_size=RERANK_BATCH_SIZE,
         show_progress_bar=False,
         prompt_name="query",
     )

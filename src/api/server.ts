@@ -248,6 +248,94 @@ interface RetrievalOptions {
   maxEvidencePages?: number;
 }
 
+type ProgressStage =
+  | "searching"
+  | "reading"
+  | "writing"
+  | "checking";
+
+const PROGRESS_LABELS: Record<
+  "en" | "hi",
+  Record<ProgressStage, string>
+> = {
+  en: {
+    searching: "Searching",
+    reading: "Reading",
+    writing: "Writing the answer from",
+    checking: "Re-checking citations and numbers",
+  },
+  hi: {
+    searching: "खोज रहे हैं",
+    reading: "पढ़ रहे हैं",
+    writing: "से उत्तर लिख रहे हैं",
+    checking: "उद्धरण और संख्याएँ दोबारा जाँच रहे हैं",
+  },
+};
+
+function progressLabel(
+  stage: ProgressStage,
+  language: "en" | "hi",
+  detail?: string,
+): string {
+  const base = PROGRESS_LABELS[language][stage];
+
+  if (!detail) {
+    if (stage === "writing") {
+      return language === "hi" ? "उत्तर लिख रहे हैं" : "Writing the answer";
+    }
+    return base;
+  }
+
+  // Hindi puts the object before the verb: "सभी विभागों में खोज रहे हैं".
+  if (language === "hi") {
+    return stage === "searching"
+      ? `${detail} में ${base}`
+      : `${detail} ${base}`;
+  }
+
+  return `${base} ${detail}`;
+}
+
+function describeScope(
+  scope: string,
+  filters: SearchFilters | undefined,
+  language: "en" | "hi",
+): string {
+  const hi = language === "hi";
+
+  if (filters?.sourceId) {
+    return hi ? `आदेश ${filters.sourceId}` : `order ${filters.sourceId}`;
+  }
+
+  if (filters?.department) {
+    return filters.department;
+  }
+
+  if (filters?.departments?.length) {
+    const names = filters.departments;
+    const shown = names.slice(0, 3).join(", ");
+    const more = names.length > 3 ? (hi ? ` और ${names.length - 3} अन्य` : ` and ${names.length - 3} more`) : "";
+    return shown + more;
+  }
+
+  return hi
+    ? "सभी विभागों"
+    : "all departments";
+}
+
+function describeEvidence(
+  evidence: { source_id: string }[],
+  language: "en" | "hi",
+): string {
+  const orders = new Set(evidence.map((item) => item.source_id)).size;
+
+  if (language === "hi") {
+    return `${orders} ${orders === 1 ? "आदेश" : "आदेशों"} के ${evidence.length} पृष्ठ`;
+  }
+
+  return `${evidence.length} page${evidence.length === 1 ? "" : "s"} in ${orders} order${orders === 1 ? "" : "s"}`;
+}
+
 async function retrieve(
   query: string,
   topK = RAG_TOP_K,
@@ -758,11 +846,70 @@ server.post(
       };
     }
 
+    reply.hijack();
+
+    reply.raw.statusCode =
+      200;
+
+    reply.raw.setHeader(
+      "content-type",
+      "text/event-stream; charset=utf-8",
+    );
+
+    reply.raw.setHeader(
+      "cache-control",
+      "no-cache, no-transform",
+    );
+
+    reply.raw.setHeader(
+      "connection",
+      "keep-alive",
+    );
+
+    reply.raw.setHeader(
+      "x-accel-buffering",
+      "no",
+    );
+
+    const sendEvent = (
+      event: string,
+      data: unknown,
+    ) => {
+      reply.raw.write(
+        `event: ${event}\n`,
+      );
+
+      reply.raw.write(
+        `data: ${JSON.stringify(data)}\n\n`,
+      );
+    };
+
+    // Stream opens before retrieval so the browser can show progress while
+    // the slow stages (reranking, generation) run.
+    const sendStatus = (
+      stage: ProgressStage,
+      detail?: string,
+    ) =>
+      sendEvent("status", {
+        stage,
+        label: progressLabel(stage, responseLanguage, detail),
+      });
+
+    try {
     let sourceStickinessApplied =
       retrievalScope ===
         "active_source" ||
       retrievalScope ===
         "active_department";
+
+    sendStatus(
+      "searching",
+      describeScope(
+        retrievalScope,
+        retrievalFilters,
+        responseLanguage,
+      ),
+    );
 
     const retrievalStartedAt =
       performance.now();
@@ -833,6 +980,14 @@ server.post(
       performance.now() -
       retrievalStartedAt;
 
+    sendStatus(
+      "reading",
+      describeEvidence(
+        retrieval.evidence,
+        responseLanguage,
+      ),
+    );
+
     const evidenceContext =
       buildEvidenceContext(
         retrieval.evidence,
@@ -895,44 +1050,6 @@ server.post(
           LLM_REQUEST_TIMEOUT_MS,
       });
 
-    reply.hijack();
-
-    reply.raw.statusCode =
-      200;
-
-    reply.raw.setHeader(
-      "content-type",
-      "text/event-stream; charset=utf-8",
-    );
-
-    reply.raw.setHeader(
-      "cache-control",
-      "no-cache, no-transform",
-    );
-
-    reply.raw.setHeader(
-      "connection",
-      "keep-alive",
-    );
-
-    reply.raw.setHeader(
-      "x-accel-buffering",
-      "no",
-    );
-
-    const sendEvent = (
-      event: string,
-      data: unknown,
-    ) => {
-      reply.raw.write(
-        `event: ${event}\n`,
-      );
-
-      reply.raw.write(
-        `data: ${JSON.stringify(data)}\n\n`,
-      );
-    };
-
     sendEvent(
       "sources",
       retrieval.evidence.map(
@@ -941,6 +1058,9 @@ server.post(
             item.label,
           sourceId:
             item.source_id,
+          documentTitle:
+            item.document_title ??
+            null,
           pageNumber:
             item.page_number,
           department:
@@ -973,7 +1093,6 @@ server.post(
       ),
     );
 
-    try {
       const generationStartedAt =
       performance.now();
 
@@ -998,6 +1117,16 @@ server.post(
 
       return result;
     };
+
+    sendStatus(
+      "writing",
+      retrieval.evidence.length > 0
+        ? describeEvidence(
+            retrieval.evidence,
+            responseLanguage,
+          )
+        : undefined,
+    );
 
     const firstDraft =
         await generateCompletion(
@@ -1063,6 +1192,8 @@ server.post(
 
       if (!finalValidation.ok) {
         repaired = true;
+
+        sendStatus("checking");
 
         const repairMessages:
           GeneratorMessage[] = [

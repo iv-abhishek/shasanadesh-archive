@@ -228,7 +228,12 @@ Model weights are downloaded only when embedding/search is first run.
 ```text
 RERANKER_MODEL=Qwen/Qwen3-Reranker-0.6B
 RERANK_CANDIDATES=24
+RERANK_BATCH_SIZE=12
 ```
+
+`RERANK_BATCH_SIZE` controls how many passages the cross-encoder scores per
+GPU pass (previously fixed at 4). Lower it if the retrieval service runs out
+of memory.
 
 The reranker uses the same `.venv-embeddings` Python environment during the local
 pilot.

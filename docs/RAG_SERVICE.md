@@ -29,7 +29,14 @@ Citation contract:
 [S1 p.9]
 ```
 
-`/api/chat` streams Server-Sent Events: `sources`, `token`, `done`, `error`.
+`/api/chat` streams Server-Sent Events: `status`, `sources`, `token`, `done`, `error`.
+
+The stream opens before retrieval. `status` events (`searching`, `reading`,
+`writing`, `checking`) carry a short label in the response language, for
+example "Searching Medical and Health" or "Writing the answer from 7 pages in
+1 order", so the UI can show progress during reranking and generation.
+Retrieval or generator failures after that point arrive as an `error` event
+that names the unreachable service.
 
 ## Answer safety gate
 
@@ -136,7 +143,8 @@ Defaults:
 
 Neighbor evidence includes `RETRIEVAL_ROLE=neighbor` and `ANCHOR_PAGE`. The generator is
 told that adjacency is not relevance and must cite the exact page that supports a claim.
-Neighbor text is clipped more aggressively to keep local-model context bounded.
+Neighbor text is clipped to 1,200 characters (direct pages: 2,800) to keep
+local-model prompts, and therefore prefill time, bounded.
 
 Structured rule/section expansion remains a later step after reliable heading and rule
 boundary extraction.

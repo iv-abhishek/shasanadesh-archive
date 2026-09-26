@@ -16,6 +16,7 @@ export type NumericVerificationStatus =
 export interface RetrievalEvidence {
   label: string;
   source_id: string;
+  document_title?: string | null;
   page_number: number;
   department: string | null;
   go_number: string | null;
