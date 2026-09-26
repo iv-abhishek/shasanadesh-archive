@@ -2090,7 +2090,7 @@ export function WorkspaceApp() {
             }
           />
         ) : (
-          <SearchApp />
+          <SearchApp scopeDepartments={profile.departments} />
         )}
           </>
         )}

@@ -1,3 +1,20 @@
+/**
+ * Pipeline stage: ingestion (registered official sources)
+ *
+ * Purpose:
+ *   Run a source adapter's discovery, then download, hash, extract and archive
+ *   each PDF it lists. Usage:
+ *     npm run ingest:source -- <adapter-id> [--limit N] [--force]
+ *     npm run ingest:sources            (every registered adapter in turn)
+ *
+ * Invariants:
+ *   - documents live in data/documents/<sourceId>/ and archive/<collection>/ in
+ *     B2; sourceIds carry the adapter prefix, so collections never mix
+ *   - everything the listing said is kept in metadata.json (titles, related
+ *     editions, the verbatim listing record) alongside capture hashes
+ *   - downloads go through politeFetch (allowlist, robots.txt, crawl delay)
+ */
+
 import { createHash, randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
@@ -7,7 +24,9 @@ import { isB2Enabled, storeCaptureInB2, type B2CaptureStorage } from "./storage/
 import { getSourceAdapter } from "./sources/registry.js";
 import type { SourceAdapter, SourceDocument } from "./sources/types.js";
 import { preservePreviousCapture } from "./lib/capture-history.js";
-import { PDFINFO_BIN, PDFTOTEXT_BIN, crawlDelayMs, crawlerUserAgent } from "./lib/tool-config.js";
+import { PDFINFO_BIN, PDFTOTEXT_BIN, crawlDelayMs } from "./lib/tool-config.js";
+import { listSourceAdapters } from "./sources/registry.js";
+import { politeFetch } from "./sources/http.js";
 
 const execFileAsync = promisify(execFile);
 const MAX_PDF_BYTES = 500_000_000;
@@ -96,14 +115,10 @@ async function downloadPdf(record: SourceDocument, adapter: SourceAdapter): Prom
   finalUrl: string;
 }> {
   assertOfficialDownload(record.downloadUrl, adapter);
-  const response = await fetch(record.downloadUrl, {
-    redirect: "follow",
-    headers: {
-      "User-Agent": crawlerUserAgent(),
-      Accept: "application/pdf,application/octet-stream;q=0.9,*/*;q=0.5",
-      "Accept-Language": "en-IN,en;q=0.9,hi;q=0.8",
-    },
-    signal: AbortSignal.timeout(120_000),
+  const response = await politeFetch(record.downloadUrl, {
+    allowedHosts: adapter.allowedHosts,
+    accept: "application/pdf,application/octet-stream;q=0.9,*/*;q=0.5",
+    timeoutMs: 120_000,
   });
   const finalUrl = new URL(response.url || record.downloadUrl);
   if (finalUrl.protocol !== "https:" || !adapter.allowedHosts.includes(finalUrl.hostname)) {
@@ -213,6 +228,11 @@ async function ingestOne(
       language: record.language,
       goDate: record.goDate,
       goNumber: record.goNumber,
+      collection: adapter.collection,
+      ...(record.titles ? { titles: record.titles } : {}),
+      ...(record.relatedSourceIds?.length ? { relatedSourceIds: record.relatedSourceIds } : {}),
+      ...(record.sourceRecord ? { sourceRecord: record.sourceRecord } : {}),
+      discoveredAt: new Date().toISOString(),
       ...(previousCaptures ? { previousCaptures } : {}),
       capture: {
         downloadedAt: new Date().toISOString(),
@@ -250,14 +270,7 @@ async function ingestOne(
   }
 }
 
-async function main(): Promise<void> {
-  const args = process.argv.slice(2);
-  const sourceName = args.find((argument) => !argument.startsWith("--"));
-  if (!sourceName) {
-    throw new Error("Usage: npm run ingest:source -- <source-id> [--limit N] [--force]");
-  }
-  const adapter = getSourceAdapter(sourceName);
-  const force = args.includes("--force");
+function parseLimit(args: string[]): number | undefined {
   const limitOption = args.find((argument) => argument.startsWith("--limit="));
   const limitIndex = args.indexOf("--limit");
   const limitValue = limitOption
@@ -265,49 +278,75 @@ async function main(): Promise<void> {
     : limitIndex >= 0
       ? args[limitIndex + 1]
       : undefined;
-  let limit: number | undefined;
-  if (limitValue !== undefined) {
-    const parsed = Number.parseInt(limitValue, 10);
-    if (!Number.isInteger(parsed) || parsed < 1) {
-      throw new Error("--limit must be a positive whole number.");
-    }
-    limit = parsed;
-  } else if (limitIndex >= 0) {
-    throw new Error("--limit needs a positive whole number.");
+  if (limitValue === undefined) {
+    if (limitIndex >= 0) throw new Error("--limit needs a positive whole number.");
+    return undefined;
   }
-  const b2Enabled = isB2Enabled();
+  const parsed = Number.parseInt(limitValue, 10);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new Error("--limit must be a positive whole number.");
+  }
+  return parsed;
+}
 
-  console.log("Source:    " + adapter.displayName);
-  console.log("B2:        " + (b2Enabled ? "enabled" : "local-only"));
+interface RunTotals {
+  downloaded: number;
+  stored: number;
+  skipped: number;
+  failed: number;
+}
+
+async function runAdapter(adapter: SourceAdapter, force: boolean, limit: number | undefined): Promise<RunTotals> {
+  const b2Enabled = isB2Enabled();
+  console.log("\nSource:    " + adapter.displayName);
+  console.log("B2:        " + (b2Enabled ? "enabled (collection " + adapter.collection + ")" : "local-only"));
   console.log("Discovering official source records...");
   const records = await adapter.discover();
   const selectedRecords = limit === undefined ? records : records.slice(0, limit);
   console.log("Discovered: " + records.length);
   console.log("Selected:   " + selectedRecords.length);
   for (const record of selectedRecords) {
-    console.log("  " + (record.goDate ?? "date unknown") + " | " + record.title + " | " + record.downloadUrl);
+    console.log("  " + (record.goDate ?? "date unknown") + " | " + record.title.slice(0, 110) + " | " + record.downloadUrl);
   }
 
-  let downloaded = 0;
-  let stored = 0;
-  let skipped = 0;
-  let failed = 0;
+  const totals: RunTotals = { downloaded: 0, stored: 0, skipped: 0, failed: 0 };
   for (let index = 0; index < selectedRecords.length; index++) {
     const result = await ingestOne(selectedRecords[index], adapter, force, b2Enabled);
-    if (result === "downloaded") downloaded++;
-    if (result === "stored") stored++;
-    if (result === "skipped") skipped++;
-    if (result === "failed") failed++;
+    totals[result === "downloaded" ? "downloaded" : result === "stored" ? "stored" : result === "skipped" ? "skipped" : "failed"]++;
     if (index < selectedRecords.length - 1 && result !== "skipped") {
       await new Promise((resolve) => setTimeout(resolve, crawlDelayMs()));
     }
   }
 
-  console.log("\nIngestion summary");
-  console.log("Downloaded: " + downloaded);
-  console.log("Backfilled: " + stored);
-  console.log("Skipped:    " + skipped);
-  console.log("Failed:     " + failed);
+  console.log("\nIngestion summary — " + adapter.id);
+  console.log("Downloaded: " + totals.downloaded);
+  console.log("Backfilled: " + totals.stored);
+  console.log("Skipped:    " + totals.skipped);
+  console.log("Failed:     " + totals.failed);
+  return totals;
+}
+
+async function main(): Promise<void> {
+  const args = process.argv.slice(2);
+  const all = args.includes("--all");
+  const sourceName = args.find((argument, index) => !argument.startsWith("--") && args[index - 1] !== "--limit");
+  if (!sourceName && !all) {
+    throw new Error("Usage: npm run ingest:source -- <source-id> [--limit N] [--force]   or   --all");
+  }
+  const force = args.includes("--force");
+  const limit = parseLimit(args);
+  const adapters = all ? listSourceAdapters() : [getSourceAdapter(sourceName!)];
+
+  let failed = 0;
+  for (const adapter of adapters) {
+    try {
+      failed += (await runAdapter(adapter, force, limit)).failed;
+    } catch (error) {
+      // One site being down must not stop the others in an --all run.
+      failed++;
+      console.error("SOURCE FAILED " + adapter.id + ": " + (error instanceof Error ? error.message : String(error)));
+    }
+  }
   if (failed > 0) process.exitCode = 1;
 }
 

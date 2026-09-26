@@ -15,6 +15,7 @@ import {
   formatAppDay,
   formatAppTime,
 } from "../lib/app-time";
+import { formatGoDate, sourceCollectionLabel } from "../lib/sources";
 
 type VerificationStatus =
   | "conflict"
@@ -1119,10 +1120,13 @@ function groupSources(sources: Source[], answer: string): SourceGroup[] {
     let group = groups.get(source.sourceId);
 
     if (!group) {
+      const collection = sourceCollectionLabel(source.sourceId);
       const subtitle = [
         source.documentTitle && source.department ? source.department : null,
         source.goNumber ? `GO ${source.goNumber}` : null,
-        source.goDate,
+        formatGoDate(source.goDate),
+        // Shasanadesh is the default archive; name the others.
+        collection === "Shasanadesh" ? null : collection,
       ].filter((value): value is string => Boolean(value));
 
       group = {
@@ -1130,7 +1134,7 @@ function groupSources(sources: Source[], answer: string): SourceGroup[] {
         title:
           source.documentTitle ||
           source.department ||
-          "Government order",
+          collection,
         subtitle,
         pages: [],
         anyCited: false,

@@ -38,6 +38,9 @@ RRF_K = 60
 # Silicon (padding to the longest passage offsets the batching gain), so the
 # measured default stays at 4; tune per machine.
 RERANK_BATCH_SIZE = int(os.getenv("RERANK_BATCH_SIZE", "4"))
+# Extra rerank passages allowed for a page's other text variant (native vs
+# OCR), so a garbled native layer cannot hide a readable OCR alternate.
+ALTERNATE_VARIANT_BUDGET = int(os.getenv("RAG_ALTERNATE_VARIANT_BUDGET", "8"))
 # pgvector's HNSW scan returns at most hnsw.ef_search rows (default 40), and
 # metadata filters are applied after the scan, so a filtered search could
 # return far fewer than candidate_count rows. Widen the scan per query.
@@ -52,6 +55,8 @@ class SearchFilters(BaseModel):
     departments: list[str] | None = None
     go_number: str | None = Field(default=None, max_length=200)
     source_id: str | None = Field(default=None, max_length=200)
+    # Source collections (documents.provider), e.g. ["shasanadesh-up", "upgov"].
+    providers: list[str] | None = None
     date_from: str | None = Field(default=None, max_length=10)
     date_to: str | None = Field(default=None, max_length=10)
     verification_status: str | None = Field(default=None, max_length=40)
@@ -216,6 +221,12 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
     if filters.source_id:
         clauses.append("d.source_id = %s")
         params.append(filters.source_id.strip())
+
+    if filters.providers:
+        providers = [item.strip() for item in filters.providers if item.strip()]
+        if providers:
+            clauses.append("d.provider = ANY(%s)")
+            params.append(providers)
 
     if filters.date_from:
         clauses.append("d.go_date >= %s::date")
@@ -645,6 +656,30 @@ def search(body: SearchRequest, request: Request):
 
     pool_unique_pages = len(pool)
 
+    # A page can have a native and an OCR variant. The first variant fused for
+    # a page is not necessarily the readable one: a legacy-font native layer
+    # (garbled Hindi) can win on vector similarity while its OCR alternate is
+    # the text a reader and the model can use. Rerank the best alternate
+    # variant of each pooled page as well; after reranking only the higher-
+    # scoring variant of each page is kept. Bounded so rerank cost grows by at
+    # most ALTERNATE_VARIANT_BUDGET extra passages.
+    alternates_added = 0
+    pooled_variant_by_page = {hit.logical_page_id: hit.variant_id for hit in pool}
+    seen_alternate_pages: set[str] = set()
+    for hit in fused_hits:
+        if alternates_added >= ALTERNATE_VARIANT_BUDGET:
+            break
+        pooled_variant = pooled_variant_by_page.get(hit.logical_page_id)
+        if (
+            pooled_variant is None
+            or hit.variant_id == pooled_variant
+            or hit.logical_page_id in seen_alternate_pages
+        ):
+            continue
+        seen_alternate_pages.add(hit.logical_page_id)
+        pool.append(hit)
+        alternates_added += 1
+
     if not pool:
         return SearchResponse(
             query=query,
@@ -675,6 +710,7 @@ def search(body: SearchRequest, request: Request):
         f"backfilled_unique_pages={backfilled_unique_pages} "
         f"rerank_pool={pool_unique_pages} "
         f"duplicates_removed={pool_duplicate_hits} "
+        f"alternate_variants={alternates_added} "
         f"rerank_ms={rerank_ms:.1f}"
     )
 

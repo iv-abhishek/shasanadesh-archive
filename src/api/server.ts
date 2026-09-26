@@ -233,6 +233,12 @@ const SearchFiltersSchema = z.object({
     .min(1)
     .max(200)
     .optional(),
+  // Source collections (documents.provider), e.g. "shasanadesh-up", "upgov".
+  providers: z
+    .array(z.string().trim().regex(/^[a-z0-9-]{2,40}$/))
+    .min(1)
+    .max(8)
+    .optional(),
   dateFrom: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -396,6 +402,8 @@ async function retrieve(
                 filters?.goNumber,
               source_id:
                 filters?.sourceId,
+              providers:
+                filters?.providers,
               date_from:
                 filters?.dateFrom,
               date_to:

@@ -995,12 +995,10 @@ h1 {
   color: var(--text);
   text-align: left;
   padding: 13px 14px;
-  cursor: pointer;
 }
 
 .search-result-card:hover {
   border-color: var(--border-strong);
-  background: var(--surface-soft);
 }
 
 .search-result-head {
@@ -1008,6 +1006,124 @@ h1 {
   justify-content: space-between;
   gap: 14px;
   align-items: flex-start;
+}
+
+.search-result-title {
+  display: grid;
+  gap: 3px;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.search-result-title strong {
+  font-size: 0.98rem;
+}
+
+.search-result-title:hover strong {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.search-result-title span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.search-result-card .page-chips {
+  align-items: center;
+  margin-top: 11px;
+}
+
+.search-result-card .source-id {
+  margin-left: auto;
+}
+
+.search-snippet mark {
+  background: var(--accent-soft, rgba(46, 125, 90, 0.18));
+  color: var(--text);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+.search-garbled-note {
+  margin: 12px 0 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.search-options-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+
+.search-scope {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.search-scope button {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  padding: 5px 12px;
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.search-scope button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+}
+
+.search-filters {
+  margin-top: 10px;
+}
+
+.search-filters > summary,
+.search-weaker > summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  user-select: none;
+}
+
+.search-filters .retrieval-filters {
+  margin-top: 10px;
+}
+
+.search-weaker {
+  margin-top: 16px;
+}
+
+.search-weaker > .search-result-list {
+  margin-top: 10px;
+  opacity: 0.85;
+}
+
+.search-empty {
+  padding: 18px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  color: var(--muted);
+  text-align: center;
 }
 
 .search-snippet {
