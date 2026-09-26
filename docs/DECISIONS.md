@@ -436,3 +436,24 @@ readable bullets.
 Latency diagnostics cover retrieval round-trip, embedding, hybrid search, reranking,
 evidence hydration, generation, repair, deterministic validation, and total chat time.
 These measurements are diagnostic, not SLAs.
+
+
+## ADR-042 - Numbers must be found on a reliable cited page
+
+Citing one native-text page next to a risky page no longer makes a numeric
+sentence safe. The validator now requires every number in the sentence to
+appear (after Devanagari-digit and thousands-separator normalisation) on a
+cited page whose numerics are not `conflict`, `ocr_only_unverified` or
+`unverified`; otherwise it reports `unsupported_numeric_claim` and the normal
+repair / salvage / fallback path runs.
+
+A sentence may still state a risky value when it explicitly says the value is
+unverified or must be checked against the cited page. Bare words such as
+"OCR" or "verification" no longer count as that warning, because they also
+occur in ordinary order subjects. Leading list numbering ("1.", "2)") is
+treated as formatting rather than a numeric claim.
+
+Follow-up detection is narrower: Hindi conjunctions (और, तो, लेकिन, अगर ...)
+only signal a follow-up at the start of a question, "यह/वह" only when followed
+by a document noun, and English "that" only when it refers to an order, rule
+or similar. This stops standalone questions inheriting the previous source.

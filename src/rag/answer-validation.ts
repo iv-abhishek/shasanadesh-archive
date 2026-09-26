@@ -1,4 +1,5 @@
 import type { RetrievalEvidence } from "./types.js";
+import { toAsciiDigits } from "../lib/numeric-tokens.js";
 
 export type AnswerValidationIssueCode =
   | "empty_answer"
@@ -6,6 +7,7 @@ export type AnswerValidationIssueCode =
   | "invalid_citation"
   | "uncited_numeric_claim"
   | "unsafe_numeric_claim"
+  | "unsupported_numeric_claim"
   | "internal_placeholder";
 
 export interface AnswerValidationIssue {
@@ -31,8 +33,51 @@ const NUMERIC_TOKEN_RE =
 const INTERNAL_PLACEHOLDER_RE =
   /\[+UNVERIFIED_NUMERIC\]+|<+UNVERIFIED_NUMERIC>+|\bUNVERIFIED_NUMERIC\b/i;
 
+// An explicit statement that a value is unverified / must be checked against the
+// cited page. Bare words such as "OCR" or "verification" are not enough: they
+// also occur in ordinary government-order subjects (e.g. "character
+// verification").
 const CAUTION_RE =
-  /\b(?:unverified|not verified|verify|verification|ocr|source page|original page|check against|needs checking)\b|(?:असत्यापित|सत्यापन|सत्यापित नहीं|मूल पृष्ठ|मूल पेज|जाँच|जांच|पुष्टि)/i;
+  /\b(?:unverified|not (?:been )?verified|(?:requires?|needs?) (?:verification|checking)|(?:should|must) be (?:verified|checked)|verify (?:(?:it|this|these|them|the (?:value|number|date|figure|amount)) )?against|check(?:ed)? against|(?:original|cited) (?:source )?page|source page)\b|(?:असत्यापित|सत्यापित नहीं|सत्यापन आवश्यक|सत्यापन की आवश्यकता|मूल पृष्ठ|मूल पेज|मूल आदेश से (?:जाँच|जांच|मिलान|पुष्टि)|पुष्टि (?:करें|आवश्यक))/iu;
+
+// Leading list numbering ("1.", "2)") is formatting, not a numeric claim.
+const LIST_MARKER_RE =
+  /^\s*(?:[-–—•*]\s*)?[0-9०-९]{1,2}[.)]\s*/u;
+
+function withoutListMarker(unit: string): string {
+  return unit.replace(LIST_MARKER_RE, "");
+}
+
+// Digit groups used to check that a number in the answer really appears on a
+// cited page. Thousands separators are dropped and Devanagari digits are
+// normalised so "५०,०००" and "50000" compare equal.
+function digitGroups(text: string): string[] {
+  return (
+    toAsciiDigits(text)
+      .replace(/(\d),(?=\d)/g, "$1")
+      .match(/\d+/g) ?? []
+  ).map((group) => group.replace(/^0+(?=\d)/, ""));
+}
+
+function numbersSupportedBy(
+  unit: string,
+  evidence: RetrievalEvidence[],
+): boolean {
+  const needed = digitGroups(unit);
+
+  if (needed.length === 0) {
+    return true;
+  }
+
+  const available = new Set(
+    evidence.flatMap((item) => [
+      ...digitGroups(item.selected_page_text ?? ""),
+      ...digitGroups(item.canonical_page_text ?? ""),
+    ]),
+  );
+
+  return needed.every((group) => available.has(group));
+}
 
 function citationKey(
   label: string,
@@ -152,7 +197,8 @@ export function validateAnswer(
     }
   }
 
-  for (const unit of claimUnits(trimmed)) {
+  for (const rawUnit of claimUnits(trimmed)) {
+    const unit = withoutListMarker(rawUnit);
     const withoutCitations =
       stripCitations(unit);
 
@@ -194,24 +240,45 @@ export function validateAnswer(
             Boolean(item),
         );
 
-    const hasSafeNumericSource =
-      citedEvidence.some(
+    if (CAUTION_RE.test(unit)) {
+      // The sentence explicitly flags the value as needing verification.
+      continue;
+    }
+
+    const safeCitedEvidence =
+      citedEvidence.filter(
         (item) =>
           !isRiskyNumericEvidence(item),
       );
 
-    const allNumericSourcesRisky =
-      citedEvidence.length > 0 &&
-      !hasSafeNumericSource;
-
     if (
-      allNumericSourcesRisky &&
-      !CAUTION_RE.test(unit)
+      citedEvidence.length > 0 &&
+      safeCitedEvidence.length === 0
     ) {
       issues.push({
         code: "unsafe_numeric_claim",
         message:
           "A numeric claim relies only on OCR-conflicted or OCR-only-unverified evidence and is stated without an explicit source-page verification warning.",
+        excerpt: unit.slice(0, 240),
+      });
+
+      continue;
+    }
+
+    // Citing one reliable page is not enough: the numbers themselves must
+    // appear on a reliable cited page. Otherwise the value may have come from
+    // a risky page cited alongside it, or been produced by the model.
+    if (
+      safeCitedEvidence.length > 0 &&
+      !numbersSupportedBy(
+        withoutCitations,
+        safeCitedEvidence,
+      )
+    ) {
+      issues.push({
+        code: "unsupported_numeric_claim",
+        message:
+          "A numeric value does not appear on any cited page with reliable (native-text) numerics.",
         excerpt: unit.slice(0, 240),
       });
     }
@@ -244,6 +311,7 @@ export function buildAnswerRepairInstruction(
     validation.issues.some(
       (issue) =>
         issue.code === "unsafe_numeric_claim" ||
+        issue.code === "unsupported_numeric_claim" ||
         issue.code === "uncited_numeric_claim" ||
         issue.code === "internal_placeholder",
     );
@@ -327,7 +395,9 @@ export function buildQualitativeSalvage(
 
   const kept: string[] = [];
 
-  for (const unit of claimUnits(answer)) {
+  for (const rawUnit of claimUnits(answer)) {
+    const unit = withoutListMarker(rawUnit);
+
     if (INTERNAL_PLACEHOLDER_RE.test(unit)) {
       continue;
     }

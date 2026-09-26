@@ -30,6 +30,24 @@ assert.equal(
   false,
 );
 
+// Everyday words mid-sentence are not follow-up signals.
+for (const standalone of [
+  "Is there a rule that officers must retire at sixty?",
+  "पेंशन नियम क्या हैं और कब लागू हुए?",
+  "स्थानांतरण नीति क्या है तो बताइए",
+]) {
+  assert.equal(isLikelyFollowUp(standalone), false, standalone);
+}
+
+for (const followUp of [
+  "What about that order's implementation?",
+  "और पेंशन के बारे में?",
+  "यह आदेश कब लागू हुआ?",
+  "उसी नियम में छुट्टी का क्या प्रावधान है?",
+]) {
+  assert.equal(isLikelyFollowUp(followUp), true, followUp);
+}
+
 {
   const messages:
     ChatMessage[] = [
