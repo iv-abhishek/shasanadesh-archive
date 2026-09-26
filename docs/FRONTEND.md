@@ -11,6 +11,10 @@ Its job is to exercise the frozen RAG API contract before visual/product polish.
 - live progress while an answer is prepared (searching, reading, writing,
   re-checking) with elapsed seconds
 - validated answer display with bullet / numbered lists, headings and bold
+- a timestamp on every question
+- answer actions: Copy (answer plus cited sources), Listen (browser speech,
+  Hindi or English voice by script), thumbs up / down with an optional reason
+  and comment, and Regenerate for the latest answer
 - sources grouped into one card per order, with page chips: cited pages
   first, other matches next, neighbouring pages collapsed behind "+N nearby"
 - clickable `[S# p.#]` citations
@@ -88,7 +92,8 @@ session and match the route profile ID against that session. Conversation pins a
 stored in PostgreSQL. Deletion removes the conversation row and its dependent
 messages/state.
 Migration `004_workspace_preferences.sql` adds the new profile fields and pin column,
-and `005_department_charges.sql` adds additional-charge flags; run
+`005_department_charges.sql` adds additional-charge flags, and
+`006_message_feedback.sql` adds answer feedback; run
 `npm run db:migrate` before running the updated API.
 
 The chat composer is pinned to the bottom of the window. Asking a question

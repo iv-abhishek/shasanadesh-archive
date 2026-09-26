@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import {
   FormEvent,
   Fragment,
@@ -79,6 +80,11 @@ interface ChatTurn {
   error: string | null;
   elapsedMs: number | null;
   status?: string | null;
+  /** When the question was asked (ms since epoch). */
+  askedAt?: number;
+  /** Saved assistant message, used for feedback and regenerate. */
+  assistantMessageId?: string | null;
+  feedback?: TurnFeedback | null;
 }
 
 interface ChatAppProps {
@@ -138,6 +144,7 @@ interface PersistedMessage {
   metadata:
     Record<string, unknown>;
   createdAt: string;
+  feedback?: TurnFeedback | null;
 }
 
 interface PersistedConversationResponse {
@@ -528,6 +535,8 @@ function turnsFromPersistedMessages(
       }
 
       pending = {
+        askedAt:
+          Date.parse(message.createdAt) || undefined,
         id:
           Date.parse(
             message.createdAt,
@@ -576,6 +585,12 @@ function turnsFromPersistedMessages(
 
     pending.done =
       done;
+
+    pending.assistantMessageId =
+      message.id;
+
+    pending.feedback =
+      message.feedback ?? null;
 
     turns.push(
       pending,
@@ -1152,20 +1167,273 @@ function SourceGroupCard({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Answer actions: copy, listen, feedback and regenerate.
+// ---------------------------------------------------------------------------
+
+type FeedbackRating = "up" | "down";
+
+interface TurnFeedback {
+  rating: FeedbackRating;
+  reason: string | null;
+  comment: string | null;
+}
+
+const FEEDBACK_REASONS: Array<{ value: string; label: string }> = [
+  { value: "incorrect", label: "Incorrect information" },
+  { value: "wrong_citation", label: "Wrong page or citation" },
+  { value: "not_relevant", label: "Not relevant" },
+  { value: "incomplete", label: "Incomplete" },
+  { value: "too_slow", label: "Too slow" },
+  { value: "other", label: "Other" },
+];
+
+function formatTurnTime(timestamp: number): { short: string; full: string; iso: string } {
+  const date = new Date(timestamp);
+  const now = new Date();
+  const sameDay = date.toDateString() === now.toDateString();
+  const time = date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const day = date.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    ...(date.getFullYear() !== now.getFullYear() ? { year: "numeric" as const } : {}),
+  });
+
+  return {
+    short: sameDay ? time : `${day}, ${time}`,
+    full: date.toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" }),
+    iso: date.toISOString(),
+  };
+}
+
+// Plain text for the clipboard: the answer without markdown emphasis, followed
+// by the cited pages so the copy stands on its own in a note or file.
+function answerCopyText(turn: ChatTurn): string {
+  const answer = turn.answer.replace(/\*\*([^*]+)\*\*/g, "$1").trim();
+  const cited = citedKeys(turn.answer);
+  const seen = new Set<string>();
+  const lines = turn.sources
+    .filter((source) => cited.has(`${source.label}:${source.pageNumber}`))
+    .filter((source) => {
+      const key = `${source.label}:${source.pageNumber}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map(
+      (source) =>
+        `[${source.label} p.${source.pageNumber}] ${source.documentTitle || source.department || "Government order"} (${source.sourceId})`,
+    );
+
+  return lines.length > 0 ? `${answer}\n\nSources:\n${lines.join("\n")}` : answer;
+}
+
+// Text for speech: citations, markdown and list markers removed.
+function answerSpeechText(answer: string): string {
+  return answer
+    .replace(/\[S\d+\s+p\.\d+\]/g, "")
+    .replace(/[ \t]+$/gm, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/^\s*(?:[-*•–]|\d{1,2}[.)])\s+/gmu, "")
+    .replace(/\s+([.,;:।])/gu, "$1")
+    // Line breaks become sentence pauses, without doubling punctuation.
+    .replace(/([.!?।:;])\s*\n+/gu, "$1 ")
+    .replace(/\n+/g, ". ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function speechLanguageFor(text: string): "hi-IN" | "en-IN" {
+  const devanagari = (text.match(/[ऀ-ॿ]/gu) ?? []).length;
+  const latin = (text.match(/[A-Za-z]/g) ?? []).length;
+  return devanagari > latin ? "hi-IN" : "en-IN";
+}
+
+async function copyToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const area = document.createElement("textarea");
+  area.value = text;
+  area.setAttribute("readonly", "");
+  area.style.position = "fixed";
+  area.style.opacity = "0";
+  document.body.appendChild(area);
+  area.select();
+  document.execCommand("copy");
+  area.remove();
+}
+
+const ActionIcon = {
+  copy: (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2" /><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2" /></svg>
+  ),
+  check: (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5" /></svg>
+  ),
+  listen: (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10v4h4l5 4V6L8 10H4Z" /><path d="M16.5 9a4 4 0 0 1 0 6M19 6.5a7.5 7.5 0 0 1 0 11" /></svg>
+  ),
+  stop: (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" /></svg>
+  ),
+  up: (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 11v9H4v-9h3Zm0 0 4-7a2 2 0 0 1 3 1.7V10h4.6a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 17.4 20H7" /></svg>
+  ),
+  down: (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 13V4H4v9h3Zm0 0 4 7a2 2 0 0 0 3-1.7V14h4.6a2 2 0 0 0 2-2.3l-1.2-6A2 2 0 0 0 17.4 4H7" /></svg>
+  ),
+  regenerate: (
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7" /><path d="M20 4v7h-7" /></svg>
+  ),
+};
+
+function AnswerActions({
+  turn,
+  copied,
+  speaking,
+  speechSupported,
+  canRegenerate,
+  onCopy,
+  onListen,
+  onFeedback,
+  onRegenerate,
+}: {
+  turn: ChatTurn;
+  copied: boolean;
+  speaking: boolean;
+  speechSupported: boolean;
+  canRegenerate: boolean;
+  onCopy: () => void;
+  onListen: () => void;
+  onFeedback: (rating: FeedbackRating | null, reason?: string | null, comment?: string | null) => void;
+  onRegenerate: () => void;
+}) {
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [reason, setReason] = useState<string | null>(turn.feedback?.reason ?? null);
+  const [comment, setComment] = useState(turn.feedback?.comment ?? "");
+  const [thanks, setThanks] = useState(false);
+  const rating = turn.feedback?.rating ?? null;
+  const conversational = Boolean(turn.done?.conversational);
+
+  const vote = (next: FeedbackRating) => {
+    if (rating === next) {
+      onFeedback(null);
+      setPanelOpen(false);
+      return;
+    }
+    onFeedback(next);
+    setThanks(next === "up");
+    setPanelOpen(next === "down");
+    if (next === "up") window.setTimeout(() => setThanks(false), 2500);
+  };
+
+  return (
+    <div className="answer-actions-wrap">
+      <div className="answer-actions" role="toolbar" aria-label="Answer actions">
+        <button type="button" className="answer-action" onClick={onCopy} title={copied ? "Copied" : "Copy answer with sources"} aria-label={copied ? "Copied" : "Copy answer"}>
+          {copied ? ActionIcon.check : ActionIcon.copy}
+          <span>{copied ? "Copied" : "Copy"}</span>
+        </button>
+
+        {speechSupported ? (
+          <button type="button" className={speaking ? "answer-action active" : "answer-action"} onClick={onListen} aria-pressed={speaking} title={speaking ? "Stop reading aloud" : "Read the answer aloud"} aria-label={speaking ? "Stop listening" : "Listen"}>
+            {speaking ? ActionIcon.stop : ActionIcon.listen}
+            <span>{speaking ? "Stop" : "Listen"}</span>
+          </button>
+        ) : null}
+
+        {!conversational ? (
+          <>
+            <span className="answer-action-divider" aria-hidden="true" />
+            <button type="button" className={rating === "up" ? "answer-action icon-only active" : "answer-action icon-only"} onClick={() => vote("up")} aria-pressed={rating === "up"} title="Good answer" aria-label="Good answer">
+              {ActionIcon.up}
+            </button>
+            <button type="button" className={rating === "down" ? "answer-action icon-only active negative" : "answer-action icon-only"} onClick={() => vote("down")} aria-pressed={rating === "down"} title="Bad answer" aria-label="Bad answer">
+              {ActionIcon.down}
+            </button>
+          </>
+        ) : null}
+
+        {canRegenerate && !conversational ? (
+          <button type="button" className="answer-action" onClick={onRegenerate} title="Ask again for a new answer" aria-label="Regenerate answer">
+            {ActionIcon.regenerate}
+            <span>Regenerate</span>
+          </button>
+        ) : null}
+
+        {thanks ? <span className="answer-action-note" role="status">Thanks for the feedback</span> : null}
+      </div>
+
+      {panelOpen ? (
+        <div className="feedback-panel" role="group" aria-label="What was wrong with this answer?">
+          <div className="feedback-panel-title">What was wrong? <span>(optional)</span></div>
+          <div className="feedback-reasons">
+            {FEEDBACK_REASONS.map((option) => (
+              <button
+                type="button"
+                key={option.value}
+                className={reason === option.value ? "feedback-reason active" : "feedback-reason"}
+                aria-pressed={reason === option.value}
+                onClick={() => setReason(reason === option.value ? null : option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <textarea
+            className="feedback-comment"
+            rows={2}
+            maxLength={1000}
+            value={comment}
+            onChange={(event) => setComment(event.target.value)}
+            placeholder="Which order or page should it have used? (optional)"
+          />
+          <div className="feedback-panel-actions">
+            <button type="button" className="feedback-cancel" onClick={() => setPanelOpen(false)}>
+              Close
+            </button>
+            <button
+              type="button"
+              className="feedback-submit"
+              onClick={() => {
+                onFeedback("down", reason, comment.trim() || null);
+                setPanelOpen(false);
+                setThanks(true);
+                window.setTimeout(() => setThanks(false), 2500);
+              }}
+            >
+              Send feedback
+            </button>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function TurnView({
   turn,
   onOpenSource,
   onRetry,
+  actions,
 }: {
   turn: ChatTurn;
   onOpenSource: (source: Source) => void;
   onRetry?: () => void;
+  actions?: ReactNode;
 }) {
+  const askedAt = formatTurnTime(turn.askedAt ?? turn.id);
+
   return (
     <article className="turn">
       <div className="question-bubble">
         {turn.question}
       </div>
+      <time className="turn-time" dateTime={askedAt.iso} title={askedAt.full}>
+        {askedAt.short}
+      </time>
 
       <div className="answer-panel">
         <div className="answer-heading">
@@ -1212,6 +1480,8 @@ function TurnView({
             )}
           </div>
         )}
+
+        {actions}
 
         {turn.done ? (
           <div className="answer-status">
@@ -1423,6 +1693,91 @@ export function ChatApp({
     useState(false);
 
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
+
+  const [copiedTurnId, setCopiedTurnId] = useState<number | null>(null);
+  const [speakingTurnId, setSpeakingTurnId] = useState<number | null>(null);
+  const [speechOutputSupported, setSpeechOutputSupported] = useState(false);
+
+  useEffect(() => {
+    setSpeechOutputSupported(
+      typeof window !== "undefined" && "speechSynthesis" in window,
+    );
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const copyAnswer = async (turn: ChatTurn) => {
+    try {
+      await copyToClipboard(answerCopyText(turn));
+      setCopiedTurnId(turn.id);
+      window.setTimeout(
+        () => setCopiedTurnId((current) => (current === turn.id ? null : current)),
+        2000,
+      );
+    } catch (error) {
+      console.warn("Could not copy the answer.", error);
+    }
+  };
+
+  const toggleListen = (turn: ChatTurn) => {
+    const synth = window.speechSynthesis;
+    if (speakingTurnId === turn.id) {
+      synth.cancel();
+      setSpeakingTurnId(null);
+      return;
+    }
+
+    synth.cancel();
+    const text = answerSpeechText(turn.answer);
+    const utterance = new SpeechSynthesisUtterance(text);
+    const lang = speechLanguageFor(text);
+    utterance.lang = lang;
+    const voice =
+      synth.getVoices().find((item) => item.lang === lang) ??
+      synth.getVoices().find((item) => item.lang.startsWith(lang.slice(0, 2)));
+    if (voice) utterance.voice = voice;
+    utterance.onend = () => setSpeakingTurnId((current) => (current === turn.id ? null : current));
+    utterance.onerror = () => setSpeakingTurnId((current) => (current === turn.id ? null : current));
+    setSpeakingTurnId(turn.id);
+    synth.speak(utterance);
+  };
+
+  const sendFeedback = async (
+    turn: ChatTurn,
+    rating: FeedbackRating | null,
+    reason: string | null = null,
+    comment: string | null = null,
+  ) => {
+    const previous = turn.feedback ?? null;
+    const next: TurnFeedback | null = rating ? { rating, reason, comment } : null;
+    setTurns((current) =>
+      current.map((item) => (item.id === turn.id ? { ...item, feedback: next } : item)),
+    );
+
+    // Votes are stored with the saved answer; unsaved turns keep them locally.
+    if (!workspaceUserId || !currentConversationId || !turn.assistantMessageId) {
+      return;
+    }
+
+    try {
+      await workspaceJson(
+        `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations/${encodeURIComponent(currentConversationId)}/messages/${encodeURIComponent(turn.assistantMessageId)}/feedback`,
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ rating, reason, comment }),
+        },
+      );
+    } catch (error) {
+      console.warn("Could not save feedback.", error);
+      setTurns((current) =>
+        current.map((item) => (item.id === turn.id ? { ...item, feedback: previous } : item)),
+      );
+    }
+  };
 
   // When a question is asked (or a saved chat opens), bring the newest
   // question to the top of the view so its answer appears below it, above
@@ -1657,10 +2012,28 @@ export function ChatApp({
     void ask(failed.question, remaining);
   };
 
+  // Regenerate the latest answer: same question, fresh draft, same safety gate.
+  // The saved answer is replaced in place (its previous version is kept).
+  const regenerate = (target: ChatTurn) => {
+    if (busy || archived) {
+      return;
+    }
+
+    if (speakingTurnId === target.id) {
+      window.speechSynthesis.cancel();
+      setSpeakingTurnId(null);
+    }
+
+    const remaining = turns.filter((turn) => turn.id !== target.id);
+    setTurns(remaining);
+    void ask(target.question, remaining, { regenerateOf: target });
+  };
+
   const ask =
     async (
       question: string,
       priorTurns: ChatTurn[],
+      options: { regenerateOf?: ChatTurn } = {},
     ) => {
       setBusy(true);
 
@@ -1672,6 +2045,8 @@ export function ChatApp({
 
       const newTurn: ChatTurn = {
         id,
+        askedAt:
+          options.regenerateOf?.askedAt ?? Date.now(),
         question,
         answer: "",
         sources: [],
@@ -1764,6 +2139,8 @@ export function ChatApp({
                   conversationMessages,
                 conversationState,
                 workspaceUserId,
+                regenerate:
+                  Boolean(options.regenerateOf),
               }),
             },
           );
@@ -1988,6 +2365,25 @@ export function ChatApp({
           persistedAnswer.trim()
         ) {
           try {
+            const replaceId =
+              options.regenerateOf?.assistantMessageId ?? null;
+
+            if (replaceId && effectiveConversationId) {
+              // Regenerated answer replaces the saved one in place.
+              await workspaceJson(
+                `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations/${encodeURIComponent(effectiveConversationId)}/messages/${encodeURIComponent(replaceId)}`,
+                {
+                  method: "PUT",
+                  headers: { "content-type": "application/json" },
+                  body: JSON.stringify({
+                    content: persistedAnswer,
+                    sources: persistedSources,
+                    metadata: { ...(persistedDone ?? {}), regenerated: true },
+                  }),
+                },
+              );
+              update((turn) => ({ ...turn, assistantMessageId: replaceId, feedback: null }));
+            } else {
             // Persist only completed turns, so a failed attempt does not
             // leave a question-only conversation behind in history.
             if (!effectiveConversationId) {
@@ -2014,7 +2410,7 @@ export function ChatApp({
               },
             );
 
-            await workspaceJson(
+            const savedAnswer = await workspaceJson<{ id: string }>(
               `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations/${encodeURIComponent(effectiveConversationId)}/messages`,
               {
                 method:
@@ -2037,6 +2433,9 @@ export function ChatApp({
                   }),
               },
             );
+            update((turn) => ({ ...turn, assistantMessageId: savedAnswer.id }));
+
+            }
 
             if (
               !(persistedDone as DoneEvent | null)
@@ -2186,6 +2585,27 @@ export function ChatApp({
                   turn.error && !busy && !archived
                     ? () => retry(turn)
                     : undefined
+                }
+                actions={
+                  turn.done && turn.answer && !turn.error ? (
+                    <AnswerActions
+                      turn={turn}
+                      copied={copiedTurnId === turn.id}
+                      speaking={speakingTurnId === turn.id}
+                      speechSupported={speechOutputSupported}
+                      canRegenerate={
+                        !busy &&
+                        !archived &&
+                        turn.id === turns[turns.length - 1]?.id
+                      }
+                      onCopy={() => void copyAnswer(turn)}
+                      onListen={() => toggleListen(turn)}
+                      onFeedback={(rating, reason, comment) =>
+                        void sendFeedback(turn, rating, reason ?? null, comment ?? null)
+                      }
+                      onRegenerate={() => regenerate(turn)}
+                    />
+                  ) : null
                 }
               />
             ),
