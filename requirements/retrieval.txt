@@ -1,0 +1,10 @@
+# Embedding, reranking and retrieval service (.venv-embeddings).
+# Versions match the environment the current retrieval baseline was measured with.
+sentence-transformers==6.1.0
+transformers==5.17.0
+torch==2.14.0
+numpy==2.5.3
+psycopg[binary]==3.3.6
+fastapi==0.141.1
+uvicorn[standard]==0.53.0
+pydantic==2.13.5

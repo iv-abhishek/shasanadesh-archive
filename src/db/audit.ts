@@ -4,18 +4,6 @@
 
 import { createPool } from "./client.js";
 
-async function one(
-  sql: string,
-): Promise<number> {
-  const result = await createPool();
-  try {
-    const response = await result.query<{ count: string }>(sql);
-    return Number.parseInt(response.rows[0].count, 10);
-  } finally {
-    await result.end();
-  }
-}
-
 async function main() {
   const pool = createPool();
 

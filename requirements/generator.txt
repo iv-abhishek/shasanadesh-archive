@@ -1,0 +1,3 @@
+# Local Apple Silicon generator (.venv-generator).
+mlx-lm==0.31.3
+mlx==0.32.2

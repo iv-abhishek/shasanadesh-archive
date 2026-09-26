@@ -14,7 +14,7 @@ if [[ ! -d .venv-generator ]]; then
 fi
 
 .venv-generator/bin/python -m pip install --upgrade pip
-.venv-generator/bin/python -m pip install --upgrade mlx-lm
+.venv-generator/bin/python -m pip install -r requirements/generator.txt
 
 echo
 echo "Local generator environment ready."

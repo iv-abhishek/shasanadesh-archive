@@ -34,6 +34,11 @@ RERANK_INSTRUCTION = (
 )
 
 RRF_K = 60
+# pgvector's HNSW scan returns at most hnsw.ef_search rows (default 40), and
+# metadata filters are applied after the scan, so a filtered search could
+# return far fewer than candidate_count rows. Widen the scan per query.
+HNSW_EF_SEARCH_MIN = 100
+HNSW_EF_SEARCH_MAX = 1000
 VECTOR_WEIGHT = 1.0
 LEXICAL_WEIGHT = 1.2
 
@@ -312,6 +317,14 @@ def retrieve_hybrid(
     filter_sql, filter_params = build_filter_clause(filters)
 
     with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
+        ef_search = candidate_count * (4 if filter_sql else 2)
+        ef_search = max(HNSW_EF_SEARCH_MIN, min(HNSW_EF_SEARCH_MAX, ef_search))
+        # is_local=true scopes the setting to this transaction only.
+        conn.execute(
+            "SELECT set_config('hnsw.ef_search', %s, true)",
+            (str(ef_search),),
+        )
+
         vector_sql = (
             base_select
             + "1 - (c.embedding <=> %s::vector(1024)) AS score "
@@ -509,21 +522,19 @@ def load_neighbor_hits(
     return hits
 
 
-def hydrate(hit: Hit, label: str) -> Evidence:
-    assert DATABASE_URL is not None
-    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
-        selected = conn.execute(
-            "SELECT text_content FROM page_variants WHERE variant_id=%s",
-            (hit.variant_id,),
-        ).fetchone()
-        canonical = conn.execute(
-            """
-            SELECT text_content FROM page_variants
-            WHERE source_id=%s AND page_number=%s AND canonical=TRUE
-            ORDER BY variant_id LIMIT 1
-            """,
-            (hit.source_id, hit.page_number),
-        ).fetchone()
+def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
+    selected = conn.execute(
+        "SELECT text_content FROM page_variants WHERE variant_id=%s",
+        (hit.variant_id,),
+    ).fetchone()
+    canonical = conn.execute(
+        """
+        SELECT text_content FROM page_variants
+        WHERE source_id=%s AND page_number=%s AND canonical=TRUE
+        ORDER BY variant_id LIMIT 1
+        """,
+        (hit.source_id, hit.page_number),
+    ).fetchone()
 
     selected_text = selected["text_content"] if selected else hit.text
     canonical_text = canonical["text_content"] if canonical else selected_text
@@ -689,16 +700,20 @@ def search(body: SearchRequest, request: Request):
 
     hydration_started_at = time.perf_counter()
 
-    hydrated_evidence = [
-        hydrate(
-            hit,
-            f"S{i}",
-        )
-        for i, hit in enumerate(
-            final_hits,
-            start=1,
-        )
-    ]
+    assert DATABASE_URL is not None
+    # One connection for all evidence pages instead of one per page.
+    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
+        hydrated_evidence = [
+            hydrate(
+                conn,
+                hit,
+                f"S{i}",
+            )
+            for i, hit in enumerate(
+                final_hits,
+                start=1,
+            )
+        ]
 
     hydration_ms = (
         time.perf_counter()

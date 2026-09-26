@@ -7,9 +7,6 @@ if [[ ! -x "${VENV}/bin/python" ]]; then
   exit 1
 fi
 
-"${VENV}/bin/python" -m pip install --upgrade \
-  "fastapi>=0.116" \
-  "uvicorn[standard]>=0.35" \
-  "pydantic>=2.11"
+"${VENV}/bin/python" -m pip install -r requirements/retrieval.txt
 
 echo "Retrieval HTTP service dependencies ready."

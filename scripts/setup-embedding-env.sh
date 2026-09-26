@@ -16,10 +16,7 @@ if [[ ! -d "$VENV" ]]; then
 fi
 
 "${VENV}/bin/python" -m pip install --upgrade pip
-"${VENV}/bin/python" -m pip install \
-  "sentence-transformers>=2.7.0" \
-  "transformers>=4.51.0" \
-  "psycopg[binary]>=3.2"
+"${VENV}/bin/python" -m pip install -r requirements/retrieval.txt
 
 echo
 echo "Embedding environment ready."

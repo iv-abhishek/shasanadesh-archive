@@ -9,9 +9,7 @@ if [[ ! -x "${VENV}/bin/python" ]]; then
   exit 1
 fi
 
-"${VENV}/bin/python" -m pip install --upgrade \
-  "sentence-transformers>=5.4.0" \
-  "transformers>=4.51.0"
+"${VENV}/bin/python" -m pip install -r requirements/retrieval.txt
 
 echo
 echo "Reranker dependencies ready."
