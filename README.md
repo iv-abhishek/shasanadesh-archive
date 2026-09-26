@@ -8,24 +8,31 @@ https://shasanadesh.up.gov.in/
 
 ## Project Goal
 
-The goal of this project is to build a reliable archive and search system for Government Orders issued by the Government of Uttar Pradesh.
+Build a dependable archive and bilingual research assistant for Government Orders and
+related official guidance. The long-term corpus includes Shasanadesh and other registered
+official government sources. Answers should be concise, traceable to exact source pages,
+and clear about uncertainty.
 
-The first phase focuses only on acquiring and preserving the original documents correctly.
+See [Product Vision](docs/PRODUCT_VISION.md) for users, profile workflow, source policy,
+release scope, and success criteria.
 
-Later phases may add OCR, Hindi text normalization, semantic search, RAG, and an AI assistant with source citations.
+## Current MVP foundation
 
-## Phase 1
+The repository already includes:
 
-Current objectives:
+- local ingestion for known Shasanadesh document IDs and a registered Department of
+  Expenditure GFR listing adapter, with source metadata and hashes;
+- page-level extraction, OCR variants, chunking, and PostgreSQL loading;
+- PostgreSQL lexical plus pgvector retrieval with reranking;
+- a TypeScript API with citations, numeric-evidence checks, and streamed responses;
+- a working Next.js chat MVP with source cards, saved history, and multi-department
+  development profiles;
+- optional Backblaze B2 archival for original PDFs and JSON manifests, with remote
+  SHA-1 verification and local SHA-256 provenance.
 
-- Discover Government Order document URLs
-- Download original PDF files
-- Preserve the original government source URL
-- Verify downloaded files
-- Calculate SHA-256 hashes
-- Detect duplicate documents
-- Store document metadata
-- Build a reliable and resumable downloader
+Still to build: adapters for more government sources, production identity and
+authorization, and the polished official-versus-public profile journey. Processed
+page/chunk artifacts are not uploaded to B2 yet.
 
 ## Initial Source
 
@@ -35,7 +42,22 @@ https://shasanadesh.up.gov.in/
 
 The website uses CAPTCHA for search, but direct Government Order PDF retrieval appears to be publicly accessible when the document identifier is already known.
 
-One of the goals of the initial research is to understand how document identifiers and public document URLs are structured.
+The first additional source adapter covers the Department of Expenditure's General
+Financial Rules listings, including the current and archive pages. Run
+`npm run ingest:doe-gfr` to discover and capture the bounded listing pages. The importer validates
+official PDF responses, records provenance and native text metadata, and archives originals
+plus manifests to the `doe-gfr` B2 collection when B2 is configured. See
+[Configuration](docs/CONFIGURATION.md) for crawl limits and storage setup.
+
+For a scanned capture, run `npm run ocr:needs -- --source-id <source-id>` and
+`npm run build:pages -- --source-id <source-id>`. These steps preserve OCR text
+separately, prefer it only when the native page has little text, and refresh the B2
+metadata manifest without re-uploading the original PDF. Then rebuild retrieval
+variants with `npm run build:retrieval-variants` and
+`npm run build:retrieval-variant-chunks`, and load the corpus into PostgreSQL with
+`npm run db:load`. `npm run build:chunks` remains available for the original chunk
+corpus.
+
 
 ## Principles
 
@@ -63,9 +85,9 @@ The same Government Order may appear on multiple Uttar Pradesh government websit
 
 Documents should therefore be deduplicated primarily using their SHA-256 hash while preserving every known source URL.
 
-## Planned Architecture
+## Target Architecture
 
-The long-term system may include:
+The long-term system is expected to include:
 
 - TypeScript / Node.js crawler
 - PostgreSQL
@@ -78,6 +100,13 @@ The long-term system may include:
 - RAG-based AI assistant
 - Source and page-level citations
 - Government Order amendment and supersession tracking
+
+When `B2_KEY_ID`, `B2_APPLICATION_KEY`, and `B2_BUCKET` are configured,
+`npm run ingest:known` stores immutable original captures and metadata manifests in B2.
+The command loads the repo-root `.env` file when present. Without those values it keeps
+its local-only behavior. See
+[Configuration](docs/CONFIGURATION.md) for the B2 setup and [Product Plan](docs/PRODUCT_PLAN.md)
+for the remaining pilot work.
 
 ## Development
 
@@ -101,9 +130,10 @@ npx tsx src/example.ts
 
 ## Repository Status
 
-Early development and research.
-
-The first milestone is to reliably download and verify a small set of real Government Order PDFs from Shasanadesh before expanding to large-scale crawling or AI processing.
+The project has a working local search/chat MVP. The next pilot milestones are
+reviewing the first DOE GFR capture, improving corpus processing and evidence-quality
+evaluation, and adding further source adapters. Broad government-site coverage is a
+continuing expansion goal, not a prerequisite for the first useful release.
 
 ## Disclaimer
 
@@ -117,6 +147,7 @@ Long-running project decisions and parameters are kept in the repository so the
 project does not depend on one chat session:
 
 - [`docs/PROJECT_MEMORY.md`](docs/PROJECT_MEMORY.md) — current state and durable context
+- [`docs/PRODUCT_VISION.md`](docs/PRODUCT_VISION.md) — product direction and pilot scope
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — system architecture
 - [`docs/CONFIGURATION.md`](docs/CONFIGURATION.md) — environment/config parameter names
 - [`docs/PRODUCT_PLAN.md`](docs/PRODUCT_PLAN.md) — product roadmap

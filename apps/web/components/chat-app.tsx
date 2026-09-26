@@ -5,6 +5,7 @@ import {
   Fragment,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -81,7 +82,47 @@ interface ChatTurn {
 interface ChatAppProps {
   workspaceUserId?: string;
   conversationId?: string | null;
+  onNewChat?: () => void;
   onHistoryChanged?: () => void;
+  preferredLanguage?: "en" | "hi";
+}
+
+interface SpeechRecognitionAlternative {
+  transcript: string;
+}
+
+interface SpeechRecognitionResult {
+  0?: SpeechRecognitionAlternative;
+  isFinal: boolean;
+  length: number;
+}
+
+interface SpeechRecognitionResultEvent {
+  results: ArrayLike<SpeechRecognitionResult>;
+}
+
+interface SpeechRecognitionErrorEvent {
+  error: string;
+}
+
+interface SpeechRecognitionInstance {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onstart: (() => void) | null;
+  onresult: ((event: SpeechRecognitionResultEvent) => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
+  abort(): void;
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionInstance;
+
+interface SpeechRecognitionWindow extends Window {
+  SpeechRecognition?: SpeechRecognitionConstructor;
+  webkitSpeechRecognition?: SpeechRecognitionConstructor;
 }
 
 interface PersistedMessage {
@@ -114,6 +155,17 @@ function pdfProxyUrl(source: Source): string {
 
 const CHAT_API_PATH =
   "/api/rag/chat";
+
+function appendSpeechTranscriptSegment(current: string, next: string): string {
+  const segment = next.replace(/\s+/gu, " ").trim();
+  if (!segment) return current;
+
+  const previous = current.replace(/\s+$/u, "");
+  if (!previous) return segment;
+  if (/^[,.;:!?।॥…%)\]}»”’]/u.test(segment)) return previous + segment;
+  if (/[([{«“‘]$/u.test(previous)) return previous + segment;
+  return previous + " " + segment;
+}
 
 function parseSseBlock(
   block: string,
@@ -980,10 +1032,32 @@ function SourceViewer({
 export function ChatApp({
   workspaceUserId,
   conversationId,
+  onNewChat,
   onHistoryChanged,
+  preferredLanguage,
 }: ChatAppProps = {}) {
   const [query, setQuery] =
     useState("");
+
+  const [speechLanguage, setSpeechLanguage] = useState<"en-IN" | "hi-IN">(
+    preferredLanguage === "hi" ? "hi-IN" : "en-IN",
+  );
+  const [speechState, setSpeechState] = useState<"idle" | "starting" | "listening" | "stopping">("idle");
+  const [speechStatus, setSpeechStatus] = useState<string | null>(null);
+  const speechRecognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const speechStartingQueryRef = useRef("");
+  const speechInputActive = speechState !== "idle";
+  const speechLanguageName = speechLanguage === "hi-IN" ? "Hindi" : "English";
+  const speechButtonLabel = speechState === "listening"
+    ? "Stop voice input"
+    : speechState === "starting"
+      ? "Cancel voice input"
+      : speechState === "stopping"
+        ? "Finishing voice input"
+        : `Start ${speechLanguageName} voice input`;
+  const speechButtonClass = speechState === "idle"
+    ? "speech-input-button"
+    : `speech-input-button is-${speechState}`;
 
   const [turns, setTurns] =
     useState<ChatTurn[]>([]);
@@ -1015,6 +1089,11 @@ export function ChatApp({
 
   const [viewer, setViewer] =
     useState<ViewerState | null>(null);
+
+  useEffect(() => () => {
+    speechRecognitionRef.current?.abort();
+    speechRecognitionRef.current = null;
+  }, []);
 
   useEffect(
     () => {
@@ -1108,11 +1187,105 @@ export function ChatApp({
       setViewer({ source });
     };
 
+  const toggleSpeechInput = () => {
+    if (speechState !== "idle") {
+      if (speechState === "stopping") return;
+      setSpeechState("stopping");
+      const activeRecognition = speechRecognitionRef.current;
+      if (!activeRecognition) {
+        setSpeechState("idle");
+        return;
+      }
+      try {
+        activeRecognition.stop();
+      } catch {
+        activeRecognition.abort();
+        speechRecognitionRef.current = null;
+        setSpeechState("idle");
+        setSpeechStatus("Voice input stopped.");
+      }
+      return;
+    }
+
+    const speechWindow = window as SpeechRecognitionWindow;
+    const Recognition = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+    if (!Recognition) {
+      setSpeechStatus("Voice input is not supported by this browser. Try a browser with speech recognition support.");
+      return;
+    }
+
+    const recognition = new Recognition();
+    recognition.lang = speechLanguage;
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    speechStartingQueryRef.current = query;
+    recognition.onstart = () => {
+      setSpeechState((current) => current === "starting" ? "listening" : current);
+      setSpeechStatus(null);
+    };
+    recognition.onresult = (event) => {
+      let transcript = "";
+      let lastSegmentIsFinal = true;
+      for (let index = 0; index < event.results.length; index += 1) {
+        const result = event.results[index];
+        const segment = result?.[0]?.transcript ?? "";
+        transcript = appendSpeechTranscriptSegment(
+          transcript,
+          segment,
+        );
+        if (segment.trim()) lastSegmentIsFinal = result?.isFinal ?? true;
+      }
+      if (!lastSegmentIsFinal && transcript && !/[,.!?।॥…:;]$/u.test(transcript)) {
+        transcript += " ";
+      }
+      const startingQuery = speechStartingQueryRef.current;
+      let recognizedText = transcript;
+      if (!startingQuery.trim() && recognizedText) {
+        recognizedText = recognizedText[0].toLocaleUpperCase() + recognizedText.slice(1);
+      }
+      const separator = startingQuery && recognizedText && !/\s$/.test(startingQuery) ? " " : "";
+      setQuery(`${startingQuery}${separator}${recognizedText}`);
+    };
+    recognition.onerror = (event) => {
+      const message = event.error === "not-allowed" || event.error === "service-not-allowed"
+        ? "Allow microphone access to use voice input."
+        : event.error === "no-speech"
+          ? "No speech was detected. Try again."
+          : event.error === "audio-capture"
+            ? "No microphone is available."
+            : "Speech recognition could not connect. Check your connection and try again.";
+      setSpeechStatus(message);
+      speechRecognitionRef.current = null;
+      setSpeechState("idle");
+    };
+    recognition.onend = () => {
+      if (speechRecognitionRef.current === recognition) {
+        speechRecognitionRef.current = null;
+        setSpeechState("idle");
+      }
+    };
+    speechRecognitionRef.current = recognition;
+    setSpeechStatus(null);
+    setSpeechState("starting");
+    try {
+      recognition.start();
+    } catch {
+      speechRecognitionRef.current = null;
+      setSpeechState("idle");
+      setSpeechStatus("Could not start voice input. Check microphone access and try again.");
+    }
+  };
+
   const submit =
     async (
       event: FormEvent,
     ) => {
       event.preventDefault();
+
+      if (speechInputActive) {
+        toggleSpeechInput();
+        return;
+      }
 
       const question =
         query.trim();
@@ -1686,8 +1859,9 @@ export function ChatApp({
               event.target.value,
             )
           }
-          placeholder="Ask in English or Hindi…"
+          placeholder="Ask in English or Hindi… Press Enter to send"
           rows={3}
+          aria-keyshortcuts="Enter"
           disabled={busy}
           onKeyDown={(
             event,
@@ -1697,26 +1871,108 @@ export function ChatApp({
                 "Enter" &&
               !event.shiftKey
             ) {
+              if (event.nativeEvent.isComposing) return;
               event.preventDefault();
-
-              event.currentTarget
-                .form
-                ?.requestSubmit();
+              if (!speechInputActive && query.trim()) {
+                event.currentTarget
+                  .form
+                  ?.requestSubmit();
+              }
             }
           }}
         />
 
-        <button
-          type="submit"
-          disabled={
-            busy ||
-            !query.trim()
-          }
-        >
-          {busy
-            ? "Working…"
-            : "Ask"}
-        </button>
+        <div className="composer-actions">
+          {onNewChat ? (
+            <button
+              type="button"
+              className="composer-new-chat-button"
+              aria-label="New chat"
+              title="New chat"
+              disabled={busy || speechInputActive}
+              onClick={onNewChat}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </button>
+          ) : null}
+          <div className="speech-language-toggle" role="group" aria-label="Voice input language">
+            <button
+              type="button"
+              className={speechLanguage === "en-IN" ? "active" : ""}
+              aria-pressed={speechLanguage === "en-IN"}
+              aria-label="Use English voice input"
+              title="English voice input"
+              disabled={busy || speechInputActive}
+              onClick={() => setSpeechLanguage("en-IN")}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              className={speechLanguage === "hi-IN" ? "active" : ""}
+              aria-pressed={speechLanguage === "hi-IN"}
+              aria-label="Use Hindi voice input with Devanagari text"
+              title="Hindi voice input; text appears in Devanagari"
+              disabled={busy || speechInputActive}
+              onClick={() => setSpeechLanguage("hi-IN")}
+            >
+              HI
+            </button>
+          </div>
+          <button
+            type="button"
+            className={speechButtonClass}
+            aria-label={speechButtonLabel}
+            aria-pressed={speechInputActive}
+            title={speechButtonLabel}
+            disabled={busy || speechState === "stopping"}
+            onClick={toggleSpeechInput}
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              {speechState === "listening" ? (
+                <rect className="speech-stop-icon" x="7" y="7" width="10" height="10" rx="2" />
+              ) : speechState === "starting" || speechState === "stopping" ? (
+                <circle className="speech-progress-icon" cx="12" cy="12" r="8" />
+              ) : (
+                <>
+                  <rect x="9" y="3" width="6" height="12" rx="3" />
+                  <path d="M5 11a7 7 0 0 0 14 0M12 18v3m-4 0h8" />
+                </>
+              )}
+            </svg>
+          </button>
+          <button
+            type="submit"
+            className="composer-submit-button"
+            aria-label={busy ? "Sending message" : "Send message"}
+            title={busy ? "Sending message" : "Send message"}
+            disabled={
+              busy ||
+              speechInputActive ||
+              !query.trim()
+            }
+          >
+            {busy ? (
+              <span className="send-progress-spinner" aria-hidden="true" />
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 19V5m-7 7 7-7 7 7" />
+              </svg>
+            )}
+          </button>
+        </div>
+
+        {speechStatus || speechInputActive ? (
+          <div className="speech-status" role="status" aria-live="polite">
+            {speechStatus ?? (speechState === "starting"
+              ? "Connecting to microphone…"
+              : speechState === "stopping"
+                ? "Finishing voice input…"
+                : `Listening in ${speechLanguageName}…`)}
+          </div>
+        ) : null}
       </form>
 
       <footer className="footer-note">

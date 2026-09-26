@@ -14,6 +14,16 @@ Its job is to exercise the frozen RAG API contract before visual/product polish.
 - OCR/numeric verification badges
 - repair / qualitative-salvage / fallback indicators
 - visible local response latency
+- development profile onboarding with name, designation, language, and search scope
+- editable profile with state/UT, district, optional contact number, language, and search scope
+- primary and additional department selection using touch-friendly checkboxes
+- persistent conversation list and saved message/source history
+- pinned conversations grouped above recent history
+- permanent conversation deletion with a confirmation step; deleting a conversation also deletes its saved messages and state
+
+This is a working MVP. Workspace profiles remain development identities; public/official
+profile types and production identity verification are not implemented. Contact numbers
+are optional profile details and are not used to authenticate a user.
 
 ## Local run
 
@@ -56,14 +66,22 @@ verification policy.
 
 ## Next frontend increments
 
-After this shell is validated:
+1. Add an in-app evidence view with exact-page document navigation and visible issuer,
+   date, document type, and amendment/supersession links.
+2. Add focused department, date, and document-type filters.
+3. Design separate general/public and verified-official onboarding after the backend
+   identity and profile model is ready.
+4. Polish responsive layouts and accessible states.
 
-1. exact-page PDF viewer inside the app;
-2. search/filter mode beside chat;
-3. conversation persistence;
-4. department/date/order filters;
-5. mobile polish;
-6. production authentication and deployment.
+Profile edits and conversation reads/updates require the active HttpOnly workspace
+session and match the route profile ID against that session. Conversation pins are
+stored in PostgreSQL. Deletion removes the conversation row and its dependent
+messages/state.
+Migration `004_workspace_preferences.sql` adds the new profile fields and pin column;
+apply pending database migrations before running the updated API.
+
+Conversation history and source cards are already implemented; production identity and
+authorization remain backend prerequisites for real official profiles.
 
 ## Same-origin RAG proxy
 

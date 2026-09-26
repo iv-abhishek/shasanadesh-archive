@@ -27,11 +27,16 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import type { B2CaptureStorage } from "./storage/b2.js";
+import { saveDocumentMetadata } from "./storage/document-metadata.js";
 
 const execFileAsync = promisify(execFile);
 
 interface Metadata {
+  [key: string]: unknown;
   sourceId: string;
+  capture?: { captureId?: string };
+  storage?: B2CaptureStorage;
   department: string | null;
   pdf?: {
     pages?: number | null;
@@ -95,6 +100,7 @@ async function ocrDocument(
 
   if (!force && metadata.ocr?.completed) {
     console.log(`SKIP OCR ${metadata.sourceId} (already complete)`);
+    await saveDocumentMetadata(metadataPath, metadata);
     return "skip";
   }
 
@@ -173,11 +179,7 @@ async function ocrDocument(
       pagesProcessed: images.length,
     };
 
-    await writeFile(
-      metadataPath,
-      JSON.stringify(metadata, null, 2) + "\n",
-      "utf8",
-    );
+    await saveDocumentMetadata(metadataPath, metadata);
 
     console.log(
       `OK ${metadata.sourceId} | pages=${images.length} | OCR text=${metadata.ocr.textBytes} bytes`,
@@ -194,8 +196,19 @@ async function ocrDocument(
   }
 }
 
+function requestedSourceId(): string | undefined {
+  const index = process.argv.indexOf("--source-id");
+  if (index < 0) return undefined;
+  const sourceId = process.argv[index + 1]?.trim();
+  if (!sourceId || sourceId.startsWith("--")) {
+    throw new Error("--source-id needs a document source ID.");
+  }
+  return sourceId;
+}
+
 async function main() {
   const force = process.argv.includes("--force");
+  const sourceId = requestedSourceId();
 
   if (!(await commandExists("pdftoppm"))) {
     throw new Error("pdftoppm not found");
@@ -210,6 +223,7 @@ async function main() {
   let ocr = 0;
   let skip = 0;
   let fail = 0;
+  let matched = false;
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
@@ -225,11 +239,18 @@ async function main() {
       continue;
     }
 
+    if (sourceId && metadata.sourceId !== sourceId) continue;
+    matched = true;
+
     const result = await ocrDocument(dir, metadata, force);
 
     if (result === "ocr") ocr++;
     if (result === "skip") skip++;
     if (result === "fail") fail++;
+  }
+
+  if (sourceId && !matched) {
+    throw new Error("No archived document matched source ID " + sourceId);
   }
 
   console.log("\n=================");

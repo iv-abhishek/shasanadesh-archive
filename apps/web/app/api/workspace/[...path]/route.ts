@@ -64,6 +64,13 @@ async function proxy(
     );
   }
 
+  const cookie =
+    request.headers.get("cookie");
+
+  if (cookie) {
+    headers.set("cookie", cookie);
+  }
+
   const method =
     request.method;
 

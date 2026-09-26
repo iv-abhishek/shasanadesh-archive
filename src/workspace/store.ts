@@ -29,6 +29,9 @@ export interface WorkspaceProfile {
   id: string;
   displayName: string;
   designation: string | null;
+  stateName: string | null;
+  district: string | null;
+  contactNumber: string | null;
   preferredLanguage:
     "en" | "hi";
   defaultScope:
@@ -43,6 +46,7 @@ export interface ConversationSummary {
   id: string;
   title: string;
   archived: boolean;
+  isPinned: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -220,6 +224,9 @@ async function saveWorkspaceProfile(
             id,
             display_name,
             designation,
+            state_name,
+            district,
+            contact_number,
             preferred_language,
             default_scope
           )
@@ -228,13 +235,22 @@ async function saveWorkspaceProfile(
             $2,
             $3,
             $4,
-            $5
+            $5,
+            $6,
+            $7,
+            $8
           )
         `,
         [
           userId,
           displayName,
           input.designation
+            ?.trim() || null,
+          input.stateName
+            ?.trim() || null,
+          input.district
+            ?.trim() || null,
+          input.contactNumber
             ?.trim() || null,
           input.preferredLanguage,
           input.defaultScope,
@@ -248,8 +264,11 @@ async function saveWorkspaceProfile(
             SET
               display_name = $2,
               designation = $3,
-              preferred_language = $4,
-              default_scope = $5,
+              state_name = $4,
+              district = $5,
+              contact_number = $6,
+              preferred_language = $7,
+              default_scope = $8,
               updated_at = NOW()
             WHERE id = $1
           `,
@@ -257,6 +276,12 @@ async function saveWorkspaceProfile(
             userId,
             displayName,
             input.designation
+              ?.trim() || null,
+            input.stateName
+              ?.trim() || null,
+            input.district
+              ?.trim() || null,
+            input.contactNumber
               ?.trim() || null,
             input.preferredLanguage,
             input.defaultScope,
@@ -359,6 +384,9 @@ export async function getWorkspaceProfile(
       display_name: string;
       designation:
         string | null;
+      state_name: string | null;
+      district: string | null;
+      contact_number: string | null;
       preferred_language:
         "en" | "hi";
       default_scope:
@@ -370,6 +398,9 @@ export async function getWorkspaceProfile(
           id,
           display_name,
           designation,
+          state_name,
+          district,
+          contact_number,
           preferred_language,
           default_scope
         FROM workspace_users
@@ -427,6 +458,15 @@ export async function getWorkspaceProfile(
     designation:
       user.rows[0]
         .designation,
+    stateName:
+      user.rows[0]
+        .state_name,
+    district:
+      user.rows[0]
+        .district,
+    contactNumber:
+      user.rows[0]
+        .contact_number,
     preferredLanguage:
       user.rows[0]
         .preferred_language,
@@ -467,6 +507,7 @@ export async function createConversation(
       id: string;
       title: string;
       archived: boolean;
+      is_pinned: boolean;
       created_at: Date;
       updated_at: Date;
     }>(
@@ -485,6 +526,7 @@ export async function createConversation(
           id,
           title,
           archived,
+          is_pinned,
           created_at,
           updated_at
       `,
@@ -504,6 +546,8 @@ export async function createConversation(
       row.title,
     archived:
       row.archived,
+    isPinned:
+      row.is_pinned,
     createdAt:
       row.created_at
         .toISOString(),
@@ -513,8 +557,107 @@ export async function createConversation(
   };
 }
 
+export async function updateConversation(
+  userId: string,
+  conversationId: string,
+  input: {
+    title?: string;
+    isPinned?: boolean;
+    archived?: boolean;
+  },
+): Promise<ConversationSummary> {
+  const result =
+    await pool.query<{
+      id: string;
+      title: string;
+      archived: boolean;
+      is_pinned: boolean;
+      created_at: Date;
+      updated_at: Date;
+    }>(
+      `
+        UPDATE conversations
+        SET title = COALESCE($3, title),
+            is_pinned = COALESCE($4, is_pinned),
+            archived = COALESCE($5, archived),
+            updated_at = CASE
+              WHEN $3::text IS NOT NULL THEN NOW()
+              ELSE updated_at
+            END
+        WHERE id = $1
+          AND user_id = $2
+        RETURNING
+          id,
+          title,
+          archived,
+          is_pinned,
+          created_at,
+          updated_at
+      `,
+      [
+        conversationId,
+        userId,
+        input.title ?? null,
+        input.isPinned ?? null,
+        input.archived ?? null,
+      ],
+    );
+
+  const row = result.rows[0];
+
+  if (!row) {
+    const error =
+      new Error("Conversation not found.");
+    (
+      error as Error & {
+        statusCode?: number;
+      }
+    ).statusCode = 404;
+    throw error;
+  }
+
+  return {
+    id: row.id,
+    title: row.title,
+    archived: row.archived,
+    isPinned: row.is_pinned,
+    createdAt: row.created_at.toISOString(),
+    updatedAt: row.updated_at.toISOString(),
+  };
+}
+
+export async function deleteConversation(
+  userId: string,
+  conversationId: string,
+): Promise<void> {
+  const result =
+    await pool.query(
+      `
+        DELETE FROM conversations
+        WHERE id = $1
+          AND user_id = $2
+      `,
+      [
+        conversationId,
+        userId,
+      ],
+    );
+
+  if (!result.rowCount) {
+    const error =
+      new Error("Conversation not found.");
+    (
+      error as Error & {
+        statusCode?: number;
+      }
+    ).statusCode = 404;
+    throw error;
+  }
+}
+
 export async function listConversations(
   userId: string,
+  archived = false,
 ): Promise<ConversationSummary[]> {
   await getWorkspaceProfile(
     userId,
@@ -525,6 +668,7 @@ export async function listConversations(
       id: string;
       title: string;
       archived: boolean;
+      is_pinned: boolean;
       created_at: Date;
       updated_at: Date;
     }>(
@@ -533,15 +677,17 @@ export async function listConversations(
           id,
           title,
           archived,
+          is_pinned,
           created_at,
           updated_at
         FROM conversations
         WHERE user_id = $1
-          AND archived = FALSE
+          AND archived = $2
         ORDER BY
+          CASE WHEN $2 THEN FALSE ELSE is_pinned END DESC,
           updated_at DESC
       `,
-      [userId],
+      [userId, archived],
     );
 
   return result.rows.map(
@@ -550,6 +696,8 @@ export async function listConversations(
       title: row.title,
       archived:
         row.archived,
+      isPinned:
+        row.is_pinned,
       createdAt:
         row.created_at
           .toISOString(),
@@ -766,6 +914,7 @@ export async function getConversation(
       id: string;
       title: string;
       archived: boolean;
+      is_pinned: boolean;
       created_at: Date;
       updated_at: Date;
     }>(
@@ -774,6 +923,7 @@ export async function getConversation(
           id,
           title,
           archived,
+          is_pinned,
           created_at,
           updated_at
         FROM conversations
@@ -854,6 +1004,8 @@ export async function getConversation(
         conversationRow.title,
       archived:
         conversationRow.archived,
+      isPinned:
+        conversationRow.is_pinned,
       createdAt:
         conversationRow
           .created_at

@@ -1,14 +1,15 @@
 /**
  * Workspace/profile/history routes.
  *
- * These routes are persistence APIs for the development product shell.
- * They do not provide authentication. The caller-supplied user ID is only an
- * ownership key until a real identity provider is integrated.
+ * These routes back the development workspace shell. Per-profile reads and
+ * writes require a matching HttpOnly session; development profile creation is
+ * still open because there is no production identity provider yet.
  */
 
 import type {
   FastifyInstance,
   FastifyReply,
+  FastifyRequest,
 } from "fastify";
 import {
   z,
@@ -26,8 +27,13 @@ import {
   listConversations,
   listDepartments,
   saveConversationState,
+  updateConversation,
+  deleteConversation,
   updateWorkspaceUser,
 } from "./store.js";
+import {
+  resolveSessionFromCookie,
+} from "./session-store.js";
 
 const ProfileBodySchema =
   z.object({
@@ -40,6 +46,21 @@ const ProfileBodySchema =
       z.string()
         .trim()
         .max(200)
+        .optional(),
+    stateName:
+      z.string()
+        .trim()
+        .max(100)
+        .optional(),
+    district:
+      z.string()
+        .trim()
+        .max(100)
+        .optional(),
+    contactNumber:
+      z.string()
+        .trim()
+        .max(32)
         .optional(),
     preferredLanguage:
       z.enum([
@@ -66,6 +87,17 @@ const ProfileBodySchema =
         .max(12)
         .optional(),
   });
+
+const ConversationPatchSchema =
+  z.object({
+    title: z.string().trim().min(1).max(200).optional(),
+    isPinned: z.boolean().optional(),
+    archived: z.boolean().optional(),
+  }).refine((input) =>
+    input.title !== undefined
+      || input.isPinned !== undefined
+      || input.archived !== undefined,
+  );
 
 const CreateConversationSchema =
   z.object({
@@ -160,6 +192,33 @@ function sendError(
     });
 }
 
+async function authorizeWorkspaceUser(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  userId: string,
+): Promise<boolean> {
+  const session =
+    await resolveSessionFromCookie(
+      request.headers.cookie,
+    );
+
+  if (!session) {
+    reply.code(401).send({
+      error: "An active workspace session is required.",
+    });
+    return false;
+  }
+
+  if (session.userId !== userId) {
+    reply.code(403).send({
+      error: "This workspace belongs to a different profile.",
+    });
+    return false;
+  }
+
+  return true;
+}
+
 export function registerWorkspaceRoutes(
   server: FastifyInstance,
 ): void {
@@ -228,6 +287,12 @@ export function registerWorkspaceRoutes(
       reply,
     ) => {
       try {
+        if (!(await authorizeWorkspaceUser(
+          request,
+          reply,
+          request.params.userId,
+        ))) return;
+
         return await getWorkspaceProfile(
           request.params
             .userId,
@@ -267,6 +332,12 @@ export function registerWorkspaceRoutes(
       }
 
       try {
+        if (!(await authorizeWorkspaceUser(
+          request,
+          reply,
+          request.params.userId,
+        ))) return;
+
         return await updateWorkspaceUser(
           request.params
             .userId,
@@ -285,6 +356,9 @@ export function registerWorkspaceRoutes(
     Params: {
       userId: string;
     };
+    Querystring: {
+      archived?: string;
+    };
   }>(
     "/api/workspace/users/:userId/conversations",
     async (
@@ -292,11 +366,18 @@ export function registerWorkspaceRoutes(
       reply,
     ) => {
       try {
+        if (!(await authorizeWorkspaceUser(
+          request,
+          reply,
+          request.params.userId,
+        ))) return;
+
         return {
           conversations:
             await listConversations(
               request.params
                 .userId,
+              request.query.archived === "true",
             ),
         };
       } catch (error) {
@@ -343,6 +424,12 @@ export function registerWorkspaceRoutes(
         );
 
       try {
+        if (!(await authorizeWorkspaceUser(
+          request,
+          reply,
+          request.params.userId,
+        ))) return;
+
         return await createConversation(
           request.params
             .userId,
@@ -370,6 +457,12 @@ export function registerWorkspaceRoutes(
       reply,
     ) => {
       try {
+        if (!(await authorizeWorkspaceUser(
+          request,
+          reply,
+          request.params.userId,
+        ))) return;
+
         return await getConversation(
           request.params
             .userId,
@@ -413,6 +506,12 @@ export function registerWorkspaceRoutes(
       }
 
       try {
+        if (!(await authorizeWorkspaceUser(
+          request,
+          reply,
+          request.params.userId,
+        ))) return;
+
         return await addConversationMessage(
           request.params
             .userId,
@@ -457,6 +556,12 @@ export function registerWorkspaceRoutes(
       }
 
       try {
+        if (!(await authorizeWorkspaceUser(
+          request,
+          reply,
+          request.params.userId,
+        ))) return;
+
         await saveConversationState(
           request.params
             .userId,
@@ -473,6 +578,70 @@ export function registerWorkspaceRoutes(
           reply,
           error,
         );
+      }
+    },
+  );
+
+  server.patch<{
+    Params: {
+      userId: string;
+      conversationId: string;
+    };
+  }>(
+    "/api/workspace/users/:userId/conversations/:conversationId",
+    async (request, reply) => {
+      const parsed =
+        ConversationPatchSchema.safeParse(
+          request.body,
+        );
+
+      if (!parsed.success) {
+        return reply.code(400).send({
+          error: parsed.error.flatten(),
+        });
+      }
+
+      try {
+        if (!(await authorizeWorkspaceUser(
+          request,
+          reply,
+          request.params.userId,
+        ))) return;
+
+        return await updateConversation(
+          request.params.userId,
+          request.params.conversationId,
+          parsed.data,
+        );
+      } catch (error) {
+        return sendError(reply, error);
+      }
+    },
+  );
+
+  server.delete<{
+    Params: {
+      userId: string;
+      conversationId: string;
+    };
+  }>(
+    "/api/workspace/users/:userId/conversations/:conversationId",
+    async (request, reply) => {
+      try {
+        if (!(await authorizeWorkspaceUser(
+          request,
+          reply,
+          request.params.userId,
+        ))) return;
+
+        await deleteConversation(
+          request.params.userId,
+          request.params.conversationId,
+        );
+
+        return { ok: true };
+      } catch (error) {
+        return sendError(reply, error);
       }
     },
   );

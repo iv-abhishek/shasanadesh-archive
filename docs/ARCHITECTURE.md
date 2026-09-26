@@ -7,6 +7,29 @@ The language model is the final reasoning/generation layer, not the database.
 The authoritative knowledge lives in preserved government documents and structured
 retrieval indexes.
 
+## Implementation Status
+
+The repository has a working local archive/search/chat MVP, but several items in this
+document describe target architecture rather than shipped components:
+
+- Initial ingestion works from a curated list of known Shasanadesh IDs. A small source
+  registry now includes the Department of Expenditure GFR adapter; a broad multi-domain
+  crawler is not implemented.
+- The known-ID ingester stores captured PDFs and metadata locally and can archive the raw
+  PDF plus a JSON manifest in B2 using its Native API. Uploads carry a SHA-1 checksum that
+  B2 validates; returned size and checksum are checked before local metadata marks the
+  capture archived. Existing local captures can be backfilled when B2 is enabled.
+- Derived pages, OCR, and chunk artifacts are still local; B2 multipart uploads for files
+  larger than 5 GB are not implemented.
+- Page extraction, OCR variants, chunking, PostgreSQL/pgvector hybrid retrieval,
+  reranking, chat orchestration, evidence validation, conversation persistence, and the
+  Next.js MVP are present.
+- Production identity/authorization, official-profile verification, and broad
+  government-source coverage remain future work.
+
+See [PRODUCT_VISION.md](PRODUCT_VISION.md) for audience, privacy, and closeable pilot
+scope.
+
 ## System Components
 
 ### 1. Discovery
@@ -36,7 +59,13 @@ For every document capture, preserve:
 - raw SHA256
 - object-storage key
 
-Original captures are immutable.
+Original captures are immutable. With B2 configured, the known-ID ingester and source
+ingester archive each original PDF and provenance manifest under
+`archive/<collection>/raw/` and `archive/<collection>/processed/`. Collections currently
+include `shasanadesh` and `doe-gfr`. The B2 Native API verifies SHA-1 during upload; the
+pipeline also records SHA-256 and checks the upload response's byte count and SHA-1.
+Without B2 credentials, ingestion remains local-only. If credentials are added later,
+existing local captures can be uploaded before they are skipped.
 
 ### 3. Text Extraction
 
@@ -81,18 +110,14 @@ Every chunk includes:
 
 ### 6. Database
 
-Planned PostgreSQL entities:
+Current migrations include corpus tables for documents, pages, page variants, chunks,
+and ingestion runs. Workspace tables store departments, profiles, department assignments,
+conversations, messages, conversation state, and development sessions.
 
-- `sources`
-- `documents`
-- `document_captures`
-- `pages`
-- `chunks`
-- `document_relationships`
-- `ingestion_runs`
-- `crawl_sources`
-
-pgvector will store semantic embeddings for chunks.
+pgvector stores chunk embeddings alongside the lexical search data. The first external
+source adapter is registered, but a persistent source registry, relational capture
+history, and document-relationship graph are still needed for broad multi-source
+ingestion and reliable amendment/supersession reasoning.
 
 ### 7. Retrieval
 
@@ -119,17 +144,10 @@ The answer must not invent citations.
 
 ### 9. Frontend
 
-Planned Next.js UI:
-
-- new chat
-- chat history
-- streaming answer
-- Hindi/English input
-- citation chips
-- source cards
-- PDF viewer
-- open exact cited page
-- optional filters for department/year/order type
+The current Next.js MVP provides new chat, saved conversation history, streaming answers,
+Hindi/English input, citations, source cards, and links to exact PDF pages. A richer
+in-app evidence viewer, refined filters, profile-type onboarding, and production
+authentication remain future increments.
 
 ## Model Abstraction
 

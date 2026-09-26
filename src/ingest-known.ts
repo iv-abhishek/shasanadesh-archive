@@ -16,7 +16,7 @@
  * - docs/DECISIONS.md
  */
 
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import {
   access,
@@ -30,6 +30,11 @@ import {
   buildShasanadeshPdfUrl,
   decodeShasanadeshId,
 } from "./lib/shasanadesh-id.js";
+import {
+  isB2Enabled,
+  storeCaptureInB2,
+  type B2CaptureStorage,
+} from "./storage/b2.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -45,6 +50,71 @@ interface KnownId {
 
 function sha256(buffer: Buffer | string): string {
   return createHash("sha256").update(buffer).digest("hex");
+}
+
+function captureDetails(metadata: Record<string, unknown>): Record<string, unknown> {
+  const capture = metadata.capture;
+  return capture && typeof capture === "object"
+    ? (capture as Record<string, unknown>)
+    : {};
+}
+
+function hasVerifiedB2Capture(
+  metadata: Record<string, unknown>,
+  expectedSha256: string,
+): boolean {
+  const storage = metadata.storage as B2CaptureStorage | undefined;
+  return (
+    storage?.provider === "backblaze-b2-native" &&
+    storage.bucket ===
+      (process.env.B2_BUCKET?.trim() || process.env.B2_BUCKET_NAME?.trim()) &&
+    storage.raw?.sha256 === expectedSha256 &&
+    Boolean(storage.raw?.fileId) &&
+    storage.metadata?.sha256 !== undefined &&
+    Boolean(storage.metadata?.fileId)
+  );
+}
+
+async function storeLocalCapture(
+  sourceId: string,
+  pdf: Buffer,
+  metadataPath: string,
+  metadata: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const capture = captureDetails(metadata);
+  const rawSha256 = sha256(pdf);
+  const recordedSha256 = capture.rawSha256;
+  if (typeof recordedSha256 === "string" && recordedSha256 !== rawSha256) {
+    throw new Error(
+      `Local PDF checksum does not match its metadata for ${sourceId}.`,
+    );
+  }
+
+  const captureId =
+    typeof capture.captureId === "string" && capture.captureId.length > 0
+      ? capture.captureId
+      : `legacy-${rawSha256.slice(0, 16)}`;
+  const preparedMetadata = {
+    ...metadata,
+    capture: {
+      ...capture,
+      captureId,
+      bytes: pdf.byteLength,
+      rawSha256,
+    },
+  };
+  const storage = await storeCaptureInB2({
+    sourceId,
+    captureId,
+    pdf,
+    metadata: preparedMetadata,
+  });
+  const completedMetadata = { ...preparedMetadata, storage };
+  await writeFile(
+    metadataPath,
+    JSON.stringify(completedMetadata, null, 2) + "\n",
+  );
+  return completedMetadata;
 }
 
 function normalizeText(text: string): string {
@@ -135,7 +205,8 @@ async function extractText(
 async function ingestOne(
   record: KnownId,
   force: boolean,
-): Promise<"downloaded" | "skipped" | "failed"> {
+  b2Enabled: boolean,
+): Promise<"downloaded" | "stored" | "skipped" | "failed"> {
   const decoded = decodeShasanadeshId(record.encodedId);
   const sourceDir = path.resolve(
     "data/documents",
@@ -148,17 +219,52 @@ async function ingestOne(
 
   await mkdir(sourceDir, { recursive: true });
 
-  if (!force && (await exists(pdfPath)) && (await exists(metadataPath))) {
-    console.log(`SKIP ${decoded.decodedId}`);
-    return "skipped";
-  }
-
-  const sourceUrl = buildShasanadeshPdfUrl(decoded.base64);
-
-  console.log(`\nINGEST ${decoded.decodedId}`);
-  console.log(sourceUrl);
-
   try {
+    if (!force && (await exists(pdfPath)) && (await exists(metadataPath))) {
+      if (!b2Enabled) {
+        console.log(`SKIP ${decoded.decodedId}`);
+        return "skipped";
+      }
+
+      const existingMetadata = JSON.parse(
+        await readFile(metadataPath, "utf8"),
+      ) as Record<string, unknown>;
+      const existingPdf = await readFile(pdfPath);
+      const actualSha256 = sha256(existingPdf);
+      const capture = captureDetails(existingMetadata);
+      if (
+        typeof capture.rawSha256 === "string" &&
+        capture.rawSha256 !== actualSha256
+      ) {
+        throw new Error(
+          `Local PDF checksum does not match its metadata for ${decoded.decodedId}.`,
+        );
+      }
+
+      if (hasVerifiedB2Capture(existingMetadata, actualSha256)) {
+        console.log(`SKIP ${decoded.decodedId} | already present in B2`);
+        return "skipped";
+      }
+
+      console.log(`\nBACKFILL B2 ${decoded.decodedId}`);
+      const completedMetadata = await storeLocalCapture(
+        decoded.decodedId,
+        existingPdf,
+        metadataPath,
+        existingMetadata,
+      );
+      const storage = completedMetadata.storage as B2CaptureStorage;
+      console.log(
+        `STORED ${decoded.decodedId} | ${storage.bucket}/${storage.raw.key} | sha1=${storage.raw.sha1}`,
+      );
+      return "stored";
+    }
+
+    const sourceUrl = buildShasanadeshPdfUrl(decoded.base64);
+
+    console.log(`\nINGEST ${decoded.decodedId}`);
+    console.log(sourceUrl);
+
     const response = await fetch(sourceUrl, {
       redirect: "follow",
       headers: {
@@ -202,6 +308,7 @@ async function ingestOne(
 
       capture: {
         downloadedAt: new Date().toISOString(),
+        captureId: randomUUID(),
         status: response.status,
         contentType: response.headers.get("content-type"),
         bytes: buffer.length,
@@ -222,10 +329,20 @@ async function ingestOne(
       },
     };
 
-    await writeFile(
-      metadataPath,
-      JSON.stringify(metadata, null, 2) + "\n",
-    );
+    await writeFile(metadataPath, JSON.stringify(metadata, null, 2) + "\n");
+
+    if (b2Enabled) {
+      const completedMetadata = await storeLocalCapture(
+        decoded.decodedId,
+        buffer,
+        metadataPath,
+        metadata,
+      );
+      const storage = completedMetadata.storage as B2CaptureStorage;
+      console.log(
+        `STORED ${decoded.decodedId} | ${storage.bucket}/${storage.raw.key} | sha1=${storage.raw.sha1}`,
+      );
+    }
 
     console.log(
       `OK ${decoded.decodedId} | ${buffer.length} bytes | pages=${pdfInfo.pages ?? "?"} | text=${text.bytes} bytes`,
@@ -244,6 +361,7 @@ async function ingestOne(
 
 async function main() {
   const force = process.argv.includes("--force");
+  const b2Enabled = isB2Enabled();
   const datasetPath = path.resolve("datasets/known-ids.json");
 
   const records = JSON.parse(
@@ -252,15 +370,18 @@ async function main() {
 
   console.log(`Known IDs: ${records.length}`);
   console.log(`Force:     ${force ? "yes" : "no"}`);
+  console.log(`B2:        ${b2Enabled ? "enabled" : "local-only"}`);
 
   let downloaded = 0;
+  let stored = 0;
   let skipped = 0;
   let failed = 0;
 
   for (let index = 0; index < records.length; index++) {
-    const result = await ingestOne(records[index], force);
+    const result = await ingestOne(records[index], force, b2Enabled);
 
     if (result === "downloaded") downloaded++;
+    if (result === "stored") stored++;
     if (result === "skipped") skipped++;
     if (result === "failed") failed++;
 
@@ -273,8 +394,10 @@ async function main() {
   console.log("Ingestion summary");
   console.log("====================");
   console.log(`Downloaded: ${downloaded}`);
+  console.log(`Backfilled: ${stored}`);
   console.log(`Skipped:    ${skipped}`);
   console.log(`Failed:     ${failed}`);
+  if (b2Enabled && failed > 0) process.exitCode = 1;
 }
 
 main().catch((error) => {

@@ -48,15 +48,6 @@ class SearchFilters(BaseModel):
     verification_status: str | None = Field(default=None, max_length=40)
 
 
-class SearchFilters(BaseModel):
-    department: str | None = Field(default=None, max_length=200)
-    go_number: str | None = Field(default=None, max_length=200)
-    source_id: str | None = Field(default=None, max_length=200)
-    date_from: str | None = Field(default=None, max_length=10)
-    date_to: str | None = Field(default=None, max_length=10)
-    verification_status: str | None = Field(default=None, max_length=40)
-
-
 class SearchRequest(BaseModel):
     query: str = Field(min_length=1, max_length=4000)
     top_k: int = Field(default=5, ge=1, le=12)
@@ -203,114 +194,8 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
         ]
 
         if departments:
-            clauses.append("d.department = ANY(%s)")
+            clauses.append("(d.department = ANY(%s) OR d.metadata->>'jurisdiction' = 'central')")
             params.append(departments)
-
-    if filters.go_number:
-        clauses.append("d.go_number ILIKE %s")
-        params.append(f"%{filters.go_number.strip()}%")
-
-    if filters.source_id:
-        clauses.append("d.source_id = %s")
-        params.append(filters.source_id.strip())
-
-    if filters.date_from:
-        clauses.append("d.go_date >= %s::date")
-        params.append(filters.date_from)
-
-    if filters.date_to:
-        clauses.append("d.go_date <= %s::date")
-        params.append(filters.date_to)
-
-    status = filters.verification_status
-
-    if status == "conflict":
-        clauses.append("p.numeric_conflict = TRUE")
-    elif status == "ocr_only_unverified":
-        clauses.append(
-            "("
-            "p.numeric_conflict = FALSE "
-            "AND NOT EXISTS ("
-            "SELECT 1 FROM page_variants pv_native "
-            "WHERE pv_native.source_id = c.source_id "
-            "AND pv_native.page_number = c.page_number "
-            "AND pv_native.variant_type = 'native'"
-            ") "
-            "AND EXISTS ("
-            "SELECT 1 FROM page_variants pv_ocr "
-            "WHERE pv_ocr.source_id = c.source_id "
-            "AND pv_ocr.page_number = c.page_number "
-            "AND pv_ocr.variant_type = 'ocr'"
-            ")"
-            ")"
-        )
-    elif status == "variants_agree":
-        clauses.append(
-            "("
-            "p.numeric_conflict = FALSE "
-            "AND EXISTS ("
-            "SELECT 1 FROM page_variants pv_native "
-            "WHERE pv_native.source_id = c.source_id "
-            "AND pv_native.page_number = c.page_number "
-            "AND pv_native.variant_type = 'native'"
-            ") "
-            "AND EXISTS ("
-            "SELECT 1 FROM page_variants pv_ocr "
-            "WHERE pv_ocr.source_id = c.source_id "
-            "AND pv_ocr.page_number = c.page_number "
-            "AND pv_ocr.variant_type = 'ocr'"
-            ")"
-            ")"
-        )
-    elif status == "native_primary":
-        clauses.append(
-            "("
-            "p.numeric_conflict = FALSE "
-            "AND EXISTS ("
-            "SELECT 1 FROM page_variants pv_native "
-            "WHERE pv_native.source_id = c.source_id "
-            "AND pv_native.page_number = c.page_number "
-            "AND pv_native.variant_type = 'native'"
-            ") "
-            "AND NOT EXISTS ("
-            "SELECT 1 FROM page_variants pv_ocr "
-            "WHERE pv_ocr.source_id = c.source_id "
-            "AND pv_ocr.page_number = c.page_number "
-            "AND pv_ocr.variant_type = 'ocr'"
-            ")"
-            ")"
-        )
-    elif status == "unverified":
-        clauses.append(
-            "("
-            "p.numeric_conflict = FALSE "
-            "AND NOT EXISTS ("
-            "SELECT 1 FROM page_variants pv_any "
-            "WHERE pv_any.source_id = c.source_id "
-            "AND pv_any.page_number = c.page_number "
-            "AND pv_any.variant_type IN ('native', 'ocr')"
-            ")"
-            ")"
-        )
-    elif status:
-        raise HTTPException(
-            status_code=400,
-            detail=f"unsupported verification_status: {status}",
-        )
-
-    if not clauses:
-        return "", []
-
-    return " AND " + " AND ".join(clauses), params
-
-
-def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
-    clauses: list[str] = []
-    params: list[Any] = []
-
-    if filters.department:
-        clauses.append("d.department ILIKE %s")
-        params.append(f"%{filters.department.strip()}%")
 
     if filters.go_number:
         clauses.append("d.go_number ILIKE %s")
@@ -700,7 +585,43 @@ def search(body: SearchRequest, request: Request):
         - hybrid_started_at
     ) * 1000.0
 
-    pool = fused_hits[: body.rerank_count]
+    raw_pool = fused_hits[: body.rerank_count]
+
+    # Avoid reranking duplicate chunks/variants from the same logical page.
+    # If deduplication leaves fewer candidates than requested results, scan
+    # lower-ranked fused hits until top_k unique pages are available or the
+    # configured rerank budget is exhausted.
+    pool: list[Hit] = []
+    seen_pool_pages: set[str] = set()
+
+    for hit in raw_pool:
+        if hit.logical_page_id in seen_pool_pages:
+            continue
+
+        seen_pool_pages.add(hit.logical_page_id)
+        pool.append(hit)
+
+    raw_pool_unique_pages = len(pool)
+    pool_duplicate_hits = len(raw_pool) - raw_pool_unique_pages
+    backfilled_unique_pages = 0
+    minimum_pool_size = min(
+        body.top_k,
+        body.rerank_count,
+    )
+
+    if len(pool) < minimum_pool_size:
+        for hit in fused_hits[len(raw_pool) :]:
+            if hit.logical_page_id in seen_pool_pages:
+                continue
+
+            seen_pool_pages.add(hit.logical_page_id)
+            pool.append(hit)
+            backfilled_unique_pages += 1
+
+            if len(pool) >= minimum_pool_size:
+                break
+
+    pool_unique_pages = len(pool)
 
     if not pool:
         return SearchResponse(
@@ -723,6 +644,17 @@ def search(body: SearchRequest, request: Request):
         time.perf_counter()
         - rerank_started_at
     ) * 1000.0
+
+    print(
+        "[retrieval-diag] "
+        f"fused={len(fused_hits)} "
+        f"raw_pool={len(raw_pool)} "
+        f"raw_unique_pages={raw_pool_unique_pages} "
+        f"backfilled_unique_pages={backfilled_unique_pages} "
+        f"rerank_pool={pool_unique_pages} "
+        f"duplicates_removed={pool_duplicate_hits} "
+        f"rerank_ms={rerank_ms:.1f}"
+    )
 
     for hit, score in zip(pool, scores, strict=True):
         hit.rerank_score = float(score)

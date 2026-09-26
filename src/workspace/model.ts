@@ -9,6 +9,9 @@ export type DefaultScope =
 export interface WorkspaceProfileInput {
   displayName: string;
   designation?: string;
+  stateName?: string;
+  district?: string;
+  contactNumber?: string;
   preferredLanguage:
     PreferredLanguage;
   defaultScope:

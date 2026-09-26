@@ -18,6 +18,9 @@ interface WorkspaceProfile {
   id: string;
   displayName: string;
   designation: string | null;
+  stateName: string | null;
+  district: string | null;
+  contactNumber: string | null;
   preferredLanguage:
     "en" | "hi";
   defaultScope:
@@ -32,12 +35,135 @@ interface ConversationSummary {
   id: string;
   title: string;
   archived: boolean;
+  isPinned: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
+function conversationDateGroups(items: ConversationSummary[]) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const grouped = new Map<string, ConversationSummary[]>();
+
+  for (const conversation of items) {
+    const date = new Date(conversation.updatedAt);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+    grouped.set(key, [...(grouped.get(key) ?? []), conversation]);
+  }
+
+  return [...grouped.entries()].map(([key, conversations]) => {
+    const [year, month, day] = key.split("-").map(Number);
+    const date = new Date(year, month - 1, day);
+    const dateTime = date.getTime();
+    const label = dateTime === today.getTime()
+      ? "Today"
+      : dateTime === yesterday.getTime()
+        ? "Yesterday"
+        : date.toLocaleDateString(undefined, {
+          month: "short",
+          day: "numeric",
+          ...(year !== today.getFullYear() ? { year: "numeric" as const } : {}),
+        });
+    return { key, label, conversations };
+  });
+}
+
+const INDIA_STATES_AND_UTS = [
+  "Andaman and Nicobar Islands",
+  "Andhra Pradesh",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chandigarh",
+  "Chhattisgarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Goa",
+  "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jammu and Kashmir",
+  "Jharkhand",
+  "Karnataka",
+  "Kerala",
+  "Ladakh",
+  "Lakshadweep",
+  "Madhya Pradesh",
+  "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Puducherry",
+  "Punjab",
+  "Rajasthan",
+  "Sikkim",
+  "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttar Pradesh",
+  "Uttarakhand",
+  "West Bengal",
+  "Central Government / Other",
+];
+
+function DepartmentChecklist({
+  departments,
+  primaryDepartment,
+  selected,
+  onChange,
+}: {
+  departments: string[];
+  primaryDepartment: string;
+  selected: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const selectable = departments.filter(
+    (department) => department !== primaryDepartment,
+  );
+
+  if (selectable.length === 0) {
+    return (
+      <div className="field-help">
+        Select additional departments if this profile works across departments.
+      </div>
+    );
+  }
+
+  const toggle = (department: string) => {
+    onChange(
+      selected.includes(department)
+        ? selected.filter((item) => item !== department)
+        : [...selected, department],
+    );
+  };
+
+  return (
+    <div className="department-checklist" aria-label="Additional departments">
+      {selectable.map((department) => (
+        <label className="department-option" key={department}>
+          <input
+            type="checkbox"
+            checked={selected.includes(department)}
+            disabled={
+              !selected.includes(department) && selected.length >= 12
+            }
+            onChange={() => toggle(department)}
+          />
+          <span>{department}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
 const LEGACY_STORAGE_KEY =
   "shasanadesh.workspaceUserId";
+const THEME_STORAGE_KEY =
+  "shasanadesh.colorTheme";
 
 async function jsonRequest<T>(
   url: string,
@@ -53,9 +179,22 @@ async function jsonRequest<T>(
     );
 
   if (!response.ok) {
-    throw new Error(
-      `${response.status}: ${await response.text()}`,
-    );
+    const responseText = await response.text();
+    let message = responseText || response.statusText;
+    try {
+      const payload = JSON.parse(responseText) as {
+        message?: unknown;
+        error?: unknown;
+      };
+      if (typeof payload.message === "string") {
+        message = payload.message;
+      } else if (typeof payload.error === "string") {
+        message = payload.error;
+      }
+    } catch {
+      // Keep the plain response body when the server did not return JSON.
+    }
+    throw new Error(`${response.status}: ${message}`);
   }
 
   return (
@@ -86,6 +225,227 @@ async function startDevSession(
     );
 
   return result.profile;
+}
+
+function ProfileEditor({
+  profile,
+  departments,
+  busy,
+  onCancel,
+  onSave,
+}: {
+  profile: WorkspaceProfile;
+  departments: string[];
+  busy: boolean;
+  onCancel: () => void;
+  onSave: (input: {
+    displayName: string;
+    designation?: string;
+    stateName?: string;
+    district?: string;
+    contactNumber?: string;
+    preferredLanguage: "en" | "hi";
+    defaultScope: "my_departments" | "all_departments";
+    primaryDepartment: string;
+    additionalDepartments: string[];
+  }) => Promise<void>;
+}) {
+  const [displayName, setDisplayName] = useState(profile.displayName);
+  const [designation, setDesignation] = useState(profile.designation ?? "");
+  const [stateName, setStateName] = useState(profile.stateName ?? "");
+  const [district, setDistrict] = useState(profile.district ?? "");
+  const [contactNumber, setContactNumber] = useState(profile.contactNumber ?? "");
+  const [primaryDepartment, setPrimaryDepartment] = useState(
+    profile.primaryDepartment ?? departments[0] ?? "",
+  );
+  const [additionalDepartments, setAdditionalDepartments] = useState(
+    profile.departments.filter(
+      (department) => department !== profile.primaryDepartment,
+    ),
+  );
+  const [preferredLanguage, setPreferredLanguage] = useState<"en" | "hi">(
+    profile.preferredLanguage,
+  );
+  const [defaultScope, setDefaultScope] = useState<
+    "my_departments" | "all_departments"
+  >(profile.defaultScope);
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    if (busy || !displayName.trim() || !primaryDepartment) return;
+    void onSave({
+      displayName: displayName.trim(),
+      designation: designation.trim() || undefined,
+      stateName: stateName || undefined,
+      district: district.trim() || undefined,
+      contactNumber: contactNumber.trim() || undefined,
+      preferredLanguage,
+      defaultScope,
+      primaryDepartment,
+      additionalDepartments: additionalDepartments.filter(
+        (department) => department !== primaryDepartment,
+      ),
+    });
+  };
+
+  return (
+    <main className="profile-page">
+      <div className="profile-page-top">
+        <div>
+          <div className="eyebrow">Workspace settings</div>
+          <h1>Profile and departments</h1>
+          <p>
+            Set your working departments and default search behavior. Your saved
+            conversations stay with this profile when these details change.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="profile-cancel-button"
+          onClick={onCancel}
+          disabled={busy}
+        >
+          Cancel
+        </button>
+      </div>
+
+      <form className="profile-editor" onSubmit={submit}>
+        <section className="profile-editor-section">
+          <div className="section-label">Professional details</div>
+          <div className="profile-form-grid">
+            <label>
+              Name
+              <input
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                autoComplete="name"
+                required
+              />
+            </label>
+            <label>
+              Designation
+              <input
+                value={designation}
+                onChange={(event) => setDesignation(event.target.value)}
+                placeholder="e.g. Principal Secretary"
+              />
+            </label>
+            <label>
+              State or Union Territory
+              <select
+                value={stateName}
+                onChange={(event) => setStateName(event.target.value)}
+              >
+                <option value="">Not specified</option>
+                {INDIA_STATES_AND_UTS.map((state) => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              District
+              <input
+                value={district}
+                onChange={(event) => setDistrict(event.target.value)}
+                placeholder="Optional"
+                autoComplete="address-level2"
+              />
+            </label>
+            <label>
+              Contact number <span className="field-optional">Optional</span>
+              <input
+                type="tel"
+                value={contactNumber}
+                onChange={(event) => setContactNumber(event.target.value)}
+                placeholder="For this workspace profile"
+                autoComplete="tel"
+              />
+              <span className="field-help">
+                This is profile information only; it is not used to sign in.
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <section className="profile-editor-section">
+          <div className="section-label">Department scope</div>
+          <label>
+            Primary department
+            <select
+              value={primaryDepartment}
+              onChange={(event) => {
+                const next = event.target.value;
+                setPrimaryDepartment(next);
+                setAdditionalDepartments((current) =>
+                  current.filter((department) => department !== next),
+                );
+              }}
+              required
+            >
+              {departments.map((department) => (
+                <option key={department} value={department}>{department}</option>
+              ))}
+            </select>
+          </label>
+          <div className="profile-field-block">
+            <div className="profile-field-label">Additional departments</div>
+            <p className="field-help">
+              Choose up to 12 departments whose orders should be in your normal scope.
+            </p>
+            <DepartmentChecklist
+              departments={departments}
+              primaryDepartment={primaryDepartment}
+              selected={additionalDepartments}
+              onChange={setAdditionalDepartments}
+            />
+          </div>
+          <div className="profile-form-grid">
+            <label>
+              Preferred language
+              <select
+                value={preferredLanguage}
+                onChange={(event) =>
+                  setPreferredLanguage(event.target.value as "en" | "hi")
+                }
+              >
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+              </select>
+            </label>
+            <label>
+              Default document scope
+              <select
+                value={defaultScope}
+                onChange={(event) =>
+                  setDefaultScope(
+                    event.target.value as "my_departments" | "all_departments",
+                  )
+                }
+              >
+                <option value="my_departments">My departments</option>
+                <option value="all_departments">All departments</option>
+              </select>
+            </label>
+          </div>
+          <p className="field-help">
+            You can still ask about another department or an individual order in
+            the chat whenever needed.
+          </p>
+        </section>
+
+        <div className="profile-editor-actions">
+          <span className="field-help">Your saved chats are retained.</span>
+          <button
+            className="onboarding-submit"
+            type="submit"
+            disabled={busy || !displayName.trim() || !primaryDepartment}
+          >
+            {busy ? "Saving…" : "Save profile"}
+          </button>
+        </div>
+      </form>
+    </main>
+  );
 }
 
 function Onboarding({
@@ -119,6 +479,10 @@ function Onboarding({
     setDesignation,
   ] =
     useState("");
+
+  const [stateName, setStateName] = useState("");
+  const [district, setDistrict] = useState("");
+  const [contactNumber, setContactNumber] = useState("");
 
   const [
     primaryDepartment,
@@ -246,6 +610,9 @@ function Onboarding({
                   designation:
                     designation.trim() ||
                     undefined,
+                  stateName: stateName || undefined,
+                  district: district.trim() || undefined,
+                  contactNumber: contactNumber.trim() || undefined,
                   preferredLanguage,
                   defaultScope,
                   primaryDepartment,
@@ -395,6 +762,42 @@ function Onboarding({
             />
           </label>
 
+          <div className="onboarding-grid">
+            <label>
+              State or Union Territory
+              <select
+                value={stateName}
+                onChange={(event) => setStateName(event.target.value)}
+              >
+                <option value="">Not specified</option>
+                {INDIA_STATES_AND_UTS.map((state) => (
+                  <option key={state} value={state}>{state}</option>
+                ))}
+              </select>
+            </label>
+            <label>
+              District
+              <input
+                value={district}
+                onChange={(event) => setDistrict(event.target.value)}
+                placeholder="Optional"
+              />
+            </label>
+          </div>
+
+          <label>
+            Contact number <span className="field-optional">Optional</span>
+            <input
+              type="tel"
+              value={contactNumber}
+              onChange={(event) => setContactNumber(event.target.value)}
+              placeholder="For this workspace profile"
+            />
+            <span className="field-help">
+              This is profile information only; it is not used to sign in.
+            </span>
+          </label>
+
           <label>
             Primary department
             <select
@@ -428,53 +831,18 @@ function Onboarding({
             </select>
           </label>
 
-          <label>
-            Additional departments
-            <select
-              multiple
-              size={6}
-              value={
-                additionalDepartments
-              }
-              onChange={(
-                event,
-              ) =>
-                setAdditionalDepartments(
-                  Array.from(
-                    event.currentTarget
-                      .selectedOptions,
-                  ).map(
-                    (option) =>
-                      option.value,
-                  ),
-                )
-              }
-            >
-              {departments.map(
-                (department) => (
-                  <option
-                    key={
-                      department
-                    }
-                    value={
-                      department
-                    }
-                    disabled={
-                      department ===
-                      primaryDepartment
-                    }
-                  >
-                    {department}
-                  </option>
-                ),
-              )}
-            </select>
-
+          <div className="profile-field-block">
+            <div className="profile-field-label">Additional departments</div>
             <span className="field-help">
-              Use Command-click to
-              choose more than one.
+              Choose up to 12 departments this profile may need to search.
             </span>
-          </label>
+            <DepartmentChecklist
+              departments={departments}
+              primaryDepartment={primaryDepartment}
+              selected={additionalDepartments}
+              onChange={setAdditionalDepartments}
+            />
+          </div>
 
           <div className="onboarding-grid">
             <label>
@@ -556,6 +924,10 @@ function Onboarding({
 }
 
 export function WorkspaceApp() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [themeReady, setThemeReady] = useState(false);
+  const [sidebarHidden, setSidebarHidden] = useState(false);
+
   const [mode, setMode] =
     useState<
       "ask" | "search"
@@ -591,6 +963,17 @@ export function WorkspaceApp() {
       ConversationSummary[]
     >([]);
 
+  const [archivedConversations, setArchivedConversations] = useState<ConversationSummary[]>([]);
+  const [historyView, setHistoryView] = useState<"recent" | "archived">("recent");
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
+  const [renameTarget, setRenameTarget] = useState<ConversationSummary | null>(null);
+  const [renameDraft, setRenameDraft] = useState("");
+  const [historyNotice, setHistoryNotice] = useState<string | null>(null);
+  const [historySearch, setHistorySearch] = useState("");
+  const [collapsedDateGroups, setCollapsedDateGroups] = useState<Set<string>>(() => new Set());
+  const [pinnedCollapsed, setPinnedCollapsed] = useState(false);
+
   const [
     selectedConversationId,
     setSelectedConversationId,
@@ -598,6 +981,10 @@ export function WorkspaceApp() {
     useState<
       string | null
     >(null);
+
+  const [profileEditing, setProfileEditing] = useState(false);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [historyBusyId, setHistoryBusyId] = useState<string | null>(null);
 
   const [
     chatSessionKey,
@@ -613,22 +1000,68 @@ export function WorkspaceApp() {
       null,
     );
 
+  useEffect(() => {
+    let initialTheme: "dark" | "light" = "dark";
+    try {
+      initialTheme = window.localStorage.getItem(THEME_STORAGE_KEY) === "light"
+        ? "light"
+        : "dark";
+    } catch {
+      // The workspace remains usable when browser storage is unavailable.
+    }
+    document.documentElement.dataset.theme = initialTheme;
+    setTheme(initialTheme);
+    setThemeReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!themeReady) return;
+    document.documentElement.dataset.theme = theme;
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+    } catch {
+      // Keep the current appearance for this page even if persistence is blocked.
+    }
+  }, [theme, themeReady]);
+
+  useEffect(() => {
+    if (!openMenuId) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      if (event.target instanceof Element && !event.target.closest(".history-menu-wrap")) {
+        setOpenMenuId(null);
+      }
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenMenuId(null);
+    };
+    document.addEventListener("pointerdown", closeOnOutsideClick);
+    document.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.removeEventListener("pointerdown", closeOnOutsideClick);
+      document.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [openMenuId]);
+
   const loadHistory =
     useCallback(
       async (
         userId: string,
+        archived = false,
       ) => {
         const data =
           await jsonRequest<{
             conversations:
               ConversationSummary[];
           }>(
-            `/api/workspace/users/${encodeURIComponent(userId)}/conversations`,
+            `/api/workspace/users/${encodeURIComponent(userId)}/conversations${archived ? "?archived=true" : ""}`,
           );
 
-        setConversations(
-          data.conversations,
-        );
+        if (archived) {
+          setArchivedConversations(data.conversations);
+        } else {
+          setConversations(data.conversations);
+        }
+        return data.conversations;
       },
       [],
     );
@@ -687,9 +1120,14 @@ export function WorkspaceApp() {
             current + 1,
         );
 
-        await loadHistory(
+        const loadedConversations = await loadHistory(
           active.id,
         );
+
+        const sharedConversationId = new URLSearchParams(window.location.search).get("conversation");
+        if (sharedConversationId && loadedConversations.some((item) => item.id === sharedConversationId)) {
+          setSelectedConversationId(sharedConversationId);
+        }
       },
       [loadHistory],
     );
@@ -748,9 +1186,14 @@ export function WorkspaceApp() {
                 data.profile,
               );
 
-              await loadHistory(
+              const loadedConversations = await loadHistory(
                 data.profile.id,
               );
+
+              const sharedConversationId = new URLSearchParams(window.location.search).get("conversation");
+              if (sharedConversationId && loadedConversations.some((item) => item.id === sharedConversationId)) {
+                setSelectedConversationId(sharedConversationId);
+              }
 
               return;
             }
@@ -782,9 +1225,14 @@ export function WorkspaceApp() {
                   migrated,
                 );
 
-                await loadHistory(
+                const loadedConversations = await loadHistory(
                   migrated.id,
                 );
+
+                const sharedConversationId = new URLSearchParams(window.location.search).get("conversation");
+                if (sharedConversationId && loadedConversations.some((item) => item.id === sharedConversationId)) {
+                  setSelectedConversationId(sharedConversationId);
+                }
 
                 return;
               } catch {
@@ -827,9 +1275,16 @@ export function WorkspaceApp() {
   );
 
   const newChat = () => {
+    setProfileEditing(false);
+    setHistoryView("recent");
+    setOpenMenuId(null);
+    setHistorySearch("");
     setSelectedConversationId(
       null,
     );
+    const url = new URL(window.location.href);
+    url.searchParams.delete("conversation");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 
     setChatSessionKey(
       (current) =>
@@ -857,14 +1312,20 @@ export function WorkspaceApp() {
       setProfile(
         null,
       );
+      setProfileEditing(false);
 
       setConversations(
         [],
       );
+      setArchivedConversations([]);
+      setHistoryView("recent");
 
       setSelectedConversationId(
         null,
       );
+      const url = new URL(window.location.href);
+      url.searchParams.delete("conversation");
+      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
 
       setChatSessionKey(
         (current) =>
@@ -877,6 +1338,342 @@ export function WorkspaceApp() {
 
       await loadDevProfiles();
     };
+
+  const saveProfile = async (input: {
+    displayName: string;
+    designation?: string;
+    stateName?: string;
+    district?: string;
+    contactNumber?: string;
+    preferredLanguage: "en" | "hi";
+    defaultScope: "my_departments" | "all_departments";
+    primaryDepartment: string;
+    additionalDepartments: string[];
+  }) => {
+    if (!profile || profileSaving) return;
+    setProfileSaving(true);
+    setError(null);
+    try {
+      const updated = await jsonRequest<WorkspaceProfile>(
+        `/api/workspace/users/${encodeURIComponent(profile.id)}`,
+        {
+          method: "PUT",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(input),
+        },
+      );
+      setProfile(updated);
+      setProfileEditing(false);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setProfileSaving(false);
+    }
+  };
+
+  const persistConversationUpdate = async (
+    conversation: ConversationSummary,
+    patch: { title?: string; isPinned?: boolean; archived?: boolean },
+  ) => {
+    if (!profile || historyBusyId) return;
+    setHistoryBusyId(conversation.id);
+    setError(null);
+    try {
+      const updated = await jsonRequest<ConversationSummary>(
+        `/api/workspace/users/${encodeURIComponent(profile.id)}/conversations/${encodeURIComponent(conversation.id)}`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(patch),
+        },
+      );
+      setConversations((current) =>
+        (updated.archived
+          ? current.filter((item) => item.id !== updated.id)
+          : [...current.filter((item) => item.id !== updated.id), updated])
+          .sort((left, right) => Number(right.isPinned) - Number(left.isPinned)
+            || right.updatedAt.localeCompare(left.updatedAt)),
+      );
+      setArchivedConversations((current) =>
+        (updated.archived
+          ? [...current.filter((item) => item.id !== updated.id), updated]
+          : current.filter((item) => item.id !== updated.id))
+          .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)),
+      );
+      return updated;
+    } catch (caught) {
+      const message = caught instanceof Error ? caught.message : String(caught);
+      setError(
+        message.includes("404:") && message.includes("PATCH")
+          ? "The API server needs a restart to load chat pinning. Restart it, then try again."
+          : message,
+      );
+    } finally {
+      setHistoryBusyId(null);
+    }
+  };
+
+  const togglePin = async (conversation: ConversationSummary) => {
+    setOpenMenuId(null);
+    await persistConversationUpdate(conversation, { isPinned: !conversation.isPinned });
+  };
+
+  const archiveConversation = async (conversation: ConversationSummary) => {
+    setOpenMenuId(null);
+    const updated = await persistConversationUpdate(conversation, { archived: true });
+    if (updated && selectedConversationId === conversation.id) {
+      setSelectedConversationId(null);
+      setChatSessionKey((current) => current + 1);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("conversation");
+      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  };
+
+  const restoreConversation = async (conversation: ConversationSummary) => {
+    setOpenMenuId(null);
+    await persistConversationUpdate(conversation, { archived: false });
+  };
+
+  const openArchivedConversation = async (conversation: ConversationSummary) => {
+    const restored = await persistConversationUpdate(conversation, { archived: false });
+    if (!restored) return;
+    setHistoryView("recent");
+    setProfileEditing(false);
+    setSelectedConversationId(restored.id);
+    setChatSessionKey((current) => current + 1);
+    setMode("ask");
+    const url = new URL(window.location.href);
+    url.searchParams.set("conversation", restored.id);
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+  };
+
+  const beginRename = (conversation: ConversationSummary) => {
+    setOpenMenuId(null);
+    setRenameTarget(conversation);
+    setRenameDraft(conversation.title);
+  };
+
+  const shareConversation = async (conversation: ConversationSummary) => {
+    setOpenMenuId(null);
+    const url = new URL(window.location.href);
+    url.searchParams.set("conversation", conversation.id);
+    const shareUrl = url.toString();
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: conversation.title,
+          text: "Open this Shasanadesh workspace conversation.",
+          url: shareUrl,
+        });
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        window.prompt("Copy this workspace link", shareUrl);
+      }
+      setHistoryNotice("Workspace link copied. Access requires the same workspace session.");
+      window.setTimeout(() => setHistoryNotice(null), 4500);
+    } catch (caught) {
+      if (caught instanceof Error && caught.name === "AbortError") return;
+      setError("Could not share this conversation. Check clipboard permissions and try again.");
+    }
+  };
+
+  const removeConversation = async (conversation: ConversationSummary) => {
+    if (!profile || historyBusyId) return;
+    const confirmed = window.confirm(
+      `Delete “${conversation.title}”? This permanently removes its saved messages and sources.`,
+    );
+    if (!confirmed) return;
+
+    setHistoryBusyId(conversation.id);
+    setError(null);
+    try {
+      await jsonRequest<{ ok: boolean }>(
+        `/api/workspace/users/${encodeURIComponent(profile.id)}/conversations/${encodeURIComponent(conversation.id)}`,
+        { method: "DELETE" },
+      );
+      setConversations((current) =>
+        current.filter((item) => item.id !== conversation.id),
+      );
+      setArchivedConversations((current) =>
+        current.filter((item) => item.id !== conversation.id),
+      );
+      setOpenMenuId(null);
+      if (selectedConversationId === conversation.id) {
+        setSelectedConversationId(null);
+        setChatSessionKey((current) => current + 1);
+        setMode("ask");
+      }
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    } finally {
+      setHistoryBusyId(null);
+    }
+  };
+
+  const renderConversationRows = (
+    items: ConversationSummary[],
+    archived = false,
+  ) => items.map((conversation) => {
+    const active = selectedConversationId === conversation.id;
+    const busy = historyBusyId === conversation.id;
+    return (
+      <div className={`history-row${active ? " active" : ""}${openMenuId === conversation.id ? " menu-open" : ""}`} key={conversation.id}>
+        <button
+          type="button"
+          className="history-item"
+          aria-current={active ? "page" : undefined}
+          onClick={() => {
+            if (archived) {
+              void openArchivedConversation(conversation);
+              return;
+            }
+            setProfileEditing(false);
+            setHistoryView("recent");
+            setSelectedConversationId(conversation.id);
+            setChatSessionKey((current) => current + 1);
+            setMode("ask");
+            const url = new URL(window.location.href);
+            url.searchParams.set("conversation", conversation.id);
+            window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+          }}
+        >
+          <span>{conversation.title}</span>
+        </button>
+        <div className="history-actions">
+          {archived ? (
+            <button
+              type="button"
+              className="history-action restore-action"
+              title="Restore conversation"
+              aria-label={`Restore ${conversation.title}`}
+              disabled={busy || historyBusyId !== null}
+              onClick={() => void restoreConversation(conversation)}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.5" /><path d="M4 4v4.5h4.5M12 8v4l3 2" /></svg>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className={conversation.isPinned ? "history-action pin-action is-pinned" : "history-action pin-action"}
+              title={conversation.isPinned ? "Unpin conversation" : "Pin conversation"}
+              aria-label={conversation.isPinned ? `Unpin ${conversation.title}` : `Pin ${conversation.title}`}
+              disabled={busy || historyBusyId !== null}
+              onClick={() => void togglePin(conversation)}
+            >
+              <svg className={conversation.isPinned ? "pin-icon pinned" : "pin-icon"} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M16 9V4h1V2H7v2h1v5l-2 2v2h5v7l1 2 1-2v-7h5v-2l-2-2Z" />
+              </svg>
+            </button>
+          )}
+          <div className="history-menu-wrap">
+            <button
+              type="button"
+              className="history-action more-action"
+              aria-label={`More options for ${conversation.title}`}
+              aria-haspopup="menu"
+              aria-expanded={openMenuId === conversation.id}
+              title="More options"
+              disabled={busy || historyBusyId !== null}
+              onClick={(event) => {
+                if (openMenuId === conversation.id) {
+                  setOpenMenuId(null);
+                  return;
+                }
+                const rect = event.currentTarget.getBoundingClientRect();
+                setMenuPosition({
+                  top: Math.max(8, Math.min(rect.bottom + 4, window.innerHeight - 236)),
+                  right: Math.max(8, window.innerWidth - rect.right),
+                });
+                setOpenMenuId(conversation.id);
+              }}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1" /><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /></svg>
+            </button>
+            {openMenuId === conversation.id ? (
+              <div className="history-menu" role="menu" aria-label={`Options for ${conversation.title}`} style={menuPosition ?? undefined}>
+                {!archived ? (
+                  <button type="button" role="menuitem" onClick={() => void shareConversation(conversation)}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3m0 0L7.5 7.5M12 3l4.5 4.5M5 13v6h14v-6" /></svg>
+                    Share
+                  </button>
+                ) : null}
+                <button type="button" role="menuitem" onClick={() => beginRename(conversation)}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16.5-.8 4.3 4.3-.8L19.8 7.7a2.1 2.1 0 0 0-3-3L4 16.5Z" /><path d="m14.8 6.7 3 3" /></svg>
+                  Rename
+                </button>
+                {!archived ? (
+                  <button type="button" role="menuitem" onClick={() => void togglePin(conversation)}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 9V4h1V2H7v2h1v5l-2 2v2h5v7l1 2 1-2v-7h5v-2l-2-2Z" /></svg>
+                    {conversation.isPinned ? "Unpin" : "Pin"}
+                  </button>
+                ) : (
+                  <button type="button" role="menuitem" onClick={() => void restoreConversation(conversation)}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.7L4 8.5" /><path d="M4 4v4.5h4.5M12 8v4l3 2" /></svg>
+                    Restore from archive
+                  </button>
+                )}
+                {!archived ? (
+                  <button type="button" role="menuitem" onClick={() => void archiveConversation(conversation)}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v13H4zM3 4h18v3H3zM9 11h6" /></svg>
+                    Archive
+                  </button>
+                ) : null}
+                <div className="history-menu-divider" />
+                <button type="button" className="history-menu-danger" role="menuitem" onClick={() => void removeConversation(conversation)}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" /></svg>
+                  Delete
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </div>
+    );
+  });
+
+  const normalizedHistorySearch = historySearch.trim().toLocaleLowerCase();
+  const matchesHistorySearch = (conversation: ConversationSummary) =>
+    !normalizedHistorySearch || conversation.title.toLocaleLowerCase().includes(normalizedHistorySearch);
+  const visibleConversations = conversations.filter(matchesHistorySearch);
+  const visibleArchivedConversations = archivedConversations.filter(matchesHistorySearch);
+  const visiblePinnedConversations = visibleConversations.filter((conversation) => conversation.isPinned);
+  const visibleRecentConversations = visibleConversations.filter((conversation) => !conversation.isPinned);
+
+  const renderDateGroupedHistory = (items: ConversationSummary[], archived = false) =>
+    conversationDateGroups(items).map((group) => {
+      const collapseKey = `${archived ? "archived" : "recent"}:${group.key}`;
+      const collapsed = collapsedDateGroups.has(collapseKey);
+      const groupId = `history-date-${collapseKey}`;
+      return (
+        <section className="history-date-section" key={collapseKey}>
+          <button
+            type="button"
+            className="history-date-heading"
+            aria-expanded={!collapsed}
+            aria-controls={groupId}
+            onClick={() => setCollapsedDateGroups((current) => {
+              const next = new Set(current);
+              if (next.has(collapseKey)) next.delete(collapseKey);
+              else next.add(collapseKey);
+              return next;
+            })}
+          >
+            <span>{group.label}</span>
+            <svg className={collapsed ? "collapsed" : ""} viewBox="0 0 20 20" aria-hidden="true">
+              <path d="m5 7.5 5 5 5-5" />
+            </svg>
+            <small className="history-date-count">{group.conversations.length}</small>
+          </button>
+          <div id={groupId} className="history-date-items" role="group" aria-label={`${group.label} conversations`} hidden={collapsed}>
+            {!collapsed ? renderConversationRows(group.conversations, archived) : null}
+          </div>
+        </section>
+      );
+    });
 
   if (loading) {
     return (
@@ -918,9 +1715,31 @@ export function WorkspaceApp() {
   }
 
   return (
-    <div className="workspace-layout">
-      <aside className="history-sidebar">
-        <div className="history-profile">
+    <div className={sidebarHidden ? "workspace-layout sidebar-hidden" : "workspace-layout"}>
+      <aside className="history-sidebar" id="workspace-history-sidebar">
+        <div className="history-search">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.8" /><path d="m16 16 4.5 4.5" /></svg>
+          <input
+            type="text"
+            aria-label="Search conversations"
+            placeholder="Search conversations"
+            value={historySearch}
+            onChange={(event) => setHistorySearch(event.target.value)}
+          />
+          {historySearch ? (
+            <button type="button" aria-label="Clear conversation search" onClick={() => setHistorySearch("")}>×</button>
+          ) : null}
+        </div>
+
+        <button
+          type="button"
+          className="history-profile history-profile-button"
+          onClick={() => {
+            setError(null);
+            setProfileEditing(true);
+          }}
+          aria-label="Edit profile and departments"
+        >
           <div className="history-avatar">
             {profile.displayName
               .trim()
@@ -930,7 +1749,7 @@ export function WorkspaceApp() {
 
           <div>
             <strong>
-              {profile.displayName}
+              {profile.displayName.trim().split(/\s+/)[0] || profile.displayName}
             </strong>
 
             <div className="history-designation">
@@ -938,7 +1757,8 @@ export function WorkspaceApp() {
                 "Government officer"}
             </div>
           </div>
-        </div>
+          <span className="profile-edit-mark" aria-hidden="true">✎</span>
+        </button>
 
         <div className="history-scope">
           <div className="section-label">
@@ -972,127 +1792,185 @@ export function WorkspaceApp() {
 
         <button
           type="button"
-          className="new-chat-button"
-          onClick={newChat}
-        >
-          + New chat
-        </button>
-
-        <button
-          type="button"
           className="switch-profile-button"
           onClick={() =>
             void switchProfile()
           }
         >
-          Switch development
-          profile
+          Switch profile
         </button>
 
-        <div className="history-heading">
-          History
-        </div>
+        <button
+          type="button"
+          className={historyView === "archived" ? "archive-view-button active" : "archive-view-button"}
+          aria-current={historyView === "archived" ? "page" : undefined}
+          onClick={() => {
+            const nextView = historyView === "archived" ? "recent" : "archived";
+            setHistoryView(nextView);
+            setOpenMenuId(null);
+            if (nextView === "archived") void loadHistory(profile.id, true);
+          }}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v13H4zM3 4h18v3H3zM9 11h6" /></svg>
+          <span>{historyView === "archived" ? "Back to chats" : "Archived"}</span>
+          <small className="history-count-badge">{archivedConversations.length}</small>
+        </button>
 
-        <nav className="history-list">
-          {conversations.length ===
-          0 ? (
-            <div className="history-empty">
-              Your saved conversations
-              will appear here.
+        {historyView === "archived" ? (
+          <>
+            <div className="history-heading history-heading-counted">
+              <span>Archived conversations</span>
+              <small className="history-count-badge">{visibleArchivedConversations.length}</small>
             </div>
-          ) : (
-            conversations.map(
-              (conversation) => (
+            <nav className="history-list" aria-label="Archived conversations">
+              {visibleArchivedConversations.length > 0
+                ? renderDateGroupedHistory(visibleArchivedConversations, true)
+                : <div className="history-empty">
+                    {normalizedHistorySearch ? "No archived conversations match your search." : "Archived conversations will appear here."}
+                  </div>}
+            </nav>
+          </>
+        ) : (
+          <>
+            {visiblePinnedConversations.length > 0 || !normalizedHistorySearch ? (
+              <>
                 <button
                   type="button"
-                  key={
-                    conversation.id
-                  }
-                  className={
-                    selectedConversationId ===
-                    conversation.id
-                      ? "history-item active"
-                      : "history-item"
-                  }
-                  onClick={() => {
-                    setSelectedConversationId(
-                      conversation.id,
-                    );
-
-                    setChatSessionKey(
-                      (
-                        current,
-                      ) =>
-                        current + 1,
-                    );
-
-                    setMode(
-                      "ask",
-                    );
-                  }}
+                  className="history-heading history-section-toggle"
+                  aria-expanded={!pinnedCollapsed}
+                  aria-controls="pinned-history-items"
+                  onClick={() => setPinnedCollapsed((collapsed) => !collapsed)}
                 >
-                  <span>
-                    {
-                      conversation.title
-                    }
-                  </span>
-
-                  <small>
-                    {new Date(
-                      conversation
-                        .updatedAt,
-                    ).toLocaleDateString()}
-                  </small>
+                  <svg className={pinnedCollapsed ? "collapsed" : ""} viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="m5 7.5 5 5 5-5" />
+                  </svg>
+                  <span>Pinned</span>
+                  <small className="history-count-badge">{visiblePinnedConversations.length}</small>
                 </button>
-              ),
-            )
-          )}
-        </nav>
+                <nav id="pinned-history-items" className="history-list" aria-label="Pinned conversations" hidden={pinnedCollapsed}>
+                  {visiblePinnedConversations.length > 0
+                    ? renderConversationRows(visiblePinnedConversations)
+                    : <div className="history-empty">Pin a conversation to keep it here.</div>}
+                </nav>
+              </>
+            ) : null}
+
+            {visibleRecentConversations.length > 0 || !normalizedHistorySearch ? (
+              <>
+                <div className="history-heading">Recent</div>
+                <nav className="history-list" aria-label="Recent conversations">
+                  {visibleRecentConversations.length > 0
+                    ? renderDateGroupedHistory(visibleRecentConversations)
+                    : conversations.length === 0
+                      ? <div className="history-empty">Your saved conversations will appear here.</div>
+                      : <div className="history-empty">All conversations are pinned.</div>}
+                </nav>
+              </>
+            ) : null}
+
+            {normalizedHistorySearch && visibleConversations.length === 0 ? (
+              <div className="history-empty search-empty">No conversations match your search.</div>
+            ) : null}
+          </>
+        )}
 
         <div className="history-footer">
+          {historyNotice ? <div className="history-notice" role="status">{historyNotice}</div> : null}
           HttpOnly development
           session
         </div>
       </aside>
 
       <div className="workspace-main">
-        <div className="workspace-switch">
-          <button
-            type="button"
-            className={
-              mode === "ask"
-                ? "workspace-switch-button active"
-                : "workspace-switch-button"
-            }
-            onClick={() =>
-              setMode("ask")
-            }
-          >
-            Ask
-          </button>
-
-          <button
-            type="button"
-            className={
-              mode === "search"
-                ? "workspace-switch-button active"
-                : "workspace-switch-button"
-            }
-            onClick={() =>
-              setMode(
-                "search",
-              )
-            }
-          >
-            Search
-          </button>
-        </div>
-
         {error ? (
           <div className="workspace-error">
             {error}
           </div>
         ) : null}
+
+        {profileEditing ? (
+          <ProfileEditor
+            key={profile.id}
+            profile={profile}
+            departments={departments}
+            busy={profileSaving}
+            onCancel={() => {
+              setError(null);
+              setProfileEditing(false);
+            }}
+            onSave={saveProfile}
+          />
+        ) : (
+          <>
+          <div className="workspace-toolbar">
+            <button
+              type="button"
+              className="sidebar-toggle"
+              aria-controls="workspace-history-sidebar"
+              aria-expanded={!sidebarHidden}
+              aria-label={sidebarHidden ? "Show history panel" : "Hide history panel"}
+              title={sidebarHidden ? "Show history panel" : "Hide history panel"}
+              onClick={() => setSidebarHidden((hidden) => !hidden)}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="16" rx="2" />
+                <path d="M9 4v16" />
+                {sidebarHidden
+                  ? <path d="m13 9 3 3-3 3" />
+                  : <path d="m16 9-3 3 3 3" />}
+              </svg>
+            </button>
+
+            <div className="workspace-switch">
+              <button
+                type="button"
+                className={
+                  mode === "ask"
+                    ? "workspace-switch-button active"
+                    : "workspace-switch-button"
+                }
+                onClick={() => setMode("ask")}
+              >
+                Ask
+              </button>
+
+              <button
+                type="button"
+                className={
+                  mode === "search"
+                    ? "workspace-switch-button active"
+                    : "workspace-switch-button"
+                }
+                onClick={() => setMode("search")}
+              >
+                Search
+              </button>
+            </div>
+
+            <div className="theme-control">
+              {theme === "light" ? (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2m0 16v2M4.93 4.93l1.42 1.42m11.3 11.3 1.42 1.42M2 12h2m16 0h2M4.93 19.07l1.42-1.42m11.3-11.3 1.42-1.42" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M20.6 15.3A8.5 8.5 0 0 1 8.7 3.4 8.6 8.6 0 1 0 20.6 15.3Z" />
+                </svg>
+              )}
+              <button
+                type="button"
+                role="switch"
+                aria-checked={theme === "dark"}
+                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+                className="appearance-switch"
+                onClick={() => setTheme((current) => current === "dark" ? "light" : "dark")}
+              >
+                <span className="appearance-switch-thumb" />
+              </button>
+            </div>
+          </div>
 
         {mode === "ask" ? (
           <ChatApp
@@ -1103,6 +1981,8 @@ export function WorkspaceApp() {
             conversationId={
               selectedConversationId
             }
+            preferredLanguage={profile.preferredLanguage}
+            onNewChat={newChat}
             onHistoryChanged={() =>
               void refreshHistory()
             }
@@ -1110,7 +1990,46 @@ export function WorkspaceApp() {
         ) : (
           <SearchApp />
         )}
+          </>
+        )}
+
+        {renameTarget ? (
+          <div className="rename-dialog-backdrop" onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setRenameTarget(null);
+          }}>
+            <form
+              className="rename-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="rename-dialog-title"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const title = renameDraft.trim();
+                if (!title) return;
+                void (async () => {
+                  const updated = await persistConversationUpdate(renameTarget, { title });
+                  if (updated) setRenameTarget(null);
+                })();
+              }}
+            >
+              <h2 id="rename-dialog-title">Rename conversation</h2>
+              <label htmlFor="conversation-rename-input">Conversation name</label>
+              <input
+                id="conversation-rename-input"
+                autoFocus
+                maxLength={200}
+                value={renameDraft}
+                onChange={(event) => setRenameDraft(event.target.value)}
+              />
+              <div className="rename-dialog-actions">
+                <button type="button" onClick={() => setRenameTarget(null)}>Cancel</button>
+                <button type="submit" disabled={!renameDraft.trim() || historyBusyId !== null}>Save</button>
+              </div>
+            </form>
+          </div>
+        ) : null}
       </div>
+
     </div>
   );
 }

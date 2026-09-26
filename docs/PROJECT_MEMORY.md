@@ -23,6 +23,34 @@ The system should:
 - GitHub: https://github.com/iv-abhishek/shasanadesh-archive
 - Local development path: `/Users/apple/Downloads/projectai/shasanadesh`
 
+## Product Direction and Build State
+
+The expanded product direction and pilot definition live in
+[PRODUCT_VISION.md](PRODUCT_VISION.md); the staged milestones are in
+[PRODUCT_PLAN.md](PRODUCT_PLAN.md).
+
+The target is a bilingual, evidence-grounded assistant over Government Orders and related
+official rules/guidance. Shasanadesh is the first source; other official government
+sources should be added through source-specific adapters rather than one unrestricted
+crawler.
+
+Current implementation includes the local Shasanadesh ingestion pipeline, native/OCR
+page variants, PostgreSQL/pgvector retrieval, reranking, the TypeScript RAG API, and a
+working Next.js chat MVP with saved history and multiple department profiles. The current
+multi-department profile scope is applied as an OR retrieval filter.
+
+The known-ID ingester now supports optional B2 archival of raw PDFs and metadata manifests.
+Backblaze verifies each uploaded object's SHA-1; the ingester checks the returned byte
+count and checksum while retaining SHA-256 capture fingerprints. Existing local captures
+can be backfilled. Processed page/OCR/chunk artifacts remain local. The initial DOE GFR
+source adapter now exists; broad source coverage, production identity and authorization,
+and separate public versus verified-official onboarding remain future work.
+
+For a near-term pilot, prioritize reliable Shasanadesh capture, B2 archival, evaluation,
+and one additional official source. Treat full .gov.in coverage as continuing expansion,
+not a prerequisite for closing the first release. Do not collect real phone numbers in
+the current unauthenticated development profile flow.
+
 ## Current Corpus State
 
 As of 2026-09-21:
@@ -149,7 +177,7 @@ Observed environment:
 - Database: PostgreSQL
 - Vector search: pgvector
 - keyword/full-text search: PostgreSQL initially
-- object storage: Backblaze B2 / S3-compatible API
+- object storage: Backblaze B2 Native API for capture uploads
 - OCR: Tesseract first, stronger fallback later
 - model serving: vLLM, OpenAI-compatible API
 - generator candidate: Qwen3.6 family
@@ -295,3 +323,40 @@ Next precision stage:
 - generator: `LLM_BASE_URL` + `LLM_MODEL`
 - citation format: `[S1 p.<page>]`
 - numeric-conflict pages provide selected and canonical variants to generation
+
+## DOE GFR Source Adapter
+
+- Registry: `src/sources/registry.ts`; initial adapter: `src/sources/doe-gfr.ts`.
+- `npm run ingest:doe-gfr` reads the current and archive Department of Expenditure GFR
+  listings, with bounded pagination (`DOE_GFR_MAX_PAGES`, default 3 and max 20).
+- The downloader enforces HTTPS and the `doe.gov.in` host allowlist, validates the PDF
+  signature, captures source/title/issuer/date/OM metadata, extracts PDF info/native text,
+  and de-duplicates identical download URLs.
+- Local files use the existing `data/documents/<source-id>/` corpus convention. Optional
+  B2 uploads use the `doe-gfr` collection. The importer is resumable and can backfill B2
+  from a complete local capture.
+- This establishes one adapter pattern; it does not imply broad .gov.in crawling.
+
+### First DOE Capture — 2026-09-26
+
+- Captured `doe-gfr-518f4efa6aa85e00a5d94221`, the Department of Expenditure
+  guidelines for transfer/alienation of Central Government land (2026-05-05), from
+  the official current listing. The B2 PDF and initial manifest uploads succeeded in
+  bucket `shasanadesh`, collection `doe-gfr`, with byte-count and SHA-1 verification.
+- Native PDF extraction yielded only 7 bytes. Tesseract OCR completed all 7 pages and
+  produced 10,959 bytes; page-level text now selects OCR. Treat dates and numbers from
+  this OCR as unverified and confirm them against the original PDF.
+- Page corpus, retrieval variants, variant chunks, and local lexical chunks were rebuilt.
+  A local query for transfer/alienation of Government land returns this DOE order with
+  page citations.
+- The updated OCR/page metadata manifest is pending B2 sync. The local metadata has
+  `storageManifestSyncPending: true`; DNS lookup for `api.backblazeb2.com` returned
+  `ENOTFOUND`. Retry with `npm run ocr:needs -- --source-id doe-gfr-518f4efa6aa85e00a5d94221`;
+  completed OCR is skipped and only the manifest is refreshed. The raw PDF is not
+  uploaded again.
+- PostgreSQL loading has not run because `DATABASE_URL` is unset in the repository
+  `.env`. The local retrieval corpus is ready; DB loading follows once a database URL
+  is configured.
+- The Python retrieval filter now has one `SearchFilters` model and one filter builder.
+  Department-profile filters include documents whose metadata declares
+  `jurisdiction: central`, while unknown-department Shasanadesh records remain excluded.

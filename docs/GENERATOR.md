@@ -8,7 +8,7 @@ For local Apple Silicon development:
 
 - server: MLX LM
 - default model: `mlx-community/Qwen3-8B-4bit`
-- endpoint: `http://127.0.0.1:8790/v1`
+- endpoint: `http://127.0.0.1:8791/v1`
 
 The local model is intentionally a development/smoke-test choice. Production is free
 to use a larger Qwen model served by vLLM or another OpenAI-compatible service without
@@ -25,7 +25,7 @@ breaking retrieval.
 - PostgreSQL: 5432
 - Python retrieval: 8788
 - TypeScript RAG API: 8787
-- local MLX generator: 8790
+- local MLX generator: 8791
 
 ## Numeric evidence policy
 
@@ -46,6 +46,9 @@ The reranker score is relevance only and must not be described as confidence.
 3. keep `npm run retrieval:serve` running
 4. `npm run api:dev:local-generator`
 5. `npm run chat:test -- "medical officer seniority"`
+
+Use `api:dev:local-generator` for local MLX development. Plain `npm run api:dev`
+requires `LLM_BASE_URL` and `LLM_MODEL` to be set in the environment or `.env`.
 
 The first generator start downloads the model.
 

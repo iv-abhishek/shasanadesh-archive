@@ -27,12 +27,17 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import type { B2CaptureStorage } from "./storage/b2.js";
+import { saveDocumentMetadata } from "./storage/document-metadata.js";
 
 const execFileAsync = promisify(execFile);
 const documentsRoot = path.resolve("data/documents");
 
 interface Metadata {
+  [key: string]: unknown;
   sourceId: string;
+  capture?: { captureId?: string };
+  storage?: B2CaptureStorage;
   department: string | null;
   goDate?: string | null;
   goNumber?: string | null;
@@ -227,11 +232,7 @@ async function buildForDocument(
           : null,
     };
 
-    await writeFile(
-      metadataPath,
-      JSON.stringify(metadata, null, 2) + "\n",
-      "utf8",
-    );
+    await saveDocumentMetadata(metadataPath, metadata);
 
     console.log(
       `OK ${metadata.sourceId} | source=${textSource} | ${records.length} pages`,
@@ -248,12 +249,24 @@ async function buildForDocument(
   }
 }
 
+function requestedSourceId(): string | undefined {
+  const index = process.argv.indexOf("--source-id");
+  if (index < 0) return undefined;
+  const sourceId = process.argv[index + 1]?.trim();
+  if (!sourceId || sourceId.startsWith("--")) {
+    throw new Error("--source-id needs a document source ID.");
+  }
+  return sourceId;
+}
+
 async function main() {
+  const sourceId = requestedSourceId();
   const entries = await readdir(documentsRoot, { withFileTypes: true });
 
   let built = 0;
   let skipped = 0;
   let failed = 0;
+  let matched = false;
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
@@ -271,11 +284,18 @@ async function main() {
       continue;
     }
 
+    if (sourceId && metadata.sourceId !== sourceId) continue;
+    matched = true;
+
     const result = await buildForDocument(documentDir, metadata);
 
     if (result === "built") built++;
     if (result === "skipped") skipped++;
     if (result === "failed") failed++;
+  }
+
+  if (sourceId && !matched) {
+    throw new Error("No archived document matched source ID " + sourceId);
   }
 
   console.log("\n========================");

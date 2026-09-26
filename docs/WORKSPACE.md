@@ -13,7 +13,7 @@ authentication or authorization yet.
 
 ## User profile
 
-A workspace profile stores:
+A development workspace profile currently stores:
 
 - display name
 - designation
@@ -24,6 +24,10 @@ A workspace profile stores:
 
 Department assignments are temporal. Updating a profile closes the previous active
 assignments instead of deleting them, allowing future posting/transfer history.
+
+State, district, verified official identity, public/official profile type, and contact
+details are not implemented. Do not add real phone numbers to the current development
+profile store: its routes do not provide production authentication or access control.
 
 ## Conversation history
 
@@ -38,16 +42,19 @@ Each conversation stores:
 This lets the product reopen a conversation without feeding the entire raw history to the
 generator.
 
-## Retrieval precedence
+## Implemented retrieval precedence
 
-Planned retrieval precedence:
+For substantive chat, the API currently applies:
 
-1. explicit department/source requested in the current user question
-2. active conversation source/department
-3. user's working department scope
-4. global corpus
+1. explicit source requested in the current question;
+2. explicit department requested in the current question;
+3. active conversation source or department for likely follow-ups;
+4. all active profile departments when default scope is my_departments;
+5. global corpus when the profile is global or the user explicitly asks for it.
 
-Working scope is a relevance default, not an access-control boundary.
+The profile's departments are combined with OR semantics. An explicit source or
+department takes precedence over the profile defaults. Working scope is a relevance
+default, not an access-control boundary.
 
 ## Development identity
 
@@ -69,13 +76,9 @@ The development UI now supports:
 - automatic persistence of completed user/assistant turns;
 - persistence of the dominant retrieved source/department as conversation state.
 
-Only the workspace UUID is stored in browser local storage. The durable profile and chat
-history remain in PostgreSQL.
-
-The profile's multi-department scope is not yet applied as an OR retrieval filter. That
-requires explicit multi-department retrieval semantics and will be added separately so a
-senior officer's 1-4 department profile is not incorrectly reduced to only the primary
-department.
+The durable profile and chat history remain in PostgreSQL. The active development
+session uses the HttpOnly cookie described below; a legacy localStorage UUID is accepted
+only for one-time migration.
 
 
 ## Working-scope retrieval
@@ -112,3 +115,15 @@ legacy caller-supplied workspace UUID exist, the valid cookie session wins.
 
 This mechanism provides development continuity, not production authentication. Real SSO
 or another identity provider should replace `dev-login` before deployment to real users.
+
+## Product direction for profile types
+
+The product should offer general/public access with optional department interests and a
+separate government-official profile with name, designation, state, district, and one or
+more active departments. These are product preferences and claims until verified by a
+real identity provider. Server-side authorization must be independent of department
+scope.
+
+Phone number should remain optional and private, and should be collected only after
+authenticated identity and an actual contact use case exist. It is not part of the current
+workspace schema or development UI.
