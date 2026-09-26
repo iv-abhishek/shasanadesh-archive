@@ -2,6 +2,13 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 26 Sept 2026, 8:10 pm IST (Claude)
+
+- Abhishek confirmed: GOs are public; users are all-department staff (IAS, officials, DEOs,
+  consultants) citing common orders in letters; narrow orders stay on the portal; NIC
+  request at launch; hosting left to Claude → recommended a model API for the pilot
+  (~$100–200/month) and an India GPU later (ROADMAP §9).
+
 ## 26 Sept 2026, 8:00 pm IST (Claude)
 
 - Product direction from Abhishek: Ask only for end users; Search is internal; focus on

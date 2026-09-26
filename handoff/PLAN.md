@@ -75,6 +75,9 @@ edit it here and say why (with the date) under "Route changes".
   are classified into tiers and excluded from Ask by default; citations link to
   official URLs; daily sync after backfill. Roadmap drafted in docs/ROADMAP.md,
   with 5 open decisions awaiting Abhishek.
+- 26 Sept 2026, 8:10 pm: decisions confirmed (ROADMAP §7). New route: classify orders
+  from the portal listing first and fully process (OCR/embeddings) only tier A/B; UP core
+  before central; "Copy reference" citation line is a Phase 3 must-have.
 
 - 26 Sept 2026: the search page is organised by department (Abhishek's request).
   Ingestion was paused by Abhishek after 1,025 orders were listed and 653 stored in B2.

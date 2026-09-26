@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 26 Sept 2026, 8:00 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 26 Sept 2026, 8:10 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -11,8 +11,10 @@ _Last updated: 26 Sept 2026, 8:00 pm IST (Claude). Update at every milestone and
 
 ## Roadmap
 
-Drafted in `docs/ROADMAP.md` (Phase 0–5). **Waiting on Abhishek** for the 5 open decisions in
-§7 (launch audience, central-first vs UP-first, hosting budget, tier B/C in Ask, NIC request).
+`docs/ROADMAP.md` (Phase 0–5), decisions **confirmed** 26 Sept (§7): all-department staff
+audience (public allowed); UP core first, then central; narrow orders excluded from Ask;
+NIC request at launch; hosting = model API for the pilot, India GPU later (§9).
+Current phase: **Phase 0**.
 
 ## What works
 

@@ -1,24 +1,22 @@
 # Snapshot (generated)
 
-Generated 26 Sept 2026, 7:47 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
+Generated 26 Sept 2026, 7:57 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
 
 ## Git
 
 - Branch: `main`
-- HEAD: `ce703d2 feat(search): "Browse all orders" — portal-style complete listing with filters and pages`
-- Unpushed commits: 0
+- HEAD: `7c6ba03 docs: product roadmap — Ask-only for end users, guideline-focused corpus, daily sync`
+- Unpushed commits: 1
 
 Uncommitted files:
 
 ```
 M README.md
- M docs/PRODUCT_PLAN.md
- M docs/PRODUCT_VISION.md
+ M docs/ROADMAP.md
  M handoff/LOG.md
  M handoff/PLAN.md
  M handoff/STATUS.md
  M package.json
-?? docs/ROADMAP.md
 ?? scripts/shasanadesh-portal-bridge.mjs
 ?? src/ingest-portal.ts
 ```
@@ -26,6 +24,7 @@ M README.md
 Recent commits:
 
 ```
+7c6ba03 docs: product roadmap — Ask-only for end users, guideline-focused corpus, daily sync
 ce703d2 feat(search): "Browse all orders" — portal-style complete listing with filters and pages
 a965553 feat(search): organise results by department; ID-based department matching; handoff files
 1b139de Shasanadesh ingestion
@@ -40,7 +39,6 @@ b51e84a fix(web): EN/HI toggle no longer turns green on hover
 093f523 fix(web): clear service errors with Retry; stop saving failed questions
 5f69739 feat: npm run dev:all starts the whole local stack
 00ff2a8 fix: load .env for the Python embedding, retrieval and search commands
-4036e07 docs: record 2026-09-26 maintenance state and follow-up commands
 ```
 
 ## Corpus by source
