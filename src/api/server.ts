@@ -64,6 +64,7 @@ import {
   findExplicitDepartment,
   requestsGlobalScope,
 } from "../rag/intent-routing.js";
+import { assessRelevance, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
 
 const PORT = Number.parseInt(
   process.env.API_PORT ?? "8787",
@@ -99,6 +100,15 @@ const RAG_RERANK_COUNT = Math.min(
       10,
     ) || 24,
   ),
+);
+
+// Minimum reranker relevance (0–1) for a retrieved page to count as evidence.
+// Below it the page is dropped; if nothing remains in the officer's departments
+// the question is searched across all departments, and if still nothing, Ask
+// says no order was found instead of answering from unrelated pages.
+const RAG_MIN_RELEVANCE = Math.min(
+  0.9,
+  Math.max(0, Number.parseFloat(process.env.RAG_MIN_RELEVANCE ?? "0.1") || 0),
 );
 
 const RAG_NEIGHBOR_RADIUS = Number.parseInt(
@@ -1017,9 +1027,105 @@ server.post(
           : "global";
     }
 
+    // Relevance gate (src/rag/relevance.ts): drop pages that are not about the
+    // question. The officer's departments are a preference, not a wall: when
+    // nothing close is found there, search all departments once.
+    let relevance =
+      assessRelevance(
+        retrieval.evidence,
+        RAG_MIN_RELEVANCE,
+      );
+    let scopeFallback = false;
+
+    if (
+      retrievalScope ===
+        "workspace_departments" &&
+      relevance.kept.length === 0
+    ) {
+      sendStatus(
+        "searching",
+        describeScope("global", undefined, responseLanguage),
+      );
+      retrieval =
+        await retrieve(
+          conversationPlan
+            .retrievalQuery,
+          RAG_TOP_K,
+          undefined,
+          {
+            expandNeighbors: true,
+            neighborRadius: RAG_NEIGHBOR_RADIUS,
+            maxEvidencePages: Math.max(
+              RAG_TOP_K,
+              RAG_MAX_EVIDENCE_PAGES,
+            ),
+          },
+        );
+      retrievalScope = "global";
+      scopeFallback = true;
+      relevance =
+        assessRelevance(
+          retrieval.evidence,
+          RAG_MIN_RELEVANCE,
+        );
+    }
+
+    retrieval = {
+      ...retrieval,
+      evidence: relevance.kept,
+    };
+
     const retrievalMs =
       performance.now() -
       retrievalStartedAt;
+
+    const searchedAllDepartments =
+      retrievalScope === "global";
+
+    // "Not found" is an answer, not an error: no citations, no source cards.
+    const sendNoEvidence = (
+      reason: "no_relevant_pages" | "model_found_no_answer",
+      generationMs = 0,
+    ) => {
+      const text =
+        noEvidenceMessage(
+          responseLanguage,
+          searchedAllDepartments,
+        );
+      if (reason === "no_relevant_pages") {
+        sendEvent("sources", []);
+      }
+      streamValidatedText(sendEvent, text);
+      sendEvent("done", {
+        ok: true,
+        validated: true,
+        noEvidence: true,
+        noEvidenceReason: reason,
+        scopeFallback,
+        retrievalScope,
+        bestRelevance:
+          Number(relevance.best.toFixed(3)),
+        citations: [],
+        timings: {
+          retrievalMs: Math.round(retrievalMs),
+          embeddingMs: retrieval.timings?.embedding_ms ?? null,
+          hybridSearchMs: retrieval.timings?.hybrid_search_ms ?? null,
+          rerankMs: retrieval.timings?.rerank_ms ?? null,
+          hydrationMs: retrieval.timings?.hydration_ms ?? null,
+          generationMs: Math.round(generationMs),
+          totalMs: Math.round(performance.now() - retrievalStartedAt),
+        },
+      });
+      request.log.info(
+        { query, retrievalScope, scopeFallback, reason, bestRelevance: relevance.best },
+        "RAG chat: no evidence",
+      );
+    };
+
+    if (retrieval.evidence.length === 0) {
+      sendNoEvidence("no_relevant_pages");
+      return;
+    }
 
     sendStatus(
       "reading",
@@ -1181,6 +1287,13 @@ server.post(
       const generationMs =
       performance.now() -
       generationStartedAt;
+
+    // The prompt asks for NO_ANSWER_IN_EVIDENCE when the pages do not answer
+    // the question; answer "not found" instead of validating a non-answer.
+    if (isNoAnswer(firstDraft)) {
+      sendNoEvidence("model_found_no_answer", generationMs);
+      return;
+    }
 
     const firstValidation =
         validateCurrentAnswer(firstDraft);
@@ -1410,6 +1523,10 @@ server.post(
               (issue) => issue.code,
             ),
           repairValidationIssues,
+          scopeFallback,
+          retrievalScope,
+          bestRelevance:
+            Number(relevance.best.toFixed(3)),
         },
       );
     } catch (error) {

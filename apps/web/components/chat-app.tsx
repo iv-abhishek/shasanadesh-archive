@@ -75,7 +75,15 @@ interface DoneEvent {
   repairValidationIssues?: string[];
   conversational?: boolean;
   intent?: string;
-  retrievalScope?: string;  timings?: RagTimings;
+  retrievalScope?: string;
+  timings?: RagTimings;
+  /** No archived order answers the question; sources are not shown. */
+  noEvidence?: boolean;
+  noEvidenceReason?: "no_relevant_pages" | "model_found_no_answer";
+  /** Nothing close in the officer's departments, so all departments were searched. */
+  scopeFallback?: boolean;
+  /** Best reranker relevance (0–1) among direct pages, for calibration. */
+  bestRelevance?: number;
 
 }
 
@@ -1614,7 +1622,7 @@ function TurnView({
 
         {turn.done ? (
           <div className="answer-status">
-            <span
+            {turn.done.noEvidence ? null : <span
               className={
                 turn.done
                   .conversational
@@ -1632,7 +1640,17 @@ function TurnView({
                     .validated
                   ? "Validated"
                   : "Not validated"}
-            </span>
+            </span>}
+
+            {turn.done.noEvidence ? (
+              <span className="badge badge-warning">No matching order</span>
+            ) : null}
+
+            {turn.done.scopeFallback ? (
+              <span className="badge" title="Nothing close was found in your profile departments, so every department was searched.">
+                Searched all departments
+              </span>
+            ) : null}
 
             {turn.done.repaired ? (
               <span className="badge">
@@ -1684,31 +1702,74 @@ function TurnView({
               <strong>{formatStageMs(turn.done.timings.repairMs)}</strong>
               <span>Validation</span>
               <strong>{formatStageMs(turn.done.timings.validationMs)}</strong>
+              {typeof turn.done.bestRelevance === "number" ? (
+                <>
+                  <span title="Reranker relevance of the best matching page (0–1). Pages below RAG_MIN_RELEVANCE are not used.">Best match</span>
+                  <strong>{turn.done.bestRelevance.toFixed(2)}</strong>
+                </>
+              ) : null}
             </div>
           </details>
         ) : null}
       </div>
 
-      {turn.sources.length >
-      0 ? (
-        <div className="sources-section">
-          <div className="section-label">
-            Sources
-          </div>
-
-          <div className="source-groups">
-            {groupSources(turn.sources, turn.answer).map((group) => (
-              <SourceGroupCard
-                key={group.sourceId}
-                group={group}
-                language={speechLanguageFor(turn.answer) === "hi-IN" ? "hi" : "en"}
-                onOpenSource={onOpenSource}
-              />
-            ))}
-          </div>
-        </div>
+      {turn.sources.length > 0 && !turn.done?.noEvidence ? (
+        <SourcesSection turn={turn} onOpenSource={onOpenSource} />
       ) : null}
     </article>
+  );
+}
+
+/**
+ * Sources under an answer. Once the answer is complete, only orders it cites
+ * are shown; other retrieved orders stay behind a toggle so unrelated PDFs do
+ * not look like support for the answer.
+ */
+function SourcesSection({
+  turn,
+  onOpenSource,
+}: {
+  turn: ChatTurn;
+  onOpenSource: (source: Source) => void;
+}) {
+  const [showOthers, setShowOthers] = useState(false);
+  const groups = groupSources(turn.sources, turn.answer);
+  const complete = Boolean(turn.done);
+  const cited = groups.filter((group) => group.anyCited);
+  // While streaming, or when nothing is cited (e.g. a salvage answer), show all.
+  const primary = complete && cited.length > 0 ? cited : groups;
+  const others = complete && cited.length > 0 ? groups.filter((group) => !group.anyCited) : [];
+  const language = speechLanguageFor(turn.answer) === "hi-IN" ? "hi" : "en";
+
+  const card = (group: SourceGroup) => (
+    <SourceGroupCard
+      key={group.sourceId}
+      group={group}
+      language={language}
+      onOpenSource={onOpenSource}
+    />
+  );
+
+  return (
+    <div className="sources-section">
+      <div className="section-label">Sources</div>
+      <div className="source-groups">{primary.map(card)}</div>
+      {others.length > 0 ? (
+        <>
+          <button
+            type="button"
+            className="sources-others-toggle"
+            aria-expanded={showOthers}
+            onClick={() => setShowOthers((value) => !value)}
+          >
+            {showOthers
+              ? "Hide other retrieved orders"
+              : `${others.length} other retrieved order${others.length === 1 ? "" : "s"} (not cited)`}
+          </button>
+          {showOthers ? <div className="source-groups source-groups-others">{others.map(card)}</div> : null}
+        </>
+      ) : null}
+    </div>
   );
 }
 

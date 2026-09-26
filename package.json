@@ -83,6 +83,7 @@
     "test:classify": "tsx src/classify/rules.test.ts",
     "classify:orders": "node --import tsx src/classify-orders.ts",
     "test:go-reference": "tsx apps/web/lib/go-reference.test.ts",
+    "test:relevance": "tsx src/rag/relevance.test.ts",
     "test:sources": "tsx src/sources/sources.test.ts",
     "dev:all": "node --env-file-if-exists=.env scripts/dev-all.mjs",
     "handoff:snapshot": "node --env-file-if-exists=.env scripts/handoff-snapshot.mjs",

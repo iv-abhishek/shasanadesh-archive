@@ -10,6 +10,7 @@ Do not place real secrets in this document.
 | `APP_BASE_URL` | public application base URL |
 | `LOG_LEVEL` | application log level |
 | `APP_TIME_ZONE` | IANA zone used when reports print dates (default `Asia/Kolkata`); stored timestamps stay UTC |
+| `RAG_MIN_RELEVANCE` | minimum reranker relevance (0–1, default `0.1`) for a retrieved page to be used as evidence; see ADR-047 and the "Best match" row in the answer's latency panel |
 | `CORS_ORIGINS` | optional comma-separated origins allowed to call the API directly; empty by default because browsers use the same-origin Next.js proxy |
 
 ## Display time zone (web app)

@@ -1,29 +1,38 @@
 # Snapshot (generated)
 
-Generated 26 Sept 2026, 8:15 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
+Generated 26 Sept 2026, 10:25 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
 
 ## Git
 
 - Branch: `main`
-- HEAD: `aac3e75 feat: classify orders before processing; Ask leaves out routine orders; Copy reference`
+- HEAD: `6a5a0c0 fix: build:pages skips routine orders; "Text indexed" means searchable chunks`
 - Unpushed commits: 0
 
 Uncommitted files:
 
 ```
-M README.md
+M .env.example
+ M README.md
+ M apps/web/app/globals.css
+ M apps/web/components/chat-app.tsx
+ M docs/CONFIGURATION.md
+ M docs/DECISIONS.md
  M handoff/LOG.md
  M handoff/STATUS.md
  M package.json
- M src/build-page-corpus.ts
- M src/documents/browse.ts
+ M src/api/server.ts
+ M src/rag/prompt.ts
+ M src/workspace/store.ts
 ?? scripts/shasanadesh-portal-bridge.mjs
 ?? src/ingest-portal.ts
+?? src/rag/relevance.test.ts
+?? src/rag/relevance.ts
 ```
 
 Recent commits:
 
 ```
+6a5a0c0 fix: build:pages skips routine orders; "Text indexed" means searchable chunks
 aac3e75 feat: classify orders before processing; Ask leaves out routine orders; Copy reference
 2bc6720 docs(roadmap): confirm decisions — all-department audience, UP core first, hosting plan
 7c6ba03 docs: product roadmap — Ask-only for end users, guideline-focused corpus, daily sync
@@ -38,7 +47,6 @@ b51e84a fix(web): EN/HI toggle no longer turns green on hover
 7f4b785 feat(workspace): officers may hold zero, one or several departments with additional charge
 47bb2f9 feat(web): live progress, formatted answers, sources grouped by order
 7a9eb61 feat(api): stream progress events; faster reranking and smaller prompts
-093f523 fix(web): clear service errors with Retry; stop saving failed questions
 ```
 
 ## Corpus by source
@@ -46,9 +54,9 @@ b51e84a fix(web): EN/HI toggle no longer turns green on hover
 | Provider | Documents | In B2 | Pages | Selective-OCR pages |
 |---|---:|---:|---:|---:|
 | doe-gfr | 1 | 1 | 7 | 0 |
-| shasanadesh-up | 678 | 677 | 125 | 47 |
+| shasanadesh-up | 678 | 677 | 445 | 92 |
 
-- Retrieval variant chunks: 336
+- Retrieval variant chunks: 901
 - B2 configured: yes
 - Submission queue entries: 0
 - Shasanadesh crawl: not started

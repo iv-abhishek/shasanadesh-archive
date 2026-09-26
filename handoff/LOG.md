@@ -2,6 +2,14 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 26 Sept 2026, 10:35 pm IST (Claude)
+
+- Abhishek tested Ask after the pipeline run: the Hindi solar-pump guideline answer was right
+  (with Hindi "संदर्भ कॉपी करें"); "medical officer seniority … probation" failed because the
+  profile's departments were a hard filter, weak pages were used, and the "not found" answer
+  was forced to cite. Added the relevance gate, scope fallback, NO_ANSWER_IN_EVIDENCE, cited-only
+  sources, and a deduplicated department picker (ADR-047). Tests + browser checks pass.
+
 ## 26 Sept 2026, 8:55 pm IST (Claude)
 
 - Abhishek ran push, db:migrate (007 applied), classify:orders (A 25 / B 48 / C 977), db:load

@@ -532,3 +532,29 @@ the generally applicable guidance officials need in Ask.
 Answer source cards carry a "Copy reference" line (e.g. "शासनादेश संख्या …,
 दिनांक DD.MM.YYYY") built only from recorded metadata, and an "Official copy"
 link to the issuing site.
+
+## ADR-047 - Relevance gate; profile departments are a preference, not a wall
+
+Observed 26 Sept: "medical officer seniority …" asked by an officer whose profile
+had Secondary Education, Public Works and Agriculture returned only Agriculture
+pages. The model then wrote "the evidence does not contain …", the validator
+forced citations onto that sentence, and two unrelated orders were shown.
+
+- **Relevance gate** (`src/rag/relevance.ts`): reranker scores are mapped to 0–1
+  (probabilities pass through, logits get a sigmoid). Direct pages below
+  `RAG_MIN_RELEVANCE` (default 0.1) are dropped, with their neighbour pages.
+- **Scope fallback:** if nothing relevant remains within the profile's
+  departments, the question is searched once across all departments and the
+  answer is badged "Searched all departments". Explicit source/department
+  requests are not widened.
+- **"Not found" is an answer:** with no relevant page, or when the model replies
+  `NO_ANSWER_IN_EVIDENCE` (new prompt rule), Ask returns a fixed Hindi/English
+  message, no citations and no source cards (`done.noEvidence`).
+- **Sources:** after an answer completes, only cited orders are shown; other
+  retrieved orders sit behind "N other retrieved orders (not cited)".
+- **Department picker:** one choice per Shasanadesh department ID (English name
+  preferred), plus names already on profiles; retrieval widens any spelling by
+  department ID (ADR-044).
+
+The threshold is uncalibrated; the answer's latency panel shows "Best match" so
+good and bad questions can be compared before tuning it.

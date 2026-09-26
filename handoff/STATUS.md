@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 26 Sept 2026, 8:55 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 26 Sept 2026, 10:35 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -33,6 +33,12 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   confident tier C; OCR/chunking skip it; the console has a tier filter ("A + B · what Ask uses").
 - **Copy reference** on answer source cards ("शासनादेश संख्या …, दिनांक DD.MM.YYYY") plus an
   **Official copy ↗** link to the issuing site.
+- **Relevance gate (ADR-047):** weak pages are dropped (`RAG_MIN_RELEVANCE`, default 0.1,
+  uncalibrated); nothing relevant in the profile's departments → all departments searched
+  ("Searched all departments"); still nothing → fixed "no matching order" answer without
+  sources. Only cited orders are shown under an answer; others behind a toggle. The
+  latency panel shows "Best match" for calibration.
+- Department picker: one choice per department (English name preferred).
 - Department filters (chat scope and Search) match by Shasanadesh department ID
   as well as by name (ADR-044).
 - Source adapters exist and are separated by collection: `shasanadesh-up`,
@@ -51,6 +57,10 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   and package.json lines for them) are **uncommitted**. Review them and commit when ingestion resumes.
 
 ## Open problems
+
+- Calibrate `RAG_MIN_RELEVANCE`: note "Best match" for good vs. unrelated questions (26 Sept
+  tests: solar-pump question answered well; "medical officer seniority" with a profile
+  lacking Medical and Health returned unrelated Agriculture pages → fixed by ADR-047).
 
 - Garbled legacy-font Hindi (e.g. 61#37#5#2023) still needs the OCR rerun (commands below).
 - The portal result order is not stable: pages 1–11 held 1,100 rows but only

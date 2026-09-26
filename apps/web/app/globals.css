@@ -3398,3 +3398,24 @@ h1 {
 .source-official:hover {
   text-decoration: underline;
 }
+
+/* Uncited retrieved orders sit behind a toggle under the cited ones. */
+.sources-others-toggle {
+  margin-top: 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 2px 0;
+}
+
+.sources-others-toggle:hover {
+  color: var(--text);
+}
+
+.source-groups-others {
+  margin-top: 8px;
+  opacity: 0.85;
+}

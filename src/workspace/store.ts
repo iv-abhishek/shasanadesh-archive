@@ -146,36 +146,71 @@ async function assertConversationOwner(
   }
 }
 
+/**
+ * One choosable name per department for the profile picker (ADR-044/047).
+ *
+ * Documents name a department in English ("Public Works") or Hindi
+ * ("लोक निर्माण विभाग", often with zero-width joiners). Shasanadesh orders of
+ * one department share a department_id, so names are grouped by that ID and
+ * the English name is preferred, else the most common spelling. Retrieval
+ * widens any chosen name back to all spellings by department_id, so either
+ * spelling scopes correctly. Names already on a profile are always listed so a
+ * current selection never disappears from the picker.
+ */
+export const DEPARTMENT_CHOICES_SQL = `
+  WITH names AS (
+    SELECT
+      CASE
+        WHEN d.department_id IS NOT NULL
+          AND d.source_id ~ '^[0-9]+#[0-9]+#[0-9]+#[0-9]{4}$'
+          THEN 'id:' || d.department_id
+        ELSE 'name:' || translate(TRIM(d.department), $1, '')
+      END AS department_key,
+      regexp_replace(translate(TRIM(d.department), $1, ''), '\\s+', ' ', 'g') AS name,
+      COUNT(*) AS documents
+    FROM documents d
+    WHERE NULLIF(TRIM(d.department), '') IS NOT NULL
+    GROUP BY 1, 2
+  ),
+  ranked AS (
+    SELECT
+      name,
+      ROW_NUMBER() OVER (
+        PARTITION BY department_key
+        ORDER BY (name ~ '[A-Za-z]') DESC, documents DESC, name
+      ) AS choice
+    FROM names
+  )
+  SELECT name FROM ranked WHERE choice = 1
+  UNION
+  SELECT dep.canonical_name AS name
+  FROM user_departments ud
+  JOIN departments dep ON dep.id = ud.department_id
+  WHERE ud.valid_to IS NULL
+  ORDER BY name
+`;
+
 export async function listDepartments():
   Promise<string[]> {
-  await pool.query(`
-    INSERT INTO departments (
-      canonical_name
-    )
-    SELECT DISTINCT
-      TRIM(department)
-    FROM documents
-    WHERE department IS NOT NULL
-      AND TRIM(department) <> ''
-    ON CONFLICT (canonical_name)
-    DO NOTHING
-  `);
-
-  const result =
-    await pool.query<{
-      canonical_name: string;
-    }>(
-      `
-        SELECT canonical_name
-        FROM departments
-        ORDER BY canonical_name
-      `,
-    );
-
-  return result.rows.map(
-    (row) =>
-      row.canonical_name,
+  const result = await pool.query<{ name: string }>(
+    DEPARTMENT_CHOICES_SQL,
+    ["\u200c\u200d"],
   );
+  const names = result.rows.map((row) => row.name);
+
+  // Profiles reference departments by row; make sure every choice has one.
+  if (names.length) {
+    await pool.query(
+      `
+        INSERT INTO departments (canonical_name)
+        SELECT unnest($1::text[])
+        ON CONFLICT (canonical_name) DO NOTHING
+      `,
+      [names],
+    );
+  }
+
+  return names;
 }
 
 export async function createWorkspaceUser(
