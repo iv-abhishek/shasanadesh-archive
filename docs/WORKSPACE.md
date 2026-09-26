@@ -22,6 +22,18 @@ A development workspace profile currently stores:
 - primary department
 - additional working departments
 
+Officers can hold several departments at once. A profile may have:
+
+- a substantive (primary) posting, or none;
+- any number of other departments (up to 12), each optionally marked as
+  **additional charge** (for example an IAS officer who is Principal Secretary
+  of one department and holds additional charge of two others);
+- no department at all, in which case questions search all departments.
+
+All assigned departments are searched with OR semantics; additional charge is
+descriptive and does not change ranking or grant access. Migration
+`005_department_charges.sql` adds `user_departments.additional_charge`.
+
 Department assignments are temporal. Updating a profile closes the previous active
 assignments instead of deleting them, allowing future posting/transfer history.
 

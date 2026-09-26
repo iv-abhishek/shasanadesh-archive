@@ -72,12 +72,23 @@ const ProfileBodySchema =
         "my_departments",
         "all_departments",
       ]),
+    // Optional: officers may have no department, or only additional charges.
     primaryDepartment:
       z.string()
         .trim()
-        .min(1)
-        .max(200),
+        .max(200)
+        .nullable()
+        .optional(),
     additionalDepartments:
+      z.array(
+        z.string()
+          .trim()
+          .min(1)
+          .max(200),
+      )
+        .max(12)
+        .optional(),
+    additionalChargeDepartments:
       z.array(
         z.string()
           .trim()

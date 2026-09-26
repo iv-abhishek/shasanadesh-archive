@@ -40,6 +40,8 @@ export interface WorkspaceProfile {
   primaryDepartment:
     string | null;
   departments: string[];
+  /** Departments held as additional charge (subset of departments). */
+  additionalChargeDepartments: string[];
 }
 
 export interface ConversationSummary {
@@ -203,10 +205,12 @@ async function saveWorkspaceProfile(
   const {
     primaryDepartment,
     departments,
+    additionalCharge,
   } =
     normalizeDepartmentNames(
       input.primaryDepartment,
       input.additionalDepartments,
+      input.additionalChargeDepartments,
     );
 
   const client =
@@ -329,12 +333,14 @@ async function saveWorkspaceProfile(
           INSERT INTO user_departments (
             user_id,
             department_id,
-            is_primary
+            is_primary,
+            additional_charge
           )
           VALUES (
             $1,
             $2,
-            $3
+            $3,
+            $4
           )
         `,
         [
@@ -342,6 +348,9 @@ async function saveWorkspaceProfile(
           departmentId,
           department ===
             primaryDepartment,
+          additionalCharge.includes(
+            department,
+          ),
         ],
       );
     }
@@ -431,11 +440,13 @@ export async function getWorkspaceProfile(
     await pool.query<{
       canonical_name: string;
       is_primary: boolean;
+      additional_charge: boolean;
     }>(
       `
         SELECT
           d.canonical_name,
-          ud.is_primary
+          ud.is_primary,
+          ud.additional_charge
         FROM user_departments ud
         JOIN departments d
           ON d.id =
@@ -484,6 +495,16 @@ export async function getWorkspaceProfile(
         (row) =>
           row.canonical_name,
       ),
+    additionalChargeDepartments:
+      assignments.rows
+        .filter(
+          (row) =>
+            row.additional_charge,
+        )
+        .map(
+          (row) =>
+            row.canonical_name,
+        ),
   };
 }
 

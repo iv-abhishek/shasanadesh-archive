@@ -29,6 +29,7 @@ interface WorkspaceProfile {
   primaryDepartment:
     string | null;
   departments: string[];
+  additionalChargeDepartments?: string[];
 }
 
 interface ConversationSummary {
@@ -110,16 +111,23 @@ const INDIA_STATES_AND_UTS = [
   "Central Government / Other",
 ];
 
+// Officers may hold several departments at once: a substantive posting,
+// additional charge of others, both, or none. Each selected department can be
+// flagged as "additional charge"; all selected departments are searched.
 function DepartmentChecklist({
   departments,
   primaryDepartment,
   selected,
   onChange,
+  charged,
+  onChargedChange,
 }: {
   departments: string[];
   primaryDepartment: string;
   selected: string[];
   onChange: (next: string[]) => void;
+  charged: string[];
+  onChargedChange: (next: string[]) => void;
 }) {
   const selectable = departments.filter(
     (department) => department !== primaryDepartment,
@@ -128,36 +136,72 @@ function DepartmentChecklist({
   if (selectable.length === 0) {
     return (
       <div className="field-help">
-        Select additional departments if this profile works across departments.
+        No other departments are available yet.
       </div>
     );
   }
 
   const toggle = (department: string) => {
-    onChange(
-      selected.includes(department)
-        ? selected.filter((item) => item !== department)
-        : [...selected, department],
+    if (selected.includes(department)) {
+      onChange(selected.filter((item) => item !== department));
+      onChargedChange(charged.filter((item) => item !== department));
+    } else {
+      onChange([...selected, department]);
+    }
+  };
+
+  const toggleCharge = (department: string) => {
+    onChargedChange(
+      charged.includes(department)
+        ? charged.filter((item) => item !== department)
+        : [...charged, department],
     );
   };
 
   return (
-    <div className="department-checklist" aria-label="Additional departments">
-      {selectable.map((department) => (
-        <label className="department-option" key={department}>
-          <input
-            type="checkbox"
-            checked={selected.includes(department)}
-            disabled={
-              !selected.includes(department) && selected.length >= 12
-            }
-            onChange={() => toggle(department)}
-          />
-          <span>{department}</span>
-        </label>
-      ))}
+    <div className="department-checklist" aria-label="Other departments">
+      {selectable.map((department) => {
+        const isSelected = selected.includes(department);
+        const isCharged = isSelected && charged.includes(department);
+
+        return (
+          <div className="department-option-row" key={department}>
+            <label className="department-option">
+              <input
+                type="checkbox"
+                checked={isSelected}
+                disabled={!isSelected && selected.length >= 12}
+                onChange={() => toggle(department)}
+              />
+              <span>{department}</span>
+            </label>
+            {isSelected ? (
+              <button
+                type="button"
+                className={isCharged ? "charge-toggle active" : "charge-toggle"}
+                aria-pressed={isCharged}
+                title="Mark if you hold this department as additional charge"
+                onClick={() => toggleCharge(department)}
+              >
+                Addl. charge
+              </button>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
+}
+
+function scopeHelp(
+  primaryDepartment: string,
+  otherDepartments: string[],
+): string {
+  if (!primaryDepartment && otherDepartments.length === 0) {
+    return "No department selected: your questions will search all departments.";
+  }
+  const count = (primaryDepartment ? 1 : 0) + otherDepartments.length;
+  return `Questions search ${count === 1 ? "this department" : `these ${count} departments`} by default. You can still ask about any other department or order in the chat.`;
 }
 
 const LEGACY_STORAGE_KEY =
@@ -246,8 +290,9 @@ function ProfileEditor({
     contactNumber?: string;
     preferredLanguage: "en" | "hi";
     defaultScope: "my_departments" | "all_departments";
-    primaryDepartment: string;
+    primaryDepartment: string | null;
     additionalDepartments: string[];
+    additionalChargeDepartments: string[];
   }) => Promise<void>;
 }) {
   const [displayName, setDisplayName] = useState(profile.displayName);
@@ -256,7 +301,10 @@ function ProfileEditor({
   const [district, setDistrict] = useState(profile.district ?? "");
   const [contactNumber, setContactNumber] = useState(profile.contactNumber ?? "");
   const [primaryDepartment, setPrimaryDepartment] = useState(
-    profile.primaryDepartment ?? departments[0] ?? "",
+    profile.primaryDepartment ?? "",
+  );
+  const [additionalCharge, setAdditionalCharge] = useState<string[]>(
+    profile.additionalChargeDepartments ?? [],
   );
   const [additionalDepartments, setAdditionalDepartments] = useState(
     profile.departments.filter(
@@ -272,7 +320,10 @@ function ProfileEditor({
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    if (busy || !displayName.trim() || !primaryDepartment) return;
+    if (busy || !displayName.trim()) return;
+    const others = additionalDepartments.filter(
+      (department) => department !== primaryDepartment,
+    );
     void onSave({
       displayName: displayName.trim(),
       designation: designation.trim() || undefined,
@@ -281,9 +332,10 @@ function ProfileEditor({
       contactNumber: contactNumber.trim() || undefined,
       preferredLanguage,
       defaultScope,
-      primaryDepartment,
-      additionalDepartments: additionalDepartments.filter(
-        (department) => department !== primaryDepartment,
+      primaryDepartment: primaryDepartment || null,
+      additionalDepartments: others,
+      additionalChargeDepartments: additionalCharge.filter((department) =>
+        others.includes(department),
       ),
     });
   };
@@ -369,8 +421,12 @@ function ProfileEditor({
 
         <section className="profile-editor-section">
           <div className="section-label">Department scope</div>
+          <p className="field-help">
+            An officer may have a substantive posting, additional charge of
+            other departments, both, or no department at all.
+          </p>
           <label>
-            Primary department
+            Substantive (primary) department
             <select
               value={primaryDepartment}
               onChange={(event) => {
@@ -379,24 +435,31 @@ function ProfileEditor({
                 setAdditionalDepartments((current) =>
                   current.filter((department) => department !== next),
                 );
+                setAdditionalCharge((current) =>
+                  current.filter((department) => department !== next),
+                );
               }}
-              required
             >
+              <option value="">None</option>
               {departments.map((department) => (
                 <option key={department} value={department}>{department}</option>
               ))}
             </select>
           </label>
           <div className="profile-field-block">
-            <div className="profile-field-label">Additional departments</div>
+            <div className="profile-field-label">Other departments</div>
             <p className="field-help">
-              Choose up to 12 departments whose orders should be in your normal scope.
+              Select up to 12 departments you work with. Mark{" "}
+              <strong>Addl. charge</strong> for departments you hold as
+              additional charge.
             </p>
             <DepartmentChecklist
               departments={departments}
               primaryDepartment={primaryDepartment}
               selected={additionalDepartments}
               onChange={setAdditionalDepartments}
+              charged={additionalCharge}
+              onChargedChange={setAdditionalCharge}
             />
           </div>
           <div className="profile-form-grid">
@@ -428,8 +491,12 @@ function ProfileEditor({
             </label>
           </div>
           <p className="field-help">
-            You can still ask about another department or an individual order in
-            the chat whenever needed.
+            {scopeHelp(
+              primaryDepartment,
+              additionalDepartments.filter(
+                (department) => department !== primaryDepartment,
+              ),
+            )}
           </p>
         </section>
 
@@ -438,7 +505,7 @@ function ProfileEditor({
           <button
             className="onboarding-submit"
             type="submit"
-            disabled={busy || !displayName.trim() || !primaryDepartment}
+            disabled={busy || !displayName.trim()}
           >
             {busy ? "Saving…" : "Save profile"}
           </button>
@@ -488,14 +555,15 @@ function Onboarding({
     primaryDepartment,
     setPrimaryDepartment,
   ] =
-    useState(
-      departments[0] ?? "",
-    );
+    useState("");
 
   const [
     additionalDepartments,
     setAdditionalDepartments,
   ] =
+    useState<string[]>([]);
+
+  const [additionalCharge, setAdditionalCharge] =
     useState<string[]>([]);
 
   const [
@@ -524,23 +592,6 @@ function Onboarding({
     useState<string | null>(
       null,
     );
-
-  useEffect(
-    () => {
-      if (
-        !primaryDepartment &&
-        departments[0]
-      ) {
-        setPrimaryDepartment(
-          departments[0],
-        );
-      }
-    },
-    [
-      departments,
-      primaryDepartment,
-    ],
-  );
 
   const loginExisting =
     async (
@@ -582,11 +633,14 @@ function Onboarding({
 
       if (
         busy ||
-        !displayName.trim() ||
-        !primaryDepartment
+        !displayName.trim()
       ) {
         return;
       }
+
+      const others = additionalDepartments.filter(
+        (department) => department !== primaryDepartment,
+      );
 
       setBusy(true);
       setError(null);
@@ -615,16 +669,13 @@ function Onboarding({
                   contactNumber: contactNumber.trim() || undefined,
                   preferredLanguage,
                   defaultScope,
-                  primaryDepartment,
-                  additionalDepartments:
-                    additionalDepartments
-                      .filter(
-                        (
-                          department,
-                        ) =>
-                          department !==
-                          primaryDepartment,
-                      ),
+                  primaryDepartment:
+                    primaryDepartment || null,
+                  additionalDepartments: others,
+                  additionalChargeDepartments:
+                    additionalCharge.filter((department) =>
+                      others.includes(department),
+                    ),
                 }),
             },
           );
@@ -706,8 +757,11 @@ function Onboarding({
                     </span>
 
                     <small>
-                      {profile.primaryDepartment ??
-                        "No primary department"}
+                      {profile.departments.length === 0
+                        ? "No department"
+                        : profile.departments.length === 1
+                          ? profile.departments[0]
+                          : `${profile.departments[0]} +${profile.departments.length - 1} more`}
                     </small>
                   </button>
                 ),
@@ -799,21 +853,25 @@ function Onboarding({
           </label>
 
           <label>
-            Primary department
+            Substantive (primary) department
             <select
               value={
                 primaryDepartment
               }
               onChange={(
                 event,
-              ) =>
-                setPrimaryDepartment(
-                  event.target
-                    .value,
-                )
-              }
-              required
+              ) => {
+                const next = event.target.value;
+                setPrimaryDepartment(next);
+                setAdditionalDepartments((current) =>
+                  current.filter((department) => department !== next),
+                );
+                setAdditionalCharge((current) =>
+                  current.filter((department) => department !== next),
+                );
+              }}
             >
+              <option value="">None</option>
               {departments.map(
                 (department) => (
                   <option
@@ -832,15 +890,19 @@ function Onboarding({
           </label>
 
           <div className="profile-field-block">
-            <div className="profile-field-label">Additional departments</div>
+            <div className="profile-field-label">Other departments</div>
             <span className="field-help">
-              Choose up to 12 departments this profile may need to search.
+              Select departments you work with, and mark{" "}
+              <strong>Addl. charge</strong> for any held as additional charge.
+              Leave everything empty to search all departments.
             </span>
             <DepartmentChecklist
               departments={departments}
               primaryDepartment={primaryDepartment}
               selected={additionalDepartments}
               onChange={setAdditionalDepartments}
+              charged={additionalCharge}
+              onChargedChange={setAdditionalCharge}
             />
           </div>
 
@@ -909,8 +971,7 @@ function Onboarding({
             type="submit"
             disabled={
               busy ||
-              !displayName.trim() ||
-              !primaryDepartment
+              !displayName.trim()
             }
           >
             {busy
@@ -1361,8 +1422,9 @@ export function WorkspaceApp() {
     contactNumber?: string;
     preferredLanguage: "en" | "hi";
     defaultScope: "my_departments" | "all_departments";
-    primaryDepartment: string;
+    primaryDepartment: string | null;
     additionalDepartments: string[];
+    additionalChargeDepartments: string[];
   }) => {
     if (!profile || profileSaving) return;
     setProfileSaving(true);
@@ -1811,29 +1873,25 @@ export function WorkspaceApp() {
             Working scope
           </div>
 
-          <strong>
-            {profile.primaryDepartment ??
-              "No primary department"}
-          </strong>
-
-          {profile.departments
-            .filter(
-              (department) =>
-                department !==
-                profile
-                  .primaryDepartment,
-            )
-            .map(
-              (department) => (
+          {profile.departments.length === 0 ? (
+            <span className="scope-all">
+              No department set · searching all departments
+            </span>
+          ) : (
+            profile.departments.map((department) => {
+              const charge = (profile.additionalChargeDepartments ?? []).includes(department);
+              const primary = department === profile.primaryDepartment;
+              return (
                 <span
-                  key={
-                    department
-                  }
+                  key={department}
+                  className={primary ? "scope-department scope-primary" : "scope-department"}
                 >
                   {department}
+                  {charge ? <em className="scope-tag">Addl. charge</em> : null}
                 </span>
-              ),
-            )}
+              );
+            })
+          )}
         </div>
 
         <button

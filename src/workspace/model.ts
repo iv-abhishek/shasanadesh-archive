@@ -16,29 +16,41 @@ export interface WorkspaceProfileInput {
     PreferredLanguage;
   defaultScope:
     DefaultScope;
-  primaryDepartment:
-    string;
+  /** Substantive posting. Optional: a profile may have no department. */
+  primaryDepartment?:
+    string | null;
   additionalDepartments?:
+    string[];
+  /** Subset of departments held as additional charge. */
+  additionalChargeDepartments?:
     string[];
 }
 
+const departmentKey = (name: string) =>
+  name.trim().toLocaleLowerCase("en");
+
+/**
+ * Normalise a profile's department assignments.
+ *
+ * - The primary department is optional; an officer may have none, one, or
+ *   several departments at a time.
+ * - Names are trimmed and de-duplicated case-insensitively, primary first.
+ * - Additional-charge flags are kept only for assigned, non-primary
+ *   departments (the substantive posting is never "additional charge").
+ */
 export function normalizeDepartmentNames(
-  primaryDepartment: string,
+  primaryDepartment: string | null | undefined,
   additionalDepartments:
     string[] = [],
+  additionalChargeDepartments:
+    string[] = [],
 ): {
-  primaryDepartment: string;
+  primaryDepartment: string | null;
   departments: string[];
+  additionalCharge: string[];
 } {
   const primary =
-    primaryDepartment
-      .trim();
-
-  if (!primary) {
-    throw new Error(
-      "Primary department is required.",
-    );
-  }
+    primaryDepartment?.trim() || null;
 
   const seen =
     new Set<string>();
@@ -48,7 +60,7 @@ export function normalizeDepartmentNames(
 
   for (
     const candidate of [
-      primary,
+      ...(primary ? [primary] : []),
       ...additionalDepartments,
     ]
   ) {
@@ -60,9 +72,7 @@ export function normalizeDepartmentNames(
     }
 
     const key =
-      normalized.toLocaleLowerCase(
-        "en",
-      );
+      departmentKey(normalized);
 
     if (seen.has(key)) {
       continue;
@@ -74,10 +84,21 @@ export function normalizeDepartmentNames(
     );
   }
 
+  const chargeKeys = new Set(
+    additionalChargeDepartments.map(departmentKey),
+  );
+
+  const additionalCharge = departments.filter(
+    (department) =>
+      department !== primary &&
+      chargeKeys.has(departmentKey(department)),
+  );
+
   return {
     primaryDepartment:
       primary,
     departments,
+    additionalCharge,
   };
 }
 
