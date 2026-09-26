@@ -87,8 +87,13 @@ Profile edits and conversation reads/updates require the active HttpOnly workspa
 session and match the route profile ID against that session. Conversation pins are
 stored in PostgreSQL. Deletion removes the conversation row and its dependent
 messages/state.
-Migration `004_workspace_preferences.sql` adds the new profile fields and pin column;
-apply pending database migrations before running the updated API.
+Migration `004_workspace_preferences.sql` adds the new profile fields and pin column,
+and `005_department_charges.sql` adds additional-charge flags; run
+`npm run db:migrate` before running the updated API.
+
+The chat composer is pinned to the bottom of the window. Asking a question
+scrolls it to the top of the view so its progress and answer appear directly
+below; the header compacts once a conversation has turns.
 
 Conversation history and source cards are already implemented; production identity and
 authorization remain backend prerequisites for real official profiles.

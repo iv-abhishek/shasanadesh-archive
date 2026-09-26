@@ -87,6 +87,19 @@ const RAG_TOP_K = Number.parseInt(
   10,
 );
 
+// Candidates scored by the cross-encoder. Reranking time grows roughly
+// linearly with this; fewer candidates are faster but may lower recall.
+const RAG_RERANK_COUNT = Math.min(
+  100,
+  Math.max(
+    5,
+    Number.parseInt(
+      process.env.RAG_RERANK_COUNT ?? "24",
+      10,
+    ) || 24,
+  ),
+);
+
 const RAG_NEIGHBOR_RADIUS = Number.parseInt(
   process.env.RAG_NEIGHBOR_RADIUS ?? "1",
   10,
@@ -360,7 +373,7 @@ async function retrieve(
             query,
             top_k: topK,
             candidate_count: 50,
-            rerank_count: 24,
+            rerank_count: RAG_RERANK_COUNT,
             filters: {
               department:
                 filters?.department,

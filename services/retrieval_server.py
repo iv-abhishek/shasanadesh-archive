@@ -34,9 +34,10 @@ RERANK_INSTRUCTION = (
 )
 
 RRF_K = 60
-# Cross-encoder batch size. Larger batches keep the Apple GPU busier; 24
-# candidates at batch 4 meant six sequential passes.
-RERANK_BATCH_SIZE = int(os.getenv("RERANK_BATCH_SIZE", "12"))
+# Cross-encoder batch size. A trial at 12 was not faster than 4 on Apple
+# Silicon (padding to the longest passage offsets the batching gain), so the
+# measured default stays at 4; tune per machine.
+RERANK_BATCH_SIZE = int(os.getenv("RERANK_BATCH_SIZE", "4"))
 # pgvector's HNSW scan returns at most hnsw.ef_search rows (default 40), and
 # metadata filters are applied after the scan, so a filtered search could
 # return far fewer than candidate_count rows. Widen the scan per query.

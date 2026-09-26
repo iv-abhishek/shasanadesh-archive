@@ -1422,6 +1422,23 @@ export function ChatApp({
   const [busy, setBusy] =
     useState(false);
 
+  const conversationEndRef = useRef<HTMLDivElement | null>(null);
+
+  // When a question is asked (or a saved chat opens), bring the newest
+  // question to the top of the view so its answer appears below it, above
+  // the pinned composer.
+  useEffect(() => {
+    if (turns.length === 0) return;
+    const turnsInView =
+      conversationEndRef.current?.parentElement?.querySelectorAll(
+        "article.turn",
+      );
+    turnsInView?.[turnsInView.length - 1]?.scrollIntoView({
+      block: "start",
+      behavior: turns.length > 1 ? "smooth" : "auto",
+    });
+  }, [turns.length]);
+
   const [viewer, setViewer] =
     useState<ViewerState | null>(null);
 
@@ -2087,7 +2104,7 @@ export function ChatApp({
   }
 
   return (
-    <main className="shell">
+    <main className={turns.length > 0 ? "shell shell-active" : "shell"}>
       <header className="topbar">
         <div>
           <div className="eyebrow">
@@ -2174,8 +2191,11 @@ export function ChatApp({
             ),
           )
         )}
+        <div ref={conversationEndRef} aria-hidden="true" />
       </section>
 
+      {/* Composer stays pinned to the bottom of the window, ChatGPT-style. */}
+      <div className="composer-dock">
       {archived ? (
         <div className="archived-banner" role="status">
           <span>
@@ -2311,6 +2331,7 @@ export function ChatApp({
         the original PDF page when
         OCR evidence is uncertain.
       </footer>
+      </div>
 
       {viewer ? (
         <SourceViewer
