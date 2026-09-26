@@ -31,4 +31,15 @@ assert.equal(fewJoiners.joinerChars, 1);
 // Only the token split changes; no joiner penalty applies.
 assert.ok(Math.abs(fewJoiners.score - good.score) <= 3, `${fewJoiners.score} vs ${good.score}`);
 
+// Broken conjuncts (7#162#20#2026 p.1, native layer): words start with vowel signs.
+const brokenConjuncts = [
+  "उ तर दे श शासन व त (सामा य) अनुभाग-2 सं या-7/2026 लखनऊ : दनांक : 02 िसत बर, 2026 कायालय ाप",
+  "व तीय िनयम सं ह ख ड-2 भाग-2 से 4 के सहायक िनयम-153(1) एवं त म म िनगत शासनादे श के अधीन",
+  "म हला सरकार कािमक को उनक स पूण सेवाकाल म सूित अवकाश दो बार तक क अनुम यता कितपय शत एवं ितबंध",
+].join("\n");
+const broken = analyzeTextQuality(brokenConjuncts.repeat(3));
+assert.ok(broken.leadingMarkTokens >= 3, `leading marks: ${broken.leadingMarkTokens}`);
+assert.ok(broken.score <= 55, `broken-conjunct page should be selected for OCR (<=55), got ${broken.score}`);
+assert.equal(analyzeTextQuality(clean.repeat(4)).leadingMarkTokens, 0);
+
 console.log("text-quality tests passed");

@@ -582,3 +582,20 @@ fragments. Now citation-only fragments are merged into the preceding claim unit,
 salvage keeps only units with at least three words besides citations, and an
 answer that is only citations fails validation as `empty_answer` (then repair or
 the safe fallback runs).
+
+## ADR-050 - Broken-conjunct native text is suspicious; Ask has a regression set
+
+While writing evaluation cases (26 Sept) the native text layer of most Shasanadesh
+PDFs turned out to drop conjuncts: "प्रसूति" → "सूित", "उत्तर प्रदेश" → "उ तर दे श",
+leaving words that start with a vowel sign, which real Hindi never does. About 190 of
+196 indexed native pages showed it, yet scored 60–70 (above the selective-OCR cut-off),
+so they were never OCR'd and keyword/semantic retrieval on them is weak.
+
+- `analyzeTextQuality` now counts words starting with a dependent vowel sign or mark;
+  at >= 3 such words and >= 1% of words the score drops by 15–45 points, so
+  `compare:suspicious` OCRs these pages. Retrieval already reranks native and OCR
+  variants and keeps the better one; the native layer is kept (its digits are useful
+  for numeric verification). The Search console's garble note uses the same signal.
+- `eval/rag-cases.json` grows to 24 verified cases, and the runner checks "not found"
+  behaviour, profile-scope fallback, text-less and cut-off answers, and reports a
+  suggested `RAG_MIN_RELEVANCE` (`npm run eval:ask`).

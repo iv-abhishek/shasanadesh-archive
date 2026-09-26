@@ -3,9 +3,17 @@
     "id": "medical-officer-seniority",
     "query": "medical officer seniority",
     "language": "en",
-    "expectedSourceIds": ["25#201#2#2020"],
+    "category": "service-rules",
+    "expectedSourceIds": [
+      "25#201#2#2020"
+    ],
     "expectedPagesBySource": {
-      "25#201#2#2020": [18, 19, 20, 15]
+      "25#201#2#2020": [
+        18,
+        19,
+        20,
+        15
+      ]
     },
     "requireCitation": true,
     "allowFallback": false,
@@ -15,12 +23,404 @@
     "id": "solar-pump-hindi",
     "query": "सोलर पम्प",
     "language": "hi",
-    "expectedSourceIds": ["61#37#5#2023"],
+    "category": "scheme-guideline",
+    "expectedSourceIds": [
+      "61#37#5#2023"
+    ],
     "expectedPagesBySource": {
-      "61#37#5#2023": [7, 2, 4, 5]
+      "61#37#5#2023": [
+        7,
+        2,
+        4,
+        5
+      ]
     },
     "requireCitation": true,
     "allowFallback": false,
     "notes": "Mixed conflict/native evidence. Qualitative salvage is acceptable; generic fallback is not."
+  },
+  {
+    "id": "medical-officer-probation-outside-profile",
+    "query": "medical officer seniority works when the officer has completed probation ?",
+    "language": "en",
+    "category": "scope",
+    "expectedSourceIds": [
+      "25#201#2#2020"
+    ],
+    "expectedPagesBySource": {
+      "25#201#2#2020": [
+        6,
+        7,
+        8,
+        17,
+        18,
+        19
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false,
+    "profileDepartments": [
+      "Secondary Education",
+      "लोक निर्माण विभाग",
+      "Agriculture"
+    ],
+    "expectScopeFallback": true,
+    "notes": "26 Sept: profile without Medical and Health returned unrelated Agriculture pages (ADR-047)."
+  },
+  {
+    "id": "solar-pump-mandatory-guidelines",
+    "query": "सोलर पंप लगवाने हेतु क्या-क्या गाइडलाइन फॉलो करना अनिवार्य है",
+    "language": "hi",
+    "category": "scheme-guideline",
+    "expectedSourceIds": [
+      "61#37#5#2023"
+    ],
+    "expectedPagesBySource": {
+      "61#37#5#2023": [
+        7,
+        2,
+        4,
+        5,
+        6
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectedTextIncludesAny": [
+      "रखरखाव",
+      "अनुरक्षण",
+      "बीमा",
+      "हेल्पलाइन"
+    ],
+    "notes": "26 Sept: answered correctly but cut mid-word (ADR-048)."
+  },
+  {
+    "id": "solar-pump-please-tell",
+    "query": "कृपया सोलर पंप के बारे में बताएं",
+    "language": "hi",
+    "category": "scheme-guideline",
+    "expectedSourceIds": [
+      "61#37#5#2023"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "25 Sept: safe fallback after garbled native text (ADR-043)."
+  },
+  {
+    "id": "project-alankar-hindi",
+    "query": "प्रोजेक्ट अलंकार के शासनादेश का डिटेल बताने का कष्ट करें",
+    "language": "hi",
+    "category": "scheme-guideline",
+    "expectedSourceIds": [
+      "22#50002#10#2024"
+    ],
+    "expectedPagesBySource": {
+      "22#50002#10#2024": [
+        1,
+        2
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectedTextIncludesAny": [
+      "बाउण्ड्री",
+      "बाउंड्री",
+      "चहारदीवारी"
+    ],
+    "notes": "26 Sept: cut mid-word, then citation-only bullets (ADR-048, ADR-049)."
+  },
+  {
+    "id": "project-alankar-english",
+    "query": "What does the Project Alankar order say about boundary walls of government secondary schools?",
+    "language": "en",
+    "category": "scheme-guideline",
+    "expectedSourceIds": [
+      "22#50002#10#2024"
+    ],
+    "expectedPagesBySource": {
+      "22#50002#10#2024": [
+        1,
+        2
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "medical-reimbursement-online",
+    "query": "सेवारत एवं सेवानिवृत्त शासकीय कर्मियों के चिकित्सा प्रतिपूर्ति दावे ऑनलाइन कैसे प्रस्तुत किये जाएंगे?",
+    "language": "hi",
+    "category": "general-instruction",
+    "expectedSourceIds": [
+      "227#201#6#2026",
+      "220#201#6#2026"
+    ],
+    "expectedPagesBySource": {
+      "227#201#6#2026": [
+        1,
+        2,
+        3
+      ],
+      "220#201#6#2026": [
+        1
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "maternity-leave-restriction",
+    "query": "प्रसूति अवकाश के बीच दो वर्ष के अंतर का प्रतिबन्ध हटाया गया है क्या?",
+    "language": "hi",
+    "category": "service-rules",
+    "expectedSourceIds": [
+      "7#162#20#2026"
+    ],
+    "expectedPagesBySource": {
+      "7#162#20#2026": [
+        1
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "Native text layer has broken conjuncts (सूित); needs OCR for good retrieval."
+  },
+  {
+    "id": "startup-incubators",
+    "query": "उत्तर प्रदेश स्टार्टअप नीति 2026 के अंतर्गत इन्क्यूबेटर्स को क्या प्रोत्साहन मिलेगा?",
+    "language": "hi",
+    "category": "policy",
+    "expectedSourceIds": [
+      "43#188#1#2026"
+    ],
+    "expectedPagesBySource": {
+      "43#188#1#2026": [
+        1,
+        5,
+        15,
+        16
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "deeptech-startups",
+    "query": "What support does the UP Startup Policy 2026 give to deeptech startups?",
+    "language": "en",
+    "category": "policy",
+    "expectedSourceIds": [
+      "44#188#1#2026"
+    ],
+    "expectedPagesBySource": {
+      "44#188#1#2026": [
+        1,
+        2,
+        4,
+        6,
+        8,
+        9
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "toy-manufacturing-policy",
+    "query": "उत्तर प्रदेश खिलौना विनिर्माण प्रोत्साहन नीति-2025 में क्या प्रोत्साहन दिए गए हैं?",
+    "language": "hi",
+    "category": "policy",
+    "expectedSourceIds": [
+      "69#182#6#2026"
+    ],
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "da-public-undertakings",
+    "query": "सार्वजनिक उपक्रमों/निगमों के अधिकारियों/कर्मचारियों को महंगाई भत्ते का भुगतान किस प्रकार होगा?",
+    "language": "hi",
+    "category": "general-instruction",
+    "expectedSourceIds": [
+      "3#161#1#2026"
+    ],
+    "expectedPagesBySource": {
+      "3#161#1#2026": [
+        1,
+        2
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "kgmu-superannuation",
+    "query": "केजीएमयू के शिक्षकों की अधिवर्षता आयु के संबंध में क्या आदेश है?",
+    "language": "hi",
+    "category": "service-rules",
+    "expectedSourceIds": [
+      "82#25#4#2026"
+    ],
+    "expectedPagesBySource": {
+      "82#25#4#2026": [
+        1
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "agniveer-reservation",
+    "query": "पूर्व अग्निवीरों को प्रवर्तन सिपाही (परिवहन) की सीधी भर्ती में आरक्षण के बारे में बताएं",
+    "language": "hi",
+    "category": "service-rules",
+    "expectedSourceIds": [
+      "8#23#4#2026"
+    ],
+    "expectedPagesBySource": {
+      "8#23#4#2026": [
+        1
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "court-manager-rules",
+    "query": "What do the Allahabad High Court Court Manager centralised service rules provide?",
+    "language": "en",
+    "category": "service-rules",
+    "expectedSourceIds": [
+      "4#46#1#2026"
+    ],
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "covid-office-guidelines",
+    "query": "सरकारी कार्यालयों में कोविड-19 से बचाव के लिए क्या निर्देश दिए गए थे?",
+    "language": "hi",
+    "category": "general-instruction",
+    "expectedSourceIds": [
+      "11#163#4#2020",
+      "12#163#4#2020"
+    ],
+    "expectedPagesBySource": {
+      "11#163#4#2020": [
+        1
+      ],
+      "12#163#4#2020": [
+        1,
+        2
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "Broken-conjunct native text (को वड); retrieval depends on OCR."
+  },
+  {
+    "id": "object-heads-2027",
+    "query": "वित्तीय वर्ष 2027-28 से मानक मदों (ऑब्जेक्ट हेड्स) की नई व्यवस्था क्या है?",
+    "language": "hi",
+    "category": "general-instruction",
+    "expectedSourceIds": [
+      "20#162#3#2026"
+    ],
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "central-land-transfer",
+    "query": "What are the guidelines for transfer or alienation of Central Government land?",
+    "language": "en",
+    "category": "central-guideline",
+    "expectedSourceIds": [
+      "doe-gfr-518f4efa6aa85e00a5d94221"
+    ],
+    "expectedPagesBySource": {
+      "doe-gfr-518f4efa6aa85e00a5d94221": [
+        1,
+        2,
+        4,
+        5,
+        6,
+        7
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "departmental-enquiry-technical-ground",
+    "query": "Can a punishment order be set aside on technical grounds in a departmental enquiry under Rule 7?",
+    "language": "en",
+    "category": "service-rules",
+    "expectedSourceIds": [
+      "10#163#1#2022",
+      "5#163#1#2022"
+    ],
+    "expectedPagesBySource": {
+      "10#163#1#2022": [
+        1
+      ],
+      "5#163#1#2022": [
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "fair-price-shop-margin",
+    "query": "उचित दर विक्रेताओं का मार्जिन कितना बढ़ाया गया है?",
+    "language": "hi",
+    "category": "general-instruction",
+    "expectedSourceIds": [
+      "3#38#6#2026",
+      "2#38#6#2026"
+    ],
+    "expectedPagesBySource": {
+      "3#38#6#2026": [
+        1
+      ],
+      "2#38#6#2026": [
+        1,
+        2
+      ]
+    },
+    "requireCitation": true,
+    "allowFallback": false
+  },
+  {
+    "id": "not-found-passport",
+    "query": "पासपोर्ट नवीनीकरण की प्रक्रिया क्या है?",
+    "language": "hi",
+    "category": "not-found",
+    "requireCitation": false,
+    "allowFallback": false,
+    "expectNoEvidence": true,
+    "notes": "Central service, not a UP GO; Ask must say no matching order."
+  },
+  {
+    "id": "not-found-income-tax",
+    "query": "What are the income tax slabs for FY 2026-27?",
+    "language": "en",
+    "category": "not-found",
+    "requireCitation": false,
+    "allowFallback": false,
+    "expectNoEvidence": true
+  },
+  {
+    "id": "not-found-metro-fare",
+    "query": "लखनऊ मेट्रो में एक यात्रा का किराया कितना है?",
+    "language": "hi",
+    "category": "not-found",
+    "requireCitation": false,
+    "allowFallback": false,
+    "expectNoEvidence": true,
+    "notes": "Metro orders in the archive are fund releases, not fares."
   }
 ]

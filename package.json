@@ -53,6 +53,7 @@
     "test:local-gpu-queue": "tsx src/api/local-gpu-queue.test.ts",
     "test:rag-safety": "npm run test:rag-validation && npm run test:rag-generation-safety && npm run test:local-gpu-queue && npm run test:numeric-tokens",
     "eval:rag": "tsx src/eval/run-rag-eval.ts",
+    "eval:ask": "tsx src/eval/run-rag-eval.ts",
     "eval:rag:search": "tsx src/eval/run-rag-eval.ts --search-only",
     "web:install": "npm --prefix apps/web install",
     "web:dev": "npm --prefix apps/web run dev",

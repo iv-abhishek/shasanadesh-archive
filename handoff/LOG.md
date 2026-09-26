@@ -2,6 +2,13 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 26 Sept 2026, 11:15 pm IST (Claude)
+
+- Regression set: runner extended (profile-scope cases, expected "not found", cut-off /
+  text-less answer checks, relevance calibration); 24 verified cases; `npm run eval:ask`.
+- Found that ~190/196 indexed native pages have broken conjuncts (e.g. "सूित"); added the
+  leading-vowel-sign signal to the quality score so compare:suspicious OCRs them (ADR-050).
+
 ## 26 Sept 2026, 10:55 pm IST (Claude)
 
 - Retest of "Project Alankar" returned five bare "[S1 p.1]" bullets (qualitative salvage).

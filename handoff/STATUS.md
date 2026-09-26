@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 26 Sept 2026, 10:55 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 26 Sept 2026, 11:15 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -75,27 +75,28 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
 
 ## Next commands (Abhishek, on the Mac)
 
-Done 26 Sept, 8:14 pm: push, db:migrate (007), classify:orders, db:load (679 orders, all classified).
-
-Make the useful portal orders searchable (tier C is skipped automatically):
+OCR the broken-conjunct pages (ADR-050; ~190 pages, roughly 20–30 min), rebuild, then
+run the regression set (~30–45 min):
 
 ```
 git push
-npm run ocr:needs                          # OCR only for scanned PDFs without a text layer
-npm run build:pages                        # page text for tier A/B + unclassified orders
-npm run compare:suspicious -- --max 100    # fix garbled pages; repeat until no "Remaining"
+npm run compare:suspicious -- --max 300    # repeat until no "Remaining" line
 npm run build:retrieval-variants
 npm run build:retrieval-variant-chunks
 npm run db:load
 npm run embed:chunks
-npm run dev:all
+npm run dev:all                            # keep running; in a second terminal:
+npm run eval:ask
 ```
+
+Share the summary block and the "Failures" section of `data/eval/runs/<latest>.md`.
 
 ## Next work (Claude)
 
 - Classification pass 2: local-model pass over low-confidence orders (subject + first page),
   then a review action in the console that writes `datasets/classification-overrides.jsonl`.
-- Phase 0 eval set: 100–150 real questions with the correct page (needs the indexed corpus).
+- Eval set: 24 verified cases in eval/rag-cases.json (26 Sept); grow toward 50–100 from
+  real questions and thumbs-down feedback. Next: speed (live streaming, hosted-model trial).
 - Bilingual department registry (department ID → English + Hindi name) and a deduplicated profile picker.
 - When ingestion resumes: a per-department capture plan and completeness reconciliation,
   batch db:load + embed for portal captures, and a local-disk policy.

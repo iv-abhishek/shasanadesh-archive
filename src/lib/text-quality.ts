@@ -25,6 +25,13 @@ export interface TextQualityMetrics {
    * Broken legacy-font mappings emit it in place of "अ".
    */
   rareLetterChars: number;
+  /**
+   * Devanagari words that start with a dependent vowel sign or other mark
+   * ("िनयम", "ोटोटाइप"). Impossible in real Hindi; produced when a PDF's font
+   * mapping drops conjuncts ("प्रसूति" → "सूित", "उत्तर प्रदेश" → "उ तर दे श").
+   */
+  leadingMarkTokens: number;
+  leadingMarkRatio: number;
   score: number;
   classification: "ok" | "review" | "suspicious";
 }
@@ -99,6 +106,13 @@ export function analyzeTextQuality(textInput: string): TextQualityMetrics {
     devanagariChars > 0 ? joinerChars / devanagariChars : 0;
   const rareLetterChars = countMatches(text, /\u0904/gu);
 
+  // Broken-conjunct text layers (measured 26 Sept: ~190 of 196 indexed native
+  // Shasanadesh pages) look plausible to the ratios above. Measure over the
+  // text without joiners so ZWJ-split words are not double counted.
+  const devanagariWords = text.replace(/[\u200C\u200D]/g, "").match(/[\u0900-\u0963\u0966-\u097F]+/gu) ?? [];
+  const leadingMarkTokens = devanagariWords.filter((word) => /^[\u0900-\u0903\u093A-\u094F\u0955-\u0957\u0962\u0963]/u.test(word)).length;
+  const leadingMarkRatio = devanagariWords.length > 0 ? leadingMarkTokens / devanagariWords.length : 0;
+
   let score = 100;
 
   if (devanagariChars >= 100) {
@@ -124,6 +138,11 @@ export function analyzeTextQuality(textInput: string): TextQualityMetrics {
 
   score -= Math.min(30, rareLetterChars * 3);
 
+  // Clean Hindi has none; broken layers measured 0.016–0.22.
+  if (leadingMarkTokens >= 3 && leadingMarkRatio >= 0.01) {
+    score -= Math.min(45, 15 + Math.round(leadingMarkRatio * 300));
+  }
+
   score = Math.max(0, Math.round(score));
 
   const classification: TextQualityMetrics["classification"] =
@@ -143,6 +162,8 @@ export function analyzeTextQuality(textInput: string): TextQualityMetrics {
     joinerChars,
     joinerRatio,
     rareLetterChars,
+    leadingMarkTokens,
+    leadingMarkRatio,
     score,
     classification,
   };

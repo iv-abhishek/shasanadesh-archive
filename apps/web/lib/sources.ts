@@ -70,7 +70,8 @@ export function formatGoDate(value: string | null | undefined): string | null {
 
 /**
  * True when a page's text layer looks like a broken legacy-font export
- * (zero-width joiners used as spaces, "ऄ" in place of "अ"). Mirrors the signals
+ * (zero-width joiners used as spaces, "ऄ" in place of "अ", words starting with a
+ * vowel sign after dropped conjuncts). Mirrors the signals
  * in src/lib/text-quality.ts; used only to warn the reader.
  */
 export function looksGarbled(text: string): boolean {
@@ -78,5 +79,11 @@ export function looksGarbled(text: string): boolean {
   if (devanagari < 40) return false;
   const joiners = (text.match(/[‌‍]/g) ?? []).length;
   const rareLetters = (text.match(/ऄ/g) ?? []).length;
-  return (joiners >= 5 && joiners / devanagari > 0.02) || rareLetters >= 2;
+  const words = text.replace(/[\u200c\u200d]/g, "").match(/[\u0900-\u0963\u0966-\u097F]+/g) ?? [];
+  const leadingMarks = words.filter((word) => /^[\u0900-\u0903\u093A-\u094F]/.test(word)).length;
+  return (
+    (joiners >= 5 && joiners / devanagari > 0.02) ||
+    rareLetters >= 2 ||
+    (leadingMarks >= 3 && leadingMarks / Math.max(1, words.length) >= 0.02)
+  );
 }

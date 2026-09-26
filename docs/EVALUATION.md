@@ -17,6 +17,13 @@ Each case may define:
 - `requireCitation`
 - `allowFallback`
 - `notes`
+- `category`: grouping label (service-rules, policy, scheme-guideline, general-instruction,
+  central-guideline, scope, not-found)
+- `profileDepartments`: ask as an officer with these departments (a development profile is
+  created once and cached in `data/eval/eval-users.json`; not available against production)
+- `expectNoEvidence`: the archive has no such order, so the only passing answer is "no matching order"
+- `expectScopeFallback`: the answer must come from outside the profile's departments (ADR-047)
+- `expectedTextIncludesAny`: at least one of these words must appear in the answer
 
 Only add expected source/page labels after they have been verified against the corpus.
 Do not invent expected pages simply to increase the benchmark size.
@@ -37,6 +44,12 @@ The harness records:
 - internal numeric-placeholder leak rate
 - search latency
 - chat latency
+- "not found" answered correctly, and wrongly answered "not found" (ADR-047)
+- shortened answers and answers that look cut off (ADR-048)
+- answers with almost no text besides citations (ADR-049)
+- searches widened beyond the profile's departments
+- best-match relevance: lowest for answerable cases vs. highest for not-found cases, with
+  a suggested `RAG_MIN_RELEVANCE` midway when they separate
 
 The local benchmark runs sequentially because retrieval/reranking and MLX generation
 share the Apple GPU.
@@ -49,11 +62,15 @@ Fast retrieval-only baseline:
 npm run eval:rag:search
 ```
 
-Full search + answer evaluation:
+Full search + answer evaluation (`eval:ask` is the same command):
 
 ```bash
-npm run eval:rag
+npm run eval:ask
 ```
+
+With the local MLX generator this takes about 30–45 minutes for the 24 cases (roughly
+60–120 s per answer); run it after every change to retrieval, prompts or validation, and
+compare the pass rate and failures with the previous report.
 
 One case:
 
@@ -83,7 +100,14 @@ and:
 
 ## Expansion plan
 
-The first two cases are verified smoke cases already exercised manually. Expand toward
+26 Sept 2026: 24 cases: the questions that failed or were checked by hand on 25–26 Sept
+(solar pump, medical-officer seniority with a profile outside Medical and Health, Project
+Alankar), 16 verified cases across the indexed orders (expected pages found by keyword in
+native and OCR text), and 3 questions the archive cannot answer. Add every real failure
+reported through thumbs-down (`npm run feedback:report`) as a case once its source page
+is verified.
+
+The first two cases were the original smoke cases. Expand toward
 30-50 cases only from verified corpus evidence, covering Hindi/English, OCR-only pages,
 native pages, numeric conflicts, exact-order lookup, policy concepts, dates, amounts,
 percentages, rule/section identifiers, no-evidence cases, and citation-placement cases.

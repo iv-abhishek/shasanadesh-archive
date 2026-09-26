@@ -22,6 +22,19 @@ interface EvalCase {
   requireCitation?: boolean;
   allowFallback?: boolean;
   notes?: string;
+  /** Free label for grouping in the report (e.g. "guideline", "not-found"). */
+  category?: string;
+  /**
+   * Ask as an officer whose profile has these departments (default scope
+   * "my_departments"). A development profile is created once and reused.
+   */
+  profileDepartments?: string[];
+  /** The archive has no order for this: Ask must answer "no matching order". */
+  expectNoEvidence?: boolean;
+  /** The answer must come from outside the profile's departments (ADR-047). */
+  expectScopeFallback?: boolean;
+  /** At least one of these words must appear in the answer. */
+  expectedTextIncludesAny?: string[];
 }
 
 interface SearchEvidence {
@@ -51,6 +64,11 @@ interface DoneEvent {
   citations?: string[];
   firstValidationIssues?: string[];
   repairValidationIssues?: string[];
+  noEvidence?: boolean;
+  shortened?: boolean;
+  scopeFallback?: boolean;
+  bestRelevance?: number;
+  conversational?: boolean;
 }
 
 interface ChatResult {
@@ -83,6 +101,12 @@ interface CaseResult {
   error: string | null;
   passed: boolean;
   failures: string[];
+  category?: string;
+  expectNoEvidence?: boolean;
+  noEvidence?: boolean | null;
+  shortened?: boolean | null;
+  scopeFallback?: boolean | null;
+  bestRelevance?: number | null;
 }
 
 interface CliOptions {
@@ -368,10 +392,63 @@ function parseSseBlock(
   };
 }
 
+/**
+ * Development profiles for cases that set profileDepartments, cached in
+ * data/eval/eval-users.json so repeated runs do not create new users.
+ * Only works against a non-production API (NODE_ENV !== "production").
+ */
+const EVAL_USERS_PATH = path.resolve("data/eval/eval-users.json");
+let evalUsers: Record<string, string> | null = null;
+
+async function evalUserFor(
+  departments: string[],
+  options: CliOptions,
+): Promise<string> {
+  const key = departments.join(" | ");
+  if (evalUsers === null) {
+    evalUsers = await readFile(EVAL_USERS_PATH, "utf8")
+      .then((text) => JSON.parse(text) as Record<string, string>)
+      .catch(() => ({}));
+  }
+
+  const cached = evalUsers[key];
+  if (cached) {
+    const check = await fetch(`${options.apiBase}/api/workspace/users/${cached}`).catch(() => null);
+    if (check?.ok) return cached;
+  }
+
+  const [primary, ...additional] = departments;
+  const response = await fetch(`${options.apiBase}/api/workspace/users`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
+      displayName: `Eval profile (${key})`.slice(0, 200),
+      designation: "Evaluation",
+      preferredLanguage: "en",
+      defaultScope: "my_departments",
+      primaryDepartment: primary ?? null,
+      additionalDepartments: additional,
+      additionalChargeDepartments: [],
+    }),
+  });
+  if (!response.ok) {
+    throw new Error(`Could not create eval profile: ${response.status} ${await response.text()}`);
+  }
+  const created = (await response.json()) as { id: string };
+  evalUsers[key] = created.id;
+  await mkdir(path.dirname(EVAL_USERS_PATH), { recursive: true });
+  await writeFile(EVAL_USERS_PATH, JSON.stringify(evalUsers, null, 2) + "\n", "utf8");
+  return created.id;
+}
+
 async function runChat(
   testCase: EvalCase,
   options: CliOptions,
 ): Promise<ChatResult> {
+  const workspaceUserId = testCase.profileDepartments?.length
+    ? await evalUserFor(testCase.profileDepartments, options)
+    : undefined;
+
   const started =
     performance.now();
 
@@ -392,6 +469,7 @@ async function runChat(
                 testCase.query,
             },
           ],
+          ...(workspaceUserId ? { workspaceUserId } : {}),
         }),
       },
       options.timeoutMs,
@@ -755,6 +833,45 @@ async function evaluateCase(
     );
   }
 
+  const noEvidence = chat.done?.noEvidence ?? false;
+  const answerWords =
+    (chat.answer.replace(CITATION_RE, "").match(/[\p{L}\p{M}]+/gu) ?? []).length;
+  CITATION_RE.lastIndex = 0;
+
+  if (testCase.expectNoEvidence) {
+    // The only right answer is "no matching order", without citations/sources.
+    if (!noEvidence && !chat.done?.conversational) {
+      failures.push("expected 'no matching order', but an answer was given");
+    }
+  } else {
+    if (noEvidence) {
+      failures.push("answered 'no matching order' although the archive has the order");
+    }
+    if (answerWords < 5) {
+      failures.push(`answer has almost no text (${answerWords} words besides citations)`);
+    }
+    // Ends mid-word unless the API said it shortened the answer cleanly.
+    if (
+      !chat.done?.shortened &&
+      answerWords >= 5 &&
+      !/[।॥.?!)\]:]\s*$/u.test(chat.answer.trim())
+    ) {
+      failures.push("answer seems cut off (no final punctuation)");
+    }
+    if (
+      testCase.expectedTextIncludesAny?.length &&
+      !testCase.expectedTextIncludesAny.some((word) =>
+        chat.answer.replace(/[\u200c\u200d]/g, "").includes(word),
+      )
+    ) {
+      failures.push(`answer mentions none of: ${testCase.expectedTextIncludesAny.join(", ")}`);
+    }
+  }
+
+  if (testCase.expectScopeFallback && !chat.done?.scopeFallback) {
+    failures.push("expected a search beyond the profile's departments (scopeFallback)");
+  }
+
   const usedFallback =
     chat.done?.usedFallback ??
     null;
@@ -777,6 +894,7 @@ async function evaluateCase(
 
   if (
     testCase.requireCitation &&
+    !testCase.expectNoEvidence &&
     citations.length === 0
   ) {
     failures.push(
@@ -862,6 +980,12 @@ async function evaluateCase(
     passed:
       failures.length === 0,
     failures,
+    category: testCase.category,
+    expectNoEvidence: testCase.expectNoEvidence ?? false,
+    noEvidence,
+    shortened: chat.done?.shortened ?? false,
+    scopeFallback: chat.done?.scopeFallback ?? false,
+    bestRelevance: chat.done?.bestRelevance ?? null,
   };
 }
 
@@ -952,6 +1076,28 @@ function ms(
   return value === null
     ? "-"
     : `${Math.round(value)} ms`;
+}
+
+/**
+ * Suggest RAG_MIN_RELEVANCE from this run: answerable cases should sit above
+ * the threshold, "not found" cases below it. Reported, never applied.
+ */
+function relevanceCalibration(results: CaseResult[]) {
+  const answerable = results
+    .filter((item) => !item.expectNoEvidence && typeof item.bestRelevance === "number")
+    .map((item) => item.bestRelevance as number)
+    .sort((a, b) => a - b);
+  const unanswerable = results
+    .filter((item) => item.expectNoEvidence && typeof item.bestRelevance === "number")
+    .map((item) => item.bestRelevance as number)
+    .sort((a, b) => a - b);
+  const lowestAnswerable = answerable[0] ?? null;
+  const highestUnanswerable = unanswerable.at(-1) ?? null;
+  const suggestion =
+    lowestAnswerable !== null && highestUnanswerable !== null && highestUnanswerable < lowestAnswerable
+      ? Number(((lowestAnswerable + highestUnanswerable) / 2).toFixed(3))
+      : null;
+  return { lowestAnswerable, highestUnanswerable, suggestion };
 }
 
 function buildSummary(
@@ -1067,6 +1213,15 @@ function buildSummary(
             item.searchMs,
         ),
       ),
+    notFoundCorrectRate: rate(
+      results.filter((item) => item.expectNoEvidence).map((item) => item.passed),
+    ),
+    falseNotFoundRate: rate(
+      results.filter((item) => !item.expectNoEvidence && item.noEvidence !== undefined).map((item) => item.noEvidence ?? null),
+    ),
+    shortenedRate: rate(results.map((item) => item.shortened ?? null)),
+    scopeFallbackRate: rate(results.map((item) => item.scopeFallback ?? null)),
+    relevance: relevanceCalibration(results),
     medianChatMs:
       median(
         results
@@ -1119,16 +1274,22 @@ function markdownReport(
     `| Internal placeholder leak | ${pct(summary.placeholderLeakRate)} |`,
     `| Median search latency | ${ms(summary.medianSearchMs)} |`,
     `| Median chat latency | ${ms(summary.medianChatMs)} |`,
+    `| "Not found" answered correctly | ${pct(summary.notFoundCorrectRate)} |`,
+    `| Wrong "not found" on answerable questions | ${pct(summary.falseNotFoundRate)} |`,
+    `| Shortened answers | ${pct(summary.shortenedRate)} |`,
+    `| Searched beyond profile departments | ${pct(summary.scopeFallbackRate)} |`,
+    `| Best match: lowest answerable / highest not-found | ${summary.relevance.lowestAnswerable ?? "-"} / ${summary.relevance.highestUnanswerable ?? "-"} |`,
+    `| Suggested RAG_MIN_RELEVANCE | ${summary.relevance.suggestion ?? "not separable yet"} |`,
     "",
     "## Cases",
     "",
-    "| Case | Pass | Source | Page | Validated | Salvage | Fallback | Chat latency |",
-    "| --- | --- | --- | --- | --- | --- | --- | ---: |",
+    "| Case | Pass | Source | Page | Validated | Salvage | Fallback | Not found | Shortened | Best match | Chat latency |",
+    "| --- | --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: |",
   ];
 
   for (const result of results) {
     lines.push(
-      `| ${result.id} | ${result.passed ? "PASS" : "FAIL"} | ${result.sourceHitAtK === null ? "-" : result.sourceHitAtK ? "yes" : "no"} | ${result.pageHitAtK === null ? "-" : result.pageHitAtK ? "yes" : "no"} | ${result.validated === null ? "-" : result.validated ? "yes" : "no"} | ${result.usedQualitativeSalvage === null ? "-" : result.usedQualitativeSalvage ? "yes" : "no"} | ${result.usedFallback === null ? "-" : result.usedFallback ? "yes" : "no"} | ${ms(result.chatMs)} |`,
+      `| ${result.id} | ${result.passed ? "PASS" : "FAIL"} | ${result.sourceHitAtK === null ? "-" : result.sourceHitAtK ? "yes" : "no"} | ${result.pageHitAtK === null ? "-" : result.pageHitAtK ? "yes" : "no"} | ${result.validated === null ? "-" : result.validated ? "yes" : "no"} | ${result.usedQualitativeSalvage === null ? "-" : result.usedQualitativeSalvage ? "yes" : "no"} | ${result.usedFallback === null ? "-" : result.usedFallback ? "yes" : "no"} | ${result.noEvidence ? "yes" : "no"} | ${result.shortened ? "yes" : "no"} | ${typeof result.bestRelevance === "number" ? result.bestRelevance.toFixed(2) : "-"} | ${ms(result.chatMs)} |`,
     );
   }
 
@@ -1342,6 +1503,14 @@ async function main():
 
   console.log(
     `Pass rate:              ${pct(summary.passRate)}`,
+  );
+
+  console.log(`"Not found" correct:    ${pct(summary.notFoundCorrectRate)}`);
+  console.log(`Wrong "not found":      ${pct(summary.falseNotFoundRate)}`);
+  console.log(`Shortened answers:      ${pct(summary.shortenedRate)}`);
+  console.log(
+    `Best match (answerable min / not-found max): ${summary.relevance.lowestAnswerable ?? "-"} / ${summary.relevance.highestUnanswerable ?? "-"}` +
+      (summary.relevance.suggestion !== null ? ` → suggested RAG_MIN_RELEVANCE ${summary.relevance.suggestion}` : ""),
   );
 
   console.log(
