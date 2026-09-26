@@ -257,7 +257,10 @@ async function retrieve(
   return runLocalGpuExclusive(
     "retrieval",
     async () => {
-      const response = await fetch(
+      let response: Response;
+
+      try {
+        response = await fetch(
         `${RETRIEVAL_BASE_URL}/search`,
         {
           method: "POST",
@@ -295,6 +298,13 @@ async function retrieve(
           }),
         },
       );
+      } catch (error) {
+        throw new Error(
+          `Retrieval service is not reachable at ${RETRIEVAL_BASE_URL} ` +
+            `(${error instanceof Error ? error.message : String(error)}). ` +
+            "Start it with npm run retrieval:serve.",
+        );
+      }
 
       if (!response.ok) {
         const body =
@@ -323,17 +333,30 @@ async function generateCompletion(
   return runLocalGpuExclusive(
     "generation",
     async () => {
-      const upstream =
-        await openai.chat.completions.create({
-          model: LLM_MODEL!,
-          messages:
-            messages as Parameters<
-              typeof openai.chat.completions.create
-            >[0]["messages"],
-          temperature,
-          max_tokens: maxTokens,
-          stream: true,
-        });
+      let upstream;
+
+      try {
+        upstream =
+          await openai.chat.completions.create({
+            model: LLM_MODEL!,
+            messages:
+              messages as Parameters<
+                typeof openai.chat.completions.create
+              >[0]["messages"],
+            temperature,
+            max_tokens: maxTokens,
+            stream: true,
+          });
+      } catch (error) {
+        if (error instanceof OpenAI.APIConnectionError) {
+          throw new Error(
+            `Language model server is not reachable at ${LLM_BASE_URL}. ` +
+              "Start it with npm run generator:serve.",
+          );
+        }
+
+        throw error;
+      }
 
       let answer = "";
 

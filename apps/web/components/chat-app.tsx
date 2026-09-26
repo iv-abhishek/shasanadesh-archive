@@ -157,6 +157,65 @@ function pdfProxyUrl(source: Source): string {
 const CHAT_API_PATH =
   "/api/rag/chat";
 
+const START_HINT =
+  "Start all services with: npm run dev:all";
+
+// Turn low-level failures into a message that names the service to start.
+function describeServiceError(message: string): string {
+  const lower = message.toLowerCase();
+
+  if (lower.includes("retrieval service")) {
+    return `The retrieval service (port 8788) is not responding. ${START_HINT}`;
+  }
+
+  if (
+    lower.includes("language model server") ||
+    lower.includes("connection error")
+  ) {
+    return `The language model server (port 8791) is not responding. ${START_HINT}`;
+  }
+
+  if (lower.includes("5432") || lower.includes("database")) {
+    return "PostgreSQL is not reachable. Start it (for example: brew services start postgresql@16), then retry.";
+  }
+
+  return message;
+}
+
+async function describeHttpFailure(response: Response): Promise<string> {
+  const text = await response.text();
+  let message = text;
+
+  try {
+    const payload = JSON.parse(text) as { message?: unknown; error?: unknown };
+    if (typeof payload.message === "string") message = payload.message;
+    else if (typeof payload.error === "string") message = payload.error;
+  } catch {
+    // Plain-text body.
+  }
+
+  // 502 comes from the Next.js proxy when the API on :8787 is down.
+  if (response.status === 502) {
+    return `The answer API (port 8787) is not running. ${START_HINT}`;
+  }
+
+  const friendly = describeServiceError(message);
+  return friendly !== message
+    ? friendly
+    : `Request failed (${response.status}): ${message || response.statusText}`;
+}
+
+function describeFetchFailure(error: unknown): string {
+  // A TypeError from fetch means the browser could not reach this app at all.
+  if (error instanceof TypeError) {
+    return `Can't reach the Shasanadesh app server. ${START_HINT}, then retry.`;
+  }
+
+  return error instanceof Error
+    ? describeServiceError(error.message)
+    : String(error);
+}
+
 function appendSpeechTranscriptSegment(current: string, next: string): string {
   const segment = next.replace(/\s+/gu, " ").trim();
   if (!segment) return current;
@@ -841,9 +900,11 @@ function SourceCard({
 function TurnView({
   turn,
   onOpenSource,
+  onRetry,
 }: {
   turn: ChatTurn;
   onOpenSource: (source: Source) => void;
+  onRetry?: () => void;
 }) {
   return (
     <article className="turn">
@@ -868,8 +929,17 @@ function TurnView({
         </div>
 
         {turn.error ? (
-          <div className="error-box">
-            {turn.error}
+          <div className="error-box error-box-with-action" role="alert">
+            <span>{turn.error}</span>
+            {onRetry ? (
+              <button
+                type="button"
+                className="retry-button"
+                onClick={onRetry}
+              >
+                Retry
+              </button>
+            ) : null}
           </div>
         ) : (
           <div className="answer-text">
@@ -1289,26 +1359,41 @@ export function ChatApp({
     }
   };
 
-  const submit =
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+
+    if (speechInputActive) {
+      toggleSpeechInput();
+      return;
+    }
+
+    const question = query.trim();
+
+    if (!question || busy || archived) {
+      return;
+    }
+
+    setQuery("");
+    void ask(question, turns);
+  };
+
+  // Retry replaces the failed turn in place and asks the same question again.
+  const retry = (failed: ChatTurn) => {
+    if (busy || archived) {
+      return;
+    }
+
+    const remaining = turns.filter((turn) => turn.id !== failed.id);
+    setTurns(remaining);
+    void ask(failed.question, remaining);
+  };
+
+  const ask =
     async (
-      event: FormEvent,
+      question: string,
+      priorTurns: ChatTurn[],
     ) => {
-      event.preventDefault();
-
-      if (speechInputActive) {
-        toggleSpeechInput();
-        return;
-      }
-
-      const question =
-        query.trim();
-
-      if (!question || busy || archived) {
-        return;
-      }
-
       setBusy(true);
-      setQuery("");
 
       const id =
         Date.now();
@@ -1336,69 +1421,6 @@ export function ChatApp({
       let effectiveConversationId =
         currentConversationId;
 
-      if (
-        workspaceUserId
-      ) {
-        try {
-          if (
-            !effectiveConversationId
-          ) {
-            const created =
-              await workspaceJson<{
-                id: string;
-              }>(
-                `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations`,
-                {
-                  method:
-                    "POST",
-                  headers: {
-                    "content-type":
-                      "application/json",
-                  },
-                  body:
-                    JSON.stringify({
-                      firstQuestion:
-                        question,
-                    }),
-                },
-              );
-
-            effectiveConversationId =
-              created.id;
-
-            setCurrentConversationId(
-              created.id,
-            );
-          }
-
-          await workspaceJson(
-            `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations/${encodeURIComponent(effectiveConversationId)}/messages`,
-            {
-              method:
-                "POST",
-              headers: {
-                "content-type":
-                  "application/json",
-              },
-              body:
-                JSON.stringify({
-                  role:
-                    "user",
-                  content:
-                    question,
-                }),
-            },
-          );
-        } catch (
-          persistenceError
-        ) {
-          console.warn(
-            "Could not persist user message.",
-            persistenceError,
-          );
-        }
-      }
-
       const update =
         (
           updater:
@@ -1420,7 +1442,7 @@ export function ChatApp({
         };
 
       const conversationMessages = [
-        ...turns
+        ...priorTurns
           .filter(
             (turn) =>
               Boolean(
@@ -1447,7 +1469,7 @@ export function ChatApp({
 
       const conversationState =
         deriveConversationState(
-          turns,
+          priorTurns,
         );
 
       let persistedAnswer =
@@ -1479,7 +1501,7 @@ export function ChatApp({
 
         if (!response.ok) {
           throw new Error(
-            `API returned ${response.status}: ${await response.text()}`,
+            await describeHttpFailure(response),
           );
         }
 
@@ -1623,7 +1645,7 @@ export function ChatApp({
                 (turn) => ({
                   ...turn,
                   error:
-                    message,
+                    describeServiceError(message),
                   elapsedMs:
                     performance.now() -
                     started,
@@ -1682,10 +1704,35 @@ export function ChatApp({
         }
         if (
           workspaceUserId &&
-          effectiveConversationId &&
           persistedAnswer.trim()
         ) {
           try {
+            // Persist only completed turns, so a failed attempt does not
+            // leave a question-only conversation behind in history.
+            if (!effectiveConversationId) {
+              const created =
+                await workspaceJson<{ id: string }>(
+                  `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations`,
+                  {
+                    method: "POST",
+                    headers: { "content-type": "application/json" },
+                    body: JSON.stringify({ firstQuestion: question }),
+                  },
+                );
+
+              effectiveConversationId = created.id;
+              setCurrentConversationId(created.id);
+            }
+
+            await workspaceJson(
+              `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations/${encodeURIComponent(effectiveConversationId)}/messages`,
+              {
+                method: "POST",
+                headers: { "content-type": "application/json" },
+                body: JSON.stringify({ role: "user", content: question }),
+              },
+            );
+
             await workspaceJson(
               `/api/workspace/users/${encodeURIComponent(workspaceUserId)}/conversations/${encodeURIComponent(effectiveConversationId)}/messages`,
               {
@@ -1754,10 +1801,7 @@ export function ChatApp({
           (turn) => ({
             ...turn,
             error:
-              error instanceof
-              Error
-                ? error.message
-                : String(error),
+              describeFetchFailure(error),
             elapsedMs:
               performance.now() -
               started,
@@ -1799,6 +1843,7 @@ export function ChatApp({
         </div>
       </header>
 
+      {turns.length === 0 ? (
       <section className="intro">
         <h2>
           Ask about an order,
@@ -1814,6 +1859,7 @@ export function ChatApp({
           source page.
         </p>
       </section>
+      ) : null}
 
       <section className="conversation">
         {turns.length === 0 ? (
@@ -1855,6 +1901,11 @@ export function ChatApp({
                 key={turn.id}
                 turn={turn}
                 onOpenSource={openSource}
+                onRetry={
+                  turn.error && !busy && !archived
+                    ? () => retry(turn)
+                    : undefined
+                }
               />
             ),
           )

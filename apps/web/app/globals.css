@@ -152,7 +152,8 @@ h1 {
 
 .topbar-note {
   color: var(--muted);
-  max-width: 250px;
+  max-width: none;
+  white-space: nowrap;
   font-size: 0.78rem;
   line-height: 1.45;
   text-align: right;
@@ -649,6 +650,7 @@ h1 {
   }
 
   .topbar-note {
+    white-space: normal;
     text-align: left;
     max-width: none;
     padding-top: 0;
@@ -2231,4 +2233,32 @@ h1 {
 
 .archived-banner button:hover {
   background: var(--hover-surface);
+}
+
+/* Error with a retry action */
+.error-box-with-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.retry-button {
+  flex: 0 0 auto;
+  padding: 6px 14px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.retry-button:hover {
+  background: color-mix(in srgb, currentColor 10%, transparent);
+}
+
+.startup-error p {
+  margin-bottom: 18px;
 }

@@ -1705,6 +1705,32 @@ export function WorkspaceApp() {
     );
   }
 
+  if (!profile && error) {
+    // The first load failed (usually the API or database is not running).
+    // Showing onboarding here would look like the profiles had disappeared.
+    const apiDown = /^50[23]\b|fetch failed|ECONNREFUSED/i.test(error);
+    return (
+      <main className="onboarding-shell">
+        <div className="onboarding-card startup-error" role="alert">
+          <div className="eyebrow">Shasanadesh workspace</div>
+          <h1>Can&apos;t reach the server</h1>
+          <p className="onboarding-copy">
+            {apiDown
+              ? "The answer API or database is not running. Start all services with npm run dev:all, then retry."
+              : error}
+          </p>
+          <button
+            type="button"
+            className="onboarding-submit"
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </button>
+        </div>
+      </main>
+    );
+  }
+
   if (!profile) {
     return (
       <Onboarding
