@@ -1048,20 +1048,34 @@ export function WorkspaceApp() {
         userId: string,
         archived = false,
       ) => {
-        const data =
-          await jsonRequest<{
-            conversations:
-              ConversationSummary[];
-          }>(
-            `/api/workspace/users/${encodeURIComponent(userId)}/conversations${archived ? "?archived=true" : ""}`,
-          );
+        const listUrl = (wantArchived: boolean) =>
+          `/api/workspace/users/${encodeURIComponent(userId)}/conversations${wantArchived ? "?archived=true" : ""}`;
 
         if (archived) {
+          const data = await jsonRequest<{
+            conversations: ConversationSummary[];
+          }>(listUrl(true));
           setArchivedConversations(data.conversations);
-        } else {
-          setConversations(data.conversations);
+          return data.conversations;
         }
-        return data.conversations;
+
+        // Load archived history alongside recent history so the Archived badge
+        // shows the real count on page load instead of 0 until it is opened.
+        const [recent, archivedList] = await Promise.all([
+          jsonRequest<{ conversations: ConversationSummary[] }>(listUrl(false)),
+          jsonRequest<{ conversations: ConversationSummary[] }>(listUrl(true))
+            .catch(() => null),
+        ]);
+
+        setConversations(recent.conversations);
+        if (archivedList) {
+          setArchivedConversations(archivedList.conversations);
+        }
+
+        return [
+          ...recent.conversations,
+          ...(archivedList?.conversations ?? []),
+        ];
       },
       [],
     );
@@ -1435,16 +1449,17 @@ export function WorkspaceApp() {
     await persistConversationUpdate(conversation, { archived: false });
   };
 
-  const openArchivedConversation = async (conversation: ConversationSummary) => {
-    const restored = await persistConversationUpdate(conversation, { archived: false });
-    if (!restored) return;
-    setHistoryView("recent");
+  // Opening an archived conversation only views it. It stays archived until the
+  // user explicitly restores it (previously a click silently un-archived it,
+  // which made the archive count drop unexpectedly).
+  const openArchivedConversation = (conversation: ConversationSummary) => {
+    setOpenMenuId(null);
     setProfileEditing(false);
-    setSelectedConversationId(restored.id);
+    setSelectedConversationId(conversation.id);
     setChatSessionKey((current) => current + 1);
     setMode("ask");
     const url = new URL(window.location.href);
-    url.searchParams.set("conversation", restored.id);
+    url.searchParams.set("conversation", conversation.id);
     window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
   };
 
@@ -1674,6 +1689,11 @@ export function WorkspaceApp() {
         </section>
       );
     });
+
+  const selectedArchivedConversation =
+    archivedConversations.find(
+      (conversation) => conversation.id === selectedConversationId,
+    ) ?? null;
 
   if (loading) {
     return (
@@ -1982,7 +2002,12 @@ export function WorkspaceApp() {
               selectedConversationId
             }
             preferredLanguage={profile.preferredLanguage}
-            onNewChat={newChat}
+            archived={selectedArchivedConversation !== null}
+            onRestoreArchived={
+              selectedArchivedConversation
+                ? () => void restoreConversation(selectedArchivedConversation)
+                : undefined
+            }
             onHistoryChanged={() =>
               void refreshHistory()
             }
@@ -2030,6 +2055,17 @@ export function WorkspaceApp() {
         ) : null}
       </div>
 
+      <button
+        type="button"
+        className="new-chat-fab"
+        aria-label="New chat"
+        title="New chat"
+        onClick={newChat}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
     </div>
   );
 }

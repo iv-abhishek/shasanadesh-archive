@@ -82,7 +82,8 @@ interface ChatTurn {
 interface ChatAppProps {
   workspaceUserId?: string;
   conversationId?: string | null;
-  onNewChat?: () => void;
+  archived?: boolean;
+  onRestoreArchived?: () => void;
   onHistoryChanged?: () => void;
   preferredLanguage?: "en" | "hi";
 }
@@ -1032,7 +1033,8 @@ function SourceViewer({
 export function ChatApp({
   workspaceUserId,
   conversationId,
-  onNewChat,
+  archived = false,
+  onRestoreArchived,
   onHistoryChanged,
   preferredLanguage,
 }: ChatAppProps = {}) {
@@ -1290,7 +1292,7 @@ export function ChatApp({
       const question =
         query.trim();
 
-      if (!question || busy) {
+      if (!question || busy || archived) {
         return;
       }
 
@@ -1848,6 +1850,20 @@ export function ChatApp({
         )}
       </section>
 
+      {archived ? (
+        <div className="archived-banner" role="status">
+          <span>
+            This conversation is archived. Restore it to continue asking
+            questions.
+          </span>
+          {onRestoreArchived ? (
+            <button type="button" onClick={onRestoreArchived}>
+              Restore
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <form
         className="composer"
         onSubmit={submit}
@@ -1862,7 +1878,7 @@ export function ChatApp({
           placeholder="Ask in English or Hindi… Press Enter to send"
           rows={3}
           aria-keyshortcuts="Enter"
-          disabled={busy}
+          disabled={busy || archived}
           onKeyDown={(
             event,
           ) => {
@@ -1883,20 +1899,6 @@ export function ChatApp({
         />
 
         <div className="composer-actions">
-          {onNewChat ? (
-            <button
-              type="button"
-              className="composer-new-chat-button"
-              aria-label="New chat"
-              title="New chat"
-              disabled={busy || speechInputActive}
-              onClick={onNewChat}
-            >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-            </button>
-          ) : null}
           <div className="speech-language-toggle" role="group" aria-label="Voice input language">
             <button
               type="button"
