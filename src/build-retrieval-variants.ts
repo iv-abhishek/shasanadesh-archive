@@ -18,6 +18,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import path from "node:path";
+import { numericTokens } from "./lib/numeric-tokens.js";
 
 const documentsRoot = path.resolve("data/documents");
 const outputPath = path.resolve(
@@ -55,14 +56,6 @@ function normalizeText(text: string): string {
     .trim();
 }
 
-function numericTokens(text: string): string[] {
-  return [
-    ...new Set(
-      (text.normalize("NFKC").match(/\d[\d.,:/()\-]*/gu) ?? [])
-        .map((token) => token.replace(/[.,;:]+$/g, "")),
-    ),
-  ];
-}
 
 async function main() {
   const entries = await readdir(documentsRoot, {

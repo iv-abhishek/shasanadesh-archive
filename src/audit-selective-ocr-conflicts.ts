@@ -9,6 +9,7 @@
 
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { numericTokens } from "./lib/numeric-tokens.js";
 
 interface ComparisonRecord {
   sourceId: string;
@@ -23,13 +24,6 @@ const reportPath = path.resolve(
   "data/corpus/selective-ocr-report.jsonl",
 );
 
-function numericTokens(text: string): string[] {
-  return (
-    text
-      .normalize("NFKC")
-      .match(/\d[\d.,:/()\-]*/gu) ?? []
-  ).map((token) => token.replace(/[.,;:]+$/g, ""));
-}
 
 function unique(values: string[]): string[] {
   return [...new Set(values)];

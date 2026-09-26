@@ -51,7 +51,7 @@
     "test:rag-validation": "tsx src/rag/answer-validation.test.ts",
     "test:rag-generation-safety": "tsx src/rag/generation-safety.test.ts",
     "test:local-gpu-queue": "tsx src/api/local-gpu-queue.test.ts",
-    "test:rag-safety": "npm run test:rag-validation && npm run test:rag-generation-safety && npm run test:local-gpu-queue",
+    "test:rag-safety": "npm run test:rag-validation && npm run test:rag-generation-safety && npm run test:local-gpu-queue && npm run test:numeric-tokens",
     "eval:rag": "tsx src/eval/run-rag-eval.ts",
     "eval:rag:search": "tsx src/eval/run-rag-eval.ts --search-only",
     "web:install": "npm --prefix apps/web install",
@@ -66,7 +66,8 @@
     "test:rag-routing": "tsx src/rag/intent-routing.test.ts",
     "test:session-cookie": "tsx src/workspace/session-cookie.test.ts",
     "test:neighbor-expansion": "python3 services/neighbor_expansion_test.py",
-    "ingest:doe-gfr": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts doe-gfr"
+    "ingest:doe-gfr": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts doe-gfr",
+    "test:numeric-tokens": "tsx src/lib/numeric-tokens.test.ts"
   },
   "keywords": [],
   "author": "",
