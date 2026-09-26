@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 26 Sept 2026, 8:45 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 26 Sept 2026, 8:55 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -62,12 +62,15 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
 
 ## Next commands (Abhishek, on the Mac)
 
+Done 26 Sept, 8:14 pm: push, db:migrate (007), classify:orders, db:load (679 orders, all classified).
+
+Make the useful portal orders searchable (tier C is skipped automatically):
+
 ```
 git push
-npm run db:migrate                        # adds documents.doc_type / tier (migration 007)
-npm run classify:orders                   # classify all listed + captured orders
-npm run db:load                           # portal orders appear in Browse, with tiers
-npm run compare:suspicious -- --max 100   # repeat until no "Remaining" line
+npm run ocr:needs                          # OCR only for scanned PDFs without a text layer
+npm run build:pages                        # page text for tier A/B + unclassified orders
+npm run compare:suspicious -- --max 100    # fix garbled pages; repeat until no "Remaining"
 npm run build:retrieval-variants
 npm run build:retrieval-variant-chunks
 npm run db:load

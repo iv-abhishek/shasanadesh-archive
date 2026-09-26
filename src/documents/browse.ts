@@ -60,7 +60,7 @@ export interface BrowseRow {
   subject: string | null;
   pageCount: number | null;
   sourceUrl: string;
-  /** True once the order's pages are loaded, i.e. it is searchable by text. */
+  /** True once the order has searchable chunks (text indexed for Ask/Search). */
   indexed: boolean;
   inB2: boolean;
   /** Classifier result (npm run classify:orders); null until classified. */
@@ -185,7 +185,8 @@ export async function browseDocuments(pool: Pool, request: BrowseRequest): Promi
         ${SUBJECT_SQL} AS subject,
         d.page_count,
         d.source_url,
-        EXISTS (SELECT 1 FROM pages p WHERE p.source_id = d.source_id) AS indexed,
+        -- "Indexed" = has searchable chunks (pages alone are not searchable).
+        EXISTS (SELECT 1 FROM chunks c WHERE c.source_id = d.source_id) AS indexed,
         (d.metadata->'storage'->'raw'->>'fileId') IS NOT NULL AS in_b2,
         d.tier,
         d.doc_type,

@@ -1,51 +1,30 @@
 # Snapshot (generated)
 
-Generated 26 Sept 2026, 8:11 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
+Generated 26 Sept 2026, 8:15 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
 
 ## Git
 
 - Branch: `main`
-- HEAD: `2bc6720 docs(roadmap): confirm decisions — all-department audience, UP core first, hosting plan`
-- Unpushed commits: 2
+- HEAD: `aac3e75 feat: classify orders before processing; Ask leaves out routine orders; Copy reference`
+- Unpushed commits: 0
 
 Uncommitted files:
 
 ```
 M README.md
- M apps/web/app/globals.css
- M apps/web/components/browse-orders.tsx
- M apps/web/components/chat-app.tsx
- M apps/web/components/search-app.tsx
- M docs/DECISIONS.md
- M docs/FRONTEND.md
- M docs/ROADMAP.md
  M handoff/LOG.md
- M handoff/PLAN.md
  M handoff/STATUS.md
  M package.json
- M services/retrieval_server.py
- M src/api/server.ts
- M src/build-retrieval-variant-chunks.ts
- M src/compare-suspicious-pages.ts
- M src/db/load-corpus.ts
- M src/documents/browse.test.ts
+ M src/build-page-corpus.ts
  M src/documents/browse.ts
- M src/documents/routes.ts
- M src/ocr-needs.ts
-?? apps/web/lib/go-reference.test.ts
-?? apps/web/lib/go-reference.ts
-?? datasets/README-classification-overrides.md
-?? datasets/classification-overrides.jsonl
-?? db/migrations/007_document_classification.sql
 ?? scripts/shasanadesh-portal-bridge.mjs
-?? src/classify-orders.ts
-?? src/classify/
 ?? src/ingest-portal.ts
 ```
 
 Recent commits:
 
 ```
+aac3e75 feat: classify orders before processing; Ask leaves out routine orders; Copy reference
 2bc6720 docs(roadmap): confirm decisions — all-department audience, UP core first, hosting plan
 7c6ba03 docs: product roadmap — Ask-only for end users, guideline-focused corpus, daily sync
 ce703d2 feat(search): "Browse all orders" — portal-style complete listing with filters and pages
@@ -60,7 +39,6 @@ b51e84a fix(web): EN/HI toggle no longer turns green on hover
 47bb2f9 feat(web): live progress, formatted answers, sources grouped by order
 7a9eb61 feat(api): stream progress events; faster reranking and smaller prompts
 093f523 fix(web): clear service errors with Retry; stop saving failed questions
-5f69739 feat: npm run dev:all starts the whole local stack
 ```
 
 ## Corpus by source

@@ -30,6 +30,7 @@ import { promisify } from "node:util";
 import type { B2CaptureStorage } from "./storage/b2.js";
 import { saveDocumentMetadata } from "./storage/document-metadata.js";
 import { PDFTOTEXT_BIN } from "./lib/tool-config.js";
+import { describeGate, loadProcessingGate } from "./classify/processing-gate.js";
 
 const execFileAsync = promisify(execFile);
 const documentsRoot = path.resolve("data/documents");
@@ -268,6 +269,11 @@ async function main() {
   let skipped = 0;
   let failed = 0;
   let matched = false;
+  // Routine orders (tier C) are not split into pages: nothing downstream uses
+  // them, and each rebuild would also refresh the B2 manifest. An explicit
+  // --source-id is always built.
+  const gate = loadProcessingGate();
+  let routine = 0;
 
   for (const entry of entries) {
     if (!entry.isDirectory()) continue;
@@ -287,6 +293,10 @@ async function main() {
 
     if (sourceId && metadata.sourceId !== sourceId) continue;
     matched = true;
+    if (!sourceId && gate.skips(metadata.sourceId)) {
+      routine++;
+      continue;
+    }
 
     const result = await buildForDocument(documentDir, metadata);
 
@@ -305,6 +315,7 @@ async function main() {
   console.log(`Built:   ${built}`);
   console.log(`Skipped: ${skipped}`);
   console.log(`Failed:  ${failed}`);
+  console.log(describeGate(gate, routine));
 
   if (failed > 0) {
     process.exitCode = 1;

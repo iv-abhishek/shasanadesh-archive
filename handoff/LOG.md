@@ -2,6 +2,12 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 26 Sept 2026, 8:55 pm IST (Claude)
+
+- Abhishek ran push, db:migrate (007 applied), classify:orders (A 25 / B 48 / C 977), db:load
+  (679 documents classified). build:pages now also skips confident tier C; the console's
+  "Text indexed" now means the order has searchable chunks.
+
 ## 26 Sept 2026, 8:45 pm IST (Claude)
 
 - Built the order classifier (rules on listing subject/category; 20 hand-labelled tests),
