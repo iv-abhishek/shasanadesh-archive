@@ -647,3 +647,34 @@ same mechanism, skipped. Pasting ~1,776 pages by hand was also impractical.
   to the tracked `datasets/classification-overrides.jsonl`, so it survives the next
   `classify:orders` + `db:load`. Refused in production unless `ARCHIVE_CONSOLE_WRITE=1`
   (no admin sign-in yet).
+
+## ADR-054 - Links between orders: "later changed by" on answers and source cards
+
+Officials cite orders in letters, so an answer that quotes an order that was later
+amended or superseded is a real risk (ROADMAP Phase 3, "Relationships").
+
+- `npm run relations:build` (`src/build-relations.ts`, `src/relations/extract.ts`) reads
+  each order's portal subject and **native** page text (OCR digits are unreliable, so OCR
+  text is not used) and extracts references to other orders: GO number + date, and the
+  kind from nearby wording: `supersedes` (अतिक्रमण / in supersession of), `amends`
+  (संशोधन / amendment), `cancels` (निरस्त / rescind), `corrects` (शुद्धि-पत्र /
+  corrigendum), else `refers`. The order's own header is skipped. Tolerant patterns
+  cover the broken conjuncts of legacy-font text.
+- An order is identified by a **number key** (serial + first 4-digit year, e.g.
+  `160/2012` for `160/दस-2012-216/79`) plus the ISO date; this survives the many ways a
+  GO number is written. Output: `data/corpus/relations.jsonl` (derived).
+- `db:load` replaces table `document_relations` (migration 008) from that file. No
+  foreign key: either side may be listed but not yet archived.
+- At answer time (`src/rag/later-changes.ts`) relations are matched to evidence orders by
+  resolved ID **or** key + date, so links resolve as more orders arrive. Only the four
+  change kinds are used; `refers` is kept for later (e.g. "orders this one relies on").
+- Prompt: evidence blocks get a digit-free `LATER_CHANGES=` line ("amended by SOURCE S2"
+  or "… by a later order that is not in this evidence"). The model says in one cited
+  sentence that the order was changed and must not present a superseded provision as
+  current. It never writes the later order's number, because the numeric validator only
+  accepts numbers found on cited pages.
+- UI: the source card shows "⚠ Amended by GO … dated …" linking to the official copy of
+  the later order (exact values come from metadata, not from the model).
+- Limits: absence of a link does not mean an order is in force; links depend on the later
+  order being captured and having native text or a descriptive subject. First run on the
+  local corpus: 46 references (1 amends, 2 corrects), 2 matched.

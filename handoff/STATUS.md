@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 27 Sept 2026, 4:30 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 27 Sept 2026, 4:05 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -41,6 +41,11 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
 - Citation-after-full-stop fix (ADR-049): no more citation-only bullets from salvage.
 - Answers never end mid-word (ADR-048): Hindi token budget 1800, repair gets the full
   budget, length-stopped answers are trimmed to the last full sentence and badged "Shortened".
+- **Later changes (ADR-054):** `npm run relations:build` finds "amended / superseded /
+  cancelled / corrected by" links between orders (subject + native text; key = serial +
+  year, plus date). `db:load` stores them (migration 008). Answers say when a cited order
+  was later changed, and the source card shows "⚠ Amended by GO … dated …" with the
+  official link. Local corpus: 46 references, 2 matched (grows with ingestion).
 - Department picker: one choice per department (English name preferred).
 - Department filters (chat scope and Search) match by Shasanadesh department ID
   as well as by name (ADR-044).

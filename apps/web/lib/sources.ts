@@ -87,3 +87,51 @@ export function looksGarbled(text: string): boolean {
     (leadingMarks >= 3 && leadingMarks / Math.max(1, words.length) >= 0.02)
   );
 }
+
+/** Official Shasanadesh viewer link for an order ID ("seq#dept#section#year"), else null. */
+export function officialShasanadeshUrl(sourceId: string): string | null {
+  if (!/^\d+#\d+#\d+#\d+$/.test(sourceId)) return null;
+  // The ID is ASCII (digits and #), so btoa is safe in the browser and in Node.
+  return `https://shasanadesh.up.gov.in/GO/ViewGOPDF_list_user.aspx?id1=${encodeURIComponent(btoa(sourceId))}`;
+}
+
+export type LaterChangeKind = "supersedes" | "amends" | "cancels" | "corrects";
+
+export interface LaterChange {
+  kind: LaterChangeKind;
+  bySourceId: string;
+  byGoNumber: string | null;
+  byGoDate: string | null;
+}
+
+const LATER_CHANGE_WORDS: Record<LaterChangeKind, { en: string; hi: string }> = {
+  cancels: { en: "Cancelled by", hi: "निरस्त —" },
+  supersedes: { en: "Superseded by", hi: "अतिक्रमित —" },
+  amends: { en: "Amended by", hi: "संशोधित —" },
+  corrects: { en: "Corrected by", hi: "शुद्धि-पत्र —" },
+};
+
+/** "Amended by GO 9/2026/… dated 01/07/2026" (or the Hindi form) for a source card. */
+export function describeLaterChange(change: LaterChange, language: "hi" | "en"): string {
+  const date = formatGoDate(change.byGoDate);
+  const order = change.byGoNumber
+    ? language === "hi" ? `शासनादेश संख्या ${change.byGoNumber}` : `GO ${change.byGoNumber}`
+    : language === "hi" ? "बाद का शासनादेश" : "a later order";
+  const dated = date ? (language === "hi" ? `, दिनांक ${date}` : ` dated ${date}`) : "";
+  return `${LATER_CHANGE_WORDS[change.kind][language]} ${order}${dated}`;
+}
+
+/** Keep only well-formed later-change entries from a stream or saved message. */
+export function readLaterChanges(value: unknown): LaterChange[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const raw = item as Record<string, unknown>;
+    if (!raw || typeof raw.bySourceId !== "string" || typeof raw.kind !== "string" || !Object.hasOwn(LATER_CHANGE_WORDS, raw.kind)) return [];
+    return [{
+      kind: raw.kind as LaterChangeKind,
+      bySourceId: raw.bySourceId,
+      byGoNumber: typeof raw.byGoNumber === "string" ? raw.byGoNumber : null,
+      byGoDate: typeof raw.byGoDate === "string" ? raw.byGoDate : null,
+    }];
+  });
+}

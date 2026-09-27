@@ -15,7 +15,14 @@ import {
   formatAppDay,
   formatAppTime,
 } from "../lib/app-time";
-import { formatGoDate, sourceCollectionLabel } from "../lib/sources";
+import {
+  describeLaterChange,
+  formatGoDate,
+  officialShasanadeshUrl,
+  readLaterChanges,
+  sourceCollectionLabel,
+  type LaterChange,
+} from "../lib/sources";
 import { formatGoReference } from "../lib/go-reference";
 
 type VerificationStatus =
@@ -48,7 +55,8 @@ interface Source {
     | "neighbor";
   anchorPageNumber?:
     number | null;
-
+  /** Later orders that supersede / amend / cancel / correct this one (ADR-054). */
+  laterChanges?: LaterChange[];
 }
 
 interface RagTimings {
@@ -600,6 +608,7 @@ function normalizePersistedSource(
         "number"
         ? raw.anchorPageNumber
         : null,
+    laterChanges: readLaterChanges(raw.laterChanges),
   };
 }
 
@@ -1124,6 +1133,7 @@ interface SourceGroup {
   sourceId: string;
   title: string;
   subtitle: string[];
+  laterChanges: LaterChange[];
   pages: Array<Source & { cited: boolean }>;
   anyCited: boolean;
 }
@@ -1152,6 +1162,7 @@ function groupSources(sources: Source[], answer: string): SourceGroup[] {
           source.department ||
           collection,
         subtitle,
+        laterChanges: source.laterChanges ?? [],
         pages: [],
         anyCited: false,
       };
@@ -1276,6 +1287,25 @@ function SourceGroupCard({
         </div>
         <span className={summary.className}>{summary.label}</span>
       </div>
+
+      {group.laterChanges.length ? (
+        <ul className="source-later-changes" aria-label="Later changes to this order">
+          {group.laterChanges.map((change) => {
+            const href = officialShasanadeshUrl(change.bySourceId);
+            const text = describeLaterChange(change, language);
+            return (
+              <li key={change.bySourceId}>
+                <span aria-hidden="true">⚠</span>{" "}
+                {href ? (
+                  <a href={href} target="_blank" rel="noreferrer">{text} ↗</a>
+                ) : (
+                  text
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
 
       <div className="page-chips">
         {mainPages.map(chip)}

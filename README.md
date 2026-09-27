@@ -99,7 +99,7 @@ The long-term system is expected to include:
 - Vector embeddings
 - RAG-based AI assistant
 - Source and page-level citations
-- Government Order amendment and supersession tracking
+- Government Order amendment and supersession tracking (`npm run relations:build`, ADR-054)
 
 When `B2_KEY_ID`, `B2_APPLICATION_KEY`, and `B2_BUCKET` are configured,
 `npm run ingest:known` stores immutable original captures and metadata manifests in B2.
@@ -128,7 +128,7 @@ lists that can be checked against the portal's own totals):
 5. `npm run portal:report` reconciles every department: portal total, pages, orders,
    archived, unavailable, waiting, and local disk use.
 
-Then `npm run classify:orders`, `npm run db:load` and the processing steps in
+Then `npm run classify:orders`, `npm run relations:build`, `npm run db:load` and the processing steps in
 `handoff/STATUS.md` make the useful orders searchable.
 
 ## Development

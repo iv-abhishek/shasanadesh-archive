@@ -2,6 +2,13 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 4:05 pm IST (Claude)
+
+- Links between orders (ADR-054): `relations:build`, migration 008 `document_relations`,
+  db:load, "LATER_CHANGES" in the prompt (digit-free), "⚠ Amended by GO …" on source cards.
+  Tests: `npm run test:relations`, `test:go-reference`; SQL checked on embedded Postgres.
+- To use it: `npm run db:migrate && npm run relations:build && npm run db:load`.
+
 ## 27 Sept 2026, 4:50 pm IST (Claude)
 
 - Classification pass 2: `npm run classify:model` (generator verdicts for low-confidence

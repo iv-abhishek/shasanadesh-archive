@@ -9,6 +9,7 @@
  */
 
 import type { RetrievalEvidence } from "./types.js";
+import { laterChangesPromptLine, type LaterChange } from "./later-changes.js";
 import { deriveNumericVerificationStatus } from "./verification.js";
 import {
   isRiskyNumericStatus,
@@ -66,6 +67,17 @@ LANGUAGE
 - If RESPONSE LANGUAGE is Hindi, answer in natural Hindi except for identifiers or official terms that are clearer verbatim.
 - If RESPONSE LANGUAGE is English, answer in English.
 
+LATER CHANGES
+- LATER_CHANGES (when present) comes from the archive's links between orders, not from the
+  page text. It says a later order superseded, amended, cancelled or corrected that source.
+- When you rely on such a source, add one short cited sentence saying so, for example
+  "S1 was later amended by another order, so check the current position [S1 p.2]." If the
+  changing order is itself in the evidence (LATER_CHANGES names its SOURCE label), use it
+  for the current position and cite it.
+- Do not present a superseded or cancelled provision as the current rule.
+- Never write the later order's number or date; the app shows them next to the sources.
+- A source without LATER_CHANGES is not proven to be in force; do not claim that it is.
+
 NEIGHBOR CONTEXT
 - RETRIEVAL_ROLE=direct means the page was selected by semantic/lexical retrieval and reranking.
 - RETRIEVAL_ROLE=neighbor means the page was added only because it is adjacent to a directly retrieved page.
@@ -114,7 +126,13 @@ function clip(
 
 export function buildEvidenceContext(
   evidence: RetrievalEvidence[],
+  laterChanges: Map<string, LaterChange[]> = new Map(),
 ): string {
+  const labelsBySourceId = new Map<string, string>();
+  for (const item of evidence) {
+    if (!labelsBySourceId.has(item.source_id)) labelsBySourceId.set(item.source_id, item.label);
+  }
+
   if (evidence.length === 0) {
     return "NO EVIDENCE WAS RETRIEVED.";
   }
@@ -173,6 +191,9 @@ export function buildEvidenceContext(
         `NUMERIC_CONFLICT=${item.numeric_conflict ? "YES" : "NO"}`,
         `NUMERIC_VERIFICATION_STATUS=${verificationStatus}`,
         `GENERATION_NUMERICS_MASKED=${generationNumericsMasked ? "YES" : "NO"}`,
+        ...[laterChangesPromptLine(laterChanges.get(item.source_id), labelsBySourceId)]
+          .filter(Boolean)
+          .map((line) => `LATER_CHANGES=${line}`),
       ].join("\n");
 
       // Neighbour pages are context only, so they get a smaller budget. Long

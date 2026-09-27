@@ -3399,6 +3399,25 @@ h1 {
   text-decoration: underline;
 }
 
+/* Later orders that amend / supersede / cancel / correct this one (ADR-054). */
+.source-later-changes {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: var(--warning-soft, rgba(214, 150, 20, 0.14));
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.source-later-changes li + li {
+  margin-top: 2px;
+}
+
+.source-later-changes a {
+  color: inherit;
+}
+
 /* Uncited retrieved orders sit behind a toggle under the cited ones. */
 .sources-others-toggle {
   margin-top: 10px;

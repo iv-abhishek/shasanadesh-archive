@@ -503,6 +503,49 @@ async function loadClassification(client: PoolClient): Promise<number> {
   return result.rowCount ?? 0;
 }
 
+/**
+ * Replace document_relations with data/corpus/relations.jsonl
+ * (npm run relations:build). The file is the full derived set, so the table
+ * is rebuilt rather than merged. A missing file leaves the table untouched.
+ */
+async function loadRelations(client: PoolClient): Promise<number | null> {
+  let content: string;
+  try {
+    content = await readFile(path.resolve("data/corpus/relations.jsonl"), "utf8");
+  } catch {
+    return null;
+  }
+
+  const columns: string[][] = [[], [], [], [], [], [], [], [], [], []];
+  for (const line of content.split("\n")) {
+    if (!line.trim()) continue;
+    const r = JSON.parse(line) as {
+      sourceId: string; sourceGoNumber: string | null; sourceGoDate: string | null; kind: string; targetGoNumber: string; targetGoKey: string;
+      targetGoDate: string; targetSourceId: string | null; foundIn: string; evidence: string;
+    };
+    [r.sourceId, r.sourceGoNumber ?? "", r.sourceGoDate ?? "", r.kind, r.targetGoNumber, r.targetGoKey, r.targetGoDate, r.targetSourceId ?? "", r.foundIn, r.evidence]
+      .forEach((value, index) => columns[index].push(value));
+  }
+
+  await client.query("DELETE FROM document_relations");
+  if (!columns[0].length) return 0;
+  const result = await client.query(
+    `
+    INSERT INTO document_relations
+      (source_id, source_go_number, source_go_date, kind, target_go_number, target_go_key,
+       target_go_date, target_source_id, found_in, evidence)
+    SELECT source_id, NULLIF(source_number, ''), NULLIF(source_date, '')::date, kind, go_number, go_key,
+           go_date::date, NULLIF(target, ''), found_in, evidence
+    FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[], $7::text[],
+                $8::text[], $9::text[], $10::text[])
+      AS r(source_id, source_number, source_date, kind, go_number, go_key, go_date, target, found_in, evidence)
+    ON CONFLICT (source_id, target_go_key, target_go_date) DO NOTHING
+    `,
+    columns,
+  );
+  return result.rowCount ?? 0;
+}
+
 async function main() {
   const pool = createPool();
   const client = await pool.connect();
@@ -522,6 +565,7 @@ async function main() {
 
     const documents = await loadDocuments(client);
     const classified = await loadClassification(client);
+    const relations = await loadRelations(client);
     const pageStats = await loadPagesAndVariants(client);
     const chunkStats = await loadChunks(client);
     const chunks = chunkStats.count;
@@ -563,6 +607,7 @@ async function main() {
     console.log("=============================");
     console.log(`Documents:          ${documents}`);
     console.log(`Classified:         ${classified}${classified ? "" : " (run npm run classify:orders first)"}`);
+    console.log(`Order relations:    ${relations ?? "unchanged (run npm run relations:build first)"}`);
     console.log(`Logical pages:      ${pageStats.pages}`);
     console.log(`Page variants:      ${pageStats.variants}`);
     console.log(`Numeric conflicts:  ${pageStats.conflicts}`);

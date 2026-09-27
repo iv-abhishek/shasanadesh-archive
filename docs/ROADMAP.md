@@ -125,7 +125,9 @@ runs on a small server, not the MacBook Air.
 ### Phase 3: Ask v1 for end users (~4 weeks)
 - Retrieval: tier-A first, profile departments, central vs state awareness, recency.
 - **Relationships:** extract "in supersession of / संशोधन / अतिक्रमण में" references so
-  answers prefer the current version and say when an order was amended.
+  answers prefer the current version and say when an order was amended. **First version
+  done 27 Sept (ADR-054):** `relations:build`, "later changed by" warning in answers and
+  on source cards. Next: rank the current version first; show "orders this one relies on".
 - Citations open the official link; archived copy as a labelled fallback; disclaimer.
 - Conversation quality: follow-ups, "explain simply", Hindi throughout, and answer templates
   for "what is the procedure / who is competent / what is the limit".

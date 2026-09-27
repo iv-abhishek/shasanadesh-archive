@@ -66,6 +66,9 @@ import {
 } from "../rag/intent-routing.js";
 import { assessRelevance, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
+import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
+import { createPool } from "../db/client.js";
+import type { Pool } from "pg";
 import { createDraftStreamer, stripThinking } from "../rag/draft-preview.js";
 
 const PORT = Number.parseInt(
@@ -221,6 +224,10 @@ server.register(cors, {
 registerWorkspaceRoutes(server);
 registerSessionRoutes(server);
 registerDocumentRoutes(server);
+
+// Read-only pool for order links (document_relations, ADR-054).
+let relationsPool: Pool | undefined;
+const getRelationsPool = () => (relationsPool ??= createPool());
 
 const ConversationStateSchema = z.object({
   activeSourceId: z
@@ -1198,9 +1205,18 @@ server.post(
       ),
     );
 
+    // Later orders that supersede / amend / cancel / correct an evidence order.
+    // A lookup failure only loses the warning; it never blocks the answer.
+    const laterChanges: Map<string, LaterChange[]> =
+      await findLaterChanges(getRelationsPool(), retrieval.evidence).catch((error) => {
+        request.log.warn({ error }, "later-changes lookup failed");
+        return new Map();
+      });
+
     const evidenceContext =
       buildEvidenceContext(
         retrieval.evidence,
+        laterChanges,
       );
 
     const generatorMessages:
@@ -1299,6 +1315,8 @@ server.post(
           anchorPageNumber:
             item.anchor_page_number ??
             null,
+          laterChanges:
+            laterChanges.get(item.source_id) ?? [],
         }),
       ),
     );
