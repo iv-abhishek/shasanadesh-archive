@@ -103,6 +103,11 @@ interface ChatTurn {
   /** Saved assistant message, used for feedback and regenerate. */
   assistantMessageId?: string | null;
   feedback?: TurnFeedback | null;
+  /**
+   * Unchecked first draft streamed while the model writes. Shown muted and
+   * replaced by the validated answer; never saved or copied.
+   */
+  draft?: string;
 }
 
 interface ChatAppProps {
@@ -1612,10 +1617,13 @@ function TurnView({
                 onOpenSource={onOpenSource}
               />
             ) : turn.done ? null : (
-              <ProgressIndicator
-                label={turn.status}
-                startedAt={turn.id}
-              />
+              <>
+                <ProgressIndicator
+                  label={turn.status}
+                  startedAt={turn.id}
+                />
+                {turn.draft ? <DraftPreview text={turn.draft} /> : null}
+              </>
             )}
           </div>
         )}
@@ -1780,6 +1788,25 @@ function SourcesSection({
           {showOthers ? <div className="source-groups source-groups-others">{others.map(card)}</div> : null}
         </>
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * The model's first draft, streamed while it writes. It has not passed the
+ * citation and number checks yet, so it is muted, labelled and replaced by the
+ * checked answer (which may differ).
+ */
+function DraftPreview({ text }: { text: string }) {
+  const hindi = speechLanguageFor(text) === "hi-IN";
+  return (
+    <div className="answer-draft" aria-live="off">
+      <div className="answer-draft-label">
+        {hindi
+          ? "मसौदा — उद्धरण और संख्याओं की जाँच हो रही है"
+          : "Draft — being checked against the cited pages"}
+      </div>
+      <div className="answer-draft-text">{text.replace(/NO_ANSWER_IN_EVIDENCE/g, "").trim()}</div>
     </div>
   );
 }
@@ -2388,6 +2415,18 @@ export function ChatApp({
               const label = (parsed.data as { label?: unknown }).label;
               if (typeof label === "string") {
                 update((turn) => ({ ...turn, status: label }));
+              }
+              return;
+            }
+
+            if (
+              parsed.event === "draft" &&
+              parsed.data &&
+              typeof parsed.data === "object"
+            ) {
+              const text = (parsed.data as { text?: unknown }).text;
+              if (typeof text === "string") {
+                update((turn) => ({ ...turn, draft: (turn.draft ?? "") + text }));
               }
               return;
             }

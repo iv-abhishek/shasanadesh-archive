@@ -66,6 +66,7 @@ import {
 } from "../rag/intent-routing.js";
 import { assessRelevance, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
+import { createDraftStreamer, stripThinking } from "../rag/draft-preview.js";
 
 const PORT = Number.parseInt(
   process.env.API_PORT ?? "8787",
@@ -81,6 +82,37 @@ const LLM_BASE_URL =
 
 const LLM_API_KEY =
   process.env.LLM_API_KEY;
+
+// Generation only needs to share the Apple GPU with retrieval when the model
+// runs on this machine. A hosted OpenAI-compatible endpoint (e.g. DeepInfra)
+// runs in parallel with local retrieval.
+const LLM_IS_LOCAL = (() => {
+  try {
+    const host = new URL(LLM_BASE_URL ?? "http://127.0.0.1").hostname;
+    return ["127.0.0.1", "localhost", "::1", "0.0.0.0"].includes(host);
+  } catch {
+    return true;
+  }
+})();
+
+// Extra JSON merged into every chat-completion request, for provider options
+// such as {"chat_template_kwargs":{"enable_thinking":false}} (hosted Qwen3
+// models otherwise write a <think> block first). Invalid JSON is ignored.
+const LLM_EXTRA_BODY: Record<string, unknown> = (() => {
+  try {
+    const raw = process.env.LLM_EXTRA_BODY?.trim();
+    return raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+  } catch {
+    console.warn("Ignoring LLM_EXTRA_BODY: not valid JSON.");
+    return {};
+  }
+})();
+
+// Stream the first draft to the browser as a clearly marked, unchecked preview
+// while it is written; the validated answer replaces it (RAG_STREAM_DRAFT=0 to
+// turn off).
+const RAG_STREAM_DRAFT =
+  (process.env.RAG_STREAM_DRAFT ?? "1") !== "0";
 
 const LLM_MODEL =
   process.env.LLM_MODEL;
@@ -481,10 +513,9 @@ async function generateCompletion(
   messages: GeneratorMessage[],
   temperature: number,
   maxTokens = LLM_MAX_TOKENS,
+  onDelta?: (text: string) => void,
 ): Promise<{ text: string; truncated: boolean }> {
-  return runLocalGpuExclusive(
-    "generation",
-    async () => {
+  const run = async () => {
       let upstream;
 
       try {
@@ -498,7 +529,10 @@ async function generateCompletion(
             temperature,
             max_tokens: maxTokens,
             stream: true,
-          });
+            ...LLM_EXTRA_BODY,
+          } as Parameters<typeof openai.chat.completions.create>[0]) as unknown as AsyncIterable<{
+            choices: Array<{ delta?: { content?: string | null }; finish_reason?: string | null }>;
+          }>;
       } catch (error) {
         if (error instanceof OpenAI.APIConnectionError) {
           throw new Error(
@@ -519,6 +553,7 @@ async function generateCompletion(
 
         if (token) {
           answer += token;
+          onDelta?.(token);
         }
         if (choice?.finish_reason) {
           finishReason = choice.finish_reason;
@@ -527,14 +562,19 @@ async function generateCompletion(
 
       // Stopped by max_tokens: cut back to the last complete sentence/bullet
       // rather than returning a half word (src/rag/truncation.ts).
+      answer = stripThinking(answer);
+
       if (finishReason === "length") {
         const trimmed = trimIncompleteAnswer(answer);
         return { text: trimmed || answer.trim(), truncated: true };
       }
 
       return { text: answer.trim(), truncated: false };
-    },
-  );
+  };
+
+  return LLM_IS_LOCAL
+    ? runLocalGpuExclusive("generation", run)
+    : run();
 }
 
 function streamValidatedText(
@@ -1301,6 +1341,16 @@ server.post(
     const tokenBudget =
       answerTokenBudget(responseLanguage);
 
+    // Unchecked preview of the first draft. Held back while it could still be
+    // the NO_ANSWER_IN_EVIDENCE reply, and sent in small batches.
+    // Unchecked preview of the first draft (src/rag/draft-preview.ts).
+    const draftStreamer = RAG_STREAM_DRAFT
+      ? createDraftStreamer((text) => sendEvent("draft", { text }))
+      : null;
+    const onDraftDelta = draftStreamer
+      ? (delta: string) => draftStreamer.onDelta(delta)
+      : undefined;
+
     const firstCompletion =
         await generateCompletion(
           openai,
@@ -1309,7 +1359,10 @@ server.post(
             ? REGENERATE_TEMPERATURE
             : LLM_TEMPERATURE,
           tokenBudget,
+          onDraftDelta,
         );
+
+    draftStreamer?.finish();
 
     const firstDraft =
       firstCompletion.text;

@@ -599,3 +599,17 @@ so they were never OCR'd and keyword/semantic retrieval on them is weak.
 - `eval/rag-cases.json` grows to 24 verified cases, and the runner checks "not found"
   behaviour, profile-scope fallback, text-less and cut-off answers, and reports a
   suggested `RAG_MIN_RELEVANCE` (`npm run eval:ask`).
+
+## ADR-051 - Unchecked draft preview while answering; hosted generator switch
+
+Answers take 60–150 s on the laptop, all of it spent before anything appears,
+because the answer is released only after validation. Now the first draft streams
+as SSE `draft` events into a muted box labelled "Draft — being checked against the
+cited pages" (Hindi label for Hindi drafts); the validated answer replaces it and
+only the validated text is saved, copied or read aloud. The preview holds back a
+leading `<think>` block and anything that may be `NO_ANSWER_IN_EVIDENCE`
+(`src/rag/draft-preview.ts`). `RAG_STREAM_DRAFT=0` restores answer-only output.
+
+For hosted models, generation skips the local GPU queue when `LLM_BASE_URL` is not
+localhost, `LLM_EXTRA_BODY` passes provider options (e.g. disabling Qwen3
+thinking), and a leading `<think>` block is stripped from the final text.

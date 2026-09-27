@@ -153,6 +153,13 @@ organises them:
 - **close vs. less relevant** — orders far below the best reranker score are
   collapsed under "less relevant orders".
 
+## Draft preview
+
+While the model writes, its first draft appears under the progress line in a dashed,
+muted box ("Draft — being checked against the cited pages"). It is replaced by the
+checked answer, which can differ (repair, salvage, fallback). Drafts are never saved,
+copied or spoken (ADR-051).
+
 ## Source cards in answers
 
 Each cited order's card has **Copy reference**, which copies the line officials paste into

@@ -114,12 +114,17 @@ that excludes either the `raw/` or `processed/` path.
 | `LLM_MODEL` | selected generator model |
 | `LLM_MAX_TOKENS` | answer token budget for English questions (default `900`) |
 | `LLM_MAX_TOKENS_HI` | answer token budget for Hindi questions (default `1800`; Devanagari needs several times more tokens per word) |
+| `LLM_EXTRA_BODY` | optional JSON merged into each generation request, e.g. `{"chat_template_kwargs":{"enable_thinking":false}}` for hosted Qwen3 |
+| `RAG_STREAM_DRAFT` | `1` (default) streams the first draft as a muted, unchecked preview; `0` shows only the checked answer |
 | `LLM_REPAIR_MAX_TOKENS` | optional cap for the repair pass; unset = same budget as the first draft |
 
 If an answer still reaches its budget, it is cut back to the last complete sentence or
 bullet (`src/rag/truncation.ts`) and badged "Shortened" rather than ending mid-word.
 
-Initial candidate: Qwen3.6 family served by vLLM.
+Local development uses Qwen3-8B (MLX) at `http://127.0.0.1:8791/v1`. To try a hosted model,
+point `LLM_BASE_URL`, `LLM_API_KEY` and `LLM_MODEL` at any OpenAI-compatible provider; when
+the host is not local, generation no longer waits for the local GPU queue
+(`LOCAL_GPU_SERIALIZE` still orders the local retrieval models). Compare with `npm run eval:ask`.
 
 ## Embeddings
 
