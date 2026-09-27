@@ -857,3 +857,26 @@ Hinglish questions also retrieve worse.
   matches the subjects in search. First build: 4,506 words (most native text is
   legacy-font and skipped; OCR will add more).
 - Not a language model: unusual names or English loanwords may need the bar or Backspace.
+
+## ADR-062 - Curated core rules collection
+
+Officials cite a small set of rulebooks and standing orders daily (GFR, DFPR, the
+procurement manuals, GeM terms, UP Budget Manual, conduct rules, UP GeM orders). Most
+are not on Shasanadesh, and those that are cannot be crawled there.
+
+- `datasets/core-rules/catalogue.json`: a hand-reviewed list, one entry per document:
+  official page, direct HTTPS PDF on a `.gov.in`/`.nic.in` host, issuer, jurisdiction,
+  department, document type, edition/date, GO number, provenance note; optionally the
+  Shasanadesh GO it copies (`preferredSource`) and entries it amends. Aggregator copies
+  are never sources. Only current editions (Works 2nd ed. 2025, Consultancy 2nd ed. 2025
+  and the new Non-Consultancy manual replace the 2022 manuals).
+- Adapter `core-rules` (`src/sources/core-rules.ts`) only reads the catalogue (validated:
+  HTTPS, government host, unique slugs, ISO dates, known `amends` targets); the shared
+  importer downloads (politely, robots.txt), stores in B2 `archive/core-rules/`, extracts.
+- Classification: provider `core-rules` → tier A, high confidence, type from the
+  catalogue. Retrieval: department and profile filters never exclude core rules
+  (they apply to every department). Catalogue `amends` become order links (ADR-054).
+- First batch (15): GFR 2017 (to 31.01.2026), DFPR 2024, Goods 2024, Works 2025,
+  Consultancy 2025, Non-Consultancy 2025, GeM GTC 4.0 v1.26, Make in India order
+  (19.07.2024), UP Budget Manual, UP Conduct Rules 1956, five UP GeM GOs (2017–2025).
+  Next candidates and the Shasanadesh capture list: `datasets/core-rules/README.md`.

@@ -37,6 +37,8 @@ export type DocType =
 
 export type Tier = "A" | "B" | "C";
 
+const CORE_RULE_TYPES: DocType[] = ["rules", "policy", "guideline", "general-instruction", "clarification", "notification", "scheme-guideline"];
+
 export interface ClassificationInput {
   subject?: string | null;
   title?: string | null;
@@ -139,6 +141,14 @@ export function classifyOrder(input: ClassificationInput): Classification {
     reasons,
     rulesVersion: RULES_VERSION,
   });
+
+  // Curated core rules (ADR-062) are chosen by hand as generally applicable;
+  // the catalogue states the document type (it arrives here as the category).
+  if (input.provider === "core-rules") {
+    const stated = (input.category ?? "").trim() as DocType;
+    const docType: DocType = CORE_RULE_TYPES.includes(stated) ? stated : "guideline";
+    return result(docType, "A", "high", ["curated core rule (datasets/core-rules)"]);
+  }
 
   // Central/other-source adapters publish guidance collections (GFR, OMs, manuals).
   if (input.provider && input.provider !== "shasanadesh-up") {

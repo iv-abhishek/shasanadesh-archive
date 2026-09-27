@@ -57,6 +57,10 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   (`solar*`, `*मेट्रो*`), issuing section ("released by लोक निर्माण अनुभाग-1"), department,
   dates and subject words, in English or Hindi; English words find Hindi subjects once
   `npm run embed:subjects` has run (migration 009).
+- **Core rules collection (ADR-062):** 15 reviewed documents (GFR, DFPR, procurement
+  manuals, GeM GTC + UP GeM GOs, Make in India order, UP Budget Manual, Conduct Rules) in
+  `datasets/core-rules/catalogue.json`; always tier A and never filtered out by department.
+  **Not ingested yet:** `npm run ingest:source -- core-rules`, then the processing steps.
 - Department picker: one choice per department (English name preferred).
 - Department filters (chat scope and Search) match by Shasanadesh department ID
   as well as by name (ADR-044).

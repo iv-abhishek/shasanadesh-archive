@@ -1,0 +1,357 @@
+{
+  "_about": "Curated core rules and guidelines (ADR-062): documents officials cite daily that are not (only) on Shasanadesh. Every entry is reviewed by hand: official page, direct PDF (HTTPS), issuer, jurisdiction, edition. Ingest with `npm run ingest:source -- core-rules`. Add entries here; never crawl.",
+  "reviewedAt": "2026-09-27",
+  "entries": [
+    {
+      "slug": "gfr-2017",
+      "title": "General Financial Rules, 2017 (updated up to 31.01.2026)",
+      "titleHi": "सामान्य वित्तीय नियम, 2017",
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "financial",
+        "procurement"
+      ],
+      "edition": "Updated up to 31 January 2026",
+      "date": "2026-01-31",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/general-financial-rules-2017-updated-upto-31st-january-2026",
+      "downloadUrl": "https://doe.gov.in/files/acts_rules_documents/GFRupdatedupto31012026.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "dfpr-2024",
+      "title": "Delegation of Financial Powers Rules, 2024",
+      "titleHi": "वित्तीय शक्ति के प्रत्यायोजन नियम, 2024",
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "financial"
+      ],
+      "edition": "2024 booklet",
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/circulars/delegation-financial-powers-rules-2024",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Delegation_of_Financial_Powers_Rules_2024_Booklet.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "manual-goods-2024",
+      "title": "Manual for Procurement of Goods, Second Edition 2024",
+      "titleHi": "माल की खरीद हेतु नियमपुस्तिका, द्वितीय संस्करण 2024",
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "procurement"
+      ],
+      "edition": "Second Edition, 2024",
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/circulars/manual-procurement-goods-second-edition-2024",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Manual_Goods_2024.pdf",
+      "sourceNote": "Official (issuer's website). Supersedes the June 2022 update.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "manual-works-2025",
+      "title": "Manual for Procurement of Works, Second Edition 2025",
+      "titleHi": "निर्माण कार्यों की खरीद हेतु नियमपुस्तिका, द्वितीय संस्करण 2025",
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "procurement",
+        "works"
+      ],
+      "edition": "Second Edition, 2025",
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/manual-procurement-works-second-edition-2025",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Works_Manual_SE_2025.pdf",
+      "sourceNote": "Official (issuer's website). Supersedes the June 2022 update; amended by DoE OM (July 2026), not yet in this collection.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "manual-consultancy-2025",
+      "title": "Manual for Procurement of Consultancy Services, Second Edition 2025",
+      "titleHi": "परामर्श सेवाओं की खरीद हेतु नियमपुस्तिका, द्वितीय संस्करण 2025",
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "procurement",
+        "consultancy"
+      ],
+      "edition": "Second Edition, 2025",
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/manual-procurement-consultancy-services-second-edition-2025",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/MfPoCS_2025.pdf",
+      "sourceNote": "Official (issuer's website). With the Non-Consultancy manual, replaces the 2022 'Consultancy & Other Services' manual.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "manual-non-consultancy-2025",
+      "title": "Manual for Procurement of Non-Consultancy Services, 2025",
+      "titleHi": "गैर-परामर्श सेवाओं की खरीद हेतु नियमपुस्तिका, 2025",
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "procurement",
+        "services"
+      ],
+      "edition": "2025",
+      "date": "2025-06-20",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/manuals",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/MfPoNCS_2025.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "gem-gtc-4-0",
+      "title": "General Terms and Conditions on GeM 4.0 (Version 1.26)",
+      "titleHi": "जेम 4.0 पर सामान्य नियम एवं शर्तें (संस्करण 1.26)",
+      "issuer": "Government e-Marketplace (GeM), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "procurement",
+        "gem"
+      ],
+      "edition": "GeM 4.0, Version 1.26",
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://gem.gov.in/termsCondition",
+      "downloadUrl": "https://assets-bg.gem.gov.in/resources/upload/shared_doc/gtc/GeM-GTC-40-1762494174.pdf",
+      "sourceNote": "Official (GeM). GeM revises the GTC often; check gem.gov.in/termsCondition for a newer version.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "ppp-make-in-india-2024",
+      "title": "Public Procurement (Preference to Make in India) Order, 2017 — revised order dated 19.07.2024",
+      "titleHi": "सार्वजनिक खरीद (मेक इन इंडिया को वरीयता) आदेश, 2017 — संशोधित आदेश दिनांक 19.07.2024",
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement",
+        "make-in-india"
+      ],
+      "edition": "Revision of 19 July 2024",
+      "date": "2024-07-19",
+      "goNumber": "P-45021/2/2017-PP (BE-II)-Part(4)Vol.II",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/458478309ccf301ceb58f63d02646f42.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "up-budget-manual",
+      "title": "Uttar Pradesh Budget Manual (Chapters I–XIX)",
+      "titleHi": "उत्तर प्रदेश बजट मैनुअल",
+      "issuer": "Finance Department, Government of Uttar Pradesh",
+      "jurisdiction": "state",
+      "department": "वित्त विभाग",
+      "documentType": "rules",
+      "topics": [
+        "financial",
+        "budget"
+      ],
+      "edition": "Chapters I–XIX (budget.up.nic.in)",
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://budget.up.nic.in/finhand1.htm",
+      "downloadUrl": "https://budget.up.nic.in/Manual/Final/Chapter/chapter_I-XIX.pdf",
+      "sourceNote": "Official (UP Finance Department budget website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "up-conduct-rules-1956",
+      "title": "Uttar Pradesh Government Servants' Conduct Rules, 1956",
+      "titleHi": "उत्तर प्रदेश सरकारी कर्मचारी आचरण नियमावली, 1956",
+      "issuer": "Personnel Department, Government of Uttar Pradesh",
+      "jurisdiction": "state",
+      "department": "कार्मिक विभाग",
+      "documentType": "rules",
+      "topics": [
+        "service",
+        "conduct"
+      ],
+      "edition": "Compiled copy (IGRS UP)",
+      "date": null,
+      "goNumber": null,
+      "language": "hi",
+      "officialPage": "https://igrsup.gov.in/igrsup/karmchariAcharan",
+      "downloadUrl": "https://igrsup.gov.in/prernadoc/Adhiniyam/karmchariAcharan/karmchariAcharan.pdf",
+      "sourceNote": "Official state portal copy (scanned; OCR). Later amendments are Personnel Department GOs on Shasanadesh.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "up-gem-go-2017-08-05",
+      "title": "GeM पोर्टल से क्रय की प्रक्रिया का निर्धारण — शासनादेश दिनांक 05.08.2017",
+      "titleHi": "जेम पोर्टल से क्रय की प्रक्रिया का निर्धारण",
+      "issuer": "IT & Electronics Section-2, Government of Uttar Pradesh",
+      "jurisdiction": "state",
+      "department": "आई.टी. एवं इलेक्ट्रॉनिक्स विभाग",
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "gem"
+      ],
+      "edition": null,
+      "date": "2017-08-05",
+      "goNumber": "25/2017/2747/78-2-2017/25आई0टी0/2001",
+      "language": "hi",
+      "officialPage": "https://hamirpur.nic.in/help/useful-guideline-on-gem-portal/",
+      "downloadUrl": "https://cdn.s3waas.gov.in/s3115f89503138416a242f40fb7d7f338e/uploads/2022/01/2022011860.pdf",
+      "sourceNote": "Official copy on the District Hamirpur website (NIC S3WaaS). The issuing department's copy is on Shasanadesh; capture it there when the portal is searched for this GO.",
+      "preferredSource": {
+        "provider": "shasanadesh-up",
+        "goNumber": "25/2017/2747/78-2-2017/25आई0टी0/2001",
+        "date": "2017-08-05"
+      },
+      "amends": []
+    },
+    {
+      "slug": "up-gem-go-2017-08-23",
+      "title": "GeM पोर्टल के माध्यम से क्रय — शासनादेश दिनांक 23.08.2017",
+      "titleHi": "जेम पोर्टल के माध्यम से क्रय",
+      "issuer": "MSME Section-2, Government of Uttar Pradesh",
+      "jurisdiction": "state",
+      "department": "सूक्ष्म, लघु एवं मध्यम उद्यम विभाग",
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "gem"
+      ],
+      "edition": null,
+      "date": "2017-08-23",
+      "goNumber": "11/2017/523/18-2-2017-97(ल0उ0)/2016",
+      "language": "hi",
+      "officialPage": "https://hamirpur.nic.in/help/useful-guideline-on-gem-portal/",
+      "downloadUrl": "https://cdn.s3waas.gov.in/s3115f89503138416a242f40fb7d7f338e/uploads/2022/01/2022011851.pdf",
+      "sourceNote": "Official copy on the District Hamirpur website (NIC S3WaaS). The issuing department's copy is on Shasanadesh; capture it there when the portal is searched for this GO.",
+      "preferredSource": {
+        "provider": "shasanadesh-up",
+        "goNumber": "11/2017/523/18-2-2017-97(ल0उ0)/2016",
+        "date": "2017-08-23"
+      },
+      "amends": []
+    },
+    {
+      "slug": "up-gem-go-2024-11-26",
+      "title": "GeM पोर्टल से क्रय विषयक अद्यतन निर्देश — शासनादेश दिनांक 26.11.2024",
+      "titleHi": "जेम पोर्टल से क्रय विषयक अद्यतन निर्देश",
+      "issuer": "MSME Section-2, Government of Uttar Pradesh",
+      "jurisdiction": "state",
+      "department": "सूक्ष्म, लघु एवं मध्यम उद्यम विभाग",
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "gem"
+      ],
+      "edition": null,
+      "date": "2024-11-26",
+      "goNumber": "57/18-2-2024-97(ल0उ0)/2016",
+      "language": "hi",
+      "officialPage": "https://hamirpur.nic.in/help/useful-guideline-on-gem-portal/",
+      "downloadUrl": "https://cdn.s3waas.gov.in/s3115f89503138416a242f40fb7d7f338e/uploads/2025/06/2025062548.pdf",
+      "sourceNote": "Official copy on the District Hamirpur website (NIC S3WaaS). The issuing department's copy is on Shasanadesh; capture it there when the portal is searched for this GO.",
+      "preferredSource": {
+        "provider": "shasanadesh-up",
+        "goNumber": "57/18-2-2024-97(ल0उ0)/2016",
+        "date": "2024-11-26"
+      },
+      "amends": []
+    },
+    {
+      "slug": "up-gem-go-2025-03-11",
+      "title": "GeM क्रय विषयक शासनादेश दिनांक 26.11.2024 में संशोधन — शासनादेश दिनांक 11.03.2025",
+      "titleHi": "जेम क्रय विषयक शासनादेश में संशोधन",
+      "issuer": "MSME Section-2, Government of Uttar Pradesh",
+      "jurisdiction": "state",
+      "department": "सूक्ष्म, लघु एवं मध्यम उद्यम विभाग",
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "gem"
+      ],
+      "edition": null,
+      "date": "2025-03-11",
+      "goNumber": "03/2025/275/18-2-2025-97(ल0उ0)/2016",
+      "language": "hi",
+      "officialPage": "https://hamirpur.nic.in/help/useful-guideline-on-gem-portal/",
+      "downloadUrl": "https://cdn.s3waas.gov.in/s3115f89503138416a242f40fb7d7f338e/uploads/2025/06/2025062523.pdf",
+      "sourceNote": "Official copy on the District Hamirpur website (NIC S3WaaS). The issuing department's copy is on Shasanadesh; capture it there when the portal is searched for this GO.",
+      "preferredSource": {
+        "provider": "shasanadesh-up",
+        "goNumber": "03/2025/275/18-2-2025-97(ल0उ0)/2016",
+        "date": "2025-03-11"
+      },
+      "amends": [
+        "up-gem-go-2024-11-26"
+      ]
+    },
+    {
+      "slug": "up-gem-go-2025-07-21",
+      "title": "जेम पोर्टल पर Forward Auction — शासनादेश दिनांक 21.07.2025",
+      "titleHi": "जेम पोर्टल पर फॉरवर्ड ऑक्शन",
+      "issuer": "MSME Section-2, Government of Uttar Pradesh",
+      "jurisdiction": "state",
+      "department": "सूक्ष्म, लघु एवं मध्यम उद्यम विभाग",
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "gem",
+        "auction"
+      ],
+      "edition": null,
+      "date": "2025-07-21",
+      "goNumber": "20/2025/996/18-02-2025-ई-1787484",
+      "language": "hi",
+      "officialPage": "https://hamirpur.nic.in/help/useful-guideline-on-gem-portal/",
+      "downloadUrl": "https://cdn.s3waas.gov.in/s3115f89503138416a242f40fb7d7f338e/uploads/2025/11/17624060335951.pdf",
+      "sourceNote": "Official copy on the District Hamirpur website (NIC S3WaaS). The issuing department's copy is on Shasanadesh; capture it there when the portal is searched for this GO.",
+      "preferredSource": {
+        "provider": "shasanadesh-up",
+        "goNumber": "20/2025/996/18-02-2025-ई-1787484",
+        "date": "2025-07-21"
+      },
+      "amends": []
+    }
+  ]
+}

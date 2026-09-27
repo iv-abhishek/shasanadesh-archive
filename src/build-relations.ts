@@ -31,6 +31,8 @@ interface OrderInfo {
   goDate: string | null;
   subject: string | null;
   folder: string | null;
+  /** Curated core rules (ADR-062): source IDs this document amends, per the catalogue. */
+  amends?: string[];
 }
 
 export interface RelationRecord {
@@ -75,6 +77,9 @@ async function collectOrders(): Promise<Map<string, OrderInfo>> {
         goDate: existing?.goDate ?? toIsoGoDate(metadata.goDate),
         subject: existing?.subject ?? metadata.portal?.subject ?? metadata.title ?? null,
         folder,
+        amends: Array.isArray(metadata.sourceRecord?.amends)
+          ? (metadata.sourceRecord.amends as string[]).map((slug) => `core-rules-${slug}`)
+          : undefined,
       });
     }
   }
@@ -120,6 +125,25 @@ async function main(): Promise<void> {
     };
 
     add(order.subject, "subject");
+
+    // Amendments stated in the core-rules catalogue (reviewed by hand).
+    for (const targetId of order.amends ?? []) {
+      const target = orders.get(targetId);
+      const key = target?.goNumber ? goKey(target.goNumber) : null;
+      if (!target?.goNumber || !key || !target.goDate) continue;
+      found.set(`${key}@${target.goDate}`, {
+        sourceId: order.sourceId,
+        sourceGoNumber: order.goNumber,
+        sourceGoDate: order.goDate,
+        kind: "amends",
+        targetGoNumber: target.goNumber,
+        targetGoKey: key,
+        targetGoDate: target.goDate,
+        targetSourceId: targetId,
+        foundIn: "catalogue",
+        evidence: "datasets/core-rules/catalogue.json",
+      });
+    }
     if (order.folder) {
       for (const line of (await readFile(path.join(order.folder, "pages.jsonl"), "utf8").catch(() => "")).split("\n")) {
         if (!line.trim()) continue;

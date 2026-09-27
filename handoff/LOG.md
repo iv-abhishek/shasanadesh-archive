@@ -2,6 +2,14 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 9:30 pm IST (Claude)
+
+- Order of work set by Abhishek: core rules (procurement, financial, GeM …) → Ask quality
+  pack → letter drafting → sign-in.
+- Core rules collection (ADR-062): researched official sources, verified 15 PDFs (all
+  HTTPS on .gov.in/.nic.in), catalogue + `core-rules` adapter, tier A rule, department
+  filters include core rules, catalogue amendments → order links.
+
 ## 27 Sept 2026, 8:40 pm IST (Claude)
 
 - Hinglish typing (ADR-061): with HI selected, English-letter words become Devanagari on

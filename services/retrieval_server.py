@@ -207,6 +207,10 @@ def make_hit(row: dict[str, Any], lexical: bool = False) -> Hit:
 # Zero-width non-joiner and joiner; stripped before comparing department names.
 INVISIBLE_JOINERS = "\u200c\u200d"
 
+# Curated core rules (GFR, procurement manuals, GeM terms, UP Budget Manual …,
+# ADR-062) apply to every department, so department filters never hide them.
+CORE_RULES_SQL = "d.provider = 'core-rules'"
+
 
 def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
     clauses: list[str] = []
@@ -224,7 +228,8 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
             "OR d.department_id IN ("
             "SELECT DISTINCT dd.department_id FROM documents dd "
             "WHERE dd.department_id IS NOT NULL "
-            "AND translate(dd.department, %s, '') ILIKE %s))"
+            "AND translate(dd.department, %s, '') ILIKE %s) "
+            f"OR {CORE_RULES_SQL})"
         )
         params.extend([INVISIBLE_JOINERS, pattern, INVISIBLE_JOINERS, pattern])
 
@@ -242,12 +247,13 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
                 "SELECT DISTINCT dd.department_id FROM documents dd "
                 "WHERE dd.department_id IS NOT NULL "
                 "AND translate(dd.department, %s, '') = ANY(%s)) "
-                "OR d.metadata->>'jurisdiction' = 'central')"
+                "OR d.metadata->>'jurisdiction' = 'central' "
+                f"OR {CORE_RULES_SQL})"
             )
             params.extend([INVISIBLE_JOINERS, departments, INVISIBLE_JOINERS, departments])
 
     if filters.department_ids:
-        clauses.append("d.department_id = ANY(%s)")
+        clauses.append(f"(d.department_id = ANY(%s) OR {CORE_RULES_SQL})")
         params.append([int(value) for value in filters.department_ids])
 
     if not filters.include_routine and not filters.source_id:
