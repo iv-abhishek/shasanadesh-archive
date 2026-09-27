@@ -2,6 +2,17 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 11:59 pm IST (Claude)
+
+- Core rules batch 2 in the catalogue (95 entries; complete Make in India set), design in
+  docs/PROCUREMENT.md.
+- Abhishek's to-do list and goal (an LLM for government functionaries) recorded in
+  PLAN.md §0 (A–F) and ROADMAP §1.
+- NEEDED.md now also lists standing items from datasets/<adapter>/pending.md (UP Financial
+  Handbook reader; three UP GOs to capture from Shasanadesh).
+- Progress line: "Searching orders of your 3 departments and the rulebooks" (one language,
+  no raw department list, no internal order IDs).
+
 ## 27 Sept 2026, 9:15 pm IST (Claude)
 
 - core-rules ingested by Abhishek: 18 of 25 stored. 7 need a manual download (6 robots.txt

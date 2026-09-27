@@ -14,6 +14,13 @@ and orders. It answers from central and Uttar
 Pradesh government documents and cites the exact page, linking to the **official
 source**.
 
+**Ultimate goal (Abhishek, 27 Sept 2026):** an **LLM for government functionaries and
+systems** — it understands government language and regional text (Hindi officialese,
+Hinglish, English, legacy-font Hindi) fluently, solves problems through conversation
+backed by evidence, and improves from regular use by officials. The assistant above is
+the first product and the data engine for that model (roadmap in handoff/PLAN.md §0,
+workstreams E–F).
+
 ## 2. Direction decided on 26 Sept 2026
 
 | Topic | Decision |

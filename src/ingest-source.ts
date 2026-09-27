@@ -180,31 +180,41 @@ async function manualPdf(record: SourceDocument, adapter: SourceAdapter): Promis
   return { bytes, status: 200, contentType: "application/pdf", finalUrl: official.href, method: "manual-download", file };
 }
 
+/**
+ * NEEDED.md: files the last run could not fetch, plus standing items kept by hand
+ * in datasets/<adapter>/pending.md (things that need a person, e.g. a portal
+ * capture or a reader still to be built). Rewritten on every run.
+ */
 async function writeNeededList(adapter: SourceAdapter, failures: Array<{ record: SourceDocument; reason: string }>): Promise<void> {
   const dir = path.join(MANUAL_ROOT, adapter.id);
   const file = path.join(dir, "NEEDED.md");
-  if (!failures.length) {
-    if (await exists(file)) await writeFile(file, `# Files to download by hand — ${adapter.displayName}\n\nNothing pending.\n`);
-    return;
-  }
+  const pending = await readFile(path.resolve("datasets", adapter.id, "pending.md"), "utf8").catch(() => "");
+  if (!failures.length && !pending.trim() && !(await exists(file))) return;
   await mkdir(dir, { recursive: true });
   const lines = [
     `# Files to download by hand — ${adapter.displayName}`,
     "",
-    "The site did not let the ingester fetch these. Open each official link in a browser,",
-    "save the PDF under the file name shown (in this folder), then run",
-    `\`npm run ingest:source -- ${adapter.id}\` again.`,
+    ...(failures.length
+      ? [
+          "The site did not let the ingester fetch these. Open each official link in a browser,",
+          "save the PDF under the file name shown (in this folder), then run",
+          `\`npm run ingest:source -- ${adapter.id}\` again.`,
+          "",
+          ...failures.flatMap(({ record, reason }) => [
+            `- **${record.title}**`,
+            `  - official link: ${record.downloadUrl}`,
+            `  - save as: \`${record.sourceId}.pdf\``,
+            `  - reason: ${reason}`,
+          ]),
+        ]
+      : ["Nothing refused in the last run."]),
     "",
-    ...failures.flatMap(({ record, reason }) => [
-      `- **${record.title}**`,
-      `  - official link: ${record.downloadUrl}`,
-      `  - save as: \`${record.sourceId}.pdf\``,
-      `  - reason: ${reason}`,
-    ]),
-    "",
+    ...(pending.trim() ? [pending.trim(), ""] : []),
   ];
   await writeFile(file, lines.join("\n"));
-  console.log("\nManual downloads needed: " + failures.length + " — see " + path.relative(process.cwd(), file));
+  if (failures.length) {
+    console.log("\nManual downloads needed: " + failures.length + " — see " + path.relative(process.cwd(), file));
+  }
 }
 
 async function persistB2(

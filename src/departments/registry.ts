@@ -110,3 +110,15 @@ export function findDepartmentMention(
 export function departmentLabel(department: DepartmentEntry, language: "hi" | "en"): string {
   return language === "hi" ? department.hi : `${department.en} (${department.hi})`;
 }
+
+/** A stored department name ("Agriculture", "लोक निर्माण विभाग") in one language. */
+export function departmentNameIn(name: string, language: "hi" | "en", departments = loadDepartments()): string {
+  const key = normalizeName(name.replace(/\s*(विभाग|department)\s*$/i, ""));
+  const entry = departments.find((department) =>
+    [department.hi, department.en, ...department.aliases].some(
+      (candidate) => normalizeName(candidate.replace(/\s*(विभाग|department)\s*$/i, "")) === key,
+    ),
+  );
+  if (!entry) return name;
+  return language === "hi" ? entry.hi : entry.en;
+}

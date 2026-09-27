@@ -6,28 +6,87 @@ This file tracks the current route per workstream.
 The roadmap and the current route for each workstream. When a route changes,
 edit it here and say why (with the date) under "Route changes".
 
-## 0. Completion plan — finish the product on the Mac first (set 27 Sept 2026)
+## 0. The to-do list (set 27 Sept 2026, Abhishek; keep this current)
 
-Hosting is not a blocker (Abhishek, 27 Sept): answers cite public government URLs; the
-pilot runs on the Mac; hosting is decided at production time.
+**Goal:** an LLM for government functionaries and systems: fluent in government language
+and regional text, answering and solving problems from evidence, learning from daily use.
+**Rules that hold for everything below:** government sources only, official URLs in chat
+(docs/RULES.md); robots.txt obeyed; CAPTCHAs never automated; central + UP now, other
+states later. Hosting is not a blocker (public documents, cited by URL); pilot on the Mac.
 
-1. **Corpus batch 2** — ingest the 70 new catalogue entries (central procurement incl.
-   complete Make in India, MSE, CVC, CSMOP, RTI, records, grievances, RPwD, CCS rules,
-   accounts, MeitY, UP Procurement Manual); manual downloads for anything refused
-   (`data/manual-downloads/core-rules/NEEDED.md`); check MII edition numbers against
-   the texts; OCR the scanned ones (CVC manual, MSE Gazette).
-2. **UP rulebooks** — adapter for the HTML-only UP Financial Handbook volumes and CSR on
-   budget.up.nic.in (each chapter cited at its official page) + Vol. VI chapter PDFs;
-   UP procurement GOs from Shasanadesh (MSE purchase policy 2020, e-tender GO,
-   Procurement Manual GO) by Abhishek's capture.
-3. **Ask quality pack** — current above superseded, narrow orders out, thumbs-down →
-   eval cases, eval baseline.
-4. **Procurement system** — docs/PROCUREMENT.md: applicability, facts table, procurement
-   guide, Make in India check, 50-question eval.
-5. **Letter drafting** — official letters / notes in government format from cited orders.
-6. **Sign-in and admin** — accounts, roles, feedback review, source management.
-7. **Pilot on the Mac** — daily sync on schedule, backups, LAN access for pilot users,
-   performance check with Qwen3-8B.
+### A. Finish the product on the Mac (in this order)
+
+1. **Corpus batch 2**: ingest the 70 new catalogue entries (complete Make in India, MSE,
+   procurement OMs, CVC, CSMOP, RTI, records, grievances, RPwD, CCS rules, accounts,
+   MeitY, UP Procurement Manual); manual downloads per NEEDED.md; verify MII numbers
+   against the texts; OCR scanned ones.
+2. **UP rulebooks**: reader for the HTML Financial Handbook volumes + CSR (cited per
+   chapter), Vol. VI PDFs; three UP GOs from Shasanadesh (Abhishek): MSE procurement policy
+   2020, e-tender GO, Procurement Manual GO. (Both listed in NEEDED.md.)
+3. **Ask quality pack**: current above superseded; narrow orders out; thumbs-down → eval
+   cases; eval baseline. Done 27 Sept: follow-up chips, auto-archive, clean "Searching …"
+   line.
+4. **Procurement system** (docs/PROCUREMENT.md): applicability UP vs central, reviewed
+   facts table, procurement guide, Make in India check, 50-question eval.
+5. **Letter drafting**: letters, notes and replies in government format from cited orders.
+6. **Sign-in and admin**: accounts, roles, feedback review, source management.
+7. **Pilot on the Mac**: daily sync scheduled, backups, LAN access for pilot users,
+   performance check.
+
+### B. Corpus: every rulebook officials use (domain by domain)
+
+For each domain: acts + rules + manuals + current circulars + FAQs, central and UP, in the
+catalogue (reviewed), each edition marked current / superseded / draft.
+
+| Priority | Domain | Central | UP |
+|---|---|---|---|
+| 1 | GeM and procurement | GeM rules, GTC, buyer/seller manuals, **GeM FAQs**, SOPs, incident management | UP GeM GOs, Procurement Manual, e-tender |
+| 1 | Audit and accounts | **CAG** Auditing Standards, Regulations on Audit & Accounts 2020, audit manuals | AG UP, Local Fund Audit, treasury rules |
+| 1 | Labour, **PF, ESI**, **outsourcing** | Labour Codes (Wages, IR, SS, OSH) + rules; EPF Act/Scheme + EPFO circulars; ESI Act + ESIC circulars; Contract Labour; GeM manpower outsourcing | UP labour rules; UP outsourcing policy / UP Outsource Sewa Nigam |
+| 2 | **Education** | MoE, NEP 2020, RTE Act, **Samagra Shiksha** framework, norms, FAQs | Basic, Secondary, Higher education GOs; UP RTE Rules |
+| 2 | **Health** and **AYUSH** | NHM guidelines, AYUSH ministry schemes and rules | UP health, medical education, AYUSH GOs |
+| 2 | **RTI** | Act, Rules, DoPT OMs, **FAQs**, CIC guidance | UP RTI Rules, UP Information Commission |
+| 2 | **Panchayati Raj** and **municipalities** | 73rd/74th amendments, MoPR guidelines, Finance Commission grant rules | UP Panchayat Raj Act 1947, Kshetra/Zila Panchayat Act 1961, Municipalities Act 1916, Municipal Corporation Act 1959 + rules |
+| 3 | **Police** and criminal law | BNS, BNSS, BSA 2023; MHA advisories | UP Police Regulations, police GOs (uppolice adapter) |
+| 3 | **Courts** | Supreme Court judgments on service/procurement matters | Allahabad High Court (its official domain is not .gov.in: needs an approved exception) |
+| 3 | Service and pay | DoPT, 7th CPC, leave, pension (CCS Pension) | UP service rules, Financial Handbook Vol. II |
+
+### C. Department knowledge: what each department does
+
+A polite crawler (government hosts, robots.txt, sitemaps, crawl delay) reads ministry and
+department websites (functions, allocation of business, citizen charter, schemes,
+organisation, helplines, FAQ) into a **department profile**, so Ask can answer "who handles
+X", route a question to the right rules, and find new documents. New PDFs go to a review
+queue (classified, tiered), not straight into answers.
+
+### D. Problem-solving conversation
+
+- Case mode: the officer describes a situation → applicable rules, steps, forms, deadlines,
+  who approves, each with evidence; asks a clarifying question when the facts decide the
+  rule (value, department, central or UP).
+- Evidence panel, checklists, letter/note drafting from the same evidence.
+- Regional text: Hindi, Hinglish, legacy-font Hindi (Kruti Dev) read correctly; answers in
+  the officer's language.
+
+### E. Self-learning (supervised, never blind)
+
+1. Every answer, thumbs-down and correction is logged (DPDP: personal data removed).
+2. Reviewed failures become eval cases; reviewed good answers become training examples;
+   up/down pairs become preference data.
+3. Periodic training on the Mac: retrieval (embeddings/reranker) on real question → page
+   pairs; LoRA of the generator (Qwen3-8B, MLX) for government language, format and
+   drafting.
+4. A new model ships only if it beats the eval sets. Facts stay in retrieval (evidence);
+   the model learns language and reasoning, not unverified facts.
+
+### F. The government LLM
+
+- Corpus in B2 (Rulebook §1: our data is used for modelling) → continued pre-training on
+  government Hindi/English text; instruction data from validated conversations.
+- Benchmark: the eval sets grow into a public-sector benchmark (UP + central, Hindi +
+  English, procurement, service, finance, RTI …).
+- Larger base model and India GPU hosting at production; other states via the
+  jurisdictions table.
 
 ## 1. Answer quality
 

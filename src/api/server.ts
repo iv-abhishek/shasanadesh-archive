@@ -68,7 +68,7 @@ import { assessRelevance, isNoAnswer, noEvidenceMessage } from "../rag/relevance
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
 import { detectListingRequest, jurisdictionsInQuery, listOrders, type SubjectSearch } from "../rag/order-listing.js";
-import { departmentLabel, findDepartmentMention } from "../departments/registry.js";
+import { departmentLabel, departmentNameIn, findDepartmentMention } from "../departments/registry.js";
 import { createPool } from "../db/client.js";
 import { officialOnly, stripNonGovernmentLinks } from "../lib/public-links.js";
 import type { Pool } from "pg";
@@ -438,6 +438,13 @@ function progressLabel(
   return `${base} ${detail}`;
 }
 
+/**
+ * What the progress line says while searching. It names the scope in the
+ * answer's language (a mixed "Secondary Education, लोक निर्माण विभाग,
+ * Agriculture…" list read badly), never shows internal IDs (Rulebook §1), and
+ * says that the rulebooks are searched too (central + UP rules are always in
+ * scope, ADR-062/064).
+ */
 function describeScope(
   scope: string,
   filters: SearchFilters | undefined,
@@ -446,27 +453,25 @@ function describeScope(
   const hi = language === "hi";
 
   if (filters?.sourceId) {
-    return hi ? `आदेश ${filters.sourceId}` : `order ${filters.sourceId}`;
+    return hi ? "इस आदेश" : "this order";
   }
 
-  if (filters?.departmentLabel) {
-    return filters.departmentLabel;
-  }
-
-  if (filters?.department) {
-    return filters.department;
+  const one = filters?.departmentLabel ?? filters?.department ?? (filters?.departments?.length === 1 ? filters.departments[0] : null);
+  if (one) {
+    const name = filters?.departmentLabel ? one : departmentNameIn(one, language);
+    return hi ? `${name} के आदेशों और नियम-पुस्तकों` : `${name} orders and the rulebooks`;
   }
 
   if (filters?.departments?.length) {
-    const names = filters.departments;
-    const shown = names.slice(0, 3).join(", ");
-    const more = names.length > 3 ? (hi ? ` और ${names.length - 3} अन्य` : ` and ${names.length - 3} more`) : "";
-    return shown + more;
+    const count = filters.departments.length;
+    return hi
+      ? `आपके ${count} विभागों के आदेशों और नियम-पुस्तकों`
+      : `orders of your ${count} departments and the rulebooks`;
   }
 
   return hi
-    ? "सभी विभागों"
-    : "all departments";
+    ? "सभी आदेशों और नियम-पुस्तकों"
+    : "all orders and rulebooks";
 }
 
 function describeEvidence(
