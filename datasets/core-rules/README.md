@@ -26,36 +26,32 @@ npm run sync:daily                       # or the processing steps: OCR, pages, 
    GO this copies) and `amends` (slugs of entries it amends).
 4. `npm run test:sources` validates the catalogue.
 
-## Current collection (27 Sept 2026, 25 documents)
+## Current collection (27 Sept 2026, 95 documents)
 
 | Area | Documents |
 |---|---|
-| Central financial rules | GFR 2017 (updated to 31.01.2026), DFPR 2024, Union Budget Manual 2022 |
-| Central procurement | Manuals for Goods (2nd ed. 2024), Works (2nd ed. 2025), Consultancy (2nd ed. 2025), Non-Consultancy Services (2025); Make in India order (revision 19.07.2024); arbitration & mediation guidelines (OM 03.06.2024) |
-| GeM | GTC on GeM 4.0 v1.26; UP GeM GOs of 05.08.2017, 23.08.2017, 26.11.2024, 11.03.2025 (amends 26.11.2024), 21.07.2025 (forward auction) |
-| Digital, data, cyber (central) | DPDP Act 2023, DPDP Rules 2025, CERT-In Directions (28.04.2022), CERT-In guidelines for government entities (2023), GIGW 3.0, Open API policy, Open Source policy, Government Open Data License (2017) |
-| UP financial / service | UP Budget Manual (Ch. I–XIX), UP Government Servants' Conduct Rules 1956 |
+| Central financial rules | GFR 2017 (to 31.01.2026) + amendments 10.07.2024, Rule 144(xi) 23.02.2023, Rule 151 08.05.2026; DFPR 2024; Union Budget Manual 2022; Civil Accounts Manual 2024; Receipts and Payments Rules 2022 |
+| Central procurement | Manuals: Goods 2024, Works 2025 (+ amendment 18.06.2026), Consultancy 2025, Non-Consultancy 2025; debarment 2021 (+ 2026); performance security 2021; force majeure, PPI price variation, wages, consultancy evaluation (2026); GeM OM 2021; arbitration & mediation 2024; land-border Order PP No. 4 (2023, supersedes 2020), OM to States 2023; GTE consolidated 2021 + drugs/devices relaxations 2025 |
+| Make in India | Order 19.07.2024 (current; supersedes 2017, 2018, 2019, 04.06.2020, 16.09.2020, all kept as superseded) + OM 08.07.2025; local-content clarification 2021; two FAQs; Standing Committee minutes (14th, 17th); Appendix-A; notifications of DoT, MeitY (phones), Steel (DMI&SP 2025), MHI (boilers, automobiles), DoP (medical devices), MNRE, Defence, Railways (S&T) |
+| MSE | MSE Order 2012 + amendments 2018, 2021, 2022 |
+| GeM | GTC on GeM 4.0 v1.26; UP GeM GOs 05.08.2017, 23.08.2017, 26.11.2024, 11.03.2025, 21.07.2025 |
+| Vigilance | CVC Vigilance Manual 2026 (9th ed.); Integrity Pact SOP 2023 + circular 09/2023 + corrigendum 2025 |
+| Office, RTI, grievances, accessibility | CSMOP 2022 (English, Hindi); RTI Act 2005, RTI Rules 2012, 2019; Public Records Act 1993, Rules 1997; DARPG grievance guidelines 2024; RPwD Act 2016, Rules 2017, amendment 2024 |
+| Service (central) | CCS (Conduct) Rules 1964, CCS (CCA) Rules 1965 (DoPT consolidations) |
+| Digital, data, cyber | DPDP Act 2023, Rules 2025; CERT-In directions 2022, guidelines 2023; GIGW 3.0; Open API; OSS; Open Data Licence 2017; Email Policy 2024; NCSP 2013; cloud procurement guidelines 2026; GI Cloud reference architecture 2026; DBIM 3.0; NDGFP (**draft**, never final) |
+| UP | Budget Manual (Ch. I–XIX); Conduct Rules 1956; Procurement Manual (Goods) 2016 |
 
-`topics` use the codes in `src/classify/topics.ts` (procurement, gem, financial-rules,
-budget-accounts, service, conduct-discipline, digital-it, data-protection, cybersecurity, …).
+Fields beyond the basics: `supersedes` (earlier editions → status superseded),
+`status: "draft" | "historical"`.
 
-## Next candidates (official PDF to be confirmed first)
+## Next candidates
 
-Their sites list documents through scripts, so the file URL could not be confirmed from a
-plain download; confirm each in a browser, then add it:
-
-- Vigilance: CVC Vigilance Manual (updated 2021; cvc.gov.in), CVC Integrity Pact SOP.
-- Accounts: Civil Accounts Manual (revised 4th ed. 2024) and Central Government Account
-  (Receipts and Payments) Rules 2022 (cga.nic.in), List of Major and Minor Heads.
-- Office: CSMOP 2022 (16th ed.), DARPG comprehensive grievance guidelines (OM 23.08.2024).
-- Personnel (central): CCS (Conduct) Rules 1964, CCS (CCA) Rules 1965 (dopt.gov.in).
-- Law: RTI Act 2005, Public Records Act 1993 and Rules 1997, RPwD Act 2016 and Rules 2017
-  (indiacode.nic.in / nationalarchives.nic.in).
-- Digital: Email Policy 2024, National Cyber Security Policy 2013, MeghRaj (GI Cloud),
-  DBIM; National Data Governance Framework Policy only as `status: draft`.
-- Procurement: MSE Public Procurement Policy Order 2012 (as amended).
-- UP: Financial Handbook volumes (web pages only), Discipline & Appeal Rules 1999,
-  Seniority Rules 1991, e-procurement GOs.
+- UP Financial Handbook volumes and CSR (HTML only on budget.up.nic.in; needs an HTML
+  adapter), Vol. VI chapter PDFs; UP MSE purchase policy 2020, e-tender GO and the
+  Procurement Manual GO (from Shasanadesh); UP Discipline & Appeal Rules 1999.
+- Not found on a government host yet: the 2013 GI Cloud roadmap, the CVC procurement
+  compendium (old URLs dead), MeitY cyber-security-products MII order, Power/MoRTH MII
+  notifications, DPIIT clarifications of 2019–2023 listed only by aggregators.
 
 Note (from Abhishek's list): Union finance and procurement rules are not automatically UP
 rules; Ask says so when it relies on a central document for a UP question (ADR-064).

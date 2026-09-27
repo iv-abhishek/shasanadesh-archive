@@ -6,6 +6,29 @@ This file tracks the current route per workstream.
 The roadmap and the current route for each workstream. When a route changes,
 edit it here and say why (with the date) under "Route changes".
 
+## 0. Completion plan — finish the product on the Mac first (set 27 Sept 2026)
+
+Hosting is not a blocker (Abhishek, 27 Sept): answers cite public government URLs; the
+pilot runs on the Mac; hosting is decided at production time.
+
+1. **Corpus batch 2** — ingest the 70 new catalogue entries (central procurement incl.
+   complete Make in India, MSE, CVC, CSMOP, RTI, records, grievances, RPwD, CCS rules,
+   accounts, MeitY, UP Procurement Manual); manual downloads for anything refused
+   (`data/manual-downloads/core-rules/NEEDED.md`); check MII edition numbers against
+   the texts; OCR the scanned ones (CVC manual, MSE Gazette).
+2. **UP rulebooks** — adapter for the HTML-only UP Financial Handbook volumes and CSR on
+   budget.up.nic.in (each chapter cited at its official page) + Vol. VI chapter PDFs;
+   UP procurement GOs from Shasanadesh (MSE purchase policy 2020, e-tender GO,
+   Procurement Manual GO) by Abhishek's capture.
+3. **Ask quality pack** — current above superseded, narrow orders out, thumbs-down →
+   eval cases, eval baseline.
+4. **Procurement system** — docs/PROCUREMENT.md: applicability, facts table, procurement
+   guide, Make in India check, 50-question eval.
+5. **Letter drafting** — official letters / notes in government format from cited orders.
+6. **Sign-in and admin** — accounts, roles, feedback review, source management.
+7. **Pilot on the Mac** — daily sync on schedule, backups, LAN access for pilot users,
+   performance check with Qwen3-8B.
+
 ## 1. Answer quality
 
 - Route: fix data before models. Garbled native text → selective OCR (ADR-043),

@@ -171,7 +171,14 @@
       "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/458478309ccf301ceb58f63d02646f42.pdf",
       "sourceNote": "Official (issuer's website).",
       "preferredSource": null,
-      "amends": []
+      "amends": [],
+      "supersedes": [
+        "ppp-make-in-india-2017",
+        "ppp-make-in-india-2018",
+        "ppp-make-in-india-2019",
+        "ppp-make-in-india-2020-06",
+        "ppp-make-in-india-2020-09"
+      ]
     },
     {
       "slug": "up-budget-manual",
@@ -560,6 +567,1527 @@
       "officialPage": "https://www.meity.gov.in/documents/act-and-policies",
       "downloadUrl": "https://www.meity.gov.in/static/uploads/2024/02/Gazette-Notification_OpenDataLicense_13.02.2017.pdf",
       "sourceNote": "Official (issuer's website; Gazette copy). Use with the NDSAP.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "ppp-make-in-india-2017",
+      "title": "Public Procurement (Preference to Make in India) Order, 2017 — original order dated 15.06.2017",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement"
+      ],
+      "edition": "Original order (superseded)",
+      "date": "2017-06-15",
+      "goNumber": "P-45021/2/2017-B.E.-II",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Public_Procurement_order_2017.pdf",
+      "sourceNote": "Official copy circulated by DoE (cover note F.18/3/2017-PPD, 04.07.2017). Superseded by later revisions; kept for history.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "ppp-make-in-india-2018",
+      "title": "Public Procurement (Preference to Make in India) Order, 2017 — revision dated 28.05.2018",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement"
+      ],
+      "edition": "Revision of 28 May 2018 (superseded)",
+      "date": "2018-05-28",
+      "goNumber": "P-45021/2/2017-B.E.-II",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/e699532cd6fb18b048c65b5b49c976dd.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "ppp-make-in-india-2019",
+      "title": "Public Procurement (Preference to Make in India) Order, 2017 — revision dated 29.05.2019",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement"
+      ],
+      "edition": "Revision of 29 May 2019 (superseded)",
+      "date": "2019-05-29",
+      "goNumber": "P-45021/2/2017-PP (BE-II)",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/cd246ee6c3329c60400df59c0debda42.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "ppp-make-in-india-2020-06",
+      "title": "Public Procurement (Preference to Make in India) Order, 2017 — revision dated 04.06.2020",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement"
+      ],
+      "edition": "Revision of 4 June 2020 (superseded)",
+      "date": "2020-06-04",
+      "goNumber": "P-45021/2/2017-PP (BE-II)",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/f0c7888ca28a668db5334f15e4e2a99a.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "ppp-make-in-india-2020-09",
+      "title": "Public Procurement (Preference to Make in India) Order, 2017 — revised order dated 16.09.2020",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement"
+      ],
+      "edition": "Revised order of 16 September 2020 (superseded)",
+      "date": "2020-09-16",
+      "goNumber": "P-45021/2/2017-PP (BE-II)",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/b0b4d27d65a0fc55c918c693e9f24b2a.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-exemption-research-institutions-2025",
+      "title": "Make in India Order — revision of exemption limit for scientific and research institutions (₹5 lakh to ₹50 lakh), OM dated 08.07.2025",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2025-07-08",
+      "goNumber": "P-45021/2/2017-PP(BE-II)-Part(4)Vol.II",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/8ce77ace736cd912e4d6f0b7bbfd0b51.pdf",
+      "sourceNote": "Official (issuer's website). Amends para 4 of the 19.07.2024 order; splitting of orders not allowed.",
+      "preferredSource": null,
+      "amends": [
+        "ppp-make-in-india-2024"
+      ]
+    },
+    {
+      "slug": "mii-clarification-local-content-2021",
+      "title": "Make in India Order — clarification on calculation of local content, OM dated 04.03.2021",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2021-03-04",
+      "goNumber": "P-45021/102/2019-BE-II-Part(1)",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/bd5a3101981a27bdffa20b972e886fb7.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-faq-rti-queries",
+      "title": "Make in India Order — frequent queries in RTI applications and response of the Public Procurement Division (FAQ on the 19.07.2024 order)",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/8583e876591c96cacf45805f5f0cf705.pdf",
+      "sourceNote": "Official (issuer's website). Undated; keyed to the 19.07.2024 order.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-faq-updated",
+      "title": "Make in India Order — updated FAQs of the Public Procurement Division",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/6f141a4672d60570a4542963c8448d78.pdf",
+      "sourceNote": "Official (issuer's website). Undated.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-standing-committee-17th-2024",
+      "title": "Make in India Order — minutes of the 17th meeting of the Standing Committee on Public Procurement (13.11.2024)",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2024-11-13",
+      "goNumber": "P-45021/69/2023-BE-II",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/faf544ec114d605bcb8a24ef1f25d4f9.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-standing-committee-14th-2022",
+      "title": "Make in India Order — minutes of the 14th meeting of the Standing Committee on Public Procurement (20.10.2022)",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2022-10-20",
+      "goNumber": "P-45014/33/2021-BE-II",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/ecd8616ed76322aa451e9c2351bfd09e.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-nodal-ministries-appendix-a",
+      "title": "Make in India Order — Appendix-A: item categories and their nodal ministries/departments",
+      "titleHi": null,
+      "issuer": "Department for Promotion of Industry and Internal Trade (DPIIT), Ministry of Commerce and Industry, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/fb6029a2baf9b5b9f03b5cb7af9d32f7.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-dot-telecom-2024",
+      "title": "Make in India — Department of Telecommunications notification of telecom products and minimum local content (21.10.2024)",
+      "titleHi": null,
+      "issuer": "Department of Telecommunications, Ministry of Communications, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "digital-it"
+      ],
+      "edition": null,
+      "date": "2024-10-21",
+      "goNumber": "18-10/2017-IP",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/020ebe08260ae81a26cbfd78a18c2a15.pdf",
+      "sourceNote": "Official copy on DPIIT's Make in India page. Replaces earlier DoT notices of 29.08.2018 and 31.08.2021.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-meity-mobile-phones-2021",
+      "title": "Make in India — MeitY notification for cellular mobile phones (29.04.2020, revised 09.03.2021)",
+      "titleHi": null,
+      "issuer": "Ministry of Electronics and Information Technology, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "digital-it"
+      ],
+      "edition": null,
+      "date": "2021-03-09",
+      "goNumber": "W-43/1/2020-IPHW",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/96ce0f77db2d539858406190a5f381a6.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-steel-dmisp-2025",
+      "title": "Policy for providing preference to Domestically Manufactured Iron & Steel Products (DMI&SP) in Government procurement, 2025 (G.S.R. 904(E), 17.12.2025)",
+      "titleHi": null,
+      "issuer": "Ministry of Steel, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2025-12-17",
+      "goNumber": "G.S.R. 904(E)",
+      "language": "en",
+      "officialPage": "https://steel.gov.in/policy-providing-preference-domestically",
+      "downloadUrl": "https://steel.gov.in/sites/default/files/2025-12/Revised%20DMISP%20Policy%202025%2017.12.2025.pdf",
+      "sourceNote": "Official (issuer's website). Replaces earlier DMI&SP policies incl. the 25.07.2025 amendment.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-mhi-industrial-boilers-2025",
+      "title": "Make in India — Ministry of Heavy Industries order for industrial boilers (Class-I local suppliers only), 29.04.2025",
+      "titleHi": null,
+      "issuer": "Ministry of Heavy Industries, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2025-04-29",
+      "goNumber": "16(4)/2018-HEI",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/bd5d95649befc0e1d56802b136a73e8e.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-mhi-automobiles-2020",
+      "title": "Make in India — Ministry of Heavy Industries order for automobiles and auto components (10.10.2020)",
+      "titleHi": null,
+      "issuer": "Ministry of Heavy Industries, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2020-10-10",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/74633e5056ad0a88a3daf0c59970a26b.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-dop-medical-devices-2021",
+      "title": "Make in India — Department of Pharmaceuticals order for medical devices (Class-I local suppliers only), 25.03.2021",
+      "titleHi": null,
+      "issuer": "Department of Pharmaceuticals, Ministry of Chemicals and Fertilizers, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "health"
+      ],
+      "edition": null,
+      "date": "2021-03-25",
+      "goNumber": "31026/36/2016-MD",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/a9e883284654f3da564699b7d62d4a73.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-mnre-renewable-energy-2018",
+      "title": "Make in India — MNRE order for renewable energy sector (11.12.2018)",
+      "titleHi": null,
+      "issuer": "Ministry of New and Renewable Energy, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2018-12-11",
+      "goNumber": "146/57/2018-P&C",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/5ba88341d6f10ca337fffbd905942014.pdf",
+      "sourceNote": "Official copy on DPIIT's Make in India page. Current status to be confirmed against MNRE's later orders.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-defence-2020",
+      "title": "Make in India — Department of Defence Production re-notification (25.08.2020)",
+      "titleHi": null,
+      "issuer": "Department of Defence Production, Ministry of Defence, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2020-08-25",
+      "goNumber": "18(2)/19/PPO-Notification",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/b03fb99bc213b4bd2bdf238c07aeecd4.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mii-railways-signal-telecom-2020",
+      "title": "Make in India — Railway Board instructions for signal and telecom items (Class-I local suppliers only), 22.06.2020",
+      "titleHi": null,
+      "issuer": "Railway Board, Ministry of Railways, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2020-06-22",
+      "goNumber": "2015/RS(G)/779/5 Vol.III",
+      "language": "en",
+      "officialPage": "https://www.dpiit.gov.in/public-procurements",
+      "downloadUrl": "https://www.dpiit.gov.in/static/uploads/2025/07/5f52d24bc8b3cb268c9aedfe8b682e05.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "gfr-144xi-land-border-2020",
+      "title": "Restrictions under Rule 144(xi) of GFR 2017 on bidders from countries sharing a land border — OM and Order (Public Procurement No. 1), 23.07.2020",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": "Superseded by Order (Public Procurement No. 4) of 23.02.2023",
+      "date": "2020-07-23",
+      "goNumber": "F.6/18/2019-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM_dated_23_07_2020.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "gfr-144xi-amendment-2023",
+      "title": "Amendment to Rule 144(xi) of the General Financial Rules, 2017 (23.02.2023)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "procurement",
+        "financial-rules"
+      ],
+      "edition": null,
+      "date": "2023-02-23",
+      "goNumber": "F.7/10/2021-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Amendment_to_Rule_144_xi_of_the_GFRs_2017.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "gfr-2017"
+      ]
+    },
+    {
+      "slug": "gfr-144xi-order-pp4-2023",
+      "title": "Order (Public Procurement No. 4): restrictions under Rule 144(xi) of GFR 2017 on bidders from countries sharing a land border (23.02.2023)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2023-02-23",
+      "goNumber": "F.7/10/2021-PPD(1)",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Order_Restrictions_under_Rule_144_xi_of_the_GFRs_2017.pdf",
+      "sourceNote": "Official (issuer's website). Supersedes Orders (Public Procurement) No. 1–3 and the 2020–21 clarifications.",
+      "preferredSource": null,
+      "amends": [],
+      "supersedes": [
+        "gfr-144xi-land-border-2020"
+      ]
+    },
+    {
+      "slug": "gfr-144xi-states-2023",
+      "title": "OM to State Governments on restrictions under Rule 144(xi) of GFR 2017 (11.09.2023)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2023-09-11",
+      "goNumber": "7/10/2021-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM_No_7_10_2021_PPD_dated_11_09_2023.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "gte-rule-161iv-consolidated-2021",
+      "title": "Revised consolidated instructions on Global Tender Enquiry under Rule 161(iv) of GFR 2017 (up to ₹200 crore), 03.08.2021",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2021-08-03",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Revised_Consolidated_Instructions_regarding_GTE_under_Rule_161_iv_of_GFR_2017.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "gte-relaxation-drugs-2025",
+      "title": "Global Tender Enquiry — relaxation for procurement of drugs (OM dated 15.01.2025)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "health"
+      ],
+      "edition": null,
+      "date": "2025-01-15",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM_15012025.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "gte-relaxation-medical-devices-2025",
+      "title": "Global Tender Enquiry — relaxation for procurement of medical devices (OM dated 17.02.2025)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "health"
+      ],
+      "edition": null,
+      "date": "2025-02-17",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM17_02_2025.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "doe-debarment-guidelines-2021",
+      "title": "Guidelines on Debarment of firms from Bidding (02.11.2021)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2021-11-02",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Guidelines_on_Debarment_of_firms_from_Bidding.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "doe-debarment-amendment-2026",
+      "title": "Amendment to Guidelines on Debarment — non-payment of wages or statutory dues; consolidated debarred list on GeM (08.05.2026)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2026-05-08",
+      "goNumber": "2/6/2026-PPD(ii)",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM_262026ii_08052026.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "doe-debarment-guidelines-2021"
+      ]
+    },
+    {
+      "slug": "gfr-rule-151-amendment-2026",
+      "title": "Amendment to Rule 151 (debarment) of the General Financial Rules, 2017 (08.05.2026)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "procurement",
+        "financial-rules"
+      ],
+      "edition": null,
+      "date": "2026-05-08",
+      "goNumber": "2/6/2026-PPD(i)",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM_262026i_08052026.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "gfr-2017"
+      ]
+    },
+    {
+      "slug": "doe-wages-code-2026",
+      "title": "Timely payment of wages under the Code on Wages in public procurement contracts (08.05.2026)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2026-05-08",
+      "goNumber": "2/6/2026-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM_262026_08052026.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "doe-force-majeure-2026",
+      "title": "Force Majeure Clause in public procurement contracts (29.04.2026)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2026-04-29",
+      "goNumber": "1/3/2026-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM132026_29042026.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "doe-works-manual-amendment-2026",
+      "title": "Amendment to the Manual for Procurement of Works (Second Edition 2025), 18.06.2026",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "works"
+      ],
+      "edition": null,
+      "date": "2026-06-18",
+      "goNumber": "F.3/9/2026-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM392026_18062026.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "manual-works-2025"
+      ]
+    },
+    {
+      "slug": "doe-price-variation-ppi-2026",
+      "title": "Use of Producer Price Indices in place of WPI in price-variation clauses (13.07.2026)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2026-07-13",
+      "goNumber": "1/5/2026-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM152026_13072026.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "doe-consultancy-evaluation-advisory-2026",
+      "title": "Advisory on qualification and evaluation criteria in procurement of consultancy services (22.07.2026)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2026-07-22",
+      "goNumber": "1/3/2026-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM132026_22072026.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "doe-consultancy-evaluation-corrigendum-2026",
+      "title": "Corrigendum to the advisory on qualification and evaluation criteria in consultancy (10.09.2026)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2026-09-10",
+      "goNumber": "F.1/1/2026-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Corrigendum_10092026.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "doe-consultancy-evaluation-advisory-2026"
+      ]
+    },
+    {
+      "slug": "doe-gem-procurement-2021",
+      "title": "Procurement of Goods and Services through Government e-Marketplace (OM dated 11.06.2021)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement",
+        "gem"
+      ],
+      "edition": null,
+      "date": "2021-06-11",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Procurement_of_Goods_and_Services_through_Government_e-Marketplace.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "doe-performance-security-2021",
+      "title": "Performance Security — reduction and related instructions (OM dated 30.12.2021)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2021-12-30",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Performance_Security_0.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "doe-gfr-amendment-2024-07",
+      "title": "Amendment to the General Financial Rules, 2017 (OM dated 10.07.2024)",
+      "titleHi": null,
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "procurement",
+        "financial-rules"
+      ],
+      "edition": null,
+      "date": "2024-07-10",
+      "goNumber": "1/3/2024-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/en/orders-circulars/459",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/OM_1_3_2024_PPD_dated_10_07_2024.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mse-procurement-order-2012",
+      "title": "Public Procurement Policy for Micro and Small Enterprises (MSEs) Order, 2012 (S.O. 581(E), 23.03.2012)",
+      "titleHi": null,
+      "issuer": "Ministry of Micro, Small and Medium Enterprises, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2012-03-23",
+      "goNumber": "S.O. 581(E)",
+      "language": "en",
+      "officialPage": "https://dcmsme.gov.in/pppm.htm",
+      "downloadUrl": "https://dcmsme.gov.in/notification.pdf",
+      "sourceNote": "Official (DC-MSME website). Scanned Gazette; read with the 2018, 2021 and 2022 amendment orders.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "mse-procurement-amendment-2018",
+      "title": "Public Procurement Policy for MSEs (Amendment) Order, 2018 — 25% target (S.O. 5670(E), 09.11.2018)",
+      "titleHi": null,
+      "issuer": "Ministry of Micro, Small and Medium Enterprises, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2018-11-09",
+      "goNumber": "S.O. 5670(E)",
+      "language": "en",
+      "officialPage": "https://dcmsme.gov.in/pppm.htm",
+      "downloadUrl": "https://www.dcmsme.gov.in/Gazette%20Notification.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "mse-procurement-order-2012"
+      ]
+    },
+    {
+      "slug": "mse-procurement-amendment-2021",
+      "title": "Public Procurement Policy for MSEs (Amendment) Order, 2021 (S.O. 3237(E), 11.08.2021)",
+      "titleHi": null,
+      "issuer": "Ministry of Micro, Small and Medium Enterprises, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2021-08-11",
+      "goNumber": "S.O. 3237(E)",
+      "language": "en",
+      "officialPage": "https://dcmsme.gov.in/pppm.htm",
+      "downloadUrl": "https://www.dcmsme.gov.in/Amendment_in_Public_Procurement_Policy_for_MSEs_Order_2012.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "mse-procurement-order-2012"
+      ]
+    },
+    {
+      "slug": "mse-procurement-amendment-2022",
+      "title": "Public Procurement Policy for MSEs (Amendment) Order, 2022 (S.O. 5745(E), 08.12.2022)",
+      "titleHi": null,
+      "issuer": "Ministry of Micro, Small and Medium Enterprises, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2022-12-08",
+      "goNumber": "S.O. 5745(E)",
+      "language": "en",
+      "officialPage": "https://dcmsme.gov.in/pppm.htm",
+      "downloadUrl": "https://www.dcmsme.gov.in/PPP-MSEs%20Order,2012%20Amendment,2022.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "mse-procurement-order-2012"
+      ]
+    },
+    {
+      "slug": "cvc-vigilance-manual-2026",
+      "title": "Vigilance Manual 2026 (Ninth Edition)",
+      "titleHi": null,
+      "issuer": "Central Vigilance Commission",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "vigilance",
+        "conduct-discipline",
+        "procurement"
+      ],
+      "edition": "Ninth Edition, 2026",
+      "date": "2026-07-27",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://cvc.gov.in/vigilancemanual",
+      "downloadUrl": "https://cvc.gov.in/uploads/vigilence/vigilence-vigilancemannual26072026-20260727_113030.pdf",
+      "sourceNote": "Official (issuer's website). Scanned, about 139 MB. Supersedes the Vigilance Manual (Updated 2021).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "cvc-integrity-pact-sop-2023",
+      "title": "Adoption and implementation of Integrity Pact — revised SOP (CVC Circular No. 04/06/23, 14.06.2023)",
+      "titleHi": null,
+      "issuer": "Central Vigilance Commission",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "vigilance",
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2023-06-14",
+      "goNumber": "015/VGL/091",
+      "language": "en",
+      "officialPage": "https://cvc.gov.in/iem",
+      "downloadUrl": "https://cvc.gov.in/uploads/iem/iem-1747656737593-412430698.pdf",
+      "sourceNote": "Official (issuer's website). Supersedes the SOP of 25.01.2022.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "cvc-integrity-pact-circular-2023-09",
+      "title": "Integrity Pact — CVC Circular No. 09/09/23 (05.09.2023)",
+      "titleHi": null,
+      "issuer": "Central Vigilance Commission",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "vigilance",
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2023-09-05",
+      "goNumber": "015/VGL/091",
+      "language": "en",
+      "officialPage": "https://cvc.gov.in/iem",
+      "downloadUrl": "https://cvc.gov.in/uploads/iem/iem-1747656766693-395395970.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "cvc-integrity-pact-sop-2023"
+      ]
+    },
+    {
+      "slug": "cvc-integrity-pact-corrigendum-2025",
+      "title": "Integrity Pact SOP — corrigendum on sub-contracting, para 4.6 (CVC Circular No. 03/04/25, 28.04.2025)",
+      "titleHi": null,
+      "issuer": "Central Vigilance Commission",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "general-instruction",
+      "topics": [
+        "vigilance",
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2025-04-28",
+      "goNumber": "015/VGL/091",
+      "language": "en",
+      "officialPage": "https://cvc.gov.in/iem",
+      "downloadUrl": "https://cvc.gov.in/uploads/iem/iem-1747656967910-470175324.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "cvc-integrity-pact-sop-2023"
+      ]
+    },
+    {
+      "slug": "csmop-2022",
+      "title": "Central Secretariat Manual of Office Procedure (CSMOP), 16th edition, 2022",
+      "titleHi": null,
+      "issuer": "Department of Administrative Reforms and Public Grievances, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "records-office"
+      ],
+      "edition": "16th edition (supersedes CSMOP 2019)",
+      "date": "2022-07-13",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.darpg.gov.in",
+      "downloadUrl": "https://www.darpg.gov.in/static/uploads/2025/10/774e0b8f427b7875158363d842fa431f.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "csmop-2022-hi",
+      "title": "केन्द्रीय सचिवालय कार्यालय प्रक्रिया नियमावली (CSMOP), 16वां संस्करण, 2022",
+      "titleHi": null,
+      "issuer": "Department of Administrative Reforms and Public Grievances, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "records-office"
+      ],
+      "edition": "16th edition, Hindi",
+      "date": "2022-07-13",
+      "goNumber": null,
+      "language": "hi",
+      "officialPage": "https://www.darpg.gov.in",
+      "downloadUrl": "https://www.darpg.gov.in/static/uploads/2025/10/567634b38b8322b5d51216640df6d8e8.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "darpg-grievance-guidelines-2024",
+      "title": "Comprehensive guidelines for handling the Public Grievances (OM dated 23.08.2024)",
+      "titleHi": null,
+      "issuer": "Department of Administrative Reforms and Public Grievances, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "grievances"
+      ],
+      "edition": null,
+      "date": "2024-08-23",
+      "goNumber": "S-15/21/2021-(PG)",
+      "language": "en",
+      "officialPage": "https://www.darpg.gov.in",
+      "downloadUrl": "https://www.darpg.gov.in/static/uploads/2025/11/1cc0d11237b03456caf40688305c9c49.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "rti-act-2005",
+      "title": "The Right to Information Act, 2005 (as amended)",
+      "titleHi": null,
+      "issuer": "Ministry of Law and Justice (India Code), Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "act",
+      "topics": [
+        "rti"
+      ],
+      "edition": null,
+      "date": "2005-06-15",
+      "goNumber": "Act No. 22 of 2005",
+      "language": "en",
+      "officialPage": "https://www.indiacode.nic.in/handle/123456789/2065",
+      "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/2065/5/a2005-22.pdf",
+      "sourceNote": "India Code (amended text incl. RTI (Amendment) Act 2019). DoPT hosts the original 2005 Gazette text at rti.dopt.gov.in.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "rti-rules-2012",
+      "title": "Right to Information Rules, 2012 (G.S.R. 603(E), 31.07.2012)",
+      "titleHi": null,
+      "issuer": "Department of Personnel and Training, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "rti"
+      ],
+      "edition": null,
+      "date": "2012-07-31",
+      "goNumber": "G.S.R. 603(E)",
+      "language": "en",
+      "officialPage": "https://dopt.gov.in/acts/rti-rules-2012-0",
+      "downloadUrl": "https://dopt.gov.in/sites/default/files/RTIRules_2012_English_0.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "rti-rules-2019",
+      "title": "Right to Information (Term of Office, Salaries, Allowances and Other Terms and Conditions of Service of Chief Information Commissioner, Information Commissioners …) Rules, 2019",
+      "titleHi": null,
+      "issuer": "Department of Personnel and Training, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "rti"
+      ],
+      "edition": null,
+      "date": "2019-10-24",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://dopt.gov.in/acts/right-information-rules-2019",
+      "downloadUrl": "https://dopt.gov.in/sites/default/files/RTI%20Rules%202019.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "public-records-act-1993",
+      "title": "The Public Records Act, 1993 (Act No. 69 of 1993)",
+      "titleHi": null,
+      "issuer": "National Archives of India, Ministry of Culture, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "act",
+      "topics": [
+        "records-office"
+      ],
+      "edition": null,
+      "date": "1993-12-21",
+      "goNumber": "Act No. 69 of 1993",
+      "language": "en",
+      "officialPage": "https://nationalarchives.nic.in/en/public-record-acts-rules",
+      "downloadUrl": "https://nationalarchives.nic.in/sites/default/files/2023-07/Public_Records_Act_1993_1.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "public-records-rules-1997",
+      "title": "The Public Records Rules, 1997",
+      "titleHi": null,
+      "issuer": "National Archives of India, Ministry of Culture, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "records-office"
+      ],
+      "edition": null,
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://nationalarchives.nic.in/en/public-record-acts-rules",
+      "downloadUrl": "https://nationalarchives.nic.in/sites/default/files/2023-07/Public_Records_Rule_1997_0.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "rpwd-act-2016",
+      "title": "The Rights of Persons with Disabilities Act, 2016",
+      "titleHi": null,
+      "issuer": "Department of Empowerment of Persons with Disabilities, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "act",
+      "topics": [
+        "accessibility"
+      ],
+      "edition": null,
+      "date": "2016-12-27",
+      "goNumber": "Act No. 49 of 2016",
+      "language": "en",
+      "officialPage": "https://depwd.gov.in/en/acts/",
+      "downloadUrl": "https://cdnbbsr.s3waas.gov.in/s3e58aea67b01fa747687f038dfde066f6/uploads/2023/10/202310161053958942.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "rpwd-rules-2017",
+      "title": "The Rights of Persons with Disabilities Rules, 2017 (G.S.R. 591(E), 15.06.2017)",
+      "titleHi": null,
+      "issuer": "Department of Empowerment of Persons with Disabilities, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "accessibility"
+      ],
+      "edition": null,
+      "date": "2017-06-15",
+      "goNumber": "G.S.R. 591(E)",
+      "language": "en",
+      "officialPage": "https://depwd.gov.in/en/acts/",
+      "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_CEN_25_54_00002_201649_1517807328299&type=rule&filename=Rules_notified_15.06.pdf",
+      "sourceNote": "India Code copy (the ministry page links it).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "rpwd-amendment-rules-2024",
+      "title": "The Rights of Persons with Disabilities (Amendment) Rules, 2024 (18.10.2024)",
+      "titleHi": null,
+      "issuer": "Department of Empowerment of Persons with Disabilities, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "accessibility"
+      ],
+      "edition": null,
+      "date": "2024-10-18",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://depwd.gov.in/en/acts/",
+      "downloadUrl": "https://cdnbbsr.s3waas.gov.in/s3e58aea67b01fa747687f038dfde066f6/uploads/2024/10/20241023621746570.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": [
+        "rpwd-rules-2017"
+      ]
+    },
+    {
+      "slug": "ccs-conduct-rules-1964",
+      "title": "Central Civil Services (Conduct) Rules, 1964 (as amended up to 31.12.2014)",
+      "titleHi": null,
+      "issuer": "Department of Personnel and Training, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "conduct-discipline",
+        "service"
+      ],
+      "edition": "DoPT consolidation, amendments up to 31.12.2014",
+      "date": "2015-02-27",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://dopt.gov.in/ccs-conduct-rules-1964",
+      "downloadUrl": "https://dopt.gov.in/sites/default/files/CCS_Conduct_Rules_1964_Updated_27Feb15_0.pdf",
+      "sourceNote": "Official (issuer's website). DoPT's latest consolidation; later amendments are separate notifications.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "ccs-cca-rules-1965",
+      "title": "Central Civil Services (Classification, Control and Appeal) Rules, 1965 (updated up to 15.10.2018)",
+      "titleHi": null,
+      "issuer": "Department of Personnel and Training, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "conduct-discipline",
+        "service"
+      ],
+      "edition": "DoPT consolidation, updated up to 15.10.2018",
+      "date": "2018-10-15",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://dopt.gov.in/ccs-cca-rules-1965",
+      "downloadUrl": "https://dopt.gov.in/sites/default/files/CCS-CCA-Rules-FINAL.pdf",
+      "sourceNote": "Official (issuer's website). DoPT's latest consolidation; later amendments (e.g. 2022) are separate notifications.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "civil-accounts-manual-2024",
+      "title": "Civil Accounts Manual, Revised Fourth Edition 2024",
+      "titleHi": null,
+      "issuer": "Controller General of Accounts, Department of Expenditure, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "budget-accounts",
+        "financial-rules"
+      ],
+      "edition": "Revised Fourth Edition, 2024 (correction slips 1 and 2 listed separately by CGA)",
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://cga.nic.in/Book/Published/2.aspx",
+      "downloadUrl": "https://cga.nic.in/DownloadPDF.aspx?filenameid=1853",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "receipts-payments-rules-2022",
+      "title": "Central Government Account (Receipts and Payments) Rules, 2022",
+      "titleHi": null,
+      "issuer": "Controller General of Accounts, Department of Expenditure, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "budget-accounts",
+        "financial-rules"
+      ],
+      "edition": null,
+      "date": "2022-08-20",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://cga.nic.in/Book/Published/3.aspx",
+      "downloadUrl": "https://cga.nic.in/DownloadPDF.aspx?filenameid=1806",
+      "sourceNote": "Official (issuer's website). Replaced the 1983 Rules.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "email-policy-2024",
+      "title": "Email Policy of Government of India, 2024",
+      "titleHi": null,
+      "issuer": "Ministry of Electronics and Information Technology, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "digital-it",
+        "cybersecurity"
+      ],
+      "edition": null,
+      "date": "2024-11-05",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.meity.gov.in/documents/act-and-policies/email-policy-2024-cTOykTMtQWa",
+      "downloadUrl": "https://www.meity.gov.in/static/uploads/2024/11/b54082aad8247490ad7f1c39e47b05da.pdf",
+      "sourceNote": "Official (issuer's website). Supersedes the 2014 e-mail policy.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "national-cyber-security-policy-2013",
+      "title": "National Cyber Security Policy, 2013",
+      "titleHi": null,
+      "issuer": "Ministry of Electronics and Information Technology, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "cybersecurity"
+      ],
+      "edition": null,
+      "date": "2013-07-02",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.meity.gov.in/documents/act-and-policies?page=1",
+      "downloadUrl": "https://www.meity.gov.in/static/uploads/2024/02/National_cyber_security_policy-2013_0.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "meity-cloud-procurement-guidelines-2026",
+      "title": "Guidelines for Procurement of Cloud Services, Version 2.0 (18.03.2026)",
+      "titleHi": null,
+      "issuer": "Ministry of Electronics and Information Technology, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "procurement",
+        "digital-it"
+      ],
+      "edition": "Version 2.0",
+      "date": "2026-03-18",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.meity.gov.in/documents/act-and-policies?page=1",
+      "downloadUrl": "https://www.meity.gov.in/static/uploads/2026/03/fea54ec9e544c77abbdb48d0f1da6264.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "meity-gi-cloud-reference-architecture-2026",
+      "title": "GI Cloud (MeghRaj) Reference Architecture, Version 2.0 (18.03.2026)",
+      "titleHi": null,
+      "issuer": "Ministry of Electronics and Information Technology, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "digital-it"
+      ],
+      "edition": "Version 2.0",
+      "date": "2026-03-18",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.meity.gov.in/documents/act-and-policies?page=1",
+      "downloadUrl": "https://www.meity.gov.in/static/uploads/2026/03/91aa1a737610250b65cf6b49c7a86a3f.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "dbim-3-0",
+      "title": "Digital Brand Identity Manual (DBIM), Version 3.0",
+      "titleHi": null,
+      "issuer": "Ministry of Electronics and Information Technology, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "digital-it",
+        "accessibility"
+      ],
+      "edition": "Version 3.0 (re-uploaded 18.09.2026)",
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://dbimtoolkit.digifootprint.gov.in/",
+      "downloadUrl": "https://dbimtoolkit.digifootprint.gov.in/static/uploads/2026/09/90e9026b0dc0b854f9ced8eff31ce400.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "ndgfp-draft-2022",
+      "title": "National Data Governance Framework Policy — draft for consultation (May 2022)",
+      "titleHi": null,
+      "issuer": "Ministry of Electronics and Information Technology, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "data-protection",
+        "digital-it"
+      ],
+      "edition": null,
+      "date": "2022-05-26",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://negd.gov.in/ndg/",
+      "downloadUrl": "https://mcrhrdi.gov.in/cio2022/presentations/law/National%20Data%20Governance%20Framework%20Policy_26%20May%202022.pdf",
+      "sourceNote": "DRAFT, never notified as final. MeitY no longer hosts it; this copy is on a state government training institute (mcrhrdi.gov.in).",
+      "preferredSource": null,
+      "amends": [],
+      "status": "draft"
+    },
+    {
+      "slug": "up-procurement-manual-goods-2016",
+      "title": "Uttar Pradesh Procurement Manual (Procurement of Goods), First Edition 2016 — with GO dated 01.04.2016",
+      "titleHi": "उत्तर प्रदेश प्रोक्योरमेंट मैनुअल (प्रोक्योरमेंट ऑफ गुड्स), प्रथम संस्करण 2016 — शासनादेश दिनांक 01.04.2016 सहित",
+      "issuer": "MSME Section-2, Government of Uttar Pradesh",
+      "jurisdiction": "state",
+      "department": "सूक्ष्म, लघु एवं मध्यम उद्यम विभाग",
+      "documentType": "guideline",
+      "topics": [
+        "procurement"
+      ],
+      "edition": "First Edition, 2016 (replaces the Store Purchase Rules, Financial Handbook Vol. V Part I, Appendix XVIII)",
+      "date": "2016-04-01",
+      "goNumber": "5/2016/253/18-2-2016-3(एसपी)/2010",
+      "language": "en",
+      "officialPage": "https://msme.up.gov.in",
+      "downloadUrl": "https://msme.up.gov.in/doc/Policies/ProcurementMannualGOUP1.pdf",
+      "sourceNote": "Official (MSME Department website; also at diupmsme.upsdc.gov.in). The site has shown spam pages: check the file before use (reference MD5 7965a06d48efe10004e7b8544c599f1a, 333 pages incl. the GO).",
       "preferredSource": null,
       "amends": []
     }

@@ -40,6 +40,10 @@ export interface CoreRuleEntry {
   sourceNote: string;
   preferredSource?: { provider: string; goNumber: string; date: string } | null;
   amends?: string[];
+  /** Earlier editions this one replaces (they become status "superseded"). */
+  supersedes?: string[];
+  /** "draft" (not final, e.g. a consultation draft) or "historical" (kept for reference). */
+  status?: "draft" | "historical";
 }
 
 const CATALOGUE = path.resolve("datasets/core-rules/catalogue.json");
@@ -64,6 +68,13 @@ export function validateCatalogue(entries: CoreRuleEntry[]): void {
     }
     for (const target of entry.amends ?? []) {
       if (!entries.some((other) => other.slug === target)) throw new Error(`${where}: amends unknown entry "${target}"`);
+    }
+    for (const target of entry.supersedes ?? []) {
+      if (!entries.some((other) => other.slug === target)) throw new Error(`${where}: supersedes unknown entry "${target}"`);
+      if (target === entry.slug) throw new Error(`${where}: cannot supersede itself`);
+    }
+    if (entry.status !== undefined && !["draft", "historical"].includes(entry.status)) {
+      throw new Error(`${where}: status must be "draft" or "historical"`);
     }
   }
 }
