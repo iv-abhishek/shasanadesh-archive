@@ -831,3 +831,29 @@ listing orders (ADR-057/058), people need to see what they can do and how to sea
 - Built on the existing colour tokens (light and dark), one column under 900 px, no
   horizontal scroll at 390 px; chips use the UI typeface because monospace fonts have
   no Devanagari.
+
+## ADR-061 - Hinglish typing becomes Devanagari (HI input)
+
+Officials often type Hindi in English letters ("solar pump lagwane hetu kya prakriya
+hai"). Only voice input produced Devanagari. The archive is mostly Devanagari, so
+Hinglish questions also retrieve worse.
+
+- The EN/HI switch beside the input now sets the input language for voice **and** typing.
+  With HI, a word typed in English letters becomes Devanagari when it is finished (Space
+  or punctuation): सोलर पम्प लगवाने हेतु क्या प्रक्रिया है. Backspace right after a
+  conversion restores the English letters; Enter converts the last word before sending.
+  Acronyms in capitals (GO, PWD, DA), numbers, GO numbers and wildcard terms stay as typed.
+- A bar under the input shows the best spellings for the word being typed, completions,
+  and the English letters ("keep English"); clicking one puts it in place.
+- **All in the browser; nothing is sent anywhere** (`apps/web/lib/transliterate.ts`).
+  Candidates: fixed Hinglish spellings (mein → में, nahi → नहीं), then a lexicon matched
+  by the words' casual romanisation (exactly; then ignoring "a", which people vary most;
+  then consonants only, same first letter and similar length), then phonetic rules
+  (conjuncts, nasal before a consonant, final a/i long as Hinglish writes them).
+- Lexicon = ~300 everyday and administrative words (bundled) + every well-formed word from
+  portal subjects, OCR output and native text that passes the text-quality check
+  (`npm run translit:lexicon` → `apps/web/public/translit/hi-lexicon.json`, generated, not
+  in git, rebuilt nightly). The archive's own spelling wins (e.g. पम्प), which also
+  matches the subjects in search. First build: 4,506 words (most native text is
+  legacy-font and skipped; OCR will add more).
+- Not a language model: unusual names or English loanwords may need the bar or Backspace.

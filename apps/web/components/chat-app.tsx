@@ -5,6 +5,7 @@ import {
   FormEvent,
   Fragment,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -25,6 +26,14 @@ import {
 } from "../lib/sources";
 import { formatGoReference } from "../lib/go-reference";
 import { SearchGuide, StartPanel } from "./start-panel";
+import {
+  convertFinishedWord,
+  convertTrailingWord,
+  undoConversion,
+  wordAtCaret,
+  type Conversion,
+} from "../lib/transliterate";
+import { useHindiTransliterator } from "../lib/use-hindi-typing";
 
 type VerificationStatus =
   | "conflict"
@@ -1354,6 +1363,64 @@ function SourceGroupCard({
   );
 }
 
+/**
+ * Hindi typing suggestions (ADR-061): alternatives for the word being typed,
+ * plus the English letters as typed. Clicking one puts it in place of the word.
+ */
+function HindiTypingBar({
+  query,
+  caret,
+  transliterator,
+  onChoose,
+}: {
+  query: string;
+  caret: number;
+  transliterator: import("../lib/transliterate").Transliterator | null;
+  onChoose: (start: number, end: number, text: string) => void;
+}) {
+  const current = wordAtCaret(query, caret);
+  const choices = current && transliterator
+    ? [...new Set([...transliterator.suggest(current.latin, 3), ...transliterator.complete(current.latin, 2)])].slice(0, 4)
+    : [];
+
+  return (
+    <div className="hindi-typing-bar" aria-live="polite">
+      <span className="hindi-typing-label" lang="hi">हिंदी</span>
+      {current && choices.length ? (
+        <>
+          {choices.map((choice, index) => (
+            <button
+              type="button"
+              key={choice}
+              className={index === 0 ? "hindi-choice hindi-choice-first" : "hindi-choice"}
+              lang="hi"
+              title={index === 0 ? "Space also chooses this" : undefined}
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => onChoose(current.start, caret, choice)}
+            >
+              {choice}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="hindi-choice hindi-choice-latin"
+            title="Keep the English letters"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => onChoose(current.start, caret, current.latin)}
+          >
+            {current.latin}
+          </button>
+        </>
+      ) : (
+        <span className="hindi-typing-hint">
+          Type in English letters; Space turns the word into Devanagari · Backspace right after undoes it ·
+          acronyms (GO, PWD) and numbers stay as typed
+        </span>
+      )}
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Answer actions: copy, listen, feedback and regenerate.
 // ---------------------------------------------------------------------------
@@ -1936,6 +2003,15 @@ export function ChatApp({
   const speechStartingQueryRef = useRef("");
   const speechInputActive = speechState !== "idle";
   const speechLanguageName = speechLanguage === "hi-IN" ? "Hindi" : "English";
+
+  // Hindi typing (ADR-061): with HI selected, words typed in English letters
+  // become Devanagari on Space; Backspace right after undoes it.
+  const hindiTyping = speechLanguage === "hi-IN";
+  const transliterator = useHindiTransliterator(hindiTyping);
+  const lastConversionRef = useRef<Conversion | null>(null);
+  const pendingCaretRef = useRef<number | null>(null);
+  const [caret, setCaret] = useState(0);
+  const toDevanagari = (latin: string) => transliterator?.suggest(latin, 1)[0];
   const speechButtonLabel = speechState === "listening"
     ? "Stop voice input"
     : speechState === "starting"
@@ -1977,6 +2053,15 @@ export function ChatApp({
   // The request in flight, so Stop (or Esc) can cancel it.
   const inFlightRef = useRef<AbortController | null>(null);
   const stopAnswer = () => inFlightRef.current?.abort();
+
+  // Put the caret back where an automatic edit (conversion, undo) left it.
+  useLayoutEffect(() => {
+    const position = pendingCaretRef.current;
+    const input = composerInputRef.current;
+    if (position === null || !input) return;
+    pendingCaretRef.current = null;
+    input.setSelectionRange(position, position);
+  }, [query]);
 
   // Examples and guide entries fill the input (to edit before sending).
   const composerInputRef = useRef<HTMLTextAreaElement | null>(null);
@@ -2324,7 +2409,8 @@ export function ChatApp({
       return;
     }
 
-    const question = query.trim();
+    // Hindi typing: the last word has no Space after it yet.
+    const question = (hindiTyping && transliterator ? convertTrailingWord(query, toDevanagari) : query).trim();
 
     if (!question || busy || archived) {
       return;
@@ -2951,13 +3037,31 @@ export function ChatApp({
       >
         <textarea
           value={query}
-          onChange={(event) =>
-            setQuery(
-              event.target.value,
-            )
-          }
+          onChange={(event) => {
+            const value = event.target.value;
+            const position = event.target.selectionStart ?? value.length;
+            if (hindiTyping && transliterator && !(event.nativeEvent as InputEvent).isComposing) {
+              const converted = convertFinishedWord(query, value, position, toDevanagari);
+              if (converted) {
+                lastConversionRef.current = converted.conversion;
+                pendingCaretRef.current = converted.caret;
+                setCaret(converted.caret);
+                setQuery(converted.value);
+                return;
+              }
+            }
+            lastConversionRef.current = null;
+            setCaret(position);
+            setQuery(value);
+          }}
+          onSelect={(event) => setCaret(event.currentTarget.selectionStart ?? 0)}
           ref={composerInputRef}
-          placeholder="Ask a question, or find an order by number, subject, department or date…"
+          lang={hindiTyping ? "hi" : undefined}
+          placeholder={
+            hindiTyping
+              ? "हिंदी में लिखें: English letters में टाइप करें (kya, yojana…), Space दबाने पर देवनागरी बनेगी"
+              : "Ask a question, or find an order by number, subject, department or date…"
+          }
           aria-label="Ask a question or find an order"
           rows={3}
           aria-keyshortcuts="Enter"
@@ -2965,6 +3069,22 @@ export function ChatApp({
           onKeyDown={(
             event,
           ) => {
+            // Backspace right after a conversion brings the English letters back.
+            if (
+              event.key === "Backspace" &&
+              hindiTyping &&
+              event.currentTarget.selectionStart === event.currentTarget.selectionEnd
+            ) {
+              const undone = undoConversion(query, event.currentTarget.selectionStart ?? 0, lastConversionRef.current);
+              if (undone) {
+                event.preventDefault();
+                lastConversionRef.current = null;
+                pendingCaretRef.current = undone.caret;
+                setCaret(undone.caret);
+                setQuery(undone.value);
+                return;
+              }
+            }
             if (
               event.key ===
                 "Enter" &&
@@ -2998,13 +3118,13 @@ export function ChatApp({
           >
             ?
           </button>
-          <div className="speech-language-toggle" role="group" aria-label="Voice input language">
+          <div className="speech-language-toggle" role="group" aria-label="Input language (voice and typing)">
             <button
               type="button"
               className={speechLanguage === "en-IN" ? "active" : ""}
               aria-pressed={speechLanguage === "en-IN"}
-              aria-label="Use English voice input"
-              title="English voice input"
+              aria-label="English input"
+              title="English: voice input and typing as typed"
               disabled={busy || speechInputActive}
               onClick={() => setSpeechLanguage("en-IN")}
             >
@@ -3014,8 +3134,8 @@ export function ChatApp({
               type="button"
               className={speechLanguage === "hi-IN" ? "active" : ""}
               aria-pressed={speechLanguage === "hi-IN"}
-              aria-label="Use Hindi voice input with Devanagari text"
-              title="Hindi voice input; text appears in Devanagari"
+              aria-label="Hindi input in Devanagari"
+              title="Hindi: voice input, and typing in English letters becomes Devanagari (kya → क्या)"
               disabled={busy || speechInputActive}
               onClick={() => setSpeechLanguage("hi-IN")}
             >
@@ -3074,6 +3194,22 @@ export function ChatApp({
             </button>
           )}
         </div>
+
+        {hindiTyping && !speechInputActive ? (
+          <HindiTypingBar
+            query={query}
+            caret={caret}
+            transliterator={transliterator}
+            onChoose={(start, end, text) => {
+              const next = `${query.slice(0, start)}${text} ${query.slice(end).replace(/^ /, "")}`;
+              lastConversionRef.current = null;
+              pendingCaretRef.current = start + text.length + 1;
+              setCaret(start + text.length + 1);
+              setQuery(next);
+              composerInputRef.current?.focus();
+            }}
+          />
+        ) : null}
 
         {speechStatus || speechInputActive ? (
           <div className="speech-status" role="status" aria-live="polite">

@@ -3813,3 +3813,64 @@ h1 {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* Hindi typing suggestions under the input (ADR-061). */
+.hindi-typing-bar {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-height: 30px;
+  padding: 0 6px 2px;
+}
+
+.hindi-typing-label {
+  color: var(--accent);
+  background: var(--accent-soft);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.hindi-typing-hint {
+  color: var(--muted);
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.composer .hindi-choice {
+  min-width: 0;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--text);
+  border-radius: 8px;
+  padding: 3px 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.composer .hindi-choice:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--hover-surface);
+}
+
+.composer .hindi-choice-first {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.composer .hindi-choice-latin {
+  color: var(--muted);
+  font-size: 0.82rem;
+  border-style: dashed;
+}
+
+.composer .hindi-choice:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -2,6 +2,12 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 8:40 pm IST (Claude)
+
+- Hinglish typing (ADR-061): with HI selected, English-letter words become Devanagari on
+  Space (browser-only; lexicon from the archive + rules), suggestion bar, Backspace undo.
+  Run `npm run translit:lexicon` once (also nightly). Unit-tested; try it in the browser.
+
 ## 27 Sept 2026, 8:00 pm IST (Claude)
 
 - Start page and search guide (ADR-060): three task cards with examples, the search

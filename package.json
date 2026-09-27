@@ -93,6 +93,8 @@
     "storage:restore": "node --env-file-if-exists=.env --import tsx src/storage-cli.ts restore",
     "test:storage": "tsx src/storage/local-disk.test.ts",
     "test:listing": "tsx src/rag/order-listing.test.ts",
+    "translit:lexicon": "tsx scripts/build-translit-lexicon.ts",
+    "test:translit": "tsx apps/web/lib/transliterate.test.ts",
     "sync:daily": "node scripts/daily-sync.mjs",
     "sync:schedule": "./scripts/install-daily-sync.sh",
     "test:relations": "tsx src/relations/extract.test.ts && tsx src/rag/later-changes.test.ts",
