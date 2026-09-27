@@ -46,6 +46,9 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   year, plus date). `db:load` stores them (migration 008). Answers say when a cited order
   was later changed, and the source card shows "⚠ Amended by GO … dated …" with the
   official link. Local corpus: 46 references, 2 matched (grows with ingestion).
+- **Daily sync (ADR-055):** `npm run sync:daily` (processing only unless `-- --ingest`),
+  report in `data/sync/reports/`; `npm run sync:schedule` installs a nightly launchd job
+  (not installed yet; Abhishek decides when).
 - Department picker: one choice per department (English name preferred).
 - Department filters (chat scope and Search) match by Shasanadesh department ID
   as well as by name (ADR-044).
@@ -65,10 +68,9 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   The portal reports about 177,504.
 - `ingest:portal`: **653 stored in B2**, 0 failures, **372 not yet fetched**. The last
   activity was 26 Sept, 6:50 pm IST. Rerunning `npm run ingest:portal` resumes from the checkpoint.
-- The listed portal orders are **not yet loaded into Postgres or embedded**, so they are not
-  searchable yet.
-- `scripts/shasanadesh-portal-bridge.mjs` and `src/ingest-portal.ts` (with the README
-  and package.json lines for them) are **uncommitted**. Review them and commit when ingestion resumes.
+- The captured orders are loaded into Postgres (db:load, 679 classified, 27 Sept) and
+  browsable; only tier A/B orders with pages and embeddings reach Ask (59 of 679).
+- `scripts/shasanadesh-portal-bridge.mjs` and `src/ingest-portal.ts` are committed (ADR-052).
 
 ## Open problems
 
@@ -91,6 +93,8 @@ run the regression set (~30–45 min):
 
 ```
 git push
+npm run db:migrate                         # adds document_relations (008)
+npm run relations:build
 npm run compare:suspicious -- --max 300    # repeat until no "Remaining" line
 npm run build:retrieval-variants
 npm run build:retrieval-variant-chunks
@@ -104,10 +108,11 @@ Share the summary block and the "Failures" section of `data/eval/runs/<latest>.m
 
 ## Next work (Claude)
 
-- Classification pass 2: local-model pass over low-confidence orders (subject + first page),
-  then a review action in the console that writes `datasets/classification-overrides.jsonl`.
-- Eval set: 24 verified cases in eval/rag-cases.json (26 Sept); grow toward 50–100 from
-  real questions and thumbs-down feedback. Next: speed (live streaming, hosted-model trial).
-- Bilingual department registry (department ID → English + Hindi name) and a deduplicated profile picker.
-- When ingestion resumes: a per-department capture plan and completeness reconciliation,
-  batch db:load + embed for portal captures, and a local-disk policy.
+- Done 26–27 Sept: classification pass 2 + console review (ADR-053), draft streaming and
+  hosted-model settings (ADR-051), per-department capture (ADR-052), order links (ADR-054),
+  daily sync (ADR-055).
+- Eval set: 24 verified cases in eval/rag-cases.json; grow toward 50–100 from real
+  questions and thumbs-down feedback once the baseline run is in.
+- Bilingual department registry (department ID → English + Hindi name) for labels everywhere.
+- Order links, next: rank the current version above the one it replaced; "orders this one
+  relies on" (the `refers` links).

@@ -131,6 +131,20 @@ lists that can be checked against the portal's own totals):
 Then `npm run classify:orders`, `npm run relations:build`, `npm run db:load` and the processing steps in
 `handoff/STATUS.md` make the useful orders searchable.
 
+## Daily sync
+
+`npm run sync:daily` brings the archive up to date in one go: classify → OCR where
+needed → pages → chunks → order links → `db:load` → embeddings for new chunks, then a
+reconciliation report. Every stage is incremental. Fetching new documents is off unless
+you pass `-- --ingest` (the portal still needs your capture through `portal:bridge` first).
+Preview the steps with `npm run sync:daily -- --dry-run`. The report is written to
+`data/sync/reports/<date>.md`, with each step's log in `data/sync/logs/`.
+
+To run it every night on the Mac: `npm run sync:schedule` (02:30 by default; pass a time
+such as `-- 03:15`, add `--ingest` once ingestion resumes, `-- --uninstall` to remove).
+Postgres must be running. Because the project is under `~/Downloads`, give the `node`
+binary the installer prints Full Disk Access, or move the project out of Downloads.
+
 ## Development
 
 Requirements:

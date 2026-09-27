@@ -87,8 +87,11 @@ section, category, subject), which the bridge already captures for every order. 
 | Central ministries (DoE, DoPT, …) and other state sites | Source adapters on a schedule, respecting robots.txt and rate limits | None |
 
 Each daily run: discover → download → B2 → extract/OCR → classify → chunk → embed →
-available in Ask, and ends with a report (new, failed, unavailable, needs review). It
-runs on a small server, not the MacBook Air.
+available in Ask, and ends with a report (new, failed, unavailable, needs review).
+**Built 27 Sept (ADR-055):** `npm run sync:daily` runs the chain and writes
+`data/sync/reports/<date>.md`; `npm run sync:schedule` schedules it nightly on the Mac with
+launchd until hosting is decided, and the same script runs from cron/systemd on a server.
+Fetching is opt-in (`--ingest`) while ingestion is on hold.
 
 ## 6. Phases
 

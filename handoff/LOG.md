@@ -8,6 +8,9 @@ Newest first. One entry per working session or milestone. Append, don't rewrite.
   db:load, "LATER_CHANGES" in the prompt (digit-free), "⚠ Amended by GO …" on source cards.
   Tests: `npm run test:relations`, `test:go-reference`; SQL checked on embedded Postgres.
 - To use it: `npm run db:migrate && npm run relations:build && npm run db:load`.
+- Daily sync (ADR-055): `scripts/daily-sync.mjs` + `scripts/install-daily-sync.sh`
+  (launchd). Tested on a stub project: step order, non-critical vs stopping failures,
+  lock, report. Not scheduled; fetching stays off by default.
 
 ## 27 Sept 2026, 4:50 pm IST (Claude)
 

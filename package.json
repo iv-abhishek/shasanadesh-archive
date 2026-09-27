@@ -87,6 +87,8 @@
     "test:classify": "tsx src/classify/rules.test.ts",
     "classify:orders": "node --import tsx src/classify-orders.ts",
     "relations:build": "tsx src/build-relations.ts",
+    "sync:daily": "node scripts/daily-sync.mjs",
+    "sync:schedule": "./scripts/install-daily-sync.sh",
     "test:relations": "tsx src/relations/extract.test.ts && tsx src/rag/later-changes.test.ts",
     "classify:model": "node --env-file-if-exists=.env --import tsx src/classify/model-pass.ts",
     "test:classify-model": "tsx src/classify/model-pass.test.ts",

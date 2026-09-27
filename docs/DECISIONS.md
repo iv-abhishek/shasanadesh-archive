@@ -678,3 +678,22 @@ amended or superseded is a real risk (ROADMAP Phase 3, "Relationships").
 - Limits: absence of a link does not mean an order is in force; links depend on the later
   order being captured and having native text or a descriptive subject. First run on the
   local corpus: 46 references (1 amends, 2 corrects), 2 matched.
+
+## ADR-055 - Daily sync: one script, launchd on the Mac for now
+
+- `scripts/daily-sync.mjs` (`npm run sync:daily`) runs, in order: db:check,
+  [ingest:sources, ingest:portal --until-idle], classify:orders, ocr:needs, build:pages,
+  compare:suspicious --max 150, build:retrieval-variants, build:retrieval-variant-chunks,
+  relations:build, db:load, embed:chunks, portal:report. Each stage is already
+  incremental (existing OCR/pages are skipped; embeddings fill `embedding IS NULL`).
+- A failure in a stage that later stages depend on stops the run; OCR, relations,
+  ingestion and the report are non-critical and only warn. Every run writes
+  `data/sync/reports/<date>.md` + `.json` and per-step logs, and posts a macOS
+  notification. A lock file prevents overlapping runs (taken over after 12 h).
+- **Fetching is opt-in** (`--ingest` / `SYNC_INGEST=1`) while ingestion is on hold. The
+  portal side stays person-started: someone captures the newest listing through the
+  bridge (CAPTCHA by hand); the job only downloads what was captured.
+- Scheduling: `scripts/install-daily-sync.sh` writes a launchd agent
+  (`in.shasanadesh.daily-sync`, 02:30 local by default, background priority). launchd
+  runs a missed job after wake. Projects under `~/Downloads` need Full Disk Access for
+  `node` (macOS privacy). On a future server the same script runs from cron/systemd.
