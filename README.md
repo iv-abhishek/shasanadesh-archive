@@ -108,6 +108,24 @@ its local-only behavior. See
 [Configuration](docs/CONFIGURATION.md) for the B2 setup and [Product Plan](docs/PRODUCT_PLAN.md)
 for the remaining pilot work.
 
+### Bulk Shasanadesh portal capture
+
+For a portal search that has been authenticated by a person, run `npm run portal:bridge`
+and open `http://127.0.0.1:8799` in the same browser. The bridge accepts only official
+Shasanadesh PDF links and writes result metadata to the ignored local inventory under
+`data/portal-capture/`. Capture each results page through the bridge, then mark the listing
+complete after reaching the portal's last page. In a second terminal, run
+`npm run ingest:portal`; it resumes from local checkpoints, preserves each original PDF
+and metadata under `data/documents/`, and uploads originals plus manifests to the configured
+B2 `shasanadesh` collection. PDF requests use the configured crawler identity and at least
+the standard three-second per-site delay. B2 configuration is mandatory for this importer.
+
+The importer records portal page, department, section, order number/date, category, subject,
+and source URL. It retries transient failures, records unavailable 404/410 links for review,
+and continues until the captured listing is complete and each unique inventory entry has a
+terminal result. Search CAPTCHA completion remains a manual browser step; the bridge neither
+solves nor bypasses it.
+
 ## Development
 
 Requirements:
