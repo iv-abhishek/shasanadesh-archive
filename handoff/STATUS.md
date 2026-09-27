@@ -83,8 +83,9 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   1,025 unique orders, so roughly as many were probably skipped. See PLAN.md › Ingestion.
 - The profile department picker lists both spellings (English and Hindi) once portal
   orders are loaded. It needs a bilingual department registry (PLAN.md › Search).
-- Local disk: the importer keeps every original under `data/documents/`
-  (~0.5 MB/PDF, ~1.4 MB/order with derived files), which is ~250 GB for the full portal.
+- Local disk: solved by ADR-056 (B2 is the archive, the Mac a cache). Projection for the
+  full portal ≈ 15 GB of order files + a few GB of Postgres. Run `npm run storage:trim --
+  --apply` once to free the ~470 MB already reclaimable.
 
 ## Next commands (Abhishek, on the Mac)
 

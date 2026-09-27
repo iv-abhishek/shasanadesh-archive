@@ -697,3 +697,26 @@ amended or superseded is a real risk (ROADMAP Phase 3, "Relationships").
   (`in.shasanadesh.daily-sync`, 02:30 local by default, background priority). launchd
   runs a missed job after wake. Projects under `~/Downloads` need Full Disk Access for
   `node` (macOS privacy). On a future server the same script runs from cron/systemd.
+
+## ADR-056 - Local disk: B2 is the archive, the Mac keeps a working cache
+
+Measured on 27 Sept (680 orders): tier C orders use 660 KB each, almost all of it the
+original PDF; tier A orders 4.7 MB each, mostly OCR page images (300 dpi PNGs, ~1 MB per
+page) that nothing reads after OCR. Keeping everything for 177,504 orders would need
+~140 GB and grow without limit.
+
+- Every order keeps `metadata.json` and extracted text locally (classification, links,
+  browse). The original PDF stays locally only for orders the processing gate processes
+  (tier A/B or unsure), since OCR and rebuilds need it; routine originals live only in B2.
+- `ocr:needs` deletes each page image once its text is written.
+- `npm run storage:trim [-- --apply]` removes leftover OCR images and routine originals.
+  An original is deleted only when its local bytes match the SHA-256 recorded for the B2
+  copy; metadata records `localCopy: evicted`. Dry run by default.
+- `npm run storage:restore -- --needed | --source-id <id>` downloads originals back from
+  B2 (by file ID, SHA-256 checked) when a tier is corrected to A/B. Needs `readFiles`.
+- `ingest:portal` and `ingest:source*` stop before free space drops below
+  `MIN_FREE_DISK_GB` (default 40; measured with `df -Pk`, correct on macOS and Linux).
+- The daily sync runs restore (after classify) and trim (after embeddings) and ends with
+  `storage:report`.
+- Projection with the current tier mix: ≈ 15 GB of order files for the full portal, plus
+  Postgres (text, chunks and embeddings of tier A/B only), a few GB.

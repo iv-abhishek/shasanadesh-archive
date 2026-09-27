@@ -2,6 +2,13 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 5:00 pm IST (Claude)
+
+- Local disk policy (ADR-056): `storage:report|trim|restore`, OCR page images deleted after
+  reading, free-space floor in both importers (`MIN_FREE_DISK_GB`, default 40), restore +
+  trim in the daily sync. Measured: tier C 660 KB/order → ~21 KB after trim; projection for
+  177,504 orders ≈ 15 GB. Trim/restore tested on copies (restore with a simulated B2).
+
 ## 27 Sept 2026, 4:05 pm IST (Claude)
 
 - Links between orders (ADR-054): `relations:build`, migration 008 `document_relations`,

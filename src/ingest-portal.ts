@@ -36,6 +36,7 @@ import { crawlDelayMs, crawlerUserAgent, PDFINFO_BIN, PDFTOTEXT_BIN } from "./li
 import { preservePreviousCapture } from "./lib/capture-history.js";
 import { isB2Enabled, refreshCaptureManifestInB2, storeCaptureInB2, type B2CaptureStorage } from "./storage/b2.js";
 import { classifyOrder } from "./classify/rules.js";
+import { diskSpaceProblem } from "./storage/local-disk.js";
 
 const UNTIL_IDLE = process.argv.includes("--until-idle");
 const KEEP_ROUTINE_LOCAL = process.argv.includes("--keep-routine-local");
@@ -430,6 +431,12 @@ async function main(): Promise<void> {
     }
 
     if (candidate) {
+      const diskProblem = await diskSpaceProblem(documentsRoot);
+      if (diskProblem) {
+        console.error(diskProblem);
+        process.exitCode = 3;
+        return;
+      }
       const attempt = (attempts.get(candidate.sourceId) ?? 0) + 1;
       attempts.set(candidate.sourceId, attempt);
       attemptedSinceReport++;

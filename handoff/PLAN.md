@@ -39,8 +39,8 @@ edit it here and say why (with the date) under "Route changes".
     rows between pages.
   - After each batch: `db:load` → build pages/chunks → `embed:chunks`, so new
     orders become searchable.
-  - Disk: decide whether to keep all originals locally or only in B2 (with
-    local cache eviction after the B2 sha256 check).
+  - Disk (decided 27 Sept, ADR-056): originals of routine orders only in B2, OCR images
+    deleted, importers stop at `MIN_FREE_DISK_GB`; `storage:restore` brings originals back.
 - Other official sources: `upgov`, `invest-up`, `uppolice` adapters built;
   `doe-gfr` ingested. The submission queue (people paste GO links/IDs) is not yet built.
 - Official bulk request to NIC / the department: to be drafted by Abhishek.

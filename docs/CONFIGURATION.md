@@ -106,6 +106,15 @@ This initial integration supports single uploads up to 5 GB. Derived page, OCR, 
 artifacts are not uploaded yet. For a bucket-restricted key, do not use a filename prefix
 that excludes either the `raw/` or `processed/` path.
 
+`npm run storage:restore` downloads originals back from B2, so the key also needs the
+`readFiles` capability (a key made with "Read and Write" access has it).
+
+## Local disk (ADR-056)
+
+| Variable | Purpose |
+|---|---|
+| `MIN_FREE_DISK_GB` | `ingest:portal` and `ingest:source*` stop before free space drops below this (default `40`; `0` turns the check off) |
+
 ## LLM
 
 | Variable | Purpose |

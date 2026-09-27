@@ -27,6 +27,7 @@ import { preservePreviousCapture } from "./lib/capture-history.js";
 import { PDFINFO_BIN, PDFTOTEXT_BIN, crawlDelayMs } from "./lib/tool-config.js";
 import { listSourceAdapters } from "./sources/registry.js";
 import { politeFetch } from "./sources/http.js";
+import { diskSpaceProblem } from "./storage/local-disk.js";
 
 const execFileAsync = promisify(execFile);
 const MAX_PDF_BYTES = 500_000_000;
@@ -311,6 +312,12 @@ async function runAdapter(adapter: SourceAdapter, force: boolean, limit: number 
 
   const totals: RunTotals = { downloaded: 0, stored: 0, skipped: 0, failed: 0 };
   for (let index = 0; index < selectedRecords.length; index++) {
+    const diskProblem = await diskSpaceProblem(process.cwd());
+    if (diskProblem) {
+      console.error(diskProblem);
+      process.exitCode = 3;
+      break;
+    }
     const result = await ingestOne(selectedRecords[index], adapter, force, b2Enabled);
     totals[result === "downloaded" ? "downloaded" : result === "stored" ? "stored" : result === "skipped" ? "skipped" : "failed"]++;
     if (index < selectedRecords.length - 1 && result !== "skipped") {

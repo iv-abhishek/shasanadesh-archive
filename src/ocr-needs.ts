@@ -163,6 +163,8 @@ async function ocrDocument(
       );
 
       const pageText = await readFile(`${outputBase}.txt`, "utf8");
+      // The image is not read again; ~1 MB per page at 300 dpi (ADR-056).
+      await rm(imagePath, { force: true });
       pageTexts.push(
         `\n\n===== PAGE ${i + 1} =====\n\n${pageText.trim()}\n`,
       );

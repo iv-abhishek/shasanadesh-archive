@@ -6,12 +6,14 @@
  *
  *   ingest (only with --ingest)   ingest:sources, ingest:portal --until-idle
  *   classify:orders               tiers decide what the heavy steps skip
+ *   storage:restore --needed      originals back from B2 for orders now tier A/B
  *   ocr:needs, build:pages        new/scanned documents → page text
  *   compare:suspicious --max N    selective OCR for garbled native pages
  *   build:retrieval-variants, build:retrieval-variant-chunks
  *   relations:build               "amended / superseded by" links (ADR-054)
  *   db:load, embed:chunks         Postgres + embeddings for new chunks only
- *   portal:report                 reconciliation (information only)
+ *   storage:trim --apply          drop local copies B2 already holds (ADR-056)
+ *   portal:report, storage:report reconciliation and disk use (information only)
  *
  * Every stage is incremental, so a day without new documents finishes quickly.
  * Fetching is OFF unless --ingest (or SYNC_INGEST=1) is given: the portal's new
@@ -54,6 +56,7 @@ const STEPS = [
       ]
     : []),
   { name: "classify:orders", run: ["classify:orders"], critical: true },
+  { name: "storage:restore", run: ["storage:restore", "--", "--needed"], critical: false },
   { name: "ocr:needs", run: ["ocr:needs"], critical: false },
   { name: "build:pages", run: ["build:pages"], critical: true },
   { name: "compare:suspicious", run: ["compare:suspicious", "--", "--max", ocrMax], critical: false },
@@ -62,7 +65,9 @@ const STEPS = [
   { name: "relations:build", run: ["relations:build"], critical: false },
   { name: "db:load", run: ["db:load"], critical: true },
   { name: "embed:chunks", run: ["embed:chunks"], critical: true },
+  { name: "storage:trim", run: ["storage:trim", "--", "--apply"], critical: false },
   { name: "portal:report", run: ["portal:report"], critical: false },
+  { name: "storage:report", run: ["storage:report"], critical: false },
 ].filter((step) => !skip.has(step.name));
 
 const pad = (n) => String(n).padStart(2, "0");

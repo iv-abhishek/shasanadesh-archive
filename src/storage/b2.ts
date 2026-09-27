@@ -21,6 +21,7 @@ interface B2Authorization {
   apiInfo: {
     storageApi: {
       apiUrl: string;
+      downloadUrl?: string;
       allowed: {
         buckets: B2Bucket[];
         capabilities: string[];
@@ -63,7 +64,9 @@ interface UploadContext {
   config: B2Config;
   bucketId: string;
   apiUrl: string;
+  downloadUrl: string;
   authorizationToken: string;
+  capabilities: string[];
 }
 
 let authorizationPromise: Promise<UploadContext> | null = null;
@@ -199,7 +202,9 @@ async function authorize(): Promise<UploadContext> {
     config,
     bucketId: selectedBucket.id,
     apiUrl: storageApi.apiUrl.replace(/\/$/, ""),
+    downloadUrl: (storageApi.downloadUrl ?? storageApi.apiUrl).replace(/\/$/, ""),
     authorizationToken: authorization.authorizationToken,
+    capabilities: allowed.capabilities ?? [],
   };
 }
 
@@ -473,4 +478,32 @@ export async function refreshCaptureManifestInB2(input: {
     raw: input.storage.raw,
     metadata,
   };
+}
+
+/**
+ * Download an archived object by file ID and check it against the recorded
+ * SHA-256 (ADR-056: local copies are a cache, B2 is the source of truth).
+ * The application key needs the readFiles capability.
+ */
+export async function downloadFromB2(reference: B2ObjectReference): Promise<Buffer> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const context = await getAuthorization(attempt > 0);
+    if (!context.capabilities.includes("readFiles") && !context.capabilities.includes("all")) {
+      throw new Error("The Backblaze application key needs the readFiles capability to restore originals.");
+    }
+    const url = new URL(`${context.downloadUrl}/b2api/v4/b2_download_file_by_id`);
+    url.searchParams.set("fileId", reference.fileId);
+    const response = await fetch(url, {
+      headers: { Authorization: context.authorizationToken },
+      signal: AbortSignal.timeout(120_000),
+    });
+    if (response.status === 401 && attempt === 0) continue; // expired token: re-authorize once
+    if (!response.ok) throw apiError(response, await responseJson(response));
+    const bytes = Buffer.from(await response.arrayBuffer());
+    if (sha256(bytes) !== reference.sha256) {
+      throw new Error(`B2 object ${reference.key} does not match its recorded SHA-256.`);
+    }
+    return bytes;
+  }
+  throw new Error("Backblaze B2 authorization failed twice.");
 }

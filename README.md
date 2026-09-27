@@ -124,12 +124,27 @@ lists that can be checked against the portal's own totals):
 4. `npm run ingest:portal -- --until-idle` downloads the listed PDFs (>= 3 s apart),
    stores originals and manifests in B2, and exits when done. Routine orders
    (tier C) keep their original only in B2 to save disk (`--keep-routine-local` to keep
-   them); `--evict-existing` applies this to orders downloaded earlier.
+   them); `--evict-existing` applies this to orders downloaded earlier. The importer stops
+   before free disk space drops below `MIN_FREE_DISK_GB` (default 40).
 5. `npm run portal:report` reconciles every department: portal total, pages, orders,
    archived, unavailable, waiting, and local disk use.
 
 Then `npm run classify:orders`, `npm run relations:build`, `npm run db:load` and the processing steps in
 `handoff/STATUS.md` make the useful orders searchable.
+
+## Local disk
+
+B2 is the archive; the Mac keeps a working copy (ADR-056). Every order keeps its metadata
+and extracted text locally; the original PDF stays only for orders Ask uses (tier A/B or
+unsure). OCR page images are deleted once read.
+
+- `npm run storage:report`: disk use by tier, free space, and the projection for the full portal.
+- `npm run storage:trim`: what can be deleted safely (dry run); add `-- --apply` to delete.
+  An original is deleted only when its bytes match the SHA-256 of the B2 copy.
+- `npm run storage:restore -- --needed`: brings originals back from B2 when an order's
+  tier is corrected to A/B (also `-- --source-id <id>`).
+
+The daily sync runs restore and trim itself.
 
 ## Daily sync
 
