@@ -145,6 +145,7 @@ console.log("order listing tests passed");
 
   const wild = find("solar* orders of agriculture");
   assert.deepEqual(wild?.patterns, ["solar*"]);
+  assert.equal(wild?.semanticText, "solar"); // English stem, matched by meaning against Hindi subjects
   assert.equal(wild?.department?.id, 37);
   assert.deepEqual(find("orders with *पंप*")?.patterns, ["*पंप*"]);
   assert.deepEqual(find("recent orders of PWD?")?.patterns, []); // a closing "?" is punctuation

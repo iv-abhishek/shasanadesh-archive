@@ -493,6 +493,31 @@ h1 {
   stroke-linejoin: round;
 }
 
+/* Stop (ADR-059): a square inside a spinning ring while an answer is written. */
+.composer .composer-stop-button {
+  position: relative;
+}
+
+.composer .composer-stop-button .send-progress-spinner {
+  position: absolute;
+  inset: 5px;
+  width: auto;
+  height: auto;
+}
+
+.composer .composer-stop-button svg {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  stroke: none;
+}
+
+/* A stopped answer is the person's choice, not an error. */
+.error-box.stopped-box {
+  background: var(--surface-soft);
+  color: var(--muted);
+}
+
 .send-progress-spinner {
   width: 16px;
   height: 16px;

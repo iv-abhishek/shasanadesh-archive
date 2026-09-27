@@ -2,6 +2,12 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 7:30 pm IST (Claude)
+
+- Stop button (ADR-059): Stop/Esc cancels the request end to end (browser → proxy → API →
+  retrieval/model); the question returns to the box for editing. Wildcard stems now join
+  meaning-based subject matching.
+
 ## 27 Sept 2026, 7:00 pm IST (Claude)
 
 - Find orders from Ask (ADR-058): number, phrase, wildcard, section/issuer, department,

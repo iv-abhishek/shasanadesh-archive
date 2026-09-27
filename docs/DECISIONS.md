@@ -789,3 +789,23 @@ the team; end users only have Ask.
   badge reads "Order search".
 - **Not possible from the data**: the signing officer's name is not recorded in the
   portal listing, so "signed by <name>" is matched as text only.
+
+## ADR-059 - Stop an answer
+
+A person who changes their mind should not wait for a 30–60 s answer, and on the Mac
+a forgotten answer holds the GPU queue for the next question.
+
+- While an answer is in progress the send button becomes **Stop** (square in a spinning
+  ring); **Esc** does the same unless a dialog is open. The browser aborts its request;
+  the turn shows "Stopped. The answer was not finished." with Retry, nothing is saved,
+  and the question returns to the input box (unless something new was typed) so it can
+  be edited and sent again.
+- The web proxy passes the browser's abort to the API (`signal: request.signal`).
+- The API aborts on the response `close` event when the stream had not finished:
+  retrieval `fetch`es and the model stream are cancelled (`signal`), work waiting in the
+  local GPU queue does not start (`throwIfAborted`), and because the OpenAI SDK ends a
+  cancelled stream quietly, `generateCompletion` checks the signal after the loop so a
+  half-written draft is never validated or repaired. A stopped request is logged, not
+  reported as an error. Checked with a fake streaming model: the model connection closes
+  within the stop.
+- Also: wildcard stems (`*solar*` → "solar") take part in meaning-based subject matching.

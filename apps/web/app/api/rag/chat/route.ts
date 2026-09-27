@@ -37,6 +37,9 @@ export async function POST(
           },
           body,
           cache: "no-store",
+          // Stop (ADR-059): the browser cancelling its request closes the
+          // API stream too, which stops retrieval and generation.
+          signal: request.signal,
         },
       );
 

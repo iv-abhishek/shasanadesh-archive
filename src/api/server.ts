@@ -373,6 +373,8 @@ const SearchBodySchema = z.object({
 });
 
 interface RetrievalOptions {
+  /** Cancelled when the person stops the answer (ADR-059). */
+  signal?: AbortSignal;
   expandNeighbors?: boolean;
   neighborRadius?: number;
   maxEvidencePages?: number;
@@ -479,6 +481,8 @@ async function retrieve(
   return runLocalGpuExclusive(
     "retrieval",
     async () => {
+      // Stopped while waiting for the GPU: do not start.
+      options?.signal?.throwIfAborted();
       let response: Response;
 
       try {
@@ -486,6 +490,7 @@ async function retrieve(
         `${RETRIEVAL_BASE_URL}/search`,
         {
           method: "POST",
+          signal: options?.signal,
           headers: {
             "content-type":
               "application/json",
@@ -558,8 +563,11 @@ async function generateCompletion(
   temperature: number,
   maxTokens = LLM_MAX_TOKENS,
   onDelta?: (text: string) => void,
+  signal?: AbortSignal,
 ): Promise<{ text: string; truncated: boolean }> {
   const run = async () => {
+      // Stopped while waiting for the GPU: give the slot to the next question.
+      signal?.throwIfAborted();
       let upstream;
 
       try {
@@ -574,7 +582,9 @@ async function generateCompletion(
             max_tokens: maxTokens,
             stream: true,
             ...LLM_EXTRA_BODY,
-          } as Parameters<typeof openai.chat.completions.create>[0]) as unknown as AsyncIterable<{
+          } as Parameters<typeof openai.chat.completions.create>[0],
+          // Aborting closes the model stream, so the model stops writing.
+          { signal }) as unknown as AsyncIterable<{
             choices: Array<{ delta?: { content?: string | null }; finish_reason?: string | null }>;
           }>;
       } catch (error) {
@@ -603,6 +613,9 @@ async function generateCompletion(
           finishReason = choice.finish_reason;
         }
       }
+      // The SDK ends the loop quietly when aborted; do not treat a stopped,
+      // half-written draft as an answer (validation, repair would follow).
+      signal?.throwIfAborted();
 
       // Stopped by max_tokens: cut back to the last complete sentence/bullet
       // rather than returning a half word (src/rag/truncation.ts).
@@ -1127,10 +1140,18 @@ server.post(
       "no",
     );
 
+    // Stop (ADR-059): when the browser closes the stream (the person pressed
+    // Stop or left), cancel retrieval and generation so the local GPU is freed.
+    const stop = new AbortController();
+    reply.raw.on("close", () => {
+      if (!reply.raw.writableFinished) stop.abort();
+    });
+
     const sendEvent = (
       event: string,
       data: unknown,
     ) => {
+      if (reply.raw.destroyed || reply.raw.writableEnded) return;
       reply.raw.write(
         `event: ${event}\n`,
       );
@@ -1179,6 +1200,7 @@ server.post(
         {
           expandNeighbors: true,
           neighborRadius: RAG_NEIGHBOR_RADIUS,
+          signal: stop.signal,
           maxEvidencePages: Math.max(
             RAG_TOP_K,
             RAG_MAX_EVIDENCE_PAGES,
@@ -1216,6 +1238,7 @@ server.post(
           {
             expandNeighbors: true,
             neighborRadius: RAG_NEIGHBOR_RADIUS,
+            signal: stop.signal,
             maxEvidencePages: Math.max(
               RAG_TOP_K,
               RAG_MAX_EVIDENCE_PAGES,
@@ -1260,6 +1283,7 @@ server.post(
           {
             expandNeighbors: true,
             neighborRadius: RAG_NEIGHBOR_RADIUS,
+            signal: stop.signal,
             maxEvidencePages: Math.max(
               RAG_TOP_K,
               RAG_MAX_EVIDENCE_PAGES,
@@ -1513,6 +1537,7 @@ server.post(
             : LLM_TEMPERATURE,
           tokenBudget,
           onDraftDelta,
+          stop.signal,
         );
 
     draftStreamer?.finish();
@@ -1617,6 +1642,8 @@ server.post(
             repairMessages,
             0,
             LLM_REPAIR_MAX_TOKENS ?? tokenBudget,
+            undefined,
+            stop.signal,
           );
 
       const repairedAnswer =
@@ -1781,6 +1808,10 @@ server.post(
         },
       );
     } catch (error) {
+      if (stop.signal.aborted) {
+        request.log.info({ query }, "answer stopped by the user");
+        return;
+      }
       sendEvent(
         "error",
         {
@@ -1791,7 +1822,7 @@ server.post(
         },
       );
     } finally {
-      reply.raw.end();
+      if (!reply.raw.writableEnded) reply.raw.end();
     }
   },
 );

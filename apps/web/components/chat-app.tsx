@@ -111,6 +111,8 @@ interface ChatTurn {
   sources: Source[];
   done: DoneEvent | null;
   error: string | null;
+  /** The person pressed Stop before the answer was finished (ADR-059). */
+  stopped?: boolean;
   elapsedMs: number | null;
   status?: string | null;
   /** When the question was asked (ms since epoch). */
@@ -1634,7 +1636,10 @@ function TurnView({
         </div>
 
         {turn.error ? (
-          <div className="error-box error-box-with-action" role="alert">
+          <div
+            className={turn.stopped ? "error-box error-box-with-action stopped-box" : "error-box error-box-with-action"}
+            role={turn.stopped ? "status" : "alert"}
+          >
             <span>{turn.error}</span>
             {onRetry ? (
               <button
@@ -1968,6 +1973,21 @@ export function ChatApp({
 
   const [busy, setBusy] =
     useState(false);
+  // The request in flight, so Stop (or Esc) can cancel it.
+  const inFlightRef = useRef<AbortController | null>(null);
+  const stopAnswer = () => inFlightRef.current?.abort();
+
+  // Esc stops the answer too, unless a dialog (e.g. the page viewer) is open.
+  useEffect(() => {
+    if (!busy) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (document.querySelector('[role="dialog"], dialog[open]')) return;
+      inFlightRef.current?.abort();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [busy]);
 
   const conversationEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -2313,6 +2333,8 @@ export function ChatApp({
       options: { regenerateOf?: ChatTurn } = {},
     ) => {
       setBusy(true);
+      const controller = new AbortController();
+      inFlightRef.current = controller;
 
       const id =
         Date.now();
@@ -2419,6 +2441,7 @@ export function ChatApp({
                 regenerate:
                   Boolean(options.regenerateOf),
               }),
+              signal: controller.signal,
             },
           );
 
@@ -2766,17 +2789,32 @@ export function ChatApp({
         }
 
       } catch (error) {
-        update(
-          (turn) => ({
+        if (controller.signal.aborted) {
+          // Stopped: nothing is saved; the question goes back into the box
+          // (unless something new was typed) so it can be edited and re-sent.
+          update((turn) => ({
             ...turn,
-            error:
-              describeFetchFailure(error),
-            elapsedMs:
-              performance.now() -
-              started,
-          }),
-        );
+            stopped: true,
+            status: null,
+            draft: undefined,
+            error: "Stopped. The answer was not finished.",
+            elapsedMs: performance.now() - started,
+          }));
+          setQuery((current) => (current.trim() ? current : question));
+        } else {
+          update(
+            (turn) => ({
+              ...turn,
+              error:
+                describeFetchFailure(error),
+              elapsedMs:
+                performance.now() -
+                started,
+            }),
+          );
+        }
       } finally {
+        if (inFlightRef.current === controller) inFlightRef.current = null;
         setBusy(false);
       }
     };
@@ -3000,25 +3038,35 @@ export function ChatApp({
               )}
             </svg>
           </button>
-          <button
-            type="submit"
-            className="composer-submit-button"
-            aria-label={busy ? "Sending message" : "Send message"}
-            title={busy ? "Sending message" : "Send message"}
-            disabled={
-              busy ||
-              speechInputActive ||
-              !query.trim()
-            }
-          >
-            {busy ? (
+          {busy ? (
+            <button
+              type="button"
+              className="composer-submit-button composer-stop-button"
+              aria-label="Stop answer"
+              title="Stop (Esc)"
+              onClick={stopAnswer}
+            >
               <span className="send-progress-spinner" aria-hidden="true" />
-            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="8" y="8" width="8" height="8" rx="1.5" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              type="submit"
+              className="composer-submit-button"
+              aria-label="Send message"
+              title="Send message"
+              disabled={
+                speechInputActive ||
+                !query.trim()
+              }
+            >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M12 19V5m-7 7 7-7 7 7" />
               </svg>
-            )}
-          </button>
+            </button>
+          )}
         </div>
 
         {speechStatus || speechInputActive ? (

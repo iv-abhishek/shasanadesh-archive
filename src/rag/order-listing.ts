@@ -399,7 +399,9 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
   const explicitSearch = explicit || Boolean(by || section);
   if (mode === "recent" && !range && !RECENT_WORD.test(lower) && !department && !findVerb) return null;
 
-  const semanticParts = [...phrases, ...words];
+  // Wildcard stems count for meaning too: "*solar*" should still find "सोलर" subjects.
+  const patternStems = patterns.map((pattern) => pattern.replace(/[*?]+/g, " ").trim()).filter((stem) => stem.length >= 3);
+  const semanticParts = [...phrases, ...patternStems, ...words];
   return {
     mode,
     explicit: explicitSearch,
