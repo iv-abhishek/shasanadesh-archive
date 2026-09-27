@@ -521,7 +521,7 @@ export function buildListingAnswer(request: ListingRequest, outcome: ListingOutc
     const number = order.goNumber ? (hi ? `संख्या ${order.goNumber}` : `GO ${order.goNumber}`) : hi ? "संख्या अंकित नहीं" : "number not recorded";
     const subject =
       shorten((order.subject ?? "").replace(/\s+/g, " ").trim(), 220) ||
-      (hi ? `विषय अंकित नहीं (आदेश ${order.sourceId})` : `subject not recorded (order ${order.sourceId})`);
+      (hi ? "विषय अंकित नहीं" : "subject not recorded"); // no internal IDs in chat (Rulebook §1)
     const department = outcome.scope.kind === "department" || !order.department ? "" : ` · ${order.department}`;
     return `${marker} **${displayDate(order.goDate)}** · ${number}${department} — ${subject} [S${index + 1} p.1]`;
   };
@@ -594,6 +594,7 @@ export async function listOrders(
     patterns: request.patterns.length ? request.patterns : undefined,
     pageSize: PAGE,
     sort: "date_desc",
+    governmentOnly: true, // Rulebook §2
   };
 
   // Finding a particular order searches every department unless one is named;

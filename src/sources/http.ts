@@ -16,6 +16,7 @@
  */
 
 import { crawlDelayMs, crawlerUserAgent } from "../lib/tool-config.js";
+import { isGovernmentHost } from "../lib/government-hosts.js";
 
 export class PolicyError extends Error {}
 
@@ -119,6 +120,10 @@ export interface PoliteFetchOptions {
 
 export function assertAllowedUrl(value: string, allowedHosts: readonly string[]): URL {
   const url = new URL(value);
+  // Rulebook §2: never fetch from a private site, whatever an adapter allows.
+  if (!isGovernmentHost(url.hostname)) {
+    throw new PolicyError(`Refusing ${url.href}: ${url.hostname} is not a government site (docs/RULES.md §2)`);
+  }
   if (url.protocol !== "https:" || !allowedHosts.includes(url.hostname)) {
     throw new PolicyError(`Refusing ${url.href}: not an HTTPS URL on ${allowedHosts.join(", ")}`);
   }

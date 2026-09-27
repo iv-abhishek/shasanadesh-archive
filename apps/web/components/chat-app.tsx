@@ -26,6 +26,7 @@ import {
 } from "../lib/sources";
 import { formatGoReference } from "../lib/go-reference";
 import { SearchGuide, StartPanel } from "./start-panel";
+import { isGovernmentUrl } from "../lib/government-hosts";
 import {
   convertFinishedWord,
   convertTrailingWord,
@@ -51,8 +52,9 @@ interface Source {
   department: string | null;
   goNumber: string | null;
   goDate: string | null;
-  sourceUrl: string;
-  pageUrl: string;
+  /** Official government URLs only (Rulebook §1); null when there is none. */
+  sourceUrl: string | null;
+  pageUrl: string | null;
   numericConflict: boolean;
   numericVerificationStatus:
     VerificationStatus;
@@ -202,15 +204,13 @@ interface PersistedConversationResponse {
     PersistedMessage[];
 }
 
-interface ViewerState {
-  source: Source;
-}
 
-function pdfProxyUrl(source: Source): string {
-  return (
-    `/api/rag/pdf?sourceId=${encodeURIComponent(source.sourceId)}` +
-    `#page=${source.pageNumber}&zoom=page-width`
-  );
+
+/** The official URL for a cited page (#page=N), or null when there is no government link. */
+function officialPageUrl(source: Source): string | null {
+  if (source.pageUrl && isGovernmentUrl(source.pageUrl)) return source.pageUrl;
+  if (source.sourceUrl && isGovernmentUrl(source.sourceUrl)) return `${source.sourceUrl.split("#")[0]}#page=${source.pageNumber}`;
+  return null;
 }
 
 const CHAT_API_PATH =
@@ -1250,7 +1250,7 @@ function SourceGroupCard({
       )
     : null;
   // Citations point to the issuing government site, not to our archived copy.
-  const officialUrl = first?.sourceUrl && /^https:\/\//.test(first.sourceUrl) ? first.sourceUrl : null;
+  const officialUrl = first && isGovernmentUrl(first.sourceUrl) ? first.sourceUrl : null;
 
   const copyReference = async () => {
     if (!reference) return;
@@ -1287,7 +1287,7 @@ function SourceGroupCard({
           page.cited ? "page-chip-cited" : page.retrievalRole === "neighbor" ? "page-chip-nearby" : "page-chip-direct",
           mixed && RISKY_STATUSES.has(page.numericVerificationStatus) ? "page-chip-risky" : "",
         ].join(" ").trim()}
-        title={`${page.label} · ${role} · ${statusLabel(page.numericVerificationStatus)} — open page ${page.pageNumber}`}
+        title={`${page.label} · ${role} · ${statusLabel(page.numericVerificationStatus)} — open page ${page.pageNumber} on the official site`}
         onClick={() => onOpenSource(page)}
       >
         p.{page.pageNumber}
@@ -1357,7 +1357,6 @@ function SourceGroupCard({
             {language === "hi" ? "आधिकारिक प्रति ↗" : "Official copy ↗"}
           </a>
         ) : null}
-        <span className="source-id">{group.sourceId}</span>
       </div>
     </section>
   );
@@ -1472,10 +1471,13 @@ function answerCopyText(turn: ChatTurn): string {
       seen.add(key);
       return true;
     })
-    .map(
-      (source) =>
-        `[${source.label} p.${source.pageNumber}] ${source.documentTitle || source.department || "Government order"} (${source.sourceId})`,
-    );
+    // Rulebook §1: the reference and the official link, never an internal ID.
+    .map((source) => {
+      const reference = formatGoReference(source, /[\u0900-\u097F]/.test(answer) ? "hi" : "en");
+      const title = source.documentTitle || source.department || "";
+      const url = officialPageUrl(source);
+      return `[${source.label} p.${source.pageNumber}] ${reference}${title && !reference.includes(title) ? ` — ${title}` : ""}${url ? `\n    ${url}` : ""}`;
+    });
 
   return lines.length > 0 ? `${answer}\n\nSources:\n${lines.join("\n")}` : answer;
 }
@@ -1930,59 +1932,6 @@ function DraftPreview({ text }: { text: string }) {
   );
 }
 
-function SourceViewer({
-  source,
-  onClose,
-}: {
-  source: Source;
-  onClose: () => void;
-}) {
-  return (
-    <div className="viewer-backdrop">
-      <aside className="viewer-panel">
-        <div className="viewer-header">
-          <div>
-            <div className="section-label">Source viewer</div>
-            <div className="viewer-title">
-              {source.department ?? "Government order"} · {source.label} · p.{source.pageNumber}
-            </div>
-          </div>
-
-          <button
-            type="button"
-            className="viewer-close"
-            onClick={onClose}
-            aria-label="Close source viewer"
-          >
-            ×
-          </button>
-        </div>
-
-        <div className="viewer-actions">
-          <span className={statusClass(source.numericVerificationStatus)}>
-            {statusLabel(source.numericVerificationStatus)}
-          </span>
-
-          <a
-            href={source.pageUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="viewer-original"
-          >
-            Open original
-          </a>
-        </div>
-
-        <iframe
-          className="pdf-frame"
-          src={pdfProxyUrl(source)}
-          title={`Source ${source.label} page ${source.pageNumber}`}
-        />
-      </aside>
-    </div>
-  );
-}
-
 export function ChatApp({
   workspaceUserId,
   conversationId,
@@ -2098,7 +2047,7 @@ export function ChatApp({
     };
   }, [guideOpen]);
 
-  // Esc stops the answer too, unless a dialog (e.g. the page viewer) is open.
+  // Esc stops the answer too, unless a dialog (e.g. the search guide) is open.
   useEffect(() => {
     if (!busy) return;
     const onKey = (event: KeyboardEvent) => {
@@ -2212,8 +2161,6 @@ export function ChatApp({
     });
   }, [turns.length]);
 
-  const [viewer, setViewer] =
-    useState<ViewerState | null>(null);
 
   useEffect(() => () => {
     speechRecognitionRef.current?.abort();
@@ -2307,9 +2254,12 @@ export function ChatApp({
     ],
   );
 
+  // Rulebook §1: a citation opens the official government copy at the cited
+  // page, never our archived file.
   const openSource =
     (source: Source) => {
-      setViewer({ source });
+      const url = officialPageUrl(source);
+      if (url) window.open(url, "_blank", "noopener,noreferrer");
     };
 
   const toggleSpeechInput = () => {
@@ -3232,12 +3182,6 @@ export function ChatApp({
       </footer>
       </div>
 
-      {viewer ? (
-        <SourceViewer
-          source={viewer.source}
-          onClose={() => setViewer(null)}
-        />
-      ) : null}
     </main>
   );
 }

@@ -2,6 +2,14 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 10:30 pm IST (Claude)
+
+- Permanent rules (docs/RULES.md, ADR-063) set by Abhishek: chat shows only government
+  URLs (no archive links/IDs; citations open the official copy); only government sources
+  ingested, others flagged (`sources:audit`, migration 010 `provenance_ok`). Audit: 1,050
+  documents, 0 flagged. Next: data model grouping (central/UP/states), catalogue from
+  Abhishek's central list, follow-up suggestions, auto-archive.
+
 ## 27 Sept 2026, 9:30 pm IST (Claude)
 
 - Order of work set by Abhishek: core rules (procurement, financial, GeM …) → Ask quality

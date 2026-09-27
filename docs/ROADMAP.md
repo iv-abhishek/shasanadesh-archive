@@ -131,7 +131,7 @@ Fetching is opt-in (`--ingest`) while ingestion is on hold.
   answers prefer the current version and say when an order was amended. **First version
   done 27 Sept (ADR-054):** `relations:build`, "later changed by" warning in answers and
   on source cards. Next: rank the current version first; show "orders this one relies on".
-- Citations open the official link; archived copy as a labelled fallback; disclaimer.
+- Citations open the official link only (Rulebook §1: no archived copy in the chat); disclaimer.
 - Conversation quality: follow-ups, "explain simply", Hindi throughout, and answer templates
   for "what is the procedure / who is competent / what is the limit".
 - **Citation line for letters (done 26 Sept, ADR-046):** a "Copy reference" button that gives the ready-to-paste

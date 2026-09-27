@@ -28,6 +28,7 @@ import { PDFINFO_BIN, PDFTOTEXT_BIN, crawlDelayMs } from "./lib/tool-config.js";
 import { listSourceAdapters } from "./sources/registry.js";
 import { politeFetch } from "./sources/http.js";
 import { diskSpaceProblem } from "./storage/local-disk.js";
+import { isGovernmentHost } from "./lib/government-hosts.js";
 
 const execFileAsync = promisify(execFile);
 const MAX_PDF_BYTES = 500_000_000;
@@ -103,6 +104,10 @@ async function extractText(pdfPath: string, textPath: string): Promise<{
 
 function assertOfficialDownload(url: string, adapter: SourceAdapter): URL {
   const parsed = new URL(url);
+  // Rulebook §2 (docs/RULES.md): government sources only.
+  if (!isGovernmentHost(parsed.hostname)) {
+    throw new Error(`Refusing ${url}: ${parsed.hostname} is not a government site (docs/RULES.md §2)`);
+  }
   if (parsed.protocol !== "https:" || !adapter.allowedHosts.includes(parsed.hostname)) {
     throw new Error("Refusing download outside the adapter's HTTPS allowlist: " + url);
   }
@@ -122,7 +127,7 @@ async function downloadPdf(record: SourceDocument, adapter: SourceAdapter): Prom
     timeoutMs: 120_000,
   });
   const finalUrl = new URL(response.url || record.downloadUrl);
-  if (finalUrl.protocol !== "https:" || !adapter.allowedHosts.includes(finalUrl.hostname)) {
+  if (finalUrl.protocol !== "https:" || !adapter.allowedHosts.includes(finalUrl.hostname) || !isGovernmentHost(finalUrl.hostname)) {
     throw new Error("PDF download redirected outside the adapter's HTTPS allowlist: " + finalUrl.href);
   }
   if (!response.ok) throw new Error("PDF request returned HTTP " + response.status);

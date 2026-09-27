@@ -27,6 +27,7 @@ import path from "node:path";
 import type { PoolClient } from "pg";
 import { createPool } from "./client.js";
 import { toIsoGoDate } from "../lib/go-date.js";
+import { GOVERNMENT_EXCEPTIONS } from "../lib/government-hosts.js";
 
 const documentsRoot = path.resolve("data/documents");
 const retrievalPagesPath = path.resolve(
@@ -504,6 +505,37 @@ async function loadClassification(client: PoolClient): Promise<number> {
 }
 
 /**
+ * Rulebook §2: provenance_ok = the source URL is on a government host and the
+ * provenance audit did not flag the document. Returns how many are flagged.
+ */
+async function markProvenance(client: PoolClient): Promise<number> {
+  const exceptions = Object.keys(GOVERNMENT_EXCEPTIONS);
+  const result = await client.query<{ flagged: string }>(
+    `
+    WITH hosts AS (
+      SELECT source_id, lower(substring(source_url from '^[a-zA-Z]+://([^/:?#]+)')) AS host
+      FROM documents
+    ),
+    verdict AS (
+      SELECT d.source_id,
+             (h.host ~ '\.(gov|nic)\.in$' OR h.host = ANY($1::text[]))
+             AND COALESCE((d.metadata->'provenance'->>'government')::boolean, TRUE) AS ok
+      FROM documents d JOIN hosts h ON h.source_id = d.source_id
+    ),
+    updated AS (
+      UPDATE documents d SET provenance_ok = v.ok
+      FROM verdict v
+      WHERE v.source_id = d.source_id AND d.provenance_ok IS DISTINCT FROM v.ok
+      RETURNING 1
+    )
+    SELECT (SELECT COUNT(*) FROM verdict WHERE ok IS NOT TRUE)::text AS flagged
+    `,
+    [exceptions],
+  );
+  return Number(result.rows[0]?.flagged ?? 0);
+}
+
+/**
  * Replace document_relations with data/corpus/relations.jsonl
  * (npm run relations:build). The file is the full derived set, so the table
  * is rebuilt rather than merged. A missing file leaves the table untouched.
@@ -565,6 +597,7 @@ async function main() {
 
     const documents = await loadDocuments(client);
     const classified = await loadClassification(client);
+    const flagged = await markProvenance(client);
     const relations = await loadRelations(client);
     const pageStats = await loadPagesAndVariants(client);
     const chunkStats = await loadChunks(client);
@@ -607,6 +640,7 @@ async function main() {
     console.log("=============================");
     console.log(`Documents:          ${documents}`);
     console.log(`Classified:         ${classified}${classified ? "" : " (run npm run classify:orders first)"}`);
+    console.log(`Non-government:     ${flagged}${flagged ? " (flagged, excluded from answers; see npm run sources:audit)" : ""}`);
     console.log(`Order relations:    ${relations ?? "unchanged (run npm run relations:build first)"}`);
     console.log(`Logical pages:      ${pageStats.pages}`);
     console.log(`Page variants:      ${pageStats.variants}`);

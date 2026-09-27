@@ -1,5 +1,8 @@
 # Shasanadesh Archive — instructions for Claude
 
+**Permanent product rules: `docs/RULES.md`** (chat shows only government URLs; only
+government sources are ingested; scope central + UP). Follow them in every change.
+
 Start every session by reading `handoff/README.md`, `handoff/STATUS.md`,
 `handoff/PLAN.md` and the top of `handoff/LOG.md`. They hold the current state,
 the plan and the working rules. Keep them updated as described there.

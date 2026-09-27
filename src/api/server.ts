@@ -70,6 +70,7 @@ import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
 import { detectListingRequest, listOrders, type SubjectSearch } from "../rag/order-listing.js";
 import { departmentLabel, findDepartmentMention } from "../departments/registry.js";
 import { createPool } from "../db/client.js";
+import { officialOnly, stripNonGovernmentLinks } from "../lib/public-links.js";
 import type { Pool } from "pg";
 import { createDraftStreamer, stripThinking } from "../rag/draft-preview.js";
 
@@ -644,6 +645,8 @@ function streamValidatedText(
   // The model answer is buffered until validation succeeds. We then emit modest
   // text chunks so the existing SSE client contract still behaves like streaming.
   const chunkSize = 96;
+  // Rulebook §1: only government links ever reach the chat.
+  text = stripNonGovernmentLinks(text);
 
   for (
     let offset = 0;
@@ -976,8 +979,9 @@ server.post(
           department: order.department,
           goNumber: order.goNumber,
           goDate: order.goDate,
-          sourceUrl: order.sourceUrl,
-          pageUrl: `${order.sourceUrl}#page=1`,
+          // Rulebook §1: government URLs only; never our archive.
+          sourceUrl: officialOnly(order.sourceUrl),
+          pageUrl: officialOnly(order.sourceUrl) ? `${order.sourceUrl}#page=1` : null,
           numericConflict: false,
           numericVerificationStatus: "unverified",
           selectedVariant: "native",
@@ -996,7 +1000,7 @@ server.post(
         reply.raw.setHeader("connection", "keep-alive");
         reply.raw.setHeader("x-accel-buffering", "no");
         reply.raw.write(`event: sources\ndata: ${JSON.stringify(sources)}\n\n`);
-        reply.raw.write(`event: token\ndata: ${JSON.stringify({ text: listed.text })}\n\n`);
+        reply.raw.write(`event: token\ndata: ${JSON.stringify({ text: stripNonGovernmentLinks(listed.text) })}\n\n`);
         reply.raw.write(
           `event: done\ndata: ${JSON.stringify({
             ok: true,
@@ -1454,10 +1458,11 @@ server.post(
             item.go_number,
           goDate:
             item.go_date,
+          // Rulebook §1: government URLs only; never our archive.
           sourceUrl:
-            item.source_url,
+            officialOnly(item.source_url),
           pageUrl:
-            item.page_url,
+            officialOnly(item.page_url),
           numericConflict:
             item.numeric_conflict,
           numericVerificationStatus:
@@ -1522,7 +1527,7 @@ server.post(
     // the NO_ANSWER_IN_EVIDENCE reply, and sent in small batches.
     // Unchecked preview of the first draft (src/rag/draft-preview.ts).
     const draftStreamer = RAG_STREAM_DRAFT
-      ? createDraftStreamer((text) => sendEvent("draft", { text }))
+      ? createDraftStreamer((text) => sendEvent("draft", { text: stripNonGovernmentLinks(text) }))
       : null;
     const onDraftDelta = draftStreamer
       ? (delta: string) => draftStreamer.onDelta(delta)

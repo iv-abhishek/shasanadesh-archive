@@ -880,3 +880,21 @@ are not on Shasanadesh, and those that are cannot be crawled there.
   Consultancy 2025, Non-Consultancy 2025, GeM GTC 4.0 v1.26, Make in India order
   (19.07.2024), UP Budget Manual, UP Conduct Rules 1956, five UP GeM GOs (2017–2025).
   Next candidates and the Shasanadesh capture list: `datasets/core-rules/README.md`.
+
+## ADR-063 - Permanent rules: government URLs only in chat; government sources only
+
+Abhishek (27 Sept): the chat must never reveal that we hold the data (only government
+URLs), and nothing may be ingested from a private site. Both are recorded as permanent
+rules in `docs/RULES.md` (§1, §2) and enforced in code:
+
+- §1: `officialOnly` for every source URL the API sends; `stripNonGovernmentLinks` on the
+  answer and draft text; prompt rule; citations open the official copy at the cited page
+  in a new tab (the archived-PDF viewer is removed from the chat); no internal IDs on
+  source cards, in order lists or in "Copy answer". `/api/rag/pdf` stays for the internal
+  Search page only.
+- §2: `src/lib/government-hosts.ts` (`*.gov.in`, `*.nic.in`, reviewed exceptions such as
+  CERT-In); enforced in `politeFetch`, `ingest-source` (download + redirect) and the
+  core-rules catalogue. Migration 010 adds `documents.provenance_ok`; `db:load` sets it from
+  the source host and the audit (`npm run sources:audit`, nightly); retrieval, subject
+  search and the order finder exclude flagged documents. First audit: 1,050 documents,
+  0 flagged.

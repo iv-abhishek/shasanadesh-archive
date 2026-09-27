@@ -256,6 +256,9 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
         clauses.append(f"(d.department_id = ANY(%s) OR {CORE_RULES_SQL})")
         params.append([int(value) for value in filters.department_ids])
 
+    # Rulebook §2: documents from non-government sources are flagged and never used.
+    clauses.append("d.provenance_ok")
+
     if not filters.include_routine and not filters.source_id:
         clauses.append(
             "(d.tier IS DISTINCT FROM 'C' "
@@ -899,7 +902,7 @@ def subject_search(body: SubjectSearchRequest, request: Request):
         convert_to_numpy=True,
     )[0]
 
-    clauses: list[str] = []
+    clauses: list[str] = ["d.provenance_ok"]  # Rulebook §2
     vector = vector_literal(query_vector)
     params: list[Any] = [vector]
     if body.department_ids:
@@ -918,9 +921,9 @@ def subject_search(body: SubjectSearchRequest, request: Request):
         # Filters apply after the HNSW scan; widen it so filtered searches still fill the limit.
         conn.execute(
             "SELECT set_config('hnsw.ef_search', %s, true)",
-            (str(max(HNSW_EF_SEARCH_MIN, min(HNSW_EF_SEARCH_MAX, body.limit * (8 if clauses else 2)))),),
+            (str(max(HNSW_EF_SEARCH_MIN, min(HNSW_EF_SEARCH_MAX, body.limit * (8 if len(clauses) > 1 else 2)))),),
         )
-        if clauses and pgvector_supports_iterative_scan(conn):
+        if pgvector_supports_iterative_scan(conn):
             conn.execute("SELECT set_config('hnsw.iterative_scan', 'strict_order', true)")
         rows = conn.execute(
             f"""

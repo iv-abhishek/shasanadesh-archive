@@ -57,6 +57,7 @@ const STEPS = [
         { name: "ingest:portal", run: ["ingest:portal", "--", "--until-idle"], critical: false },
       ]
     : []),
+  { name: "sources:audit", run: ["sources:audit"], critical: false },
   { name: "classify:orders", run: ["classify:orders"], critical: true },
   { name: "storage:restore", run: ["storage:restore", "--", "--needed"], critical: false },
   { name: "ocr:needs", run: ["ocr:needs"], critical: false },

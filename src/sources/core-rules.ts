@@ -19,6 +19,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { SourceAdapter, SourceDocument, SourceLanguage } from "./types.js";
+import { isGovernmentHost } from "../lib/government-hosts.js";
 
 export interface CoreRuleEntry {
   slug: string;
@@ -53,7 +54,7 @@ export function validateCatalogue(entries: CoreRuleEntry[]): void {
     for (const key of ["downloadUrl", "officialPage"] as const) {
       const url = new URL(entry[key]);
       if (url.protocol !== "https:") throw new Error(`${where}: ${key} must be HTTPS`);
-      if (!/\.(gov|nic)\.in$/.test(url.hostname)) throw new Error(`${where}: ${key} must be on a .gov.in / .nic.in host`);
+      if (!isGovernmentHost(url.hostname)) throw new Error(`${where}: ${key} must be on a government host (.gov.in / .nic.in, docs/RULES.md §2)`);
     }
     if (entry.date && !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) throw new Error(`${where}: date must be YYYY-MM-DD`);
     if (!["central", "state"].includes(entry.jurisdiction)) throw new Error(`${where}: jurisdiction must be central or state`);

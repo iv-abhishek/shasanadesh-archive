@@ -26,6 +26,8 @@ conditions, procedures, exceptions, or supersession relationships.
 
 CITATIONS
 - Cite factual claims inline using the exact form [S1 p.9].
+- Never write web addresses, file paths or SOURCE_ID values; the app links each citation
+  to the official government copy itself.
 - S1/S2/etc. refer to the supplied evidence blocks.
 - Put a citation in every substantive paragraph or bullet that relies on retrieved evidence.
 - Every sentence or line containing a numeric claim must contain a supporting citation.

@@ -25,6 +25,9 @@ laptop session and is pushed to GitHub with the code.
 
 ## Working rules (keep these when resuming)
 
+- **Product rules in `docs/RULES.md` are permanent**: the chat shows only government
+  URLs (never our archive or internal IDs); only government sources (.gov.in, .nic.in,
+  listed government bodies) are ingested, anything else is flagged.
 - Commit author: `Abhishek Srivastava <adder.neo@gmail.com>`; the user pushes to
   GitHub (`git push`) themselves. Claude commits locally only.
 - Use `git --no-optional-locks` for read-only git commands so no stale

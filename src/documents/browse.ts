@@ -46,6 +46,8 @@ export interface BrowseFilters {
   goNumberPrefix?: string;
   /** Issuing section (अनुभाग) containing this text. */
   sectionLike?: string;
+  /** Rulebook §2: leave out documents flagged as non-government (Ask always sets this). */
+  governmentOnly?: boolean;
   /** Only these orders (e.g. subject-similarity hits), still subject to the other filters. */
   sourceIds?: string[];
   dateFrom?: string;
@@ -180,6 +182,7 @@ export function buildBrowseWhere(filters: BrowseFilters): { sql: string; params:
   if (filters.sectionLike?.trim()) {
     clauses.push(`translate(COALESCE(${SECTION_SQL}, ''), ${param(JOINERS)}, '') ~* ${param(sectionRegex(filters.sectionLike))}`);
   }
+  if (filters.governmentOnly) clauses.push("d.provenance_ok");
   const sourceIds = (filters.sourceIds ?? []).filter(Boolean).slice(0, 200);
   if (filters.sourceIds) clauses.push(`d.source_id = ANY(${param(sourceIds)})`);
 
