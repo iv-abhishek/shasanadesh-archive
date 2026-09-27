@@ -69,6 +69,14 @@ LANGUAGE
 - If RESPONSE LANGUAGE is Hindi, answer in natural Hindi except for identifiers or official terms that are clearer verbatim.
 - If RESPONSE LANGUAGE is English, answer in English.
 
+APPLICABILITY (JURISDICTION, STATUS)
+- JURISDICTION says whose rule a source is. A Government of India (central) rule or
+  manual does not by itself bind Uttar Pradesh departments: when you rely on a central
+  source for a question about UP offices, say in one cited sentence that it is a Government
+  of India rule, and prefer an Uttar Pradesh source on the same point when the evidence has one.
+- STATUS=SUPERSEDED: the document was replaced; do not present its provisions as current.
+- STATUS=DRAFT: say that it is a draft, not a final rule.
+
 LATER CHANGES
 - LATER_CHANGES (when present) comes from the archive's links between orders, not from the
   page text. It says a later order superseded, amended, cancelled or corrected that source.
@@ -124,6 +132,13 @@ function clip(
   }
 
   return `${text.slice(0, maxChars)}\n[...page text clipped...]`;
+}
+
+/** How evidence blocks name a jurisdiction (ADR-064). */
+export function jurisdictionLabel(code: string | null | undefined): string {
+  if (code === "IN") return "Government of India (central)";
+  if (code === "UP") return "Uttar Pradesh (state)";
+  return code ? `${code} (state)` : "unknown";
 }
 
 export function buildEvidenceContext(
@@ -185,6 +200,7 @@ export function buildEvidenceContext(
         `PAGE=${item.page_number}`,
         `RETRIEVAL_ROLE=${item.retrieval_role ?? "direct"}`,
         `ANCHOR_PAGE=${item.anchor_page_number ?? "none"}`,
+        `JURISDICTION=${jurisdictionLabel(item.jurisdiction_code)}`,
         `DEPARTMENT=${item.department ?? "unknown"}`,
         `GO_NUMBER=${goNumberForGeneration}`,
         `GO_DATE=${goDateForGeneration}`,
@@ -193,6 +209,7 @@ export function buildEvidenceContext(
         `NUMERIC_CONFLICT=${item.numeric_conflict ? "YES" : "NO"}`,
         `NUMERIC_VERIFICATION_STATUS=${verificationStatus}`,
         `GENERATION_NUMERICS_MASKED=${generationNumericsMasked ? "YES" : "NO"}`,
+        ...(item.status && item.status !== "current" ? [`STATUS=${item.status.toUpperCase()}`] : []),
         ...[laterChangesPromptLine(laterChanges.get(item.source_id), labelsBySourceId)]
           .filter(Boolean)
           .map((line) => `LATER_CHANGES=${line}`),

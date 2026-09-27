@@ -34,6 +34,8 @@ const FiltersSchema = z.object({
   dateFrom: isoDate,
   dateTo: isoDate,
   tiers: z.array(z.enum(["A", "B", "C", "none"])).max(4).optional(),
+  jurisdictions: z.array(z.string().regex(/^[A-Za-z]{2}$/)).max(10).optional(),
+  topics: z.array(z.string().regex(/^[a-z-]{2,40}$/)).max(10).optional(),
 });
 
 const BrowseSchema = FiltersSchema.extend({

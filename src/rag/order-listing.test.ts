@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildListingAnswer, detectListingRequest, parseDateRange, type ListingOutcome } from "./order-listing.js";
+import { buildListingAnswer, detectListingRequest, jurisdictionsInQuery, parseDateRange, type ListingOutcome } from "./order-listing.js";
 import { findDepartmentMention } from "../departments/registry.js";
 
 const TODAY = "2026-09-27"; // a Sunday
@@ -197,3 +197,19 @@ console.log("order listing tests passed");
 }
 
 console.log("order finder tests passed");
+
+// Jurisdiction and topic filters (ADR-064).
+{
+  const find = (q: string) => detectListingRequest(q, "2026-09-27");
+  assert.deepEqual([find("GeM guidelines")?.topics, find("GeM guidelines")?.words], [["gem"], []]);
+  assert.deepEqual(find("central government procurement rules")?.jurisdictions, ["IN"]);
+  assert.deepEqual(find("UP GeM orders")?.jurisdictions, ["UP"]);
+  assert.deepEqual(find("पेंशन से संबंधित शासनादेश")?.topics, ["pension"]);
+  assert.deepEqual(find("सूचना का अधिकार नियम")?.topics, ["rti"]);
+  // केन्द्रीय कारागार is a central jail, not the central government.
+  assert.deepEqual(find("केन्द्रीय कारागार में बन्दी की समयपूर्व रिहाई के आदेश")?.jurisdictions, []);
+  assert.equal(find("What are the GeM guidelines for direct purchase?"), null); // content → Ask
+  assert.deepEqual(jurisdictionsInQuery("rules of the up government and भारत सरकार").codes.sort(), ["IN", "UP"]);
+  assert.deepEqual(jurisdictionsInQuery("look up the order").codes, []); // "up" in lowercase is a word
+}
+console.log("jurisdiction/topic filter tests passed");

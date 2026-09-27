@@ -86,7 +86,7 @@
     "test:text-quality": "tsx src/lib/text-quality.test.ts",
     "test:go-date": "tsx src/lib/go-date.test.ts",
     "test:browse": "tsx src/documents/browse.test.ts",
-    "test:classify": "tsx src/classify/rules.test.ts",
+    "test:classify": "tsx src/classify/rules.test.ts && tsx src/classify/topics.test.ts",
     "classify:orders": "node --import tsx src/classify-orders.ts",
     "relations:build": "tsx src/build-relations.ts",
     "sources:audit": "tsx src/audit-provenance.ts",

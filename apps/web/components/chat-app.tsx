@@ -71,6 +71,9 @@ interface Source {
   laterChanges?: LaterChange[];
   /** "listing": an entry of an order list (ADR-057), not a retrieved page. */
   kind?: "listing";
+  /** ADR-064: "IN" (Government of India), "UP", …; and current / superseded / draft. */
+  jurisdictionCode?: string | null;
+  status?: string | null;
 }
 
 interface RagTimings {
@@ -205,6 +208,16 @@ interface PersistedConversationResponse {
 }
 
 
+
+/** "Government of India" / "Uttar Pradesh" (ADR-064). */
+function jurisdictionName(code: string, language: "hi" | "en"): string {
+  const names: Record<string, [string, string]> = {
+    IN: ["Government of India", "भारत सरकार"],
+    UP: ["Uttar Pradesh", "उत्तर प्रदेश"],
+  };
+  const pair = names[code];
+  return pair ? (language === "hi" ? pair[1] : pair[0]) : code;
+}
 
 /** The official URL for a cited page (#page=N), or null when there is no government link. */
 function officialPageUrl(source: Source): string | null {
@@ -629,6 +642,8 @@ function normalizePersistedSource(
         : null,
     laterChanges: readLaterChanges(raw.laterChanges),
     kind: raw.kind === "listing" ? "listing" : undefined,
+    jurisdictionCode: typeof raw.jurisdictionCode === "string" ? raw.jurisdictionCode : null,
+    status: typeof raw.status === "string" ? raw.status : null,
   };
 }
 
@@ -1307,6 +1322,21 @@ function SourceGroupCard({
         </div>
         {first?.kind === "listing" ? null : <span className={summary.className}>{summary.label}</span>}
       </div>
+
+      {first?.jurisdictionCode || (first?.status && first.status !== "current") ? (
+        <div className="source-tags">
+          {first.jurisdictionCode ? (
+            <span className={first.jurisdictionCode === "IN" ? "source-tag source-tag-central" : "source-tag"}>
+              {jurisdictionName(first.jurisdictionCode, language)}
+            </span>
+          ) : null}
+          {first.status === "superseded" ? (
+            <span className="source-tag source-tag-warning">{language === "hi" ? "अतिक्रमित" : "Superseded"}</span>
+          ) : first.status === "draft" ? (
+            <span className="source-tag source-tag-warning">{language === "hi" ? "प्रारूप" : "Draft"}</span>
+          ) : null}
+        </div>
+      ) : null}
 
       {group.laterChanges.length ? (
         <ul className="source-later-changes" aria-label="Later changes to this order">

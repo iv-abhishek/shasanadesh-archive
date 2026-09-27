@@ -49,6 +49,24 @@ Chunks belong to a page variant and always retain:
 
 Document/source metadata and capture metadata.
 
+#### Grouping (ADR-064, migration 011)
+
+The archive is not only Shasanadesh: it holds Central Government and Uttar Pradesh
+documents (other states later) from any government source (Rulebook §2).
+
+| Column | Meaning |
+|---|---|
+| `jurisdiction_code` | `IN` Government of India, `UP` Uttar Pradesh; a new state is one row in `jurisdictions` |
+| `authority` | issuing ministry / department (central: issuer; UP: department) |
+| `topics` | topic groups (`topics` table): procurement, gem, financial-rules, budget-accounts, service, pension, conduct-discipline, digital-it, rti, … |
+| `status` | `current`, `superseded` (a later order supersedes/cancels it), `draft`, `historical` |
+| `edition` | e.g. "Second Edition, 2025", "Updated up to 31 January 2026" |
+| `provenance_ok` | Rulebook §2: false when the source is not a government host (flagged, excluded from answers) |
+| `provider` | the collection it came from (`shasanadesh-up`, `core-rules`, `doe-gfr`, …) |
+
+Hierarchy for browsing and filters: **jurisdiction → authority/department → topic →
+document**, with tier (A/B/C), document type, status and date alongside.
+
 ### `pages`
 
 One row per logical PDF page.

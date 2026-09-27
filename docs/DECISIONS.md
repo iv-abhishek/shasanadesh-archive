@@ -898,3 +898,27 @@ rules in `docs/RULES.md` (§1, §2) and enforced in code:
   the source host and the audit (`npm run sources:audit`, nightly); retrieval, subject
   search and the order finder exclude flagged documents. First audit: 1,050 documents,
   0 flagged.
+
+## ADR-064 - Central + UP grouping (jurisdiction, authority, topics, status)
+
+Abhishek (27 Sept): the archive is no longer Shasanadesh only; Shasanadesh is the UP part.
+Central and UP documents now, other states later, all from government sources.
+
+- Migration 011: `jurisdictions` (IN, UP; one row per future state) and `topics` (24 topic
+  groups, bilingual names) tables; `documents.jurisdiction_code`, `authority`, `topics[]`,
+  `status` (current/superseded/draft/historical), `edition`.
+- Filled by `db:load`: jurisdiction from metadata (`jurisdiction: central` → IN, a future
+  `stateCode` wins, else UP); authority = central issuer or UP department; edition and draft
+  status from the core-rules catalogue; `superseded` when a later order supersedes or
+  cancels it (order links). Topics from `src/classify/topics.ts` (bilingual subject rules;
+  catalogue topics for curated documents), stored by `classify:orders`. On the 1,025 listed
+  orders 98% get a topic.
+- Retrieval returns jurisdiction and status; evidence blocks carry `JURISDICTION=` and
+  `STATUS=` and the prompt states applicability (a Government of India rule does not by
+  itself bind UP departments; superseded and draft documents are named as such). Source
+  cards show "Government of India" / "Uttar Pradesh" and Superseded/Draft.
+- Filters: retrieval `jurisdiction_codes` / `topics`; a question naming one government
+  ("central government …", "UP …") is answered from that jurisdiction. The order finder
+  turns topic and jurisdiction words into filters ("GeM guidelines", "central procurement
+  rules", "पेंशन से संबंधित शासनादेश"); "केन्द्रीय कारागार" (a central jail) is not the
+  central government. The Search console has Government and Topic filters with counts.

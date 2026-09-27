@@ -46,6 +46,9 @@ export interface BrowseFilters {
   goNumberPrefix?: string;
   /** Issuing section (अनुभाग) containing this text. */
   sectionLike?: string;
+  /** ADR-064: jurisdiction codes ("IN", "UP", …) and topic codes; any of each. */
+  jurisdictions?: string[];
+  topics?: string[];
   /** Rulebook §2: leave out documents flagged as non-government (Ask always sets this). */
   governmentOnly?: boolean;
   /** Only these orders (e.g. subject-similarity hits), still subject to the other filters. */
@@ -82,6 +85,11 @@ export interface BrowseRow {
   tier: "A" | "B" | "C" | null;
   docType: string | null;
   classificationConfidence: "high" | "low" | null;
+  /** ADR-064 grouping. */
+  jurisdictionCode: string | null;
+  authority: string | null;
+  topics: string[];
+  status: string;
 }
 
 export interface BrowseResult {
@@ -183,6 +191,10 @@ export function buildBrowseWhere(filters: BrowseFilters): { sql: string; params:
     clauses.push(`translate(COALESCE(${SECTION_SQL}, ''), ${param(JOINERS)}, '') ~* ${param(sectionRegex(filters.sectionLike))}`);
   }
   if (filters.governmentOnly) clauses.push("d.provenance_ok");
+  const jurisdictions = (filters.jurisdictions ?? []).map((code) => code.trim().toUpperCase()).filter((code) => /^[A-Z]{2}$/.test(code));
+  if (jurisdictions.length) clauses.push(`d.jurisdiction_code = ANY(${param(jurisdictions)})`);
+  const topics = (filters.topics ?? []).filter((topic) => /^[a-z-]{2,40}$/.test(topic));
+  if (topics.length) clauses.push(`d.topics && ${param(topics)}::text[]`);
   const sourceIds = (filters.sourceIds ?? []).filter(Boolean).slice(0, 200);
   if (filters.sourceIds) clauses.push(`d.source_id = ANY(${param(sourceIds)})`);
 
@@ -253,7 +265,11 @@ export async function browseDocuments(pool: Pool, request: BrowseRequest): Promi
         (d.metadata->'storage'->'raw'->>'fileId') IS NOT NULL AS in_b2,
         d.tier,
         d.doc_type,
-        d.classification->>'confidence' AS classification_confidence
+        d.classification->>'confidence' AS classification_confidence,
+        d.jurisdiction_code,
+        d.authority,
+        d.topics,
+        d.status
       FROM documents d
       ${where}
       ORDER BY d.go_date ${order} NULLS LAST, d.source_id
@@ -283,6 +299,10 @@ export async function browseDocuments(pool: Pool, request: BrowseRequest): Promi
       tier: row.tier ?? null,
       docType: row.doc_type ?? null,
       classificationConfidence: row.classification_confidence ?? null,
+      jurisdictionCode: row.jurisdiction_code ?? null,
+      authority: row.authority ?? null,
+      topics: row.topics ?? [],
+      status: row.status ?? "current",
     })),
   };
 }
@@ -302,6 +322,9 @@ export interface BrowseFacets {
   categories: Array<{ name: string; count: number }>;
   /** Orders per tier ("none" = not classified yet), within the chosen departments. */
   tiers: Array<{ tier: string; count: number }>;
+  /** ADR-064: documents per jurisdiction and per topic group (bilingual names). */
+  jurisdictions: Array<{ code: string; nameEn: string; nameHi: string; count: number }>;
+  topics: Array<{ code: string; nameEn: string; nameHi: string; count: number }>;
 }
 
 /** Drop-down choices with counts, like the portal's department/section lists. */
@@ -359,7 +382,25 @@ export async function browseFacets(
     scoped.params,
   );
 
+  // Before migration 011 the tables do not exist: empty groups, not an error.
+  const jurisdictionCounts = await pool
+    .query<{ code: string; name_en: string; name_hi: string; count: string }>(
+      `SELECT j.code, j.name_en, j.name_hi, COUNT(d.source_id)::text AS count
+       FROM jurisdictions j LEFT JOIN documents d ON d.jurisdiction_code = j.code
+       WHERE j.active GROUP BY j.code, j.name_en, j.name_hi, j.level ORDER BY j.level, j.code`,
+    )
+    .catch(() => ({ rows: [] as Array<{ code: string; name_en: string; name_hi: string; count: string }> }));
+  const topicCounts = await pool
+    .query<{ code: string; name_en: string; name_hi: string; count: string }>(
+      `SELECT t.code, t.name_en, t.name_hi, COUNT(d.source_id)::text AS count
+       FROM topics t LEFT JOIN documents d ON t.code = ANY(d.topics)
+       GROUP BY t.code, t.name_en, t.name_hi, t.sort_order ORDER BY t.sort_order`,
+    )
+    .catch(() => ({ rows: [] as Array<{ code: string; name_en: string; name_hi: string; count: string }> }));
+
   return {
+    jurisdictions: jurisdictionCounts.rows.map((row) => ({ code: row.code, nameEn: row.name_en, nameHi: row.name_hi, count: Number(row.count) })),
+    topics: topicCounts.rows.map((row) => ({ code: row.code, nameEn: row.name_en, nameHi: row.name_hi, count: Number(row.count) })),
     total: Number(total.rows[0]?.count ?? 0),
     departments: departments.rows.map((row) => ({
       key: row.key,

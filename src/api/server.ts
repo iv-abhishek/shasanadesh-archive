@@ -67,7 +67,7 @@ import {
 import { assessRelevance, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
-import { detectListingRequest, listOrders, type SubjectSearch } from "../rag/order-listing.js";
+import { detectListingRequest, jurisdictionsInQuery, listOrders, type SubjectSearch } from "../rag/order-listing.js";
 import { departmentLabel, findDepartmentMention } from "../departments/registry.js";
 import { createPool } from "../db/client.js";
 import { officialOnly, stripNonGovernmentLinks } from "../lib/public-links.js";
@@ -316,6 +316,9 @@ const SearchFiltersSchema = z.object({
   // Shasanadesh department IDs from the registry (ADR-057), with a label for
   // progress messages.
   departmentIds: z.array(z.number().int().positive()).min(1).max(12).optional(),
+  // ADR-064: "IN" (Government of India), "UP", … and topic codes.
+  jurisdictionCodes: z.array(z.string().trim().regex(/^[A-Za-z]{2}$/)).min(1).max(10).optional(),
+  topics: z.array(z.string().trim().regex(/^[a-z-]{2,40}$/)).min(1).max(10).optional(),
   departmentLabel: z.string().trim().min(1).max(200).optional(),
   goNumber: z
     .string()
@@ -508,6 +511,10 @@ async function retrieve(
                 filters?.departments,
               department_ids:
                 filters?.departmentIds,
+              jurisdiction_codes:
+                filters?.jurisdictionCodes,
+              topics:
+                filters?.topics,
               go_number:
                 filters?.goNumber,
               source_id:
@@ -991,6 +998,8 @@ server.post(
           anchorPageNumber: null,
           kind: "listing",
           laterChanges: laterChanges.get(order.sourceId) ?? [],
+          jurisdictionCode: order.jurisdictionCode ?? null,
+          status: order.status ?? null,
         }));
 
         reply.hijack();
@@ -1117,6 +1126,13 @@ server.post(
           workspaceProfile
             .departments,
       };
+    }
+
+    // ADR-064: a question that names one government ("central government rules
+    // on …", "UP …") is answered from that jurisdiction's documents.
+    const askedJurisdictions = jurisdictionsInQuery(query).codes;
+    if (askedJurisdictions.length === 1) {
+      retrievalFilters = { ...(retrievalFilters ?? {}), jurisdictionCodes: askedJurisdictions };
     }
 
     reply.hijack();
@@ -1481,6 +1497,10 @@ server.post(
             null,
           laterChanges:
             laterChanges.get(item.source_id) ?? [],
+          jurisdictionCode:
+            item.jurisdiction_code ?? null,
+          status:
+            item.status ?? null,
         }),
       ),
     );

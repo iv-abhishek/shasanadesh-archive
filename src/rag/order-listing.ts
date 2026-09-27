@@ -18,6 +18,7 @@ import {
   type DepartmentEntry,
 } from "../departments/registry.js";
 import { browseDocuments, type BrowseRequest } from "../documents/browse.js";
+import { TOPIC_NAMES, topicsInQuery } from "../classify/topics.js";
 import { normalizeDigits, parseReferenceDate } from "../relations/extract.js";
 
 export interface ListingRequest {
@@ -42,6 +43,9 @@ export interface ListingRequest {
   section?: string;
   /** Other subject words, all required for a word match. */
   words: string[];
+  /** ADR-064: jurisdictions ("IN", "UP") and topic codes the question names. */
+  jurisdictions: string[];
+  topics: string[];
   /** Words for meaning-based subject matching (null when there are none). */
   semanticText: string | null;
   /** The words as one string, for messages. */
@@ -290,6 +294,32 @@ const FIND_FILLER = new Set([
 ]);
 const isFiller = (word: string) => FILLER.has(word) || FIND_FILLER.has(word);
 
+// Words that only say "a rule/guideline" once a topic or jurisdiction is named.
+const GENERIC_KIND = new Set([
+  "guidelines", "guideline", "rules", "rule", "manual", "manuals", "policy", "policies", "instructions", "circulars",
+  "नियम", "नियमावली", "नियमों", "दिशा", "निर्देश", "दिशानिर्देश", "नीति", "निर्देशों",
+]);
+
+/**
+ * Whose rules the question asks about (ADR-064). Only unambiguous phrases:
+ * "केन्द्रीय कारागार" is a central jail, not the central government.
+ */
+export function jurisdictionsInQuery(query: string): { codes: string[]; matched: string[] } {
+  const codes = new Set<string>();
+  const matched: string[] = [];
+  const central = /\b(?:central government|union government|government of india|goi|central (?:rules|guidelines|orders|manuals?))\b|केंद्र सरकार|केन्द्र सरकार|केंद्रीय सरकार|केन्द्रीय सरकार|भारत सरकार/gi;
+  const state = /\b(?:uttar pradesh|u\.p\.|up government|up govt|state government)\b|\bUP\b|उत्तर प्रदेश|उ0प्र0|उ\.प्र\.|प्रदेश सरकार|राज्य सरकार/g;
+  for (const hit of query.matchAll(central)) {
+    codes.add("IN");
+    matched.push(hit[0]);
+  }
+  for (const hit of query.matchAll(state)) {
+    codes.add("UP");
+    matched.push(hit[0]);
+  }
+  return { codes: [...codes], matched };
+}
+
 /**
  * Decide whether a question is about finding or listing orders, and pull out
  * its parts. Null means "a question about content: let Ask answer it".
@@ -320,11 +350,21 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
     return " ";
   });
 
+  // Jurisdiction and topic words become filters, not subject words (ADR-064).
+  const jurisdiction = jurisdictionsInQuery(text);
+  const topicHits = topicsInQuery(text);
+  for (const phrase of [...jurisdiction.matched, ...topicHits.matched]) {
+    rest = rest.split(phrase.toLowerCase()).join(" ");
+  }
+  const narrowed = jurisdiction.codes.length > 0 || topicHits.topics.length > 0;
+
   const hasOrderWord = ORDER_WORD.test(lower);
   const findVerb = FIND_VERB.test(lower.trim());
   const explicit = Boolean(goNumber || phrases.length || patterns.length || findVerb);
   if (CONTENT_QUESTION.test(lower) && !explicit) return null;
-  if (!hasOrderWord && !explicit) return null;
+  // "GeM guidelines", "central procurement rules": documents by topic, even without "order".
+  const asksForDocuments = narrowed && /\b(?:guidelines?|rules|manuals?|policy|policies|circulars?|instructions)\b|दिशा-?निर्देश|नियमावली|नियम|नीति/i.test(lower);
+  if (!hasOrderWord && !explicit && !asksForDocuments) return null;
 
   // Dates first, so neither the issuer ("released by X this week") nor a
   // subject word ("Sepetember") swallows them.
@@ -391,10 +431,11 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
     .replace(/[(),.?!।:;"'/-]/g, " ")
     .split(/\s+/)
     .filter((word) => word.length >= 2 && !isFiller(word) && !/^\d+(?:st|nd|rd|th)?$/.test(word))
+    .filter((word) => !(narrowed && GENERIC_KIND.has(word)))
     .slice(0, 8);
 
   const mode: ListingRequest["mode"] =
-    words.length || goNumber || phrases.length || patterns.length || section ? "find" : "recent";
+    words.length || goNumber || phrases.length || patterns.length || section || narrowed ? "find" : "recent";
   // Naming the issuing office is a clear search, too.
   const explicitSearch = explicit || Boolean(by || section);
   if (mode === "recent" && !range && !RECENT_WORD.test(lower) && !department && !findVerb) return null;
@@ -414,6 +455,8 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
     phrases,
     patterns,
     section,
+    jurisdictions: jurisdiction.codes,
+    topics: topicHits.topics,
     words,
     semanticText: semanticParts.length ? semanticParts.join(" ") : null,
     topic: words.length ? words.join(" ") : null,
@@ -434,6 +477,8 @@ export interface ListedOrder {
   goDate: string | null;
   subject: string | null;
   sourceUrl: string;
+  jurisdictionCode?: string | null;
+  status?: string | null;
   /** How it was found: its text contains the terms, or its subject is close in meaning. */
   match?: "words" | "similar";
   similarity?: number;
@@ -474,6 +519,13 @@ function describeCriteria(request: ListingRequest, hi: boolean): string {
   for (const pattern of request.patterns) parts.push(`\`${pattern}\``);
   if (request.words.length) parts.push(`“${request.words.join(" ")}”`);
   if (request.section) parts.push(hi ? `अनुभाग “${request.section}”` : `section “${request.section}”`);
+  for (const topic of request.topics) {
+    const name = TOPIC_NAMES[topic as keyof typeof TOPIC_NAMES];
+    if (name) parts.push(hi ? `विषय-समूह “${name.hi}”` : `topic “${name.en}”`);
+  }
+  for (const code of request.jurisdictions) {
+    parts.push(code === "IN" ? (hi ? "भारत सरकार" : "Government of India") : code === "UP" ? (hi ? "उत्तर प्रदेश" : "Uttar Pradesh") : code);
+  }
   return parts.join(hi ? ", " : ", ");
 }
 
@@ -595,6 +647,8 @@ export async function listOrders(
     pageSize: PAGE,
     sort: "date_desc",
     governmentOnly: true, // Rulebook §2
+    jurisdictions: request.jurisdictions.length ? request.jurisdictions : undefined,
+    topics: request.topics.length ? request.topics : undefined,
   };
 
   // Finding a particular order searches every department unless one is named;
@@ -641,6 +695,8 @@ export async function listOrders(
     goDate: row.goDate,
     subject: row.subject,
     sourceUrl: row.sourceUrl,
+    jurisdictionCode: row.jurisdictionCode,
+    status: row.status,
     match,
     similarity,
   });

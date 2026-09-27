@@ -23,6 +23,10 @@ export interface RetrievalEvidence {
   go_date: string | null;
   source_url: string;
   page_url: string;
+  /** ADR-064: "IN" (Government of India), "UP", later other states. */
+  jurisdiction_code?: string | null;
+  /** "current" | "superseded" | "draft" | "historical". */
+  status?: string | null;
   retrieval_role?: "direct" | "neighbor";
   anchor_page_number?: number | null;
   selected_variant: "native" | "ocr";

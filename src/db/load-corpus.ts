@@ -464,6 +464,7 @@ async function loadClassification(client: PoolClient): Promise<number> {
   const types: string[] = [];
   const tiers: string[] = [];
   const details: string[] = [];
+  const topics: string[] = [];
   for (const line of content.split("\n")) {
     if (!line.trim()) continue;
     const record = JSON.parse(line) as {
@@ -476,8 +477,10 @@ async function loadClassification(client: PoolClient): Promise<number> {
       override?: unknown;
       decidedBy?: string;
       modelReason?: string;
+      topics?: string[];
     };
     ids.push(record.sourceId);
+    topics.push(JSON.stringify(record.topics ?? []));
     types.push(record.docType);
     tiers.push(record.tier);
     details.push(JSON.stringify({
@@ -494,21 +497,71 @@ async function loadClassification(client: PoolClient): Promise<number> {
   const result = await client.query(
     `
     UPDATE documents d
-    SET doc_type = c.doc_type, tier = c.tier, classification = c.details::jsonb
-    FROM unnest($1::text[], $2::text[], $3::text[], $4::text[])
-      AS c(source_id, doc_type, tier, details)
+    SET doc_type = c.doc_type, tier = c.tier, classification = c.details::jsonb,
+        topics = ARRAY(SELECT jsonb_array_elements_text(c.topics::jsonb))
+    FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[])
+      AS c(source_id, doc_type, tier, details, topics)
     WHERE d.source_id = c.source_id
     `,
-    [ids, types, tiers, details],
+    [ids, types, tiers, details, topics],
   );
   return result.rowCount ?? 0;
+}
+
+/**
+ * Jurisdiction, authority, edition and status (ADR-064).
+ *   jurisdiction: "central" in metadata → IN; everything else so far is UP
+ *     (Shasanadesh and the UP adapters). A future state adapter sets
+ *     metadata.stateCode, which wins.
+ *   authority: the issuing ministry/department (central: issuer; UP: department).
+ *   status: "draft" when the catalogue says so; "superseded" when a later order
+ *     supersedes or cancels it (document_relations); otherwise "current".
+ */
+export async function loadTaxonomy(client: PoolClient): Promise<{ byJurisdiction: string; superseded: number; drafts: number }> {
+  await client.query(`
+    UPDATE documents d SET
+      jurisdiction_code = CASE
+        WHEN NULLIF(d.metadata->>'stateCode', '') IS NOT NULL THEN upper(d.metadata->>'stateCode')
+        WHEN d.metadata->>'jurisdiction' = 'central' THEN 'IN'
+        ELSE 'UP'
+      END,
+      authority = COALESCE(
+        CASE WHEN d.metadata->>'jurisdiction' = 'central' THEN NULLIF(d.metadata->>'issuer', '') END,
+        NULLIF(d.department, ''),
+        NULLIF(d.metadata->>'issuer', '')
+      ),
+      edition = NULLIF(d.metadata->'sourceRecord'->>'edition', ''),
+      status = CASE
+        WHEN d.metadata->'sourceRecord'->>'status' IN ('draft', 'historical') THEN d.metadata->'sourceRecord'->>'status'
+        ELSE 'current'
+      END
+    WHERE d.source_id IS NOT NULL
+  `);
+  // Superseded / cancelled by a later order we know of (order links, ADR-054).
+  const superseded = await client.query(`
+    UPDATE documents d SET status = 'superseded'
+    WHERE d.status = 'current'
+      AND EXISTS (
+        SELECT 1 FROM document_relations r
+        WHERE r.kind IN ('supersedes', 'cancels') AND r.target_source_id = d.source_id
+      )
+  `);
+  const summary = await client.query<{ code: string; n: string }>(
+    "SELECT COALESCE(jurisdiction_code, '?') AS code, COUNT(*)::text AS n FROM documents GROUP BY 1 ORDER BY 1",
+  );
+  const drafts = await client.query<{ n: string }>("SELECT COUNT(*)::text AS n FROM documents WHERE status = 'draft'");
+  return {
+    byJurisdiction: summary.rows.map((row) => `${row.code} ${row.n}`).join(", "),
+    superseded: superseded.rowCount ?? 0,
+    drafts: Number(drafts.rows[0]?.n ?? 0),
+  };
 }
 
 /**
  * Rulebook §2: provenance_ok = the source URL is on a government host and the
  * provenance audit did not flag the document. Returns how many are flagged.
  */
-async function markProvenance(client: PoolClient): Promise<number> {
+export async function markProvenance(client: PoolClient): Promise<number> {
   const exceptions = Object.keys(GOVERNMENT_EXCEPTIONS);
   const result = await client.query<{ flagged: string }>(
     `
@@ -599,6 +652,7 @@ async function main() {
     const classified = await loadClassification(client);
     const flagged = await markProvenance(client);
     const relations = await loadRelations(client);
+    const taxonomy = await loadTaxonomy(client);
     const pageStats = await loadPagesAndVariants(client);
     const chunkStats = await loadChunks(client);
     const chunks = chunkStats.count;
@@ -642,6 +696,7 @@ async function main() {
     console.log(`Classified:         ${classified}${classified ? "" : " (run npm run classify:orders first)"}`);
     console.log(`Non-government:     ${flagged}${flagged ? " (flagged, excluded from answers; see npm run sources:audit)" : ""}`);
     console.log(`Order relations:    ${relations ?? "unchanged (run npm run relations:build first)"}`);
+    console.log(`Jurisdictions:      ${taxonomy.byJurisdiction} · superseded ${taxonomy.superseded} · drafts ${taxonomy.drafts}`);
     console.log(`Logical pages:      ${pageStats.pages}`);
     console.log(`Page variants:      ${pageStats.variants}`);
     console.log(`Numeric conflicts:  ${pageStats.conflicts}`);
@@ -678,7 +733,10 @@ async function main() {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exit(1);
-});
+// Run as `npm run db:load`; importing (tests) only exposes the steps.
+if (process.argv[1]?.includes("load-corpus")) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

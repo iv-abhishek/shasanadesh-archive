@@ -56,6 +56,9 @@ class SearchFilters(BaseModel):
     # Shasanadesh department IDs (the registry resolves "basic education" to 50001);
     # independent of how a capture spelled the department name.
     department_ids: list[int] | None = Field(default=None, max_length=12)
+    # ADR-064: "IN" (Government of India), "UP", … and topic codes (migration 011).
+    jurisdiction_codes: list[str] | None = Field(default=None, max_length=10)
+    topics: list[str] | None = Field(default=None, max_length=10)
     go_number: str | None = Field(default=None, max_length=200)
     source_id: str | None = Field(default=None, max_length=200)
     # Source collections (documents.provider), e.g. ["shasanadesh-up", "upgov"].
@@ -92,6 +95,9 @@ class Evidence(BaseModel):
     go_date: str | None
     source_url: str
     page_url: str
+    # ADR-064: IN (Government of India) / UP / later other states; current / superseded / draft.
+    jurisdiction_code: str | None = None
+    status: str | None = None
     retrieval_role: str
     anchor_page_number: int | None
     selected_variant: str
@@ -129,6 +135,8 @@ class Hit:
     go_date: str | None
     source_url: str
     document_title: str | None = None
+    jurisdiction_code: str | None = None
+    status: str | None = None
     lexical_score: float | None = None
     fused_score: float = 0.0
     rerank_score: float = 0.0
@@ -198,6 +206,8 @@ def make_hit(row: dict[str, Any], lexical: bool = False) -> Hit:
         go_date=str(row["go_date"]) if row["go_date"] is not None else None,
         source_url=row["source_url"],
         document_title=row.get("document_title"),
+        jurisdiction_code=row.get("jurisdiction_code"),
+        status=row.get("status"),
     )
     if lexical:
         hit.lexical_score = float(row["score"])
@@ -247,7 +257,7 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
                 "SELECT DISTINCT dd.department_id FROM documents dd "
                 "WHERE dd.department_id IS NOT NULL "
                 "AND translate(dd.department, %s, '') = ANY(%s)) "
-                "OR d.metadata->>'jurisdiction' = 'central' "
+                "OR d.jurisdiction_code = 'IN' OR d.metadata->>'jurisdiction' = 'central' "
                 f"OR {CORE_RULES_SQL})"
             )
             params.extend([INVISIBLE_JOINERS, departments, INVISIBLE_JOINERS, departments])
@@ -255,6 +265,14 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
     if filters.department_ids:
         clauses.append(f"(d.department_id = ANY(%s) OR {CORE_RULES_SQL})")
         params.append([int(value) for value in filters.department_ids])
+
+    if filters.jurisdiction_codes:
+        clauses.append("d.jurisdiction_code = ANY(%s)")
+        params.append([code.upper() for code in filters.jurisdiction_codes])
+
+    if filters.topics:
+        clauses.append("d.topics && %s::text[]")
+        params.append(list(filters.topics))
 
     # Rulebook §2: documents from non-government sources are flagged and never used.
     clauses.append("d.provenance_ok")
@@ -397,6 +415,7 @@ def retrieve_hybrid(
         "SELECT c.variant_chunk_id, c.variant_id, c.logical_page_id, c.source_id, "
         "c.page_number, c.variant_type, c.canonical, c.text_content, "
         "p.numeric_conflict, d.department, d.go_number, d.go_date, d.source_url, "
+        "d.jurisdiction_code, d.status, "
         "COALESCE(NULLIF(d.metadata->>'title', ''), NULLIF(d.metadata->'portal'->>'subject', '')) AS document_title, "
     )
 
@@ -546,6 +565,8 @@ def load_neighbor_hits(
                   d.go_number,
                   d.go_date,
                   d.source_url,
+                  d.jurisdiction_code,
+                  d.status,
                   -- Portal captures carry the order's subject instead of a title.
                   COALESCE(
                     NULLIF(d.metadata->>'title', ''),
@@ -602,6 +623,8 @@ def load_neighbor_hits(
                     canonical=bool(row["canonical"]),
                     text=row["text_content"],
                     numeric_conflict=bool(row["numeric_conflict"]),
+                    jurisdiction_code=row.get("jurisdiction_code"),
+                    status=row.get("status"),
                     department=row["department"],
                     go_number=row["go_number"],
                     go_date=(
@@ -648,6 +671,8 @@ def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
         go_date=hit.go_date,
         source_url=hit.source_url,
         page_url=f"{hit.source_url}#page={hit.page_number}",
+        jurisdiction_code=hit.jurisdiction_code,
+        status=hit.status,
         retrieval_role=hit.retrieval_role,
         anchor_page_number=hit.anchor_page_number,
         selected_variant=hit.variant_type,

@@ -26,6 +26,7 @@ import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { RULES_VERSION, classifyOrder, normalizeSubject, type Classification, type DocType, type Tier } from "./classify/rules.js";
+import { topicsFor, type TopicCode } from "./classify/topics.js";
 
 const root = process.cwd();
 const inventoryPath = path.join(root, "data/portal-capture/inventory.jsonl");
@@ -43,6 +44,8 @@ interface Candidate {
   department: string | null;
   inListing: boolean;
   captured: boolean;
+  /** Core-rules catalogue topics (ADR-062/064). */
+  catalogueTopics?: string[];
 }
 
 export interface ClassificationRecord extends Classification {
@@ -56,6 +59,8 @@ export interface ClassificationRecord extends Classification {
   /** Which pass decided the tier. */
   decidedBy: "rules" | "model" | "override";
   modelReason?: string;
+  /** Topic groups (src/classify/topics.ts, ADR-064). */
+  topics: TopicCode[];
   classifiedAt: string;
 }
 
@@ -105,6 +110,7 @@ async function collect(): Promise<Map<string, Candidate>> {
         department: existing?.department ?? text(metadata.department),
         inListing: Boolean(existing),
         captured: true,
+        catalogueTopics: Array.isArray(metadata.sourceRecord?.topics) ? metadata.sourceRecord.topics : undefined,
       });
     }
   }
@@ -142,6 +148,7 @@ async function main(): Promise<void> {
       inListing: candidate.inListing,
       captured: candidate.captured,
       ...rules,
+      topics: topicsFor(candidate),
       decidedBy: "rules" as const,
       ...(model
         ? {
@@ -182,6 +189,9 @@ async function main(): Promise<void> {
   console.log(`Low confidence:   ${count((r) => r.confidence === "low")}  (for model pass / review)`);
   console.log(`Decided by model: ${count((r) => r.decidedBy === "model")}`);
   console.log(`Overrides:        ${count((r) => Boolean(r.override))}`);
+  const byTopic = new Map<string, number>();
+  for (const record of records) for (const topic of record.topics) byTopic.set(topic, (byTopic.get(topic) ?? 0) + 1);
+  console.log("By topic:         " + [...byTopic].sort((a, b) => b[1] - a[1]).map(([topic, n]) => `${topic} ${n}`).join(", "));
   console.log("By type:          " + [...byType].sort((a, b) => b[1] - a[1]).map(([type, n]) => `${type} ${n}`).join(", "));
   console.log(`Output:           ${path.relative(root, outputPath)}`);
 

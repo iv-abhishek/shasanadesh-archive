@@ -2,6 +2,12 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 11:30 pm IST (Claude)
+
+- Central + UP grouping (ADR-064): migration 011 (jurisdictions, topics, status, edition,
+  authority), topic rules, db:load taxonomy, applicability in prompts, source-card tags,
+  finder/retrieval filters, Search console filters. Checked on embedded Postgres.
+
 ## 27 Sept 2026, 10:30 pm IST (Claude)
 
 - Permanent rules (docs/RULES.md, ADR-063) set by Abhishek: chat shows only government

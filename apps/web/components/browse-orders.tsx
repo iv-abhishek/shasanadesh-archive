@@ -24,6 +24,9 @@ interface Facets {
   sections: Array<{ name: string; count: number }>;
   categories: Array<{ name: string; count: number }>;
   tiers?: Array<{ tier: string; count: number }>;
+  /** ADR-064 grouping: Government of India / Uttar Pradesh / …, and topic groups. */
+  jurisdictions?: Array<{ code: string; nameEn: string; nameHi: string; count: number }>;
+  topics?: Array<{ code: string; nameEn: string; nameHi: string; count: number }>;
 }
 
 export interface BrowseRow {
@@ -66,6 +69,10 @@ interface Filters {
   mine: boolean;
   /** "", "A", "B", "C", "AB" (what Ask uses) or "none" (not classified). */
   tier: string;
+  /** "" or a jurisdiction code ("IN", "UP"). */
+  jurisdiction: string;
+  /** "" or a topic code. */
+  topic: string;
 }
 
 const EMPTY: Filters = {
@@ -79,6 +86,8 @@ const EMPTY: Filters = {
   dateTo: "",
   mine: false,
   tier: "",
+  jurisdiction: "",
+  topic: "",
 };
 
 const TIER_LABELS: Record<string, string> = {
@@ -210,6 +219,8 @@ export function BrowseOrders({
         ...(applied.dateFrom ? { dateFrom: applied.dateFrom } : {}),
         ...(applied.dateTo ? { dateTo: applied.dateTo } : {}),
         ...(tierFilter(applied.tier) ? { tiers: tierFilter(applied.tier) } : {}),
+        ...(applied.jurisdiction ? { jurisdictions: [applied.jurisdiction] } : {}),
+        ...(applied.topic ? { topics: [applied.topic] } : {}),
         page,
         pageSize,
         sort,
@@ -298,6 +309,24 @@ export function BrowseOrders({
               <option value="">All categories</option>
               {(facets?.categories ?? []).map((item) => (
                 <option key={item.name} value={item.name}>{item.name} ({item.count})</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Government
+            <select value={draft.jurisdiction} onChange={(event) => choose({ jurisdiction: event.target.value })}>
+              <option value="">Central and states</option>
+              {(facets?.jurisdictions ?? []).map((item) => (
+                <option key={item.code} value={item.code}>{item.nameEn} · {item.nameHi} ({item.count})</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Topic
+            <select value={draft.topic} onChange={(event) => choose({ topic: event.target.value })} disabled={!facets?.topics?.length}>
+              <option value="">All topics</option>
+              {(facets?.topics ?? []).filter((item) => item.count > 0).map((item) => (
+                <option key={item.code} value={item.code}>{item.nameEn} · {item.nameHi} ({item.count})</option>
               ))}
             </select>
           </label>

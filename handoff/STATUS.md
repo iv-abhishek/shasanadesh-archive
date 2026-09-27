@@ -106,7 +106,7 @@ run the regression set (~30–45 min):
 
 ```
 git push
-npm run db:migrate                         # adds document_relations (008), subject vectors (009)
+npm run db:migrate                         # 008 relations, 009 subject vectors, 010 provenance, 011 jurisdictions/topics
 npm run embed:subjects                     # one vector per order subject (a few minutes)
 npm run relations:build
 npm run compare:suspicious -- --max 300    # repeat until no "Remaining" line
