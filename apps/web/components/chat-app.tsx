@@ -24,6 +24,7 @@ import {
   type LaterChange,
 } from "../lib/sources";
 import { formatGoReference } from "../lib/go-reference";
+import { SearchGuide, StartPanel } from "./start-panel";
 
 type VerificationStatus =
   | "conflict"
@@ -1977,6 +1978,41 @@ export function ChatApp({
   const inFlightRef = useRef<AbortController | null>(null);
   const stopAnswer = () => inFlightRef.current?.abort();
 
+  // Examples and guide entries fill the input (to edit before sending).
+  const composerInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
+  const pickExample = (text: string) => {
+    setQuery(text);
+    setGuideOpen(false);
+    window.requestAnimationFrame(() => {
+      const input = composerInputRef.current;
+      if (!input) return;
+      input.focus();
+      input.setSelectionRange(text.length, text.length);
+    });
+  };
+
+  // The guide popover closes on Esc or a click outside it.
+  useEffect(() => {
+    if (!guideOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setGuideOpen(false);
+      }
+    };
+    const onPointer = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (!target?.closest(".search-guide-popover, .composer-guide-button")) setGuideOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onPointer);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onPointer);
+    };
+  }, [guideOpen]);
+
   // Esc stops the answer too, unless a dialog (e.g. the page viewer) is open.
   useEffect(() => {
     if (!busy) return;
@@ -2850,57 +2886,9 @@ export function ChatApp({
         </div>
       </header>
 
-      {turns.length === 0 ? (
-      <section className="intro">
-        <h2>
-          Ask about an order,
-          rule, department or
-          administrative provision.
-        </h2>
-
-        <p>
-          Answers are grounded in
-          archived government-order
-          pages. Open any citation
-          to review the original
-          source page.
-        </p>
-      </section>
-      ) : null}
-
       <section className="conversation">
         {turns.length === 0 ? (
-          <div className="empty-state">
-            <div>
-              Try a current
-              benchmark question:
-            </div>
-
-            <div className="suggestions">
-              <button
-                type="button"
-                onClick={() =>
-                  setQuery(
-                    "medical officer seniority",
-                  )
-                }
-              >
-                medical officer
-                seniority
-              </button>
-
-              <button
-                type="button"
-                onClick={() =>
-                  setQuery(
-                    "सोलर पम्प",
-                  )
-                }
-              >
-                सोलर पम्प
-              </button>
-            </div>
-          </div>
+          <StartPanel onPick={pickExample} />
         ) : (
           turns.map(
             (turn) => (
@@ -2968,7 +2956,9 @@ export function ChatApp({
               event.target.value,
             )
           }
-          placeholder="Ask in English or Hindi… Press Enter to send"
+          ref={composerInputRef}
+          placeholder="Ask a question, or find an order by number, subject, department or date…"
+          aria-label="Ask a question or find an order"
           rows={3}
           aria-keyshortcuts="Enter"
           disabled={busy || archived}
@@ -2991,7 +2981,23 @@ export function ChatApp({
           }}
         />
 
+        {guideOpen ? (
+          <div className="search-guide-popover" role="dialog" aria-label="Search guide">
+            <SearchGuide onPick={pickExample} compact />
+          </div>
+        ) : null}
+
         <div className="composer-actions">
+          <button
+            type="button"
+            className="composer-guide-button"
+            aria-label="Search guide"
+            aria-expanded={guideOpen}
+            title="Search guide: phrases, wildcards, GO numbers, dates"
+            onClick={() => setGuideOpen((open) => !open)}
+          >
+            ?
+          </button>
           <div className="speech-language-toggle" role="group" aria-label="Voice input language">
             <button
               type="button"

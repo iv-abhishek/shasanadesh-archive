@@ -2,6 +2,12 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 8:00 pm IST (Claude)
+
+- Start page and search guide (ADR-060): three task cards with examples, the search
+  guide (phrases, wildcards, numbers, sections, dates, departments), "?" guide button by
+  the input. Checked light/dark at 1280 px and 390 px.
+
 ## 27 Sept 2026, 7:30 pm IST (Claude)
 
 - Stop button (ADR-059): Stop/Esc cancels the request end to end (browser → proxy → API →

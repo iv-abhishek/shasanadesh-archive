@@ -809,3 +809,25 @@ a forgotten answer holds the GPU queue for the next question.
   reported as an error. Checked with a fake streaming model: the model connection closes
   within the stop.
 - Also: wildcard stems (`*solar*` → "solar") take part in meaning-based subject matching.
+
+## ADR-060 - Start page and search guide
+
+The empty Ask screen showed two "benchmark" chips. With Ask now answering, finding and
+listing orders (ADR-057/058), people need to see what they can do and how to search.
+
+- Start page (`apps/web/components/start-panel.tsx`): a bilingual headline, three task
+  cards (Ask a question · Find an order · Latest and dated orders) with ready examples,
+  and the search guide. Examples fill the input box and focus it, so they can be edited
+  before sending; nothing is sent by a click.
+- Search guide: `"…"` exact phrase, `*` any letters, `?` one letter, GO number (or its
+  beginning), issuing section (released by … / … द्वारा जारी / … अनुभाग-1), dates (today,
+  this week, last month, August 2026, 10.09.2026, 10 or 15 September, पिछले सप्ताह),
+  departments in English or Hindi; each row has a clickable example, and a note on
+  combining terms and on when Ask writes an answer versus lists orders.
+- The same guide opens from a "?" button beside the input during a conversation (a
+  dialog above the composer; Esc or a click outside closes it, and Esc there does not
+  stop an answer). Placeholder: "Ask a question, or find an order by number, subject,
+  department or date…".
+- Built on the existing colour tokens (light and dark), one column under 900 px, no
+  horizontal scroll at 390 px; chips use the UI typeface because monospace fonts have
+  no Devanagari.

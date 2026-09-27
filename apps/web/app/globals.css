@@ -160,6 +160,9 @@ h1 {
   padding-top: 6px;
 }
 
+
+
+
 .intro {
   padding: 30px 0 23px;
   max-width: 700px;
@@ -185,36 +188,9 @@ h1 {
   gap: 20px;
 }
 
-.empty-state {
-  min-width: 0;
-  background: var(--surface);
-  border: 1px dashed var(--border);
-  border-radius: 15px;
-  padding: 18px 20px;
-  color: var(--muted);
-}
 
-.suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 11px;
-}
 
-.suggestions button {
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  padding: 8px 12px;
-  border-radius: 999px;
-  font-size: 0.88rem;
-  cursor: pointer;
-}
 
-.suggestions button:hover {
-  border-color: var(--accent);
-  background: var(--hover-surface);
-}
 
 .turn {
   display: grid;
@@ -3524,4 +3500,316 @@ h1 {
 
 .browse-open > button {
   display: block;
+}
+
+/* ------------------------------------------------------------------------ */
+/* Start page and search guide (ADR-060)                                     */
+/* ------------------------------------------------------------------------ */
+
+.start-panel {
+  display: grid;
+  gap: 22px;
+  padding: 22px 0 6px;
+  min-width: 0;
+}
+
+.start-hero {
+  max-width: 880px;
+}
+
+.start-hero h2 {
+  font-size: clamp(1.45rem, 2.6vw, 2.1rem);
+  text-wrap: balance;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin: 0 0 6px;
+}
+
+.start-hero p {
+  color: var(--muted);
+  font-size: 0.93rem;
+  line-height: 1.58;
+  margin: 0;
+}
+
+.start-hero .start-hero-hi {
+  color: var(--text);
+  font-size: 1.02rem;
+  margin-bottom: 10px;
+}
+
+.start-tasks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.start-task {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 10px;
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.start-task-head {
+  display: flex;
+  gap: 11px;
+  align-items: center;
+}
+
+.start-task-head h3 {
+  font-size: 0.98rem;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.start-task-head span[lang="hi"] {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.start-task-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.start-task-icon svg,
+.start-task li svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.start-task > p {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.start-task ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  align-content: end;
+}
+
+.start-task li button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--text);
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-size: 0.84rem;
+  line-height: 1.35;
+  cursor: pointer;
+}
+
+.start-task li button span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.start-task li button svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  color: var(--muted);
+  transition: transform 150ms ease, color 150ms ease;
+}
+
+.start-task li button:hover {
+  border-color: var(--accent);
+  background: var(--hover-surface);
+}
+
+.start-task li button:hover svg {
+  color: var(--accent);
+  transform: translateX(2px);
+}
+
+.start-task li button:focus-visible,
+.search-guide-example:focus-visible,
+.composer .composer-guide-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Search guide: syntax on the left, meaning and a clickable example on the right. */
+.search-guide {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 16px 18px;
+  min-width: 0;
+}
+
+.search-guide-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.search-guide-head h3 {
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.search-guide-head span {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.search-guide-rows {
+  display: grid;
+  margin: 0;
+}
+
+.search-guide-row {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: 6px 16px;
+  padding: 9px 0;
+  border-top: 1px solid var(--border);
+}
+
+.search-guide-row dt {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-content: flex-start;
+}
+
+.search-guide-row dd {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+/* Chips use the UI typeface: monospace fonts have no Devanagari and space it badly. */
+.search-guide code {
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 0.78rem;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
+.search-guide-example,
+.composer .search-guide-example {
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  padding: 0;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  text-underline-offset: 3px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.search-guide-example:hover,
+.composer .search-guide-example:hover:not(:disabled) {
+  background: none;
+  text-decoration-color: var(--accent);
+}
+
+.search-guide-note {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  margin: 10px 0 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.search-guide-note code {
+  white-space: normal;
+}
+
+/* The guide from the composer's "?" button, above the input. */
+.search-guide-popover {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 8px);
+  width: min(620px, 100%);
+  max-height: min(62vh, 560px);
+  overflow: auto;
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  z-index: 30;
+}
+
+.search-guide-compact {
+  padding: 14px 16px;
+}
+
+.search-guide-compact .search-guide-row {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.3fr);
+}
+
+.composer .composer-guide-button {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface-soft);
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.composer .composer-guide-button:hover:not(:disabled),
+.composer .composer-guide-button[aria-expanded="true"] {
+  border-color: var(--accent);
+  background: var(--hover-surface);
+  color: var(--accent);
+}
+
+@media (max-width: 900px) {
+  .start-tasks {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .search-guide-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
