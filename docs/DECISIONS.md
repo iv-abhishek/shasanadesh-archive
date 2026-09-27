@@ -720,3 +720,33 @@ page) that nothing reads after OCR. Keeping everything for 177,504 orders would 
   `storage:report`.
 - Projection with the current tier mix: ≈ 15 GB of order files for the full portal, plus
   Postgres (text, chunks and embeddings of tier A/B only), a few GB.
+
+## ADR-057 - Order lists for "recent / dated" questions; bilingual department registry
+
+27 Sept: "recent government order release in department of basic education" returned an
+unrelated Agriculture page and a safe fallback. Semantic search cannot rank by date,
+"basic education" did not match the archive's Hindi name (बेसिक शिक्षा विभाग), so the
+search stayed in the profile's departments.
+
+- **Order lists** (`src/rag/order-listing.ts`): a question that mentions orders and
+  either a recency word (recent, latest, new, issued, released, हाल, नवीनतम, जारी …) or a
+  date (today, yesterday, this/last week, this/last month, last N days, a month, a year,
+  a day such as 21.09.2026 / 21 Sept 2026, between A and B, since A — English and Hindi,
+  IST calendar) is answered from the order list: newest first, up to 10, "N of total",
+  each line date · GO number · subject with a source card (Copy reference, official
+  link, later changes). No model is involved, so it is instant and every line is a
+  recorded fact. Questions about content ("what does…", procedure, eligibility,
+  provisions) still go to Ask. Leftover subject words filter the subjects; when nothing
+  matches, the question goes to Ask instead of listing unrelated orders.
+- Scope: a named department; otherwise the profile's departments; if they have nothing,
+  all departments (flagged). All tiers are listed: the question is what was issued.
+- **Department registry** (`datasets/departments.json`, `src/departments/registry.ts`):
+  Shasanadesh department ID → portal Hindi name, English name (from the archive or a
+  standard translation marked `enSource: translation`, to review) and aliases (PWD,
+  jail, बेसिक शिक्षा). A mention is *strong* when multi-word or followed by
+  department/विभाग and then also scopes Ask, through a new retrieval filter by
+  department ID (`department_ids`), independent of how captures spelled the name. A
+  single word ("finance", "energy") is *weak* and only used for lists.
+- UI: list answers carry an "Order list" badge; their source cards drop the text-quality
+  badge. A safe fallback no longer shows "Validated".
+- Eval: two `order-list` cases (`expectListing`).

@@ -2,6 +2,14 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 5:45 pm IST (Claude)
+
+- Order lists (ADR-057) after Abhishek's screenshot ("recent … basic education" gave an
+  Agriculture fallback): list intent with English/Hindi dates, department registry
+  (59 departments), `department_ids` retrieval filter, "Order list" badge, no "Validated"
+  on safe fallbacks, 2 eval cases. Checked on the 679 real orders in a temporary Postgres.
+  Restart `npm run dev:all` (API + retrieval) to pick it up.
+
 ## 27 Sept 2026, 5:00 pm IST (Claude)
 
 - Local disk policy (ADR-056): `storage:report|trim|restore`, OCR page images deleted after

@@ -57,6 +57,8 @@ interface Source {
     number | null;
   /** Later orders that supersede / amend / cancel / correct this one (ADR-054). */
   laterChanges?: LaterChange[];
+  /** "listing": an entry of an order list (ADR-057), not a retrieved page. */
+  kind?: "listing";
 }
 
 interface RagTimings {
@@ -94,6 +96,9 @@ interface DoneEvent {
   shortened?: boolean;
   /** Best reranker relevance (0–1) among direct pages, for calibration. */
   bestRelevance?: number;
+  /** Answered from the order list (ADR-057): dates, numbers and subjects as recorded. */
+  listing?: boolean;
+  listingTotal?: number;
 
 }
 
@@ -609,6 +614,7 @@ function normalizePersistedSource(
         ? raw.anchorPageNumber
         : null,
     laterChanges: readLaterChanges(raw.laterChanges),
+    kind: raw.kind === "listing" ? "listing" : undefined,
   };
 }
 
@@ -1285,7 +1291,7 @@ function SourceGroupCard({
             <span>{group.subtitle.join(" · ")}</span>
           ) : null}
         </div>
-        <span className={summary.className}>{summary.label}</span>
+        {first?.kind === "listing" ? null : <span className={summary.className}>{summary.label}</span>}
       </div>
 
       {group.laterChanges.length ? (
@@ -1662,7 +1668,15 @@ function TurnView({
 
         {turn.done ? (
           <div className="answer-status">
-            {turn.done.noEvidence ? null : <span
+            {/* A safe fallback is a fixed message, so "Validated" would mislead. */}
+            {turn.done.noEvidence || turn.done.usedFallback ? null : turn.done.listing ? (
+              <span
+                className="badge badge-safe"
+                title="Listed from the recorded order dates, numbers and subjects; no text was generated."
+              >
+                Order list
+              </span>
+            ) : <span
               className={
                 turn.done
                   .conversational

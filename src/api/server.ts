@@ -67,6 +67,8 @@ import {
 import { assessRelevance, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
+import { detectListingRequest, listOrders } from "../rag/order-listing.js";
+import { departmentLabel, findDepartmentMention } from "../departments/registry.js";
 import { createPool } from "../db/client.js";
 import type { Pool } from "pg";
 import { createDraftStreamer, stripThinking } from "../rag/draft-preview.js";
@@ -225,9 +227,10 @@ registerWorkspaceRoutes(server);
 registerSessionRoutes(server);
 registerDocumentRoutes(server);
 
-// Read-only pool for order links (document_relations, ADR-054).
+// Read-only pool for order links (ADR-054) and order lists (ADR-057).
 let relationsPool: Pool | undefined;
 const getRelationsPool = () => (relationsPool ??= createPool());
+
 
 const ConversationStateSchema = z.object({
   activeSourceId: z
@@ -285,6 +288,10 @@ const SearchFiltersSchema = z.object({
     .min(1)
     .max(12)
     .optional(),
+  // Shasanadesh department IDs from the registry (ADR-057), with a label for
+  // progress messages.
+  departmentIds: z.array(z.number().int().positive()).min(1).max(12).optional(),
+  departmentLabel: z.string().trim().min(1).max(200).optional(),
   goNumber: z
     .string()
     .trim()
@@ -406,6 +413,10 @@ function describeScope(
     return hi ? `आदेश ${filters.sourceId}` : `order ${filters.sourceId}`;
   }
 
+  if (filters?.departmentLabel) {
+    return filters.departmentLabel;
+  }
+
   if (filters?.department) {
     return filters.department;
   }
@@ -465,6 +476,8 @@ async function retrieve(
                 filters?.department,
               departments:
                 filters?.departments,
+              department_ids:
+                filters?.departmentIds,
               go_number:
                 filters?.goNumber,
               source_id:
@@ -883,6 +896,91 @@ server.post(
         query,
       );
 
+    // A department named in English or Hindi ("basic education", "PWD", "कृषि
+    // विभाग") that is not one of the archive's spellings (ADR-057).
+    const registryDepartment =
+      explicitDepartment ? null : findDepartmentMention(query);
+
+    // "Recent / latest / dated … orders": answer from the order list.
+    const listingRequest =
+      explicitSourceId ? null : detectListingRequest(query);
+    if (listingRequest) {
+      const startedAt = performance.now();
+      const listed = await listOrders(
+        getRelationsPool(),
+        listingRequest,
+        !globalScopeRequested && workspaceProfile?.defaultScope === "my_departments"
+          ? workspaceProfile.departments
+          : [],
+        responseLanguage,
+      ).catch((error) => {
+        request.log.warn({ error }, "order listing failed; answering with Ask");
+        return null;
+      });
+
+      if (listed) {
+        const orders = listed.outcome.orders;
+        const laterChanges = await findLaterChanges(
+          getRelationsPool(),
+          orders.map((order, index) => ({
+            label: `S${index + 1}`,
+            source_id: order.sourceId,
+            go_number: order.goNumber,
+            go_date: order.goDate,
+          })) as never,
+        ).catch(() => new Map<string, LaterChange[]>());
+
+        const sources = orders.map((order, index) => ({
+          label: `S${index + 1}`,
+          sourceId: order.sourceId,
+          documentTitle: order.subject,
+          pageNumber: 1,
+          department: order.department,
+          goNumber: order.goNumber,
+          goDate: order.goDate,
+          sourceUrl: order.sourceUrl,
+          pageUrl: `${order.sourceUrl}#page=1`,
+          numericConflict: false,
+          numericVerificationStatus: "unverified",
+          selectedVariant: "native",
+          selectedCanonical: true,
+          rerankScoreRaw: 0,
+          retrievalRole: "direct",
+          anchorPageNumber: null,
+          kind: "listing",
+          laterChanges: laterChanges.get(order.sourceId) ?? [],
+        }));
+
+        reply.hijack();
+        reply.raw.statusCode = 200;
+        reply.raw.setHeader("content-type", "text/event-stream; charset=utf-8");
+        reply.raw.setHeader("cache-control", "no-cache, no-transform");
+        reply.raw.setHeader("connection", "keep-alive");
+        reply.raw.setHeader("x-accel-buffering", "no");
+        reply.raw.write(`event: sources\ndata: ${JSON.stringify(sources)}\n\n`);
+        reply.raw.write(`event: token\ndata: ${JSON.stringify({ text: listed.text })}\n\n`);
+        reply.raw.write(
+          `event: done\ndata: ${JSON.stringify({
+            ok: true,
+            listing: true,
+            validated: true,
+            responseLanguage,
+            retrievalScope: `listing_${listed.outcome.scope.kind}`,
+            scopeFallback: listed.outcome.widened,
+            listingTotal: listed.outcome.total,
+            citations: sources.map((source) => `${source.label}:1`),
+            timings: { totalMs: Math.round(performance.now() - startedAt) },
+          })}\n\n`,
+        );
+        reply.raw.end();
+        request.log.info(
+          { query, listing: listingRequest, total: listed.outcome.total, scope: listed.outcome.scope.kind },
+          "answered from the order list",
+        );
+        return;
+      }
+    }
+
     const activeSourceId =
       conversationPlan
         .contextualized
@@ -927,6 +1025,16 @@ server.post(
       retrievalFilters = {
         department:
           explicitDepartment,
+      };
+    } else if (
+      registryDepartment?.strength === "strong"
+    ) {
+      retrievalScope =
+        "explicit_department";
+
+      retrievalFilters = {
+        departmentIds: [registryDepartment.department.id],
+        departmentLabel: departmentLabel(registryDepartment.department, responseLanguage),
       };
     } else if (
       activeSourceId

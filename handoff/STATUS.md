@@ -49,6 +49,10 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
 - **Daily sync (ADR-055):** `npm run sync:daily` (processing only unless `-- --ingest`),
   report in `data/sync/reports/`; `npm run sync:schedule` installs a nightly launchd job
   (not installed yet; Abhishek decides when).
+- **Order lists (ADR-057):** "recent orders of basic education", "21.09.2026 के शासनादेश",
+  "orders issued this week" are answered from the order list, newest first (no model).
+  Departments named in English or Hindi resolve through `datasets/departments.json`
+  (English names marked `translation` should be reviewed).
 - Department picker: one choice per department (English name preferred).
 - Department filters (chat scope and Search) match by Shasanadesh department ID
   as well as by name (ADR-044).
@@ -114,6 +118,6 @@ Share the summary block and the "Failures" section of `data/eval/runs/<latest>.m
   daily sync (ADR-055).
 - Eval set: 24 verified cases in eval/rag-cases.json; grow toward 50–100 from real
   questions and thumbs-down feedback once the baseline run is in.
-- Bilingual department registry (department ID → English + Hindi name) for labels everywhere.
+- Department registry exists (ADR-057); next: use it for labels in the picker and Search.
 - Order links, next: rank the current version above the one it replaced; "orders this one
   relies on" (the `refers` links).

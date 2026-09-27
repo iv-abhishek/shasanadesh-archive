@@ -137,6 +137,8 @@ Fetching is opt-in (`--ingest`) while ingestion is on hold.
 - **Citation line for letters (done 26 Sept, ADR-046):** a "Copy reference" button that gives the ready-to-paste
   reference, e.g. "शासनादेश संख्या 61/2023/37-5, दिनांक 15 सितम्बर 2023", with the
   official link. This is the core daily use case.
+- **Order lists (done 27 Sept, ADR-057):** "recent / latest / dated … orders of <department>"
+  answered from the order list, newest first, in English or Hindi.
 - **Narrow orders:** when a question is about one specific order (a person, a project, a
   sanction), say so and point to the Shasanadesh portal search by GO number/department
   rather than answering from tier C.

@@ -1,0 +1,563 @@
+{
+ "_about": "Shasanadesh department ID → Hindi and English names, plus aliases people type (ADR-057). 'hi' is the portal's name; 'en' comes from the archive (enSource: archive) or is a standard translation to review (enSource: translation). Add departments as the capture finds new IDs.",
+ "departments": [
+  {
+   "id": 1,
+   "hi": "ऊर्जा विभाग",
+   "en": "Energy",
+   "enSource": "translation",
+   "aliases": [
+    "power department",
+    "urja"
+   ]
+  },
+  {
+   "id": 6,
+   "hi": "नागरिक उड्डयन विभाग",
+   "en": "Civil Aviation",
+   "enSource": "archive",
+   "aliases": [
+    "aviation"
+   ]
+  },
+  {
+   "id": 7,
+   "hi": "पर्यटन विभाग",
+   "en": "Tourism",
+   "enSource": "translation",
+   "aliases": [
+    "paryatan"
+   ]
+  },
+  {
+   "id": 12,
+   "hi": "प्राविधिक शिक्षा विभाग",
+   "en": "Technical Education",
+   "enSource": "translation",
+   "aliases": [
+    "polytechnic"
+   ]
+  },
+  {
+   "id": 15,
+   "hi": "कारागार प्रशासन एवं सुधार विभाग",
+   "en": "Prison Administration and Reforms",
+   "enSource": "translation",
+   "aliases": [
+    "prison",
+    "prisons",
+    "jail",
+    "jails",
+    "कारागार",
+    "जेल"
+   ]
+  },
+  {
+   "id": 17,
+   "hi": "होमगार्ड्स विभाग",
+   "en": "Home Guards",
+   "enSource": "translation",
+   "aliases": [
+    "homeguard",
+    "home guard",
+    "होमगाडर्स"
+   ]
+  },
+  {
+   "id": 19,
+   "hi": "आबकारी विभाग",
+   "en": "Excise",
+   "enSource": "translation",
+   "aliases": [
+    "abkari"
+   ]
+  },
+  {
+   "id": 20,
+   "hi": "पिछड़ा वर्ग कल्याण विभाग",
+   "en": "Backward Classes Welfare",
+   "enSource": "translation",
+   "aliases": [
+    "obc welfare"
+   ]
+  },
+  {
+   "id": 21,
+   "hi": "श्रम विभाग",
+   "en": "Labour",
+   "enSource": "translation",
+   "aliases": [
+    "labor"
+   ]
+  },
+  {
+   "id": 23,
+   "hi": "परिवहन विभाग",
+   "en": "Transport",
+   "enSource": "translation",
+   "aliases": []
+  },
+  {
+   "id": 25,
+   "hi": "चिकित्सा शिक्षा एवं आयुष विभाग",
+   "en": "Medical Education and AYUSH",
+   "enSource": "translation",
+   "aliases": [
+    "medical education"
+   ]
+  },
+  {
+   "id": 34,
+   "hi": "लोक निर्माण विभाग",
+   "en": "Public Works",
+   "enSource": "archive",
+   "aliases": [
+    "pwd",
+    "public works department"
+   ]
+  },
+  {
+   "id": 37,
+   "hi": "कृषि विभाग",
+   "en": "Agriculture",
+   "enSource": "archive",
+   "aliases": [
+    "krishi"
+   ]
+  },
+  {
+   "id": 38,
+   "hi": "खाद्य एवम् रसद विभाग",
+   "en": "Food and Civil Supplies",
+   "enSource": "archive",
+   "aliases": [
+    "food and logistics",
+    "खाद्य एवं रसद"
+   ]
+  },
+  {
+   "id": 39,
+   "hi": "कृषि शिक्षा एवं अनुसंधान विभाग",
+   "en": "Agricultural Education and Research",
+   "enSource": "translation",
+   "aliases": []
+  },
+  {
+   "id": 40,
+   "hi": "ग्राम्य विकास विभाग",
+   "en": "Rural Development",
+   "enSource": "translation",
+   "aliases": [
+    "ग्रामीण विकास"
+   ]
+  },
+  {
+   "id": 41,
+   "hi": "पशुधन विभाग",
+   "en": "Animal Husbandry",
+   "enSource": "translation",
+   "aliases": [
+    "livestock",
+    "पशुपालन"
+   ]
+  },
+  {
+   "id": 44,
+   "hi": "मत्स्य विभाग",
+   "en": "Fisheries",
+   "enSource": "translation",
+   "aliases": []
+  },
+  {
+   "id": 46,
+   "hi": "न्याय विभाग",
+   "en": "Justice",
+   "enSource": "translation",
+   "aliases": [
+    "law department",
+    "law and justice"
+   ]
+  },
+  {
+   "id": 48,
+   "hi": "सामान्य प्रशासन विभाग",
+   "en": "General Administration",
+   "enSource": "translation",
+   "aliases": [
+    "gad"
+   ]
+  },
+  {
+   "id": 54,
+   "hi": "नियोजन विभाग",
+   "en": "Planning",
+   "enSource": "translation",
+   "aliases": []
+  },
+  {
+   "id": 64,
+   "hi": "अल्पसंख्यक कल्याण विभाग",
+   "en": "Minority Welfare",
+   "enSource": "translation",
+   "aliases": [
+    "minority affairs"
+   ]
+  },
+  {
+   "id": 65,
+   "hi": "संस्कृति विभाग",
+   "en": "Culture",
+   "enSource": "translation",
+   "aliases": []
+  },
+  {
+   "id": 79,
+   "hi": "सूचना विभाग",
+   "en": "Information",
+   "enSource": "translation",
+   "aliases": [
+    "information and public relations"
+   ]
+  },
+  {
+   "id": 94,
+   "hi": "स्टाम्प एवं रजिस्ट्रेशन विभाग",
+   "en": "Stamp and Registration",
+   "enSource": "translation",
+   "aliases": [
+    "stamps and registration",
+    "registration department"
+   ]
+  },
+  {
+   "id": 97,
+   "hi": "नागरिक सुरक्षा विभाग",
+   "en": "Civil Defence",
+   "enSource": "translation",
+   "aliases": [
+    "civil defense"
+   ]
+  },
+  {
+   "id": 100,
+   "hi": "विज्ञान एवं प्रोद्योगिकी विभाग",
+   "en": "Science and Technology",
+   "enSource": "translation",
+   "aliases": [
+    "विज्ञान एवं प्रौद्योगिकी"
+   ]
+  },
+  {
+   "id": 102,
+   "hi": "कृषि विपणन एवं विदेश व्यापार विभाग",
+   "en": "Agricultural Marketing and Foreign Trade",
+   "enSource": "translation",
+   "aliases": [
+    "agriculture marketing",
+    "mandi"
+   ]
+  },
+  {
+   "id": 107,
+   "hi": "समाज कल्याण विभाग",
+   "en": "Social Welfare",
+   "enSource": "translation",
+   "aliases": []
+  },
+  {
+   "id": 116,
+   "hi": "महिला कल्याण एवं बाल विकास",
+   "en": "Women Welfare and Child Development",
+   "enSource": "translation",
+   "aliases": [
+    "women and child development",
+    "women welfare",
+    "icds",
+    "महिला कल्याण"
+   ]
+  },
+  {
+   "id": 118,
+   "hi": "दिव्यांगजन सशक्तीकरण विभाग",
+   "en": "Divyangjan Empowerment",
+   "enSource": "translation",
+   "aliases": [
+    "disability",
+    "persons with disabilities",
+    "divyang"
+   ]
+  },
+  {
+   "id": 142,
+   "hi": "दुग्ध विकास विभाग",
+   "en": "Dairy Development",
+   "enSource": "translation",
+   "aliases": [
+    "dairy"
+   ]
+  },
+  {
+   "id": 145,
+   "hi": "रेशम विभाग",
+   "en": "Sericulture",
+   "enSource": "translation",
+   "aliases": [
+    "silk"
+   ]
+  },
+  {
+   "id": 146,
+   "hi": "हथकरघा एवं वस्त्रोद्योग",
+   "en": "Handloom and Textiles",
+   "enSource": "translation",
+   "aliases": [
+    "handloom",
+    "textiles"
+   ]
+  },
+  {
+   "id": 161,
+   "hi": "सार्वजनिक उद्यम विभाग",
+   "en": "Public Enterprises",
+   "enSource": "translation",
+   "aliases": []
+  },
+  {
+   "id": 162,
+   "hi": "वित्त विभाग",
+   "en": "Finance",
+   "enSource": "archive",
+   "aliases": [
+    "vitt"
+   ]
+  },
+  {
+   "id": 163,
+   "hi": "कार्मिक विभाग",
+   "en": "Personnel",
+   "enSource": "archive",
+   "aliases": [
+    "karmik"
+   ]
+  },
+  {
+   "id": 165,
+   "hi": "गृह विभाग",
+   "en": "Home",
+   "enSource": "translation",
+   "aliases": [
+    "home department",
+    "grih"
+   ]
+  },
+  {
+   "id": 167,
+   "hi": "उच्च शिक्षा विभाग",
+   "en": "Higher Education",
+   "enSource": "translation",
+   "aliases": [
+    "uchch shiksha"
+   ]
+  },
+  {
+   "id": 168,
+   "hi": "खादी एवं ग्रामोद्योग विभाग",
+   "en": "Khadi and Village Industries",
+   "enSource": "translation",
+   "aliases": [
+    "khadi"
+   ]
+  },
+  {
+   "id": 174,
+   "hi": "नियुक्ति विभाग",
+   "en": "Appointment",
+   "enSource": "translation",
+   "aliases": [
+    "appointments"
+   ]
+  },
+  {
+   "id": 176,
+   "hi": "अतिरिक्त ऊर्जा श्रोत विभाग",
+   "en": "Additional Energy Sources",
+   "enSource": "translation",
+   "aliases": [
+    "renewable energy",
+    "non-conventional energy",
+    "अतिरिक्त ऊर्जा स्रोत"
+   ]
+  },
+  {
+   "id": 180,
+   "hi": "व्यावसायिक शिक्षा एवं कौशल विकास और उद्यमशीलता विभाग",
+   "en": "Vocational Education and Skill Development",
+   "enSource": "archive",
+   "aliases": [
+    "skill development",
+    "vocational education"
+   ]
+  },
+  {
+   "id": 181,
+   "hi": "अवस्थापना विकास विभाग",
+   "en": "Infrastructure Development",
+   "enSource": "translation",
+   "aliases": [
+    "infrastructure"
+   ]
+  },
+  {
+   "id": 182,
+   "hi": "औद्योगिक विकास विभाग",
+   "en": "Industrial Development",
+   "enSource": "translation",
+   "aliases": [
+    "industries",
+    "industry department"
+   ]
+  },
+  {
+   "id": 186,
+   "hi": "आवास विभाग",
+   "en": "Housing",
+   "enSource": "translation",
+   "aliases": [
+    "housing and urban planning",
+    "आवास एवं शहरी नियोजन"
+   ]
+  },
+  {
+   "id": 187,
+   "hi": "सिंचाई एवं जल संसाधन विभाग",
+   "en": "Irrigation and Water Resources",
+   "enSource": "translation",
+   "aliases": [
+    "irrigation"
+   ]
+  },
+  {
+   "id": 188,
+   "hi": "सूचना एवं प्रौद्योगिकी विभाग",
+   "en": "IT and Electronics",
+   "enSource": "translation",
+   "aliases": [
+    "information technology",
+    "it department"
+   ]
+  },
+  {
+   "id": 193,
+   "hi": "धर्मार्थ कार्य",
+   "en": "Religious Affairs",
+   "enSource": "translation",
+   "aliases": [
+    "dharmarth karya",
+    "धर्मार्थ कार्य विभाग"
+   ]
+  },
+  {
+   "id": 196,
+   "hi": "राज्य कर विभाग",
+   "en": "State Tax",
+   "enSource": "translation",
+   "aliases": [
+    "commercial tax",
+    "gst department",
+    "वाणिज्य कर"
+   ]
+  },
+  {
+   "id": 201,
+   "hi": "चिकित्सा एवं स्वास्थ्य विभाग",
+   "en": "Medical and Health",
+   "enSource": "archive",
+   "aliases": [
+    "health department",
+    "medical health",
+    "चिकित्सा एवं स्वास्थ विभाग"
+   ]
+  },
+  {
+   "id": 202,
+   "hi": "खाद्य एवं औषधि प्रशासन विभाग",
+   "en": "Food and Drug Administration",
+   "enSource": "translation",
+   "aliases": [
+    "fsda",
+    "food safety"
+   ]
+  },
+  {
+   "id": 208,
+   "hi": "खेल विभाग",
+   "en": "Sports",
+   "enSource": "translation",
+   "aliases": [
+    "khel"
+   ]
+  },
+  {
+   "id": 211,
+   "hi": "नगरीय रोजगार एवं गरीबी उन्मूलन विभाग",
+   "en": "Urban Employment and Poverty Alleviation",
+   "enSource": "translation",
+   "aliases": [
+    "urban employment",
+    "poverty alleviation"
+   ]
+  },
+  {
+   "id": 20000,
+   "hi": "नमामि गंगे तथा ग्रामीण जलापूर्ति विभाग",
+   "en": "Namami Gange and Rural Water Supply",
+   "enSource": "translation",
+   "aliases": [
+    "rural water supply",
+    "namami gange",
+    "jal jeevan"
+   ]
+  },
+  {
+   "id": 30000,
+   "hi": "पर्यावरण वन एवं जलवायु परिवर्तन",
+   "en": "Environment, Forest and Climate Change",
+   "enSource": "translation",
+   "aliases": [
+    "forest department",
+    "environment department",
+    "वन विभाग"
+   ]
+  },
+  {
+   "id": 50001,
+   "hi": "बेसिक शिक्षा विभाग",
+   "en": "Basic Education",
+   "enSource": "translation",
+   "aliases": [
+    "primary education",
+    "basic shiksha",
+    "बेसिक शिक्षा"
+   ]
+  },
+  {
+   "id": 50002,
+   "hi": "माध्यमिक शिक्षा विभाग",
+   "en": "Secondary Education",
+   "enSource": "archive",
+   "aliases": [
+    "madhyamik shiksha",
+    "माध्यमिक शिक्षा"
+   ]
+  },
+  {
+   "id": 50003,
+   "hi": "आयुष विभाग",
+   "en": "AYUSH",
+   "enSource": "translation",
+   "aliases": [
+    "ayush department"
+   ]
+  }
+ ]
+}

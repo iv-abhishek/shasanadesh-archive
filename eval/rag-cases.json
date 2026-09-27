@@ -422,5 +422,36 @@
     "allowFallback": false,
     "expectNoEvidence": true,
     "notes": "Metro orders in the archive are fund releases, not fares."
+  },
+  {
+    "id": "list-recent-basic-education",
+    "query": "recent government order release in department of basic education",
+    "language": "en",
+    "category": "order-list",
+    "profileDepartments": [
+      "Secondary Education",
+      "लोक निर्माण विभाग",
+      "Agriculture"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectListing": true,
+    "expectedTextIncludesAny": [
+      "बेसिक शिक्षा"
+    ],
+    "notes": "27 Sept screenshot: answered with an Agriculture page and a safe fallback. The department is named in English and is outside the profile; the answer is a dated list (ADR-057)."
+  },
+  {
+    "id": "list-dated-hindi",
+    "query": "21.09.2026 के शासनादेश",
+    "language": "hi",
+    "category": "order-list",
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectListing": true,
+    "expectedTextIncludesAny": [
+      "21.09.2026"
+    ],
+    "notes": "A date-bound list in Hindi."
   }
 ]

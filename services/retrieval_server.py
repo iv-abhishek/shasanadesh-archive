@@ -53,6 +53,9 @@ LEXICAL_WEIGHT = 1.2
 class SearchFilters(BaseModel):
     department: str | None = Field(default=None, max_length=200)
     departments: list[str] | None = None
+    # Shasanadesh department IDs (the registry resolves "basic education" to 50001);
+    # independent of how a capture spelled the department name.
+    department_ids: list[int] | None = Field(default=None, max_length=12)
     go_number: str | None = Field(default=None, max_length=200)
     source_id: str | None = Field(default=None, max_length=200)
     # Source collections (documents.provider), e.g. ["shasanadesh-up", "upgov"].
@@ -242,6 +245,10 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
                 "OR d.metadata->>'jurisdiction' = 'central')"
             )
             params.extend([INVISIBLE_JOINERS, departments, INVISIBLE_JOINERS, departments])
+
+    if filters.department_ids:
+        clauses.append("d.department_id = ANY(%s)")
+        params.append([int(value) for value in filters.department_ids])
 
     if not filters.include_routine and not filters.source_id:
         clauses.append(

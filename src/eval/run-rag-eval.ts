@@ -35,6 +35,8 @@ interface EvalCase {
   expectScopeFallback?: boolean;
   /** At least one of these words must appear in the answer. */
   expectedTextIncludesAny?: string[];
+  /** Must be answered from the order list, newest first (ADR-057). */
+  expectListing?: boolean;
 }
 
 interface SearchEvidence {
@@ -866,6 +868,10 @@ async function evaluateCase(
     ) {
       failures.push(`answer mentions none of: ${testCase.expectedTextIncludesAny.join(", ")}`);
     }
+  }
+
+  if (testCase.expectListing && !(chat.done as { listing?: boolean } | undefined)?.listing) {
+    failures.push("expected an order list (newest first), but Ask answered from page text");
   }
 
   if (testCase.expectScopeFallback && !chat.done?.scopeFallback) {
