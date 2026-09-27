@@ -131,6 +131,30 @@ lists that can be checked against the portal's own totals):
 5. `npm run portal:report` reconciles every department: portal total, pages, orders,
    archived, unavailable, waiting, and local disk use.
 
+#### Import saved result pages without a portal bookmark
+
+If browser page capture is unavailable, save each results page locally as HTML after
+the portal search succeeds. Name files `page-1.html`, `page-2.html`, and so on, and
+put the pages for one department/search in a folder under
+`data/portal-capture/incoming/`. This parser reads local files only; it never reads
+browser state or sends requests to the portal. It validates the official PDF links
+and submits the rows to the loopback bridge, which records them in the same ledger
+used by the B2 importer.
+
+For example, after saving every page for a department:
+
+```sh
+npm run portal:import-saved -- --input data/portal-capture/incoming/housing \
+  --department 'आवास विभाग' --date-from 01/01/1947 --date-to 27/09/2026 \
+  --total 12345 --page-size 100 --mark-complete
+```
+
+Replace the department, dates, and portal total with the exact search used. Include
+page 1 to infer page size, or pass `--page-size`; use `--dry-run` first to check the
+saved files. Only use `--mark-complete` after saving every page for that search.
+The already-running importer watches the shared inventory and downloads PDFs with
+the configured delay (at least 3 seconds between portal PDF requests).
+
 Then `npm run classify:orders`, `npm run relations:build`, `npm run db:load` and the processing steps in
 `handoff/STATUS.md` make the useful orders searchable.
 
