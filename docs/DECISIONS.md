@@ -928,3 +928,33 @@ Central and UP documents now, other states later, all from government sources.
   turns topic and jurisdiction words into filters ("GeM guidelines", "central procurement
   rules", "पेंशन से संबंधित शासनादेश"); "केन्द्रीय कारागार" (a central jail) is not the
   central government. The Search console has Government and Topic filters with counts.
+
+## ADR-065 - Suggested follow-up questions under an answer
+
+Abhishek (27 Sept): after an answer, offer a few relevant questions to click.
+
+- The browser asks `POST /api/suggest` (web proxy `/api/rag/suggest`) **after** the answer is
+  shown, so suggestions never delay the answer. Only the latest answer gets them; not
+  archived chats, "no matching order", safe fallback or small talk.
+- Answers from text: the model writes three short questions in the answer's language from the
+  question, the answer (citations removed) and the cited orders' titles, GO numbers and
+  dates (160 tokens, temperature 0.4, `src/rag/suggestions.ts`). The reply is cleaned: no
+  URLs (Rulebook §1), no repeat of the question, wrong-language lines dropped, max three.
+- Order lists: deterministic ("What does GO 51/2026 dated 21.09.2026 say?").
+- Fallbacks: fixed questions (procedure, competent authority, later amendments) when the
+  model is off (`RAG_SUGGESTIONS=0`), fails, returns fewer than two, or another question is
+  waiting for the local GPU (a person's answer always comes first).
+- Clicking a chip asks it as the next question in the same conversation.
+
+## ADR-066 - Auto-archive conversations after a month without activity
+
+Abhishek (27 Sept): chats older than one month go to Archives automatically, date-wise.
+
+- Migration 012: `conversations.archived_at`, `archived_reason` ('manual' | 'inactive'),
+  `restored_at`. Activity = last message or rename (`updated_at`) or last restore, so a
+  restored chat gets a fresh month. Pinned chats are never auto-archived.
+- Applied lazily whenever a person's history loads (best effort; before migration 012 it is
+  skipped with a warning) and for everyone by `npm run chats:archive`, a step of
+  `sync:daily`. `WORKSPACE_ARCHIVE_AFTER_DAYS` (default 30; 0 = off).
+- The Archived view groups by month of last activity, then by day; automatically archived
+  rows say so on hover. Opening an archived chat only views it; Restore continues it.

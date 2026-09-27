@@ -14,6 +14,7 @@
  *   db:load, embed:chunks         Postgres + embeddings for new chunks only
  *   embed:subjects                subject vectors for finding orders (ADR-058)
  *   translit:lexicon              Hindi word list for Hinglish typing (ADR-061)
+ *   chats:archive                 chats inactive for a month → Archives (ADR-066)
  *   storage:trim --apply          drop local copies B2 already holds (ADR-056)
  *   portal:report, storage:report reconciliation and disk use (information only)
  *
@@ -70,6 +71,7 @@ const STEPS = [
   { name: "embed:chunks", run: ["embed:chunks"], critical: true },
   { name: "embed:subjects", run: ["embed:subjects"], critical: false },
   { name: "translit:lexicon", run: ["translit:lexicon"], critical: false },
+  { name: "chats:archive", run: ["chats:archive"], critical: false },
   { name: "storage:trim", run: ["storage:trim", "--", "--apply"], critical: false },
   { name: "portal:report", run: ["portal:report"], critical: false },
   { name: "storage:report", run: ["storage:report"], critical: false },

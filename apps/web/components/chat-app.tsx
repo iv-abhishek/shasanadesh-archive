@@ -1702,11 +1702,14 @@ function TurnView({
   onOpenSource,
   onRetry,
   actions,
+  suggestions,
 }: {
   turn: ChatTurn;
   onOpenSource: (source: Source) => void;
   onRetry?: () => void;
   actions?: ReactNode;
+  /** Follow-up questions under the latest answer (ADR-065). */
+  suggestions?: ReactNode;
 }) {
   const askedAt = formatTurnTime(turn.askedAt ?? turn.id);
 
@@ -1886,7 +1889,100 @@ function TurnView({
       {turn.sources.length > 0 && !turn.done?.noEvidence ? (
         <SourcesSection turn={turn} onOpenSource={onOpenSource} />
       ) : null}
+
+      {suggestions}
     </article>
+  );
+}
+
+// Follow-up questions (ADR-065): asked once per answer, after it is shown.
+const suggestionCache = new Map<number, string[]>();
+
+function wantsSuggestions(turn: ChatTurn): boolean {
+  const done = turn.done;
+  return Boolean(
+    done && turn.answer && !turn.error && !done.noEvidence && !done.usedFallback && !done.conversational,
+  );
+}
+
+function SuggestedQuestions({
+  turn,
+  disabled,
+  onAsk,
+}: {
+  turn: ChatTurn;
+  disabled: boolean;
+  onAsk: (question: string) => void;
+}) {
+  const language = speechLanguageFor(turn.answer) === "hi-IN" || speechLanguageFor(turn.question) === "hi-IN" ? "hi" : "en";
+  const [items, setItems] = useState<string[] | null>(suggestionCache.get(turn.id) ?? null);
+
+  useEffect(() => {
+    if (suggestionCache.has(turn.id)) return;
+    const controller = new AbortController();
+    const cited = turn.done?.listing
+      ? turn.sources
+      : turn.sources.filter((source) => (turn.done?.citations ?? []).some((c) => /S\d+/.exec(c)?.[0] === source.label));
+    const sources = (cited.length ? cited : turn.sources).slice(0, 6).map((source) => ({
+      title: source.documentTitle ?? null,
+      goNumber: source.goNumber,
+      goDate: source.goDate,
+      department: source.department,
+    }));
+
+    fetch("/api/rag/suggest", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        question: turn.question,
+        answer: turn.answer.slice(0, 12000),
+        language,
+        listing: Boolean(turn.done?.listing),
+        sources,
+      }),
+      signal: controller.signal,
+    })
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data: { suggestions?: unknown } | null) => {
+        const list = Array.isArray(data?.suggestions)
+          ? data.suggestions.filter((item): item is string => typeof item === "string").slice(0, 3)
+          : [];
+        suggestionCache.set(turn.id, list);
+        setItems(list);
+      })
+      .catch(() => {
+        /* aborted or offline: show nothing */
+      });
+
+    return () => controller.abort();
+  }, [turn.id, turn.question, turn.answer, turn.sources, turn.done, language]);
+
+  if (!items) {
+    return (
+      <div className="suggestions suggestions-loading" aria-hidden="true">
+        <span className="suggestions-title">{language === "hi" ? "संबंधित प्रश्न" : "Related questions"}</span>
+        <span className="suggestion-chip suggestion-skeleton" />
+        <span className="suggestion-chip suggestion-skeleton" />
+      </div>
+    );
+  }
+  if (!items.length) return null;
+
+  return (
+    <div className="suggestions" role="group" aria-label={language === "hi" ? "संबंधित प्रश्न" : "Related questions"}>
+      <span className="suggestions-title">{language === "hi" ? "संबंधित प्रश्न" : "Related questions"}</span>
+      {items.map((item) => (
+        <button
+          key={item}
+          type="button"
+          className="suggestion-chip"
+          disabled={disabled}
+          onClick={() => onAsk(item)}
+        >
+          <span aria-hidden="true">↳</span> {item}
+        </button>
+      ))}
+    </div>
   );
 }
 
@@ -2985,6 +3081,19 @@ export function ChatApp({
                         void sendFeedback(turn, rating, reason ?? null, comment ?? null)
                       }
                       onRegenerate={() => regenerate(turn)}
+                    />
+                  ) : null
+                }
+                suggestions={
+                  !archived && turn.id === turns[turns.length - 1]?.id && wantsSuggestions(turn) ? (
+                    <SuggestedQuestions
+                      turn={turn}
+                      disabled={busy}
+                      onAsk={(question) => {
+                        if (busy || archived) return;
+                        setQuery("");
+                        void ask(question, turns);
+                      }}
                     />
                   ) : null
                 }

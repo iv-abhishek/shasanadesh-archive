@@ -3903,3 +3903,82 @@ h1 {
   color: var(--warning);
   border-color: transparent;
 }
+
+/* Follow-up questions under the latest answer (ADR-065). */
+.suggestions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-top: 14px;
+}
+
+.suggestions-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.suggestion-chip {
+  max-width: 100%;
+  padding: 7px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+  color: inherit;
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.suggestion-chip span {
+  color: var(--accent);
+}
+
+.suggestion-chip:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.suggestion-chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.suggestion-skeleton {
+  width: min(320px, 70%);
+  height: 30px;
+  cursor: default;
+  animation: suggestion-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes suggestion-pulse {
+  50% { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .suggestion-skeleton { animation: none; }
+}
+
+/* Archives grouped by month, then day (ADR-066). */
+.archive-note {
+  margin: 2px 12px 8px;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.archive-day + .archive-day {
+  margin-top: 4px;
+}
+
+.archive-day-label {
+  padding: 4px 12px 2px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--muted);
+}

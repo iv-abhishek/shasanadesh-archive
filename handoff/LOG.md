@@ -2,6 +2,14 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 8:55 pm IST (Claude)
+
+- Suggested follow-up questions (ADR-065): `/api/suggest`, chips under the latest answer;
+  model-written for text answers, deterministic for order lists, fixed fallbacks.
+- Auto-archive (ADR-066): migration 012, chats idle 30 days → Archives (pinned stay),
+  `chats:archive` in sync:daily, Archives grouped month → day. Checked on embedded Postgres.
+- (Earlier entries today carry estimated clock times; this one is the actual time.)
+
 ## 27 Sept 2026, 11:30 pm IST (Claude)
 
 - Central + UP grouping (ADR-064): migration 011 (jurisdictions, topics, status, edition,

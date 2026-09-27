@@ -73,6 +73,12 @@ import { createPool } from "../db/client.js";
 import { officialOnly, stripNonGovernmentLinks } from "../lib/public-links.js";
 import type { Pool } from "pg";
 import { createDraftStreamer, stripThinking } from "../rag/draft-preview.js";
+import {
+  buildSuggestionMessages,
+  fallbackSuggestions,
+  listingSuggestions,
+  parseSuggestions,
+} from "../rag/suggestions.js";
 
 const PORT = Number.parseInt(
   process.env.API_PORT ?? "8787",
@@ -739,6 +745,86 @@ server.post(
         RAG_TOP_K,
       parsed.data.filters,
     );
+  },
+);
+
+// Follow-up questions under an answer (ADR-065). Asked by the browser after
+// the answer is shown, so it never delays the answer. RAG_SUGGESTIONS=0 keeps
+// only the fixed questions (no model call).
+const RAG_SUGGESTIONS =
+  (process.env.RAG_SUGGESTIONS ?? "1") !== "0";
+
+const SuggestBodySchema = z.object({
+  question: z.string().min(1).max(2000),
+  answer: z.string().max(12000).default(""),
+  language: z.enum(["hi", "en"]).default("en"),
+  listing: z.boolean().optional(),
+  sources: z
+    .array(
+      z.object({
+        title: z.string().nullish(),
+        goNumber: z.string().nullish(),
+        goDate: z.string().nullish(),
+        department: z.string().nullish(),
+      }),
+    )
+    .max(12)
+    .default([]),
+});
+
+server.post(
+  "/api/suggest",
+  async (request, reply) => {
+    const parsed =
+      SuggestBodySchema.safeParse(request.body);
+
+    if (!parsed.success) {
+      return reply.code(400).send({ error: parsed.error.flatten() });
+    }
+
+    const body = parsed.data;
+
+    if (body.listing) {
+      return { suggestions: listingSuggestions(body), source: "listing" };
+    }
+
+    // Someone else is waiting for the GPU: their answer matters more.
+    const queue = getLocalGpuQueueStatus();
+    const gpuBusy = LLM_IS_LOCAL && queue.enabled && queue.waiting > 0;
+
+    if (!RAG_SUGGESTIONS || !LLM_BASE_URL || !LLM_MODEL || gpuBusy) {
+      return { suggestions: fallbackSuggestions(body), source: "fixed" };
+    }
+
+    const stop = new AbortController();
+    reply.raw.on("close", () => {
+      if (!reply.raw.writableFinished) stop.abort();
+    });
+
+    try {
+      const openai = new OpenAI({
+        baseURL: LLM_BASE_URL,
+        apiKey: LLM_API_KEY || "local-openai-compatible-endpoint",
+        timeout: 20_000,
+      });
+      const { text } = await generateCompletion(
+        openai,
+        buildSuggestionMessages(body) as GeneratorMessage[],
+        0.4,
+        160,
+        undefined,
+        stop.signal,
+      );
+      const suggestions = parseSuggestions(text, body);
+
+      return suggestions.length >= 2
+        ? { suggestions, source: "model" }
+        : { suggestions: fallbackSuggestions(body), source: "fixed" };
+    } catch (error) {
+      if (stop.signal.aborted) return reply.code(499).send();
+      request.log.warn({ err: error }, "suggestions failed; using fixed questions");
+      return { suggestions: fallbackSuggestions(body), source: "fixed" };
+    }
   },
 );
 

@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 27 Sept 2026, 4:05 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 27 Sept 2026, 8:55 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -61,6 +61,10 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   manuals, GeM GTC + UP GeM GOs, Make in India order, UP Budget Manual, Conduct Rules) in
   `datasets/core-rules/catalogue.json`; always tier A and never filtered out by department.
   **Not ingested yet:** `npm run ingest:source -- core-rules`, then the processing steps.
+- **Suggested questions (ADR-065):** three clickable follow-ups under the latest answer
+  (model-written after the answer; order lists get "What does GO … say?").
+- **Auto-archive (ADR-066):** chats idle for 30 days move to Archives (pinned stay), grouped
+  by month and day; `npm run chats:archive` runs in sync:daily. Needs migration 012.
 - Department picker: one choice per department (English name preferred).
 - Department filters (chat scope and Search) match by Shasanadesh department ID
   as well as by name (ADR-044).
@@ -106,7 +110,7 @@ run the regression set (~30–45 min):
 
 ```
 git push
-npm run db:migrate                         # 008 relations, 009 subject vectors, 010 provenance, 011 jurisdictions/topics
+npm run db:migrate                         # 008 relations, 009 subject vectors, 010 provenance, 011 jurisdictions/topics, 012 auto-archive
 npm run embed:subjects                     # one vector per order subject (a few minutes)
 npm run relations:build
 npm run compare:suspicious -- --max 300    # repeat until no "Remaining" line

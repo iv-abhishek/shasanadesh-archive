@@ -96,6 +96,8 @@
     "test:storage": "tsx src/storage/local-disk.test.ts",
     "test:rules": "tsx src/lib/public-links.test.ts",
     "test:listing": "tsx src/rag/order-listing.test.ts",
+    "test:suggestions": "tsx src/rag/suggestions.test.ts",
+    "chats:archive": "node --env-file-if-exists=.env --import tsx src/archive-conversations.ts",
     "translit:lexicon": "tsx scripts/build-translit-lexicon.ts",
     "test:translit": "tsx apps/web/lib/transliterate.test.ts",
     "sync:daily": "node scripts/daily-sync.mjs",

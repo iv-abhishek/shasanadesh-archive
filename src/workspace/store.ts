@@ -25,6 +25,11 @@ import {
 const pool: Pool =
   createPool();
 
+/** For one-shot scripts (chats:archive) that must exit when done. */
+export async function closeWorkspacePool(): Promise<void> {
+  await pool.end();
+}
+
 export interface WorkspaceProfile {
   id: string;
   displayName: string;
@@ -51,6 +56,9 @@ export interface ConversationSummary {
   isPinned: boolean;
   createdAt: string;
   updatedAt: string;
+  /** ADR-066: when and why it was archived ("inactive" = automatic). */
+  archivedAt?: string | null;
+  archivedReason?: "manual" | "inactive" | null;
 }
 
 export interface MessageFeedback {
@@ -637,12 +645,29 @@ export async function updateConversation(
       is_pinned: boolean;
       created_at: Date;
       updated_at: Date;
+      archived_at: Date | null;
+      archived_reason: "manual" | "inactive" | null;
     }>(
       `
         UPDATE conversations
         SET title = COALESCE($3, title),
             is_pinned = COALESCE($4, is_pinned),
             archived = COALESCE($5, archived),
+            -- ADR-066: record manual archive; a restore counts as activity.
+            archived_at = CASE
+              WHEN $5::boolean IS TRUE AND archived = FALSE THEN NOW()
+              WHEN $5::boolean IS FALSE THEN NULL
+              ELSE archived_at
+            END,
+            archived_reason = CASE
+              WHEN $5::boolean IS TRUE AND archived = FALSE THEN 'manual'
+              WHEN $5::boolean IS FALSE THEN NULL
+              ELSE archived_reason
+            END,
+            restored_at = CASE
+              WHEN $5::boolean IS FALSE AND archived = TRUE THEN NOW()
+              ELSE restored_at
+            END,
             updated_at = CASE
               WHEN $3::text IS NOT NULL THEN NOW()
               ELSE updated_at
@@ -655,7 +680,9 @@ export async function updateConversation(
           archived,
           is_pinned,
           created_at,
-          updated_at
+          updated_at,
+          archived_at,
+          archived_reason
       `,
       [
         conversationId,
@@ -686,6 +713,8 @@ export async function updateConversation(
     isPinned: row.is_pinned,
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
+    archivedAt: row.archived && row.archived_at ? row.archived_at.toISOString() : null,
+    archivedReason: row.archived ? row.archived_reason ?? null : null,
   };
 }
 
@@ -718,6 +747,38 @@ export async function deleteConversation(
   }
 }
 
+/**
+ * ADR-066: conversations with no activity for WORKSPACE_ARCHIVE_AFTER_DAYS
+ * (default 30; 0 turns it off) move to Archives. Activity is the last message
+ * or rename (updated_at) or the last restore. Pinned conversations stay.
+ */
+export const ARCHIVE_AFTER_DAYS = (() => {
+  const value = Number.parseInt(process.env.WORKSPACE_ARCHIVE_AFTER_DAYS ?? "30", 10);
+  return Number.isFinite(value) && value >= 0 ? value : 30;
+})();
+
+export const AUTO_ARCHIVE_SQL = `
+  UPDATE conversations
+  SET archived = TRUE,
+      archived_at = NOW(),
+      archived_reason = 'inactive'
+  WHERE archived = FALSE
+    AND is_pinned = FALSE
+    AND ($1::uuid IS NULL OR user_id = $1::uuid)
+    AND GREATEST(updated_at, COALESCE(restored_at, updated_at))
+        < NOW() - make_interval(days => $2::int)
+`;
+
+/** Archive inactive conversations of one user (or everyone when userId is null). */
+export async function archiveInactiveConversations(
+  userId: string | null,
+  days = ARCHIVE_AFTER_DAYS,
+): Promise<number> {
+  if (days <= 0) return 0;
+  const result = await pool.query(AUTO_ARCHIVE_SQL, [userId, days]);
+  return result.rowCount ?? 0;
+}
+
 export async function listConversations(
   userId: string,
   archived = false,
@@ -725,6 +786,14 @@ export async function listConversations(
   await getWorkspaceProfile(
     userId,
   );
+
+  // Best-effort: a failure here (e.g. migration 012 not yet run) must not
+  // hide the person's history.
+  try {
+    await archiveInactiveConversations(userId);
+  } catch (error) {
+    console.warn("Auto-archive skipped:", error instanceof Error ? error.message : error);
+  }
 
   const result =
     await pool.query<{
@@ -734,6 +803,8 @@ export async function listConversations(
       is_pinned: boolean;
       created_at: Date;
       updated_at: Date;
+      archived_at: Date | null;
+      archived_reason: "manual" | "inactive" | null;
     }>(
       `
         SELECT
@@ -742,7 +813,9 @@ export async function listConversations(
           archived,
           is_pinned,
           created_at,
-          updated_at
+          updated_at,
+          (to_jsonb(conversations) ->> 'archived_at')::timestamptz AS archived_at,
+          to_jsonb(conversations) ->> 'archived_reason' AS archived_reason
         FROM conversations
         WHERE user_id = $1
           AND archived = $2
@@ -767,6 +840,12 @@ export async function listConversations(
       updatedAt:
         row.updated_at
           .toISOString(),
+      archivedAt:
+        row.archived && row.archived_at
+          ? row.archived_at.toISOString()
+          : null,
+      archivedReason:
+        row.archived ? row.archived_reason ?? null : null,
     }),
   );
 }

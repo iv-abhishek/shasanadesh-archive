@@ -40,6 +40,9 @@ interface ConversationSummary {
   isPinned: boolean;
   createdAt: string;
   updatedAt: string;
+  /** ADR-066: when and why it was archived ("inactive" = automatic). */
+  archivedAt?: string | null;
+  archivedReason?: "manual" | "inactive" | null;
 }
 
 function conversationDateGroups(items: ConversationSummary[]) {
@@ -61,6 +64,39 @@ function conversationDateGroups(items: ConversationSummary[]) {
         ? "Yesterday"
         : formatDayKey(key, key.slice(0, 4) !== todayKey.slice(0, 4));
     return { key, label, conversations };
+  });
+}
+
+/**
+ * Archives (ADR-066): month sections ("September 2026"), each with the days
+ * the conversations were last active. Items arrive newest first.
+ */
+function archiveMonthGroups(items: ConversationSummary[]) {
+  const months = new Map<string, Map<string, ConversationSummary[]>>();
+  for (const conversation of items) {
+    const day = appDayKey(conversation.updatedAt);
+    const month = day.slice(0, 7);
+    const days = months.get(month) ?? new Map<string, ConversationSummary[]>();
+    days.set(day, [...(days.get(day) ?? []), conversation]);
+    months.set(month, days);
+  }
+  return [...months.entries()].map(([key, days]) => {
+    const [year, month] = key.split("-").map(Number);
+    const label = new Date(Date.UTC(year, month - 1, 15)).toLocaleDateString("en-IN", {
+      timeZone: "UTC",
+      month: "long",
+      year: "numeric",
+    });
+    return {
+      key,
+      label,
+      count: [...days.values()].reduce((total, list) => total + list.length, 0),
+      days: [...days.entries()].map(([dayKey, conversations]) => ({
+        key: dayKey,
+        label: formatDayKey(dayKey, true),
+        conversations,
+      })),
+    };
   });
 }
 
@@ -1596,6 +1632,11 @@ export function WorkspaceApp() {
           type="button"
           className="history-item"
           aria-current={active ? "page" : undefined}
+          title={
+            archived && conversation.archivedReason === "inactive"
+              ? `${conversation.title} — archived automatically after 30 days without activity`
+              : undefined
+          }
           onClick={() => {
             if (archived) {
               void openArchivedConversation(conversation);
@@ -1712,6 +1753,45 @@ export function WorkspaceApp() {
   const visibleArchivedConversations = archivedConversations.filter(matchesHistorySearch);
   const visiblePinnedConversations = visibleConversations.filter((conversation) => conversation.isPinned);
   const visibleRecentConversations = visibleConversations.filter((conversation) => !conversation.isPinned);
+
+  const renderArchiveHistory = (items: ConversationSummary[]) =>
+    archiveMonthGroups(items).map((month) => {
+      const collapseKey = `archived-month:${month.key}`;
+      const collapsed = collapsedDateGroups.has(collapseKey);
+      const groupId = `history-${collapseKey.replace(":", "-")}`;
+      return (
+        <section className="history-date-section archive-month" key={collapseKey}>
+          <button
+            type="button"
+            className="history-date-heading"
+            aria-expanded={!collapsed}
+            aria-controls={groupId}
+            onClick={() => setCollapsedDateGroups((current) => {
+              const next = new Set(current);
+              if (next.has(collapseKey)) next.delete(collapseKey);
+              else next.add(collapseKey);
+              return next;
+            })}
+          >
+            <span>{month.label}</span>
+            <svg className={collapsed ? "collapsed" : ""} viewBox="0 0 20 20" aria-hidden="true">
+              <path d="m5 7.5 5 5 5-5" />
+            </svg>
+            <small className="history-date-count">{month.count}</small>
+          </button>
+          <div id={groupId} className="history-date-items" role="group" aria-label={`${month.label} archived conversations`} hidden={collapsed}>
+            {!collapsed
+              ? month.days.map((day) => (
+                  <div className="archive-day" key={day.key}>
+                    <div className="archive-day-label">{day.label}</div>
+                    {renderConversationRows(day.conversations, true)}
+                  </div>
+                ))
+              : null}
+          </div>
+        </section>
+      );
+    });
 
   const renderDateGroupedHistory = (items: ConversationSummary[], archived = false) =>
     conversationDateGroups(items).map((group) => {
@@ -1919,9 +1999,13 @@ export function WorkspaceApp() {
               <span>Archived conversations</span>
               <small className="history-count-badge">{visibleArchivedConversations.length}</small>
             </div>
+            <p className="archive-note">
+              Chats with no activity for 30 days move here automatically, grouped by the date they were last used.
+              Pinned chats stay. Restore a chat to continue it.
+            </p>
             <nav className="history-list" aria-label="Archived conversations">
               {visibleArchivedConversations.length > 0
-                ? renderDateGroupedHistory(visibleArchivedConversations, true)
+                ? renderArchiveHistory(visibleArchivedConversations)
                 : <div className="history-empty">
                     {normalizedHistorySearch ? "No archived conversations match your search." : "Archived conversations will appear here."}
                   </div>}
