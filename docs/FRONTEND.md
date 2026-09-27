@@ -137,6 +137,9 @@ Each row shows the classifier's tier (A/B/C, "?" when low confidence) and docume
 type, and the "Usefulness (tier)" filter includes "A + B · what Ask uses", which is
 how to review what the classifier kept out of Ask (ADR-046).
 
+Each row also has **A / B / C** buttons to correct the tier; the change applies at once
+and is saved to `datasets/classification-overrides.jsonl` (ADR-053).
+
 **Search inside orders** ranks pages by meaning (all tiers). Search asks the retrieval service for up to 24 pages (the reranked pool) and
 organises them:
 

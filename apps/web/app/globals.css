@@ -3444,3 +3444,40 @@ h1 {
   overflow: hidden;
   mask-image: linear-gradient(to bottom, black 80%, transparent);
 }
+
+/* Tier correction buttons in the archive console. */
+.tier-review {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 6px;
+}
+
+.browse-open .tier-review button {
+  min-width: 26px;
+  padding: 3px 7px;
+  font-size: 0.72rem;
+  background: transparent;
+  color: var(--muted);
+}
+
+.browse-open .tier-review button.active {
+  background: var(--accent-soft);
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.tier-saved {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+.browse-open {
+  white-space: nowrap;
+}
+
+.browse-open > button {
+  display: block;
+}

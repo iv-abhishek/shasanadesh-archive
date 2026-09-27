@@ -86,6 +86,8 @@
     "test:browse": "tsx src/documents/browse.test.ts",
     "test:classify": "tsx src/classify/rules.test.ts",
     "classify:orders": "node --import tsx src/classify-orders.ts",
+    "classify:model": "node --env-file-if-exists=.env --import tsx src/classify/model-pass.ts",
+    "test:classify-model": "tsx src/classify/model-pass.test.ts",
     "test:go-reference": "tsx apps/web/lib/go-reference.test.ts",
     "test:relevance": "tsx src/rag/relevance.test.ts",
     "test:truncation": "tsx src/rag/truncation.test.ts",

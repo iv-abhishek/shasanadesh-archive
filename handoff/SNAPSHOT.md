@@ -1,30 +1,35 @@
 # Snapshot (generated)
 
-Generated 27 Sept 2026, 3:47 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
+Generated 27 Sept 2026, 3:50 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
 
 ## Git
 
 - Branch: `main`
-- HEAD: `d2f4e5e feat(ingest): Shasanadesh portal bridge and importer (as used for the first capture)`
-- Unpushed commits: 2
+- HEAD: `9df449f feat(ingest): per-department portal capture, capture bookmark, reconciliation, disk policy`
+- Unpushed commits: 3
 
 Uncommitted files:
 
 ```
-M README.md
- M apps/web/app/api/rag/pdf/route.ts
+M apps/web/app/api/rag/documents/[action]/route.ts
+ M apps/web/app/globals.css
+ M apps/web/components/browse-orders.tsx
+ M docs/CONFIGURATION.md
  M docs/DECISIONS.md
+ M docs/FRONTEND.md
  M handoff/LOG.md
- M handoff/STATUS.md
  M package.json
- M scripts/shasanadesh-portal-bridge.mjs
- M src/ingest-portal.ts
-?? scripts/portal-report.mjs
+ M src/classify-orders.ts
+ M src/db/load-corpus.ts
+ M src/documents/routes.ts
+?? src/classify/model-pass.test.ts
+?? src/classify/model-pass.ts
 ```
 
 Recent commits:
 
 ```
+9df449f feat(ingest): per-department portal capture, capture bookmark, reconciliation, disk policy
 d2f4e5e feat(ingest): Shasanadesh portal bridge and importer (as used for the first capture)
 d060925 feat(ask): unchecked draft preview while answering; hosted-model switch
 b350f11 feat(eval): 24-case Ask regression set; detect broken-conjunct text for OCR
@@ -39,7 +44,6 @@ ce703d2 feat(search): "Browse all orders" — portal-style complete listing with
 a965553 feat(search): organise results by department; ID-based department matching; handoff files
 1b139de Shasanadesh ingestion
 68e944e feat: IST display time zone, legacy-font garble detection, Hindi fallback
-7c9926b feat(web): question timestamps and answer actions (copy, listen, feedback, regenerate)
 ```
 
 ## Corpus by source

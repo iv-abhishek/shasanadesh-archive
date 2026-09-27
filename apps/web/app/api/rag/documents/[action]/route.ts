@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 // Same-origin proxy for the read-only archive browse API (browse, facets).
 const RAG_API_BASE_URL = process.env.RAG_API_BASE_URL ?? "http://127.0.0.1:8787";
-const ACTIONS = new Set(["browse", "facets"]);
+const ACTIONS = new Set(["browse", "facets", "classification"]);
 
 export async function POST(
   request: NextRequest,

@@ -43,6 +43,8 @@ export interface BrowseRow {
   tier: "A" | "B" | "C" | null;
   docType: string | null;
   classificationConfidence: "high" | "low" | null;
+  /** Set in this session after a person changed the tier. */
+  reviewed?: boolean;
 }
 
 interface BrowseResult {
@@ -92,7 +94,7 @@ const TIER_BADGE: Record<string, string> = { A: "Tier A", B: "Tier B", C: "Tier 
 const tierFilter = (tier: string): string[] | undefined =>
   tier === "AB" ? ["A", "B"] : tier ? [tier] : undefined;
 
-async function post<T>(action: "browse" | "facets", body: unknown): Promise<T> {
+async function post<T>(action: "browse" | "facets" | "classification", body: unknown): Promise<T> {
   const response = await fetch(`/api/rag/documents/${action}`, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -170,6 +172,28 @@ export function BrowseOrders({
       cancelled = true;
     };
   }, [draft.provider, draft.departmentKey]);
+
+  /** A person's correction of an order's tier (saved as an override). */
+  const setTier = async (row: BrowseRow, tier: "A" | "B" | "C") => {
+    if (row.tier === tier && row.classificationConfidence === "high") return;
+    try {
+      const saved = await post<{ tier: "A" | "B" | "C"; docType: string | null }>("classification", { sourceId: row.sourceId, tier });
+      setResult((current) =>
+        current
+          ? {
+              ...current,
+              rows: current.rows.map((item) =>
+                item.sourceId === row.sourceId
+                  ? { ...item, tier: saved.tier, docType: saved.docType, classificationConfidence: "high", reviewed: true }
+                  : item,
+              ),
+            }
+          : current,
+      );
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : String(caught));
+    }
+  };
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -400,6 +424,21 @@ export function BrowseOrders({
                   </td>
                   <td className="browse-open">
                     <button type="button" onClick={() => onOpen(row)}>View order</button>
+                    <span className="tier-review" role="group" aria-label="Set usefulness tier">
+                      {(["A", "B", "C"] as const).map((tier) => (
+                        <button
+                          type="button"
+                          key={tier}
+                          className={row.tier === tier ? "active" : ""}
+                          aria-pressed={row.tier === tier}
+                          title={`Mark as tier ${tier}: ${TIER_LABELS[tier]}`}
+                          onClick={() => setTier(row, tier)}
+                        >
+                          {tier}
+                        </button>
+                      ))}
+                      {row.reviewed ? <span className="tier-saved">saved</span> : null}
+                    </span>
                   </td>
                 </tr>
               ))}

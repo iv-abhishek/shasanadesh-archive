@@ -473,6 +473,8 @@ async function loadClassification(client: PoolClient): Promise<number> {
       reasons: string[];
       rulesVersion: string;
       override?: unknown;
+      decidedBy?: string;
+      modelReason?: string;
     };
     ids.push(record.sourceId);
     types.push(record.docType);
@@ -481,6 +483,8 @@ async function loadClassification(client: PoolClient): Promise<number> {
       confidence: record.confidence,
       reasons: record.reasons,
       rulesVersion: record.rulesVersion,
+      decidedBy: record.decidedBy ?? "rules",
+      ...(record.modelReason ? { modelReason: record.modelReason } : {}),
       ...(record.override ? { override: record.override } : {}),
     }));
   }

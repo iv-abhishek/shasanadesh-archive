@@ -2,6 +2,12 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 4:50 pm IST (Claude)
+
+- Classification pass 2: `npm run classify:model` (generator verdicts for low-confidence
+  orders; human > model > rules) and console A/B/C buttons with immediate DB update +
+  overrides file (ADR-053). Endpoint tested on embedded Postgres; buttons in the browser.
+
 ## 27 Sept 2026, 4:30 pm IST (Claude)
 
 - Draft preview while answering + hosted-model switch (ADR-051, d060925).

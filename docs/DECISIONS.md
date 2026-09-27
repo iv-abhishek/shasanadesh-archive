@@ -634,3 +634,16 @@ same mechanism, skipped. Pasting ~1,776 pages by hand was also impractical.
   (tier C) have their local `original.pdf` removed once B2 holds the same bytes
   (sha256); metadata and text stay, and the viewer falls back to the official link.
   `--keep-routine-local` opts out; `--evict-existing` applies it to earlier downloads.
+
+## ADR-053 - Classification pass 2 (model) and human review in the console
+
+- `npm run classify:model` sends the orders the rules were unsure about (confidence
+  "low") to the configured generator with a fixed tier/type definition and stores
+  JSON verdicts in `data/corpus/classification-model.jsonl` (resumable; unusable
+  replies are discarded). `classify:orders` now applies: human override > model >
+  rules, and records `decidedBy`.
+- The archive console's rows have A/B/C buttons. `POST /api/documents/classification`
+  updates `documents.tier/doc_type/classification` at once and appends the correction
+  to the tracked `datasets/classification-overrides.jsonl`, so it survives the next
+  `classify:orders` + `db:load`. Refused in production unless `ARCHIVE_CONSOLE_WRITE=1`
+  (no admin sign-in yet).

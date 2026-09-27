@@ -7,7 +7,9 @@
  *     - portal listings in data/portal-capture/inventory.jsonl (also orders not
  *       downloaded yet), and
  *     - captured documents in data/documents/<id>/metadata.json.
- *   Human corrections in datasets/classification-overrides.jsonl are applied last.
+ *   Precedence: human correction (datasets/classification-overrides.jsonl) >
+ *   model pass for low-confidence orders (data/corpus/classification-model.jsonl,
+ *   npm run classify:model) > rules.
  *
  * Output:
  *   data/corpus/classification.jsonl — one line per sourceId (derived, rebuildable);
@@ -23,13 +25,14 @@
 import { existsSync } from "node:fs";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { classifyOrder, normalizeSubject, type Classification, type DocType, type Tier } from "./classify/rules.js";
+import { RULES_VERSION, classifyOrder, normalizeSubject, type Classification, type DocType, type Tier } from "./classify/rules.js";
 
 const root = process.cwd();
 const inventoryPath = path.join(root, "data/portal-capture/inventory.jsonl");
 const documentsRoot = path.join(root, "data/documents");
 const overridesPath = path.join(root, "datasets/classification-overrides.jsonl");
 const outputPath = path.join(root, "data/corpus/classification.jsonl");
+const modelPath = path.join(root, "data/corpus/classification-model.jsonl");
 
 interface Candidate {
   sourceId: string;
@@ -50,6 +53,9 @@ export interface ClassificationRecord extends Classification {
   inListing: boolean;
   captured: boolean;
   override?: { tier: Tier; docType?: DocType; note?: string; reviewedBy?: string; reviewedAt?: string };
+  /** Which pass decided the tier. */
+  decidedBy: "rules" | "model" | "override";
+  modelReason?: string;
   classifiedAt: string;
 }
 
@@ -116,11 +122,18 @@ async function main(): Promise<void> {
       .map((item) => [item.sourceId, item]),
   );
 
+  const modelResults = new Map(
+    (await readJsonl<{ sourceId: string; tier: Tier; docType: DocType; reason: string; rulesVersion: string }>(modelPath))
+      .filter((item) => item.rulesVersion === RULES_VERSION)
+      .map((item) => [item.sourceId, item]),
+  );
+
   const classifiedAt = new Date().toISOString();
   const records: ClassificationRecord[] = [];
   for (const candidate of candidates.values()) {
     const rules = classifyOrder(candidate);
     const override = overrides.get(candidate.sourceId);
+    const model = rules.confidence === "low" ? modelResults.get(candidate.sourceId) : undefined;
     records.push({
       sourceId: candidate.sourceId,
       provider: candidate.provider,
@@ -129,11 +142,22 @@ async function main(): Promise<void> {
       inListing: candidate.inListing,
       captured: candidate.captured,
       ...rules,
+      decidedBy: "rules" as const,
+      ...(model
+        ? {
+            tier: model.tier,
+            docType: model.docType,
+            confidence: "high" as const,
+            decidedBy: "model" as const,
+            modelReason: model.reason,
+          }
+        : {}),
       ...(override
         ? {
             tier: override.tier,
             docType: override.docType ?? rules.docType,
             confidence: "high" as const,
+            decidedBy: "override" as const,
             override,
           }
         : {}),
@@ -156,6 +180,7 @@ async function main(): Promise<void> {
   console.log(`Tier B:           ${count((r) => r.tier === "B")}  useful in context`);
   console.log(`Tier C:           ${count((r) => r.tier === "C")}  routine or individual`);
   console.log(`Low confidence:   ${count((r) => r.confidence === "low")}  (for model pass / review)`);
+  console.log(`Decided by model: ${count((r) => r.decidedBy === "model")}`);
   console.log(`Overrides:        ${count((r) => Boolean(r.override))}`);
   console.log("By type:          " + [...byType].sort((a, b) => b[1] - a[1]).map(([type, n]) => `${type} ${n}`).join(", "));
   console.log(`Output:           ${path.relative(root, outputPath)}`);
