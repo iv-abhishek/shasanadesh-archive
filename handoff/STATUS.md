@@ -118,7 +118,7 @@ npm run build:retrieval-variants
 npm run build:retrieval-variant-chunks
 npm run db:load
 npm run embed:chunks
-npm run dev:all                            # keep running; in a second terminal:
+npm run dev:all -- --restart               # restarts api + web so new code loads; in a second terminal:
 npm run eval:ask
 ```
 

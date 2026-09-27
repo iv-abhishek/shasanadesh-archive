@@ -9,6 +9,9 @@ Newest first. One entry per working session or milestone. Append, don't rewrite.
 - Auto-archive (ADR-066): migration 012, chats idle 30 days → Archives (pinned stay),
   `chats:archive` in sync:daily, Archives grouped month → day. Checked on embedded Postgres.
 - (Earlier entries today carry estimated clock times; this one is the actual time.)
+- dev:all: a port held by a busy earlier run is reused (no second copy failing with
+  "address already in use"); `npm run dev:all -- --restart` restarts api + web so code
+  changes load, `--restart=all` everything.
 
 ## 27 Sept 2026, 11:30 pm IST (Claude)
 
