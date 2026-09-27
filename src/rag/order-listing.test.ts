@@ -28,6 +28,12 @@ const list = (q: string) => detectListingRequest(q, TODAY);
     assert.equal(r?.topic, null, q);
   }
   assert.equal(list("latest orders of कृषि विभाग / Agriculture")?.topic, null);
+  {
+    const r = list("Agriculture order released on 10th or 15th Sepetember");
+    assert.equal(r?.department?.id, 37);
+    assert.deepEqual(r?.dates, ["2026-09-10", "2026-09-15"]);
+    assert.equal(r?.topic, null);
+  }
 
   // Content questions stay with Ask.
   for (const q of [
@@ -65,6 +71,17 @@ const list = (q: string) => detectListingRequest(q, TODAY);
   assert.equal(range("orders of 2025"), "2025-01-01..2025-12-31");
   assert.equal(range("may i see orders"), null); // "may" alone is not a month
   assert.equal(range("recent orders"), null);
+
+  // Days without a year, several days, misspelt months (27 Sept screenshot).
+  const days = (q: string) => parseDateRange(q, TODAY)?.dates?.join(",") ?? range(q);
+  assert.equal(days("Agriculture order released on 10th or 15th Sepetember"), "2026-09-10,2026-09-15");
+  assert.equal(days("10 और 15 सितम्बर 2026 के आदेश"), "2026-09-10,2026-09-15");
+  assert.equal(days("September 10, 15 orders"), "2026-09-10,2026-09-15");
+  assert.equal(days("orders dated 10.09.2026 or 15.09.2026"), "2026-09-10,2026-09-15");
+  assert.equal(range("orders of 15 sept"), "2026-09-15..2026-09-15");
+  assert.equal(range("orders of 5th agust"), "2026-08-05..2026-08-05");
+  assert.equal(range("orders of 30th December"), "2025-12-30..2025-12-30"); // no year: the last one that has passed
+  assert.equal(range("10 marks orders"), null); // not a month
 }
 
 // --- Department names --------------------------------------------------------
@@ -102,6 +119,8 @@ const list = (q: string) => detectListingRequest(q, TODAY);
   assert.match(en, /^2\. \*\*17\.09\.2026\*\* · number not recorded — (क )+…? ?… \[S2 p\.1\]$|^2\. .* … \[S2 p\.1\]$/m);
   const hi = buildListingAnswer({ ...request, rangeLabel: { en: "dated 21 Sept 2026", hi: "दिनांक 21.09.2026" } }, outcome, "hi");
   assert.match(hi, /दिनांक 21\.09\.2026 के शासनादेश/);
+  const someEmpty = buildListingAnswer(request, { ...outcome, emptyDates: ["2026-09-10"] }, "en");
+  assert.match(someEmpty, /No orders dated 10\.09\.2026 were found in the archive\./);
   const none = buildListingAnswer(request, { ...outcome, orders: [], total: 0 }, "en");
   assert.match(none, /^No orders were found for Basic Education/);
   assert.doesNotMatch(none, /\[S\d/);

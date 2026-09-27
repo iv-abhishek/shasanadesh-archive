@@ -24,6 +24,8 @@ export interface ListingRequest {
   department: DepartmentEntry | null;
   dateFrom?: string;
   dateTo?: string;
+  /** Particular days ("10th or 15th September"); dateFrom/dateTo span them. */
+  dates?: string[];
   /** How the range was asked for, e.g. "this week", "21 Sept 2026". */
   rangeLabel: { en: string; hi: string } | null;
   /** Subject words left after removing listing words, dates and the department. */
@@ -51,6 +53,30 @@ const MONTH_WORDS: Array<[RegExp, number]> = [
 ];
 const MONTH_ALT = "january|jan|february|feb|march|mar|april|apr|may|june|jun|july|jul|august|aug|september|sept|sep|october|oct|november|nov|december|dec|जनवरी|फरवरी|फ़रवरी|मार्च|अप्रैल|अप्रेल|मई|जून|जुलाई|अगस्त|सितम्बर|सितंबर|अक्टूबर|अक्तूबर|नवम्बर|नवंबर|दिसम्बर|दिसंबर";
 const monthNumber = (word: string) => MONTH_WORDS.find(([pattern]) => pattern.test(word.toLowerCase()))?.[1] ?? null;
+// Next to a day number a misspelt month is still a month ("Sepetember", "Agust"):
+// within 1 edit of a short month name or 2 of a long one ("marks" is not March).
+const MONTH_NAMES = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"];
+function editDistance(a: string, b: string): number {
+  const row = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    let previous = row[0];
+    row[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const current = row[j];
+      row[j] = Math.min(row[j] + 1, row[j - 1] + 1, previous + (a[i - 1] === b[j - 1] ? 0 : 1));
+      previous = current;
+    }
+  }
+  return row[b.length];
+}
+function looseMonthNumber(word: string): number | null {
+  const exact = monthNumber(word);
+  if (exact) return exact;
+  const lower = word.toLowerCase();
+  if (!/^[a-z]{4,12}$/.test(lower)) return null;
+  const index = MONTH_NAMES.findIndex((name) => editDistance(lower, name) <= (name.length <= 5 ? 1 : 2));
+  return index >= 0 ? index + 1 : null;
+}
 const lastDayOf = (year: number, month: number) => iso(new Date(Date.UTC(year, month, 0)));
 const pad = (n: number) => String(n).padStart(2, "0");
 const dottedDate = (value: string) => `${value.slice(8, 10)}.${value.slice(5, 7)}.${value.slice(0, 4)}`;
@@ -71,8 +97,26 @@ function parseOneDate(text: string): string | null {
 interface Range {
   from?: string;
   to?: string;
+  dates?: string[];
   label: { en: string; hi: string };
   matched: string;
+}
+
+function daysRange(dates: string[], matched: string): Range {
+  if (dates.length === 1) {
+    const [day] = dates;
+    return { from: day, to: day, label: { en: `dated ${humanDate(day)}`, hi: `दिनांक ${dottedDate(day)}` }, matched };
+  }
+  return {
+    from: dates[0],
+    to: dates.at(-1),
+    dates,
+    label: {
+      en: `dated ${dates.map(dottedDate).join(" or ")}`,
+      hi: `दिनांक ${dates.map(dottedDate).join(" या ")}`,
+    },
+    matched,
+  };
 }
 
 /** The first date range the question asks for, if any. `today` is YYYY-MM-DD. */
@@ -99,6 +143,42 @@ export function parseDateRange(rawQuery: string, today: string): Range | null {
       (hit = tryMatch(new RegExp(`(${DATE_TEXT})\\s+(?:के\\s+बाद|से)`)))) {
     const from = parseOneDate(hit[1]);
     if (from) return { from, to: today, label: { en: `since ${humanDate(from)}`, hi: `${dottedDate(from)} से` }, matched: hit[0] };
+  }
+  // Several full dates: "10.09.2026 or 15.09.2026"
+  {
+    const all = [...query.matchAll(new RegExp(DATE_TEXT, "g"))];
+    if (all.length >= 2) {
+      const dates = [...new Set(all.map((m) => parseOneDate(m[0])).filter((d): d is string => Boolean(d)))].sort();
+      if (dates.length >= 2) return daysRange(dates, query.slice(all[0].index, all.at(-1)!.index! + all.at(-1)![0].length));
+    }
+  }
+  // Day(s) and a month, year optional: "10th or 15th September", "15 sept",
+  // "10 और 15 सितम्बर 2026", "September 10, 15".
+  {
+    const ORD = "(?:st|nd|rd|th)?";
+    const DAYS = `\\d{1,2}${ORD}(?:\\s*(?:,|or|and|&|और|या|व|तथा)\\s*\\d{1,2}${ORD})*`;
+    const WORD = `(?:${MONTH_ALT}|[a-z]{3,12})`;
+    const dayFirst = new RegExp(`(?:^|\\s)(${DAYS})\\s+(?:of\\s+)?(${WORD})\\.?(?:,?\\s+(\\d{4}))?(?=[\\s,.?!]|$)`);
+    const monthFirst = new RegExp(`(?:^|\\s)(${WORD})\\.?\\s+(${DAYS})(?:,?\\s+(\\d{4}))?(?=[\\s,.?!]|$)`);
+    for (const [re, dayGroup, monthGroup] of [[dayFirst, 1, 2], [monthFirst, 2, 1]] as const) {
+      const found = re.exec(query);
+      if (!found) continue;
+      const month = looseMonthNumber(found[monthGroup]);
+      if (!month) continue;
+      const days = (found[dayGroup].match(/\d{1,2}/g) ?? []).map(Number).filter((d) => d >= 1 && d <= 31);
+      if (!days.length) continue;
+      const year = found[3] ? Number(found[3]) : null;
+      const dates = days
+        .map((day) => {
+          // No year: the most recent such day that is not in the future.
+          let y2 = year ?? Number(today.slice(0, 4));
+          let value = `${y2}-${pad(month)}-${pad(day)}`;
+          if (!year && value > today) value = `${--y2}-${pad(month)}-${pad(day)}`;
+          return iso(fromIso(value)) === value ? value : null; // drops 31 Sept
+        })
+        .filter((d): d is string => Boolean(d));
+      if (dates.length) return daysRange([...new Set(dates)].sort(), found[0].trim());
+    }
   }
   // a single day
   if ((hit = tryMatch(new RegExp(DATE_TEXT)))) {
@@ -194,12 +274,13 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
   const topicWords = rest
     .replace(/[(),.?!।:;"'/-]/g, " ")
     .split(/\s+/)
-    .filter((word) => word.length >= 3 && !FILLER.has(word) && !/^\d+$/.test(word));
+    .filter((word) => word.length >= 3 && !FILLER.has(word) && !/^\d+(?:st|nd|rd|th)?$/.test(word));
 
   return {
     department: mention?.department ?? null,
     dateFrom: range?.from,
     dateTo: range?.to,
+    dates: range?.dates,
     rangeLabel: range?.label ?? null,
     topic: topicWords.length ? topicWords.slice(0, 4).join(" ") : null,
   };
@@ -227,6 +308,8 @@ export interface ListingOutcome {
   topicDropped: boolean;
   /** The profile had nothing, so every department was listed. */
   widened: boolean;
+  /** Requested days (request.dates) on which no order was found. */
+  emptyDates?: string[];
 }
 
 /** Cut at the last space before `max` characters and mark the cut. */
@@ -262,12 +345,18 @@ export function buildListingAnswer(request: ListingRequest, outcome: ListingOutc
 
   const lines = outcome.orders.map((order, index) => {
     const number = order.goNumber ? (hi ? `संख्या ${order.goNumber}` : `GO ${order.goNumber}`) : hi ? "संख्या अंकित नहीं" : "number not recorded";
-    const subject = shorten((order.subject ?? "").replace(/\s+/g, " ").trim(), 220) || (hi ? "विषय अंकित नहीं" : "subject not recorded");
+    const subject =
+      shorten((order.subject ?? "").replace(/\s+/g, " ").trim(), 220) ||
+      (hi ? `विषय अंकित नहीं (आदेश ${order.sourceId})` : `subject not recorded (order ${order.sourceId})`);
     const department = outcome.scope.kind === "department" || !order.department ? "" : ` · ${order.department}`;
     return `${index + 1}. **${displayDate(order.goDate)}** · ${number}${department} — ${subject} [S${index + 1} p.1]`;
   });
 
   const notes: string[] = [];
+  if (outcome.emptyDates?.length) {
+    const days = outcome.emptyDates.map(displayDate).join(hi ? " या " : " or ");
+    notes.push(hi ? `दिनांक ${days} का कोई शासनादेश संग्रह में नहीं मिला।` : `No orders dated ${days} were found in the archive.`);
+  }
   if (outcome.widened) notes.push(hi ? "आपके प्रोफ़ाइल के विभागों में कोई आदेश नहीं मिला, इसलिए सभी विभाग दिखाए गए हैं।" : "Nothing matched in your profile departments, so all departments are shown.");
   if (outcome.topicDropped && request.topic)
     notes.push(hi ? `"${request.topic}" विषय वाला कोई आदेश नहीं मिला, इसलिए सभी आदेश दिखाए गए हैं।` : `No order's subject mentions "${request.topic}", so all orders are shown.`);
@@ -309,10 +398,26 @@ export async function listOrders(
     filters = { ...base, scopeDepartments: profileDepartments };
   }
 
-  let result = await browseDocuments(pool, filters);
+  // Particular days ("10th or 15th September") are listed day by day, so a
+  // busy day cannot crowd out the others; days with nothing are reported.
+  let emptyDates: string[] = [];
+  const browse = async (f: BrowseRequest) => {
+    if (!request.dates?.length) return browseDocuments(pool, f);
+    const perDay = await Promise.all(
+      request.dates.map((day) => browseDocuments(pool, { ...f, dateFrom: day, dateTo: day })),
+    );
+    emptyDates = request.dates.filter((_, index) => perDay[index].total === 0);
+    const rows = perDay
+      .flatMap((day) => day.rows)
+      .sort((a, b) => (b.goDate ?? "").localeCompare(a.goDate ?? ""))
+      .slice(0, 10);
+    return { total: perDay.reduce((sum, day) => sum + day.total, 0), page: 1, pageSize: 10, rows };
+  };
+
+  let result = await browse(filters);
   let widened = false;
   if (!result.total && scope.kind === "profile") {
-    result = await browseDocuments(pool, base);
+    result = await browse(base);
     scope = { kind: "all" };
     widened = result.total > 0;
   }
@@ -322,7 +427,7 @@ export async function listOrders(
   let topicDropped = false;
   if (!result.total && request.topic) {
     if (!request.department) return null;
-    result = await browseDocuments(pool, { ...filters, text: undefined });
+    result = await browse({ ...filters, text: undefined });
     topicDropped = true;
   }
 
@@ -339,6 +444,7 @@ export async function listOrders(
     scope,
     topicDropped,
     widened,
+    emptyDates,
   };
   return { text: buildListingAnswer(request, outcome, language), outcome };
 }

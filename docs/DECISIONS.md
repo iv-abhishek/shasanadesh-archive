@@ -750,3 +750,8 @@ search stayed in the profile's departments.
 - UI: list answers carry an "Order list" badge; their source cards drop the text-quality
   badge. A safe fallback no longer shows "Validated".
 - Eval: two `order-list` cases (`expectListing`).
+- Dates also cover several days ("10th or 15th September", "10 और 15 सितम्बर",
+  "10.09.2026 or 15.09.2026"; listed day by day, empty days reported), month-first dates,
+  a missing year (the last such day that has passed) and misspelt months next to a day
+  ("Sepetember"; within 1–2 edits of the name). A department named twice ("Public Works
+  Department or PWD") is one department, not a subject word.
