@@ -2,6 +2,13 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 9:15 pm IST (Claude)
+
+- core-rules ingested by Abhishek: 18 of 25 stored. 7 need a manual download (6 robots.txt
+  on GeM / S3WaaS CDN, DEA unreachable): list in data/manual-downloads/core-rules/NEEDED.md;
+  the ingester now picks saved files up (ADR-067).
+- dev:all --restart also clears a stale Next.js dev lock.
+
 ## 27 Sept 2026, 8:55 pm IST (Claude)
 
 - Suggested follow-up questions (ADR-065): `/api/suggest`, chips under the latest answer;

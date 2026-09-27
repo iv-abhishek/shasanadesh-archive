@@ -22,6 +22,7 @@
  *   --restart=all    stop every earlier service first (models reload: slower)
  */
 import { execFileSync, spawn } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 import net from "node:net";
 
@@ -86,8 +87,37 @@ function listeners(port) {
   }
 }
 
+const alive = (pid) => {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Next.js keeps its own lock (apps/web/.next/dev/lock) and refuses to start
+ * while that process lives, even when it no longer serves the port.
+ */
+function nextLockPid() {
+  try {
+    const lock = JSON.parse(readFileSync(new URL("../apps/web/.next/dev/lock", import.meta.url), "utf8"));
+    const pid = Number(lock.pid);
+    if (!Number.isInteger(pid) || pid === process.pid || !alive(pid)) return null;
+    const command = execFileSync("ps", ["-p", String(pid), "-o", "command="], { encoding: "utf8" });
+    return /next|node/i.test(command) ? pid : null;
+  } catch {
+    return null;
+  }
+}
+
 async function stopEarlier(service) {
   const pids = listeners(service.port);
+  if (service.name === "web") {
+    const lockPid = nextLockPid();
+    if (lockPid && !pids.includes(lockPid)) pids.push(lockPid);
+  }
   if (!pids.length) return;
   log("dev", `restarting ${service.name}: stopping the earlier one on port ${service.port} (pid ${pids.join(", ")})`);
   for (const pid of pids) {
@@ -98,7 +128,17 @@ async function stopEarlier(service) {
     }
   }
   const deadline = Date.now() + 15_000;
-  while (Date.now() < deadline && (await portInUse(service.port))) await new Promise((r) => setTimeout(r, 300));
+  const running = () => pids.some(alive);
+  while (Date.now() < deadline && (running() || (await portInUse(service.port)))) await new Promise((r) => setTimeout(r, 300));
+  // A hung process ignores SIGTERM.
+  for (const pid of pids.filter(alive)) {
+    try {
+      process.kill(pid, "SIGKILL");
+    } catch {
+      /* gone */
+    }
+  }
+  await new Promise((r) => setTimeout(r, 500));
   if (await portInUse(service.port)) log("dev", `${service.name}: port ${service.port} is still in use; stop it by hand (kill ${pids.join(" ")})`);
 }
 
@@ -198,6 +238,10 @@ for (const service of services) {
       `${service.name} already running at ${service.health} — reusing it` +
         (service.name === "api" && !restartNames.has("api") ? " (code changes need: npm run dev:all -- --restart)" : ""),
     );
+    continue;
+  }
+  if (service.name === "web" && !(await portInUse(service.port)) && nextLockPid()) {
+    log("dev", `web: an earlier Next.js (pid ${nextLockPid()}) is still running but not serving — run: npm run dev:all -- --restart`);
     continue;
   }
   if (await portInUse(service.port)) {

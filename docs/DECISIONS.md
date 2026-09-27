@@ -958,3 +958,16 @@ Abhishek (27 Sept): chats older than one month go to Archives automatically, dat
   `sync:daily`. `WORKSPACE_ARCHIVE_AFTER_DAYS` (default 30; 0 = off).
 - The Archived view groups by month of last activity, then by day; automatically archived
   rows say so on hover. Opening an archived chat only views it; Restore continues it.
+
+## ADR-067 - Files a site will not let the ingester fetch
+
+First core-rules run (27 Sept): 18 of 25 stored; GeM (`assets-bg.gem.gov.in`) and the UP
+S3WaaS CDN (`cdn.s3waas.gov.in`) disallow these paths in robots.txt, and dea.gov.in did not
+answer. The ingester keeps obeying robots.txt. Instead a person opens the official link
+and saves the PDF as `data/manual-downloads/<adapter>/<sourceId>.pdf`; the next run uses
+that file, checks it is a PDF, records `capture.method: "manual-download"` and keeps the
+official URL as `sourceUrl` (Rulebook §1/§2 unchanged: the source is still the government
+URL). Each run lists refused or unreachable files in `NEEDED.md` in that folder.
+
+`dev:all --restart` also stops a Next.js dev server that holds `apps/web/.next/dev/lock`
+without serving the port (the cause of "Another next dev server is already running").

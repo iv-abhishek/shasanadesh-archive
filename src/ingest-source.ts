@@ -13,6 +13,11 @@
  *   - everything the listing said is kept in metadata.json (titles, related
  *     editions, the verbatim listing record) alongside capture hashes
  *   - downloads go through politeFetch (allowlist, robots.txt, crawl delay)
+ *   - a file the site does not let programs fetch (robots.txt, a site that
+ *     times out) can be downloaded by a person from the same official URL and
+ *     saved as data/manual-downloads/<adapter>/<sourceId>.pdf; the next run uses
+ *     that file, records capture.method "manual-download" and keeps the
+ *     official URL as the source. Failed records are listed in NEEDED.md there.
  */
 
 import { createHash, randomUUID } from "node:crypto";
@@ -148,6 +153,60 @@ async function downloadPdf(record: SourceDocument, adapter: SourceAdapter): Prom
   };
 }
 
+const MANUAL_ROOT = path.resolve("data/manual-downloads");
+
+function manualPath(adapter: SourceAdapter, sourceId: string): string {
+  return path.join(MANUAL_ROOT, adapter.id, sourceId + ".pdf");
+}
+
+/** A PDF a person saved from the record's official URL, if there is one. */
+async function manualPdf(record: SourceDocument, adapter: SourceAdapter): Promise<{
+  bytes: Buffer;
+  status: number;
+  contentType: string | null;
+  finalUrl: string;
+  method: "manual-download";
+  file: string;
+} | null> {
+  const file = manualPath(adapter, record.sourceId);
+  if (!(await exists(file))) return null;
+  // The official URL must still pass the government / allowlist checks.
+  const official = assertOfficialDownload(record.downloadUrl, adapter);
+  const bytes = await readFile(file);
+  if (bytes.byteLength > MAX_PDF_BYTES) throw new Error("PDF is larger than the 500 MB per-document ingestion limit.");
+  if (bytes.subarray(0, 5).toString("ascii") !== "%PDF-") {
+    throw new Error("Saved file is not a PDF: " + path.relative(process.cwd(), file));
+  }
+  return { bytes, status: 200, contentType: "application/pdf", finalUrl: official.href, method: "manual-download", file };
+}
+
+async function writeNeededList(adapter: SourceAdapter, failures: Array<{ record: SourceDocument; reason: string }>): Promise<void> {
+  const dir = path.join(MANUAL_ROOT, adapter.id);
+  const file = path.join(dir, "NEEDED.md");
+  if (!failures.length) {
+    if (await exists(file)) await writeFile(file, `# Files to download by hand — ${adapter.displayName}\n\nNothing pending.\n`);
+    return;
+  }
+  await mkdir(dir, { recursive: true });
+  const lines = [
+    `# Files to download by hand — ${adapter.displayName}`,
+    "",
+    "The site did not let the ingester fetch these. Open each official link in a browser,",
+    "save the PDF under the file name shown (in this folder), then run",
+    `\`npm run ingest:source -- ${adapter.id}\` again.`,
+    "",
+    ...failures.flatMap(({ record, reason }) => [
+      `- **${record.title}**`,
+      `  - official link: ${record.downloadUrl}`,
+      `  - save as: \`${record.sourceId}.pdf\``,
+      `  - reason: ${reason}`,
+    ]),
+    "",
+  ];
+  await writeFile(file, lines.join("\n"));
+  console.log("\nManual downloads needed: " + failures.length + " — see " + path.relative(process.cwd(), file));
+}
+
 async function persistB2(
   adapter: SourceAdapter,
   sourceId: string,
@@ -175,6 +234,7 @@ async function ingestOne(
   adapter: SourceAdapter,
   force: boolean,
   b2Enabled: boolean,
+  failures: Array<{ record: SourceDocument; reason: string }> = [],
 ): Promise<"downloaded" | "stored" | "skipped" | "failed"> {
   if (!safeSourceId(record.sourceId)) {
     console.error("FAILED unsafe source id: " + record.sourceId);
@@ -215,7 +275,9 @@ async function ingestOne(
     }
 
     console.log("\nINGEST " + record.sourceId + " | " + record.title);
-    const response = await downloadPdf(record, adapter);
+    const manual = await manualPdf(record, adapter);
+    if (manual) console.log("USING saved file " + path.relative(process.cwd(), manual.file) + " (official URL " + manual.finalUrl + ")");
+    const response = manual ?? { ...(await downloadPdf(record, adapter)), method: "download" as const };
     // Keep the earlier capture when re-downloading with --force.
     const previousCaptures = force ? await preservePreviousCapture(sourceDir) : null;
     await writeFile(pdfPath, response.bytes);
@@ -241,6 +303,7 @@ async function ingestOne(
       discoveredAt: new Date().toISOString(),
       ...(previousCaptures ? { previousCaptures } : {}),
       capture: {
+        method: response.method,
         downloadedAt: new Date().toISOString(),
         captureId: randomUUID(),
         status: response.status,
@@ -268,10 +331,12 @@ async function ingestOne(
     );
     return "downloaded";
   } catch (error) {
-    console.error(
-      "FAILED " + record.sourceId + ":",
-      error instanceof Error ? error.message : String(error),
-    );
+    const reason = error instanceof Error ? error.message : String(error);
+    console.error("FAILED " + record.sourceId + ":", reason);
+    // Refused by the site (robots.txt) or unreachable: a person can fetch it.
+    if (/robots\.txt|fetch failed|timed? ?out|aborted|HTTP 403/i.test(reason)) {
+      failures.push({ record, reason });
+    }
     return "failed";
   }
 }
@@ -316,6 +381,7 @@ async function runAdapter(adapter: SourceAdapter, force: boolean, limit: number 
   }
 
   const totals: RunTotals = { downloaded: 0, stored: 0, skipped: 0, failed: 0 };
+  const failures: Array<{ record: SourceDocument; reason: string }> = [];
   for (let index = 0; index < selectedRecords.length; index++) {
     const diskProblem = await diskSpaceProblem(process.cwd());
     if (diskProblem) {
@@ -323,7 +389,7 @@ async function runAdapter(adapter: SourceAdapter, force: boolean, limit: number 
       process.exitCode = 3;
       break;
     }
-    const result = await ingestOne(selectedRecords[index], adapter, force, b2Enabled);
+    const result = await ingestOne(selectedRecords[index], adapter, force, b2Enabled, failures);
     totals[result === "downloaded" ? "downloaded" : result === "stored" ? "stored" : result === "skipped" ? "skipped" : "failed"]++;
     if (index < selectedRecords.length - 1 && result !== "skipped") {
       await new Promise((resolve) => setTimeout(resolve, crawlDelayMs()));
@@ -335,6 +401,7 @@ async function runAdapter(adapter: SourceAdapter, force: boolean, limit: number 
   console.log("Backfilled: " + totals.stored);
   console.log("Skipped:    " + totals.skipped);
   console.log("Failed:     " + totals.failed);
+  await writeNeededList(adapter, failures);
   return totals;
 }
 
