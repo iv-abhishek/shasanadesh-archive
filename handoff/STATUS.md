@@ -1,6 +1,6 @@
 # Status
 
-_Last updated: 26 Sept 2026, 11:15 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
+_Last updated: 27 Sept 2026, 4:30 pm IST (Claude). Update at every milestone and at least every 2–3 hours of active work._
 
 ## Current focus (set by Abhishek, 26 Sept 7:06 pm)
 
@@ -48,7 +48,13 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   `doe-gfr`, `upgov`, `invest-up`, `uppolice` (B2 `archive/<collection>/…`,
   `documents.provider`). The listing metadata is kept verbatim.
 
-## Ingestion state (paused)
+## Ingestion state (paused, tooling ready)
+
+- Tooling for the full portal is ready (ADR-052): per-department capture with the bridge
+  bookmark, `portal:report` reconciliation, `ingest:portal -- --until-idle`, routine
+  originals kept only in B2. The bookmark was tested on a mock results page; **try it on
+  one real portal page first** and share the bridge message if a column or the page
+  number/total is not recognised.
 
 - Portal capture through `portal:bridge`: result pages 1–11 → **1,025 unique orders listed**.
   The portal reports about 177,504.

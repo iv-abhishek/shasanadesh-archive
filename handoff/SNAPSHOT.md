@@ -1,34 +1,33 @@
 # Snapshot (generated)
 
-Generated 26 Sept 2026, 10:55 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
+Generated 27 Sept 2026, 3:47 pm (Asia/Kolkata) by `npm run handoff:snapshot`. Do not edit by hand.
 
 ## Git
 
 - Branch: `main`
-- HEAD: `37f87b5 fix(validation): keep trailing citations with their sentence; no citation-only answers`
-- Unpushed commits: 0
+- HEAD: `d2f4e5e feat(ingest): Shasanadesh portal bridge and importer (as used for the first capture)`
+- Unpushed commits: 2
 
 Uncommitted files:
 
 ```
 M README.md
- M apps/web/lib/sources.ts
+ M apps/web/app/api/rag/pdf/route.ts
  M docs/DECISIONS.md
- M docs/EVALUATION.md
- M eval/rag-cases.json
  M handoff/LOG.md
  M handoff/STATUS.md
  M package.json
- M src/eval/run-rag-eval.ts
- M src/lib/text-quality.test.ts
- M src/lib/text-quality.ts
-?? scripts/shasanadesh-portal-bridge.mjs
-?? src/ingest-portal.ts
+ M scripts/shasanadesh-portal-bridge.mjs
+ M src/ingest-portal.ts
+?? scripts/portal-report.mjs
 ```
 
 Recent commits:
 
 ```
+d2f4e5e feat(ingest): Shasanadesh portal bridge and importer (as used for the first capture)
+d060925 feat(ask): unchecked draft preview while answering; hosted-model switch
+b350f11 feat(eval): 24-case Ask regression set; detect broken-conjunct text for OCR
 37f87b5 fix(validation): keep trailing citations with their sentence; no citation-only answers
 859caaa fix(ask): answers never end mid-word; larger Hindi token budget
 90c3496 fix(ask): relevance gate, department fallback, honest "not found", cited-only sources
@@ -41,9 +40,6 @@ a965553 feat(search): organise results by department; ID-based department matchi
 1b139de Shasanadesh ingestion
 68e944e feat: IST display time zone, legacy-font garble detection, Hindi fallback
 7c9926b feat(web): question timestamps and answer actions (copy, listen, feedback, regenerate)
-253af98 feat(api): answer feedback, in-place regenerate, feedback report
-b51e84a fix(web): EN/HI toggle no longer turns green on hover
-6d5d23a feat(web): pin the chat composer to the bottom; configurable rerank count
 ```
 
 ## Corpus by source
@@ -51,9 +47,9 @@ b51e84a fix(web): EN/HI toggle no longer turns green on hover
 | Provider | Documents | In B2 | Pages | Selective-OCR pages |
 |---|---:|---:|---:|---:|
 | doe-gfr | 1 | 1 | 7 | 0 |
-| shasanadesh-up | 678 | 677 | 445 | 92 |
+| shasanadesh-up | 678 | 677 | 445 | 192 |
 
-- Retrieval variant chunks: 901
+- Retrieval variant chunks: 1084
 - B2 configured: yes
 - Submission queue entries: 0
 - Shasanadesh crawl: not started

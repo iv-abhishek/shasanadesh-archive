@@ -1,12 +1,44 @@
+/**
+ * Pipeline stage: Shasanadesh portal import (npm run ingest:portal)
+ *
+ * Purpose:
+ *   Download every order listed by the portal bridge (data/portal-capture/
+ *   inventory.jsonl), keep its listing metadata, and archive the original PDF
+ *   and a manifest in B2 (collection "shasanadesh"). Resumable: outcomes are
+ *   appended to ingest-status.jsonl and a restart continues where it stopped.
+ *
+ * Options:
+ *   --until-idle           exit once every listed order has a final outcome,
+ *                          instead of waiting for the bridge to add more
+ *   --keep-routine-local   keep local PDFs of routine orders (see below)
+ *   --evict-existing       one-off: apply the disk policy to orders already
+ *                          downloaded, then exit (no network requests)
+ *
+ * Disk policy (ADR-052): orders the classifier is confident are routine or
+ *   individual (tier C: sanctions, releases, one person/place) are archived
+ *   in B2 and their local original.pdf is removed after the upload's checksum
+ *   is verified; metadata.json and text.txt stay. The viewer falls back to the
+ *   official portal link. Guideline-type orders keep their local PDF for OCR.
+ *
+ * Invariants:
+ *   - requests only official Shasanadesh PDF links, at the configured crawl
+ *     delay (>= 3 s), with the configured crawler identity
+ *   - a local PDF is removed only when B2 holds the same bytes (sha256)
+ *   - never solves or bypasses a CAPTCHA; listing capture is done by a person
+ */
 import { createHash, randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
-import { appendFile, mkdir, open, readFile, rename, stat, writeFile } from "node:fs/promises";
+import { appendFile, mkdir, open, readFile, rename, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import { decodeShasanadeshId } from "./lib/shasanadesh-id.js";
 import { crawlDelayMs, crawlerUserAgent, PDFINFO_BIN, PDFTOTEXT_BIN } from "./lib/tool-config.js";
 import { preservePreviousCapture } from "./lib/capture-history.js";
 import { isB2Enabled, refreshCaptureManifestInB2, storeCaptureInB2, type B2CaptureStorage } from "./storage/b2.js";
+import { classifyOrder } from "./classify/rules.js";
+
+const UNTIL_IDLE = process.argv.includes("--until-idle");
+const KEEP_ROUTINE_LOCAL = process.argv.includes("--keep-routine-local");
 
 const execFileAsync = promisify(execFile);
 const DATA_DIR = path.resolve("data/portal-capture");
@@ -46,6 +78,7 @@ interface KnownMetadata extends Record<string, unknown> {
   storage?: B2CaptureStorage;
   capture?: Record<string, unknown>;
   portal?: Record<string, unknown>;
+  localCopy?: { state: "evicted"; reason: string; at: string };
 }
 
 const records = new Map<string, PortalRecord>();
@@ -212,6 +245,17 @@ async function ingest(record: PortalRecord): Promise<"stored" | "skipped"> {
 
   const localPdf = await readFile(pdfPath).catch(() => null);
   const localMetadata = await readFile(metadataPath, "utf8").then((value) => JSON.parse(value) as KnownMetadata).catch(() => null);
+
+  // Routine order already archived in B2 and removed locally: nothing to do.
+  const archivedSha = (localMetadata?.capture as Record<string, unknown> | undefined)?.rawSha256;
+  if (
+    !localPdf &&
+    localMetadata?.localCopy?.state === "evicted" &&
+    typeof archivedSha === "string" &&
+    hasVerifiedB2(localMetadata, archivedSha)
+  ) {
+    return "skipped";
+  }
   if (localPdf && localMetadata && localPdf.subarray(0, 5).toString("ascii") === "%PDF-") {
     const captureSha = (localMetadata.capture as Record<string, unknown> | undefined)?.rawSha256;
     if (!captureSha || captureSha === sha256(localPdf)) {
@@ -253,7 +297,32 @@ async function ingest(record: PortalRecord): Promise<"stored" | "skipped"> {
   });
   metadata.storage = storage;
   await atomicJson(metadataPath, metadata);
+  await evictIfRoutine(record, metadata, metadataPath, pdfPath);
   return "stored";
+}
+
+/**
+ * Remove the local PDF of a confidently routine order once B2 holds the same
+ * bytes. Keeps metadata.json and text.txt (small, used for classification).
+ */
+async function evictIfRoutine(
+  record: PortalRecord,
+  metadata: KnownMetadata,
+  metadataPath: string,
+  pdfPath: string,
+): Promise<void> {
+  if (KEEP_ROUTINE_LOCAL) return;
+  const classification = classifyOrder(record);
+  if (classification.tier !== "C" || classification.confidence !== "high") return;
+  const sha = (metadata.capture as Record<string, unknown> | undefined)?.rawSha256;
+  if (typeof sha !== "string" || !hasVerifiedB2(metadata, sha)) return;
+  await rm(pdfPath, { force: true });
+  metadata.localCopy = {
+    state: "evicted",
+    reason: `routine order (${classification.docType}); original kept in B2`,
+    at: new Date().toISOString(),
+  };
+  await atomicJson(metadataPath, metadata);
 }
 
 async function writeStatus(status: StatusRecord): Promise<void> {
@@ -310,7 +379,37 @@ async function isComplete(): Promise<{ complete: boolean; expected: number | nul
   }
 }
 
+/** --evict-existing: apply the disk policy to already-downloaded orders. */
+async function evictExisting(): Promise<void> {
+  await loadInventoryGrowth();
+  let evicted = 0;
+  let kept = 0;
+  let freedBytes = 0;
+  for (const record of records.values()) {
+    const sourceDir = path.join(documentsRoot, sourceDirectory(record.sourceId));
+    const pdfPath = path.join(sourceDir, "original.pdf");
+    const metadataPath = path.join(sourceDir, "metadata.json");
+    const size = await stat(pdfPath).then((value) => value.size).catch(() => 0);
+    if (!size) continue;
+    const metadata = await readFile(metadataPath, "utf8").then((value) => JSON.parse(value) as KnownMetadata).catch(() => null);
+    if (!metadata) continue;
+    await evictIfRoutine(record, metadata, metadataPath, pdfPath);
+    if (metadata.localCopy?.state === "evicted") {
+      evicted++;
+      freedBytes += size;
+    } else {
+      kept++;
+    }
+  }
+  console.log(`Local PDFs removed (routine, verified in B2): ${evicted}, freed ${(freedBytes / 1e6).toFixed(1)} MB; kept locally: ${kept}.`);
+}
+
 async function main(): Promise<void> {
+  if (process.argv.includes("--evict-existing")) {
+    if (KEEP_ROUTINE_LOCAL) throw new Error("--evict-existing and --keep-routine-local contradict each other.");
+    await evictExisting();
+    return;
+  }
   if (!isB2Enabled()) throw new Error("B2 is not configured. The portal importer refuses to run local-only.");
   await mkdir(DATA_DIR, { recursive: true });
   await mkdir(documentsRoot, { recursive: true });
@@ -367,8 +466,14 @@ async function main(): Promise<void> {
       continue;
     }
 
-    const completion = await isComplete();
     const terminal = succeeded.size + unavailable.size;
+    const waitingRetries = [...retryAt.values()].some((time) => time > Date.now());
+    if (UNTIL_IDLE && terminal >= records.size && !waitingRetries) {
+      console.log(`Portal ingestion idle: saved=${succeeded.size}, unavailable=${unavailable.size}, listed=${records.size}.`);
+      if (unavailable.size) process.exitCode = 2;
+      return;
+    }
+    const completion = await isComplete();
     if (completion.complete && records.size >= (completion.expected ?? Number.POSITIVE_INFINITY) && terminal >= records.size) {
       console.log(`Portal ingestion finished: saved=${succeeded.size}, unavailable=${unavailable.size}, unique inventory=${records.size}, portal expected=${completion.expected}.`);
       if (unavailable.size) process.exitCode = 2;

@@ -2,6 +2,15 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 4:30 pm IST (Claude)
+
+- Draft preview while answering + hosted-model switch (ADR-051, d060925).
+- Committed Abhishek's bridge/importer as used (d2f4e5e), then: per-department listings,
+  capture bookmark (tested on a mock portal page in Chromium), reshuffle handling, CORS/PNA,
+  `portal:report`, importer `--until-idle` / routine-PDF eviction / `--evict-existing`,
+  viewer fallback to the official link (ADR-052). Bridge tested end to end on a copy of the
+  real capture data.
+
 ## 26 Sept 2026, 11:15 pm IST (Claude)
 
 - Regression set: runner extended (profile-scope cases, expected "not found", cut-off /

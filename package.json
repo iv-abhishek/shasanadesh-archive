@@ -15,6 +15,7 @@
     "ingest:known": "node --env-file-if-exists=.env --import tsx src/ingest-known.ts",
     "portal:bridge": "node scripts/shasanadesh-portal-bridge.mjs",
     "ingest:portal": "node --env-file-if-exists=.env --import tsx src/ingest-portal.ts",
+    "portal:report": "node scripts/portal-report.mjs",
     "audit:text": "tsx src/audit-text-quality.ts",
     "ocr:needs": "node --env-file-if-exists=.env --import tsx src/ocr-needs.ts",
     "audit:ocr": "tsx src/audit-ocr.ts",

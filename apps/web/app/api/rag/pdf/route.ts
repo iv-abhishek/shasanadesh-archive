@@ -105,6 +105,14 @@ export async function GET(request: NextRequest): Promise<Response> {
       },
     });
   } catch (error) {
+    // Routine orders keep their original only in B2 (ADR-052); show the
+    // official portal copy instead of an error.
+    if (SHASANADESH_ID_RE.test(sourceId)) {
+      const official = new URL(`https://${SHASANADESH_HOST}${SHASANADESH_PATH}`);
+      official.searchParams.set("id1", Buffer.from(sourceId, "utf8").toString("base64"));
+      return Response.redirect(official.toString(), 302);
+    }
+
     return Response.json(
       {
         message: "Archived PDF is unavailable.",

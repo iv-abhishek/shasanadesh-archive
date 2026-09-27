@@ -613,3 +613,24 @@ leading `<think>` block and anything that may be `NO_ANSWER_IN_EVIDENCE`
 For hosted models, generation skips the local GPU queue when `LLM_BASE_URL` is not
 localhost, `LLM_EXTRA_BODY` passes provider options (e.g. disabling Qwen3
 thinking), and a leading `<think>` block is stripped from the final text.
+
+## ADR-052 - Per-department portal capture with reconciliation; routine originals only in B2
+
+The first capture (26 Sept) used one all-departments, date-sorted listing: 11 pages
+held 1,100 rows but only 1,025 unique orders, so rows were repeated and, by the
+same mechanism, skipped. Pasting ~1,776 pages by hand was also impractical.
+
+- The bridge records every page under a **listing** (the portal search filters:
+  department, section, category, dates). Page numbers are per listing; a listing is
+  complete only when pages 1..ceil(total/page size) are captured and rows reach the
+  portal total. Pages that come back with different orders are logged as reshuffles
+  (new orders kept, page not double-counted). Earlier pages belong to "legacy".
+- A **capture bookmark** (served by the bridge with a per-run token) reads the
+  results table by its Hindi/English headers, the current page, the total and the
+  filters, and POSTs to the bridge; CORS/Private-Network headers allow only the
+  portal origin. Fallback: copy + paste. The CAPTCHA remains a person's step.
+- `npm run portal:report` reconciles listings, downloads, B2 and disk use.
+- The importer gains `--until-idle`. Orders the classifier is confident are routine
+  (tier C) have their local `original.pdf` removed once B2 holds the same bytes
+  (sha256); metadata and text stay, and the viewer falls back to the official link.
+  `--keep-routine-local` opts out; `--evict-existing` applies it to earlier downloads.

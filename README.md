@@ -110,21 +110,26 @@ for the remaining pilot work.
 
 ### Bulk Shasanadesh portal capture
 
-For a portal search that has been authenticated by a person, run `npm run portal:bridge`
-and open `http://127.0.0.1:8799` in the same browser. The bridge accepts only official
-Shasanadesh PDF links and writes result metadata to the ignored local inventory under
-`data/portal-capture/`. Capture each results page through the bridge, then mark the listing
-complete after reaching the portal's last page. In a second terminal, run
-`npm run ingest:portal`; it resumes from local checkpoints, preserves each original PDF
-and metadata under `data/documents/`, and uploads originals plus manifests to the configured
-B2 `shasanadesh` collection. PDF requests use the configured crawler identity and at least
-the standard three-second per-site delay. B2 configuration is mandatory for this importer.
+The portal's search needs a CAPTCHA that a person completes; nothing here solves or
+bypasses it. Capture is done **one department at a time** (smaller, steadier result
+lists that can be checked against the portal's own totals):
 
-The importer records portal page, department, section, order number/date, category, subject,
-and source URL. It retries transient failures, records unavailable 404/410 links for review,
-and continues until the captured listing is complete and each unique inventory entry has a
-terminal result. Search CAPTCHA completion remains a manual browser step; the bridge neither
-solves nor bypasses it.
+1. `npm run portal:bridge` and open `http://127.0.0.1:8799`. Drag the **Capture
+   Shasanadesh page** bookmark to the bookmarks bar (re-drag after each bridge start).
+2. On shasanadesh.up.gov.in pick one department and the largest page size, complete the
+   CAPTCHA and search. On every results page click the bookmark (Chrome may ask once to
+   let the site reach your local network; only 127.0.0.1 is contacted). If the bridge
+   cannot be reached, the bookmark copies the page; paste it into the bridge form.
+3. After the last page press **Mark complete** for that department on the bridge page.
+4. `npm run ingest:portal -- --until-idle` downloads the listed PDFs (>= 3 s apart),
+   stores originals and manifests in B2, and exits when done. Routine orders
+   (tier C) keep their original only in B2 to save disk (`--keep-routine-local` to keep
+   them); `--evict-existing` applies this to orders downloaded earlier.
+5. `npm run portal:report` reconciles every department: portal total, pages, orders,
+   archived, unavailable, waiting, and local disk use.
+
+Then `npm run classify:orders`, `npm run db:load` and the processing steps in
+`handoff/STATUS.md` make the useful orders searchable.
 
 ## Development
 
