@@ -67,7 +67,7 @@ import {
 import { assessRelevance, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
-import { detectListingRequest, listOrders } from "../rag/order-listing.js";
+import { detectListingRequest, listOrders, type SubjectSearch } from "../rag/order-listing.js";
 import { departmentLabel, findDepartmentMention } from "../departments/registry.js";
 import { createPool } from "../db/client.js";
 import type { Pool } from "pg";
@@ -226,6 +226,30 @@ server.register(cors, {
 registerWorkspaceRoutes(server);
 registerSessionRoutes(server);
 registerDocumentRoutes(server);
+
+/**
+ * Orders whose subject is close in meaning to the query (ADR-058), from the
+ * retrieval service. Throws when the service or its subject index is missing;
+ * the finder then shows word matches only.
+ */
+const searchSubjects: SubjectSearch = (query, options) =>
+  runLocalGpuExclusive("retrieval", async () => {
+    const response = await fetch(`${RETRIEVAL_BASE_URL}/subjects/search`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query,
+        limit: options.limit,
+        department_ids: options.departmentIds,
+        date_from: options.dateFrom,
+        date_to: options.dateTo,
+      }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!response.ok) throw new Error(`subject search HTTP ${response.status}`);
+    const hits = (await response.json()) as Array<{ source_id: string; similarity: number }>;
+    return hits.map((hit) => ({ sourceId: hit.source_id, similarity: hit.similarity }));
+  });
 
 // Read-only pool for order links (ADR-054) and order lists (ADR-057).
 let relationsPool: Pool | undefined;
@@ -913,6 +937,7 @@ server.post(
           ? workspaceProfile.departments
           : [],
         responseLanguage,
+        searchSubjects,
       ).catch((error) => {
         request.log.warn({ error }, "order listing failed; answering with Ask");
         return null;
@@ -963,6 +988,8 @@ server.post(
           `event: done\ndata: ${JSON.stringify({
             ok: true,
             listing: true,
+            find: listingRequest.mode === "find",
+            bestSimilarity: listed.outcome.bestSimilarity,
             validated: true,
             responseLanguage,
             retrievalScope: `listing_${listed.outcome.scope.kind}`,

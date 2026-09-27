@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildBrowseWhere } from "./browse.js";
+import { buildBrowseWhere, sectionRegex, wildcardToLike } from "./browse.js";
 
 // No filters: no WHERE clause at all (list everything).
 assert.deepEqual(buildBrowseWhere({}), { sql: "", params: [] });
@@ -50,3 +50,25 @@ assert.deepEqual(buildBrowseWhere({}), { sql: "", params: [] });
 }
 
 console.log("browse filter tests passed");
+
+// Finder filters (ADR-058).
+{
+  const { sql, params } = buildBrowseWhere({ phrases: ["फार्मर रजिस्ट्री"], patterns: ["solar*", "क?षि"], goNumberPrefix: "51 / 2026", sectionLike: "कृषि अनुभाग-5" });
+  assert.ok(params.includes("%फार्मर रजिस्ट्री%"));
+  assert.ok(params.includes("%solar%%"));
+  assert.ok(params.includes("%क_षि%"));
+  assert.ok(params.includes("51/2026%"));
+  assert.match(sql, /replace\(d\.go_number, ' ', ''\) ILIKE/);
+  assert.match(sql, /~\*/);
+  assert.equal(wildcardToLike("100%_*"), "100\\%\\_%");
+  // Section numbers: spacing and dash style do not matter, the number does.
+  const re = new RegExp(sectionRegex("कृषि अनुभाग-5"), "i");
+  assert.ok(re.test("कृषि अनुभाग-5"));
+  assert.ok(re.test("कृषि अनुभाग - 5"));
+  assert.ok(re.test("कृषि अनुभाग–5"));
+  assert.ok(!re.test("कृषि अनुभाग-15"));
+  assert.ok(!re.test("कृषि अनुभाग-51"));
+  // Only listed IDs.
+  assert.match(buildBrowseWhere({ sourceIds: ["a", "b"] }).sql, /d\.source_id = ANY/);
+}
+console.log("browse finder filter tests passed");

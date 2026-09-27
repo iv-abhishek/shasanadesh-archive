@@ -855,3 +855,77 @@ def search(body: SearchRequest, request: Request):
             "total_ms": retrieval_total_ms,
         },
     )
+
+
+# ---------------------------------------------------------------------------
+# Order finding by subject meaning (ADR-058)
+# ---------------------------------------------------------------------------
+
+SUBJECT_QUERY_PROMPT = (
+    "Instruct: Given a Hindi or English description of an Uttar Pradesh government "
+    "order (its topic, scheme, place, person or purpose), retrieve orders whose "
+    "subject line matches it.\n"
+    "Query:"
+)
+
+
+class SubjectSearchRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=500)
+    limit: int = Field(default=30, ge=1, le=100)
+    department_ids: list[int] | None = Field(default=None, max_length=12)
+    date_from: str | None = Field(default=None, max_length=10)
+    date_to: str | None = Field(default=None, max_length=10)
+
+
+class SubjectHit(BaseModel):
+    source_id: str
+    similarity: float
+
+
+@app.post("/subjects/search", response_model=list[SubjectHit])
+def subject_search(body: SubjectSearchRequest, request: Request):
+    """Orders whose subject line is closest in meaning to the query (cosine similarity)."""
+    embedder: SentenceTransformer = request.app.state.embedder
+    query_vector = embedder.encode(
+        [body.query.strip()],
+        prompt=SUBJECT_QUERY_PROMPT,
+        normalize_embeddings=True,
+        convert_to_numpy=True,
+    )[0]
+
+    clauses: list[str] = []
+    vector = vector_literal(query_vector)
+    params: list[Any] = [vector]
+    if body.department_ids:
+        clauses.append("d.department_id = ANY(%s)")
+        params.append([int(value) for value in body.department_ids])
+    if body.date_from:
+        clauses.append("d.go_date >= %s::date")
+        params.append(body.date_from)
+    if body.date_to:
+        clauses.append("d.go_date <= %s::date")
+        params.append(body.date_to)
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    params.extend([vector, body.limit])
+
+    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
+        # Filters apply after the HNSW scan; widen it so filtered searches still fill the limit.
+        conn.execute(
+            "SELECT set_config('hnsw.ef_search', %s, true)",
+            (str(max(HNSW_EF_SEARCH_MIN, min(HNSW_EF_SEARCH_MAX, body.limit * (8 if clauses else 2)))),),
+        )
+        if clauses and pgvector_supports_iterative_scan(conn):
+            conn.execute("SELECT set_config('hnsw.iterative_scan', 'strict_order', true)")
+        rows = conn.execute(
+            f"""
+            SELECT e.source_id, 1 - (e.embedding <=> %s::vector(1024)) AS similarity
+            FROM document_subject_embeddings e
+            JOIN documents d ON d.source_id = e.source_id
+            {where}
+            ORDER BY e.embedding <=> %s::vector(1024)  -- index order (cosine distance)
+            LIMIT %s
+            """,
+            params,
+        ).fetchall()
+
+    return [SubjectHit(source_id=row["source_id"], similarity=float(row["similarity"])) for row in rows]

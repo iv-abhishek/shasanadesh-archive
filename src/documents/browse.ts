@@ -35,6 +35,19 @@ export interface BrowseFilters {
   goNumber?: string;
   /** Words that must all appear in the subject/title or GO number. */
   text?: string;
+  /**
+   * Finder terms (ADR-058), all required: exact phrases, and patterns where `*`
+   * is any run of characters and `?` one character. Matched against subject,
+   * section, category and GO number.
+   */
+  phrases?: string[];
+  patterns?: string[];
+  /** GO number starting with this ("51/2026" finds 51/2026/918/…). */
+  goNumberPrefix?: string;
+  /** Issuing section (अनुभाग) containing this text. */
+  sectionLike?: string;
+  /** Only these orders (e.g. subject-similarity hits), still subject to the other filters. */
+  sourceIds?: string[];
   dateFrom?: string;
   dateTo?: string;
   /** Classification tiers to show ("A", "B", "C", or "none" for unclassified). */
@@ -82,6 +95,31 @@ const SUBJECT_SQL =
   "COALESCE(NULLIF(d.metadata->>'title', ''), NULLIF(d.metadata->'portal'->>'subject', ''))";
 const SECTION_SQL = "NULLIF(d.metadata->'portal'->>'section', '')";
 const CATEGORY_SQL = "NULLIF(d.metadata->'portal'->>'category', '')";
+
+// Everything a finder term may match: subject, section, category and number.
+const SEARCHABLE_SQL =
+  `COALESCE(${SUBJECT_SQL}, '') || ' ' || COALESCE(${SECTION_SQL}, '') || ' ' || ` +
+  `COALESCE(${CATEGORY_SQL}, '') || ' ' || COALESCE(d.go_number, '')`;
+
+function likeEscape(value: string): string {
+  return value.replace(/[\\%_]/g, (character) => `\\${character}`);
+}
+
+/**
+ * A section as typed ("कृषि अनुभाग-5", "अनुभाग 1") → a Postgres regex that
+ * ignores spacing and dash style but not the number ("अनुभाग-1" ≠ "अनुभाग-12").
+ */
+export function sectionRegex(section: string): string {
+  const text = clean(section).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  let regex = text.replace(/\s*[-–]\s*/g, "\\s*[-–]?\\s*").replace(/ (?=\d)/g, "\\s*[-–]?\\s*").replace(/ /g, "\\s+");
+  if (/\d$/.test(text)) regex += "([^0-9]|$)";
+  return regex;
+}
+
+/** User wildcards → LIKE: `*` any run, `?` one character; everything else literal. */
+export function wildcardToLike(pattern: string): string {
+  return likeEscape(pattern).replace(/\*+/g, "%").replace(/\?/g, "_");
+}
 
 /** Build the WHERE clause. Exported for tests. */
 export function buildBrowseWhere(filters: BrowseFilters): { sql: string; params: unknown[] } {
@@ -134,15 +172,37 @@ export function buildBrowseWhere(filters: BrowseFilters): { sql: string; params:
   if (filters.goNumber?.trim()) {
     clauses.push(`d.go_number ILIKE ${param(`%${filters.goNumber.trim()}%`)}`);
   }
+  if (filters.goNumberPrefix?.trim()) {
+    // Spaces are not significant in GO numbers ("51 / 2026").
+    const prefix = likeEscape(filters.goNumberPrefix.replace(/\s+/g, ""));
+    clauses.push(`replace(d.go_number, ' ', '') ILIKE ${param(`${prefix}%`)}`);
+  }
+  if (filters.sectionLike?.trim()) {
+    clauses.push(`translate(COALESCE(${SECTION_SQL}, ''), ${param(JOINERS)}, '') ~* ${param(sectionRegex(filters.sectionLike))}`);
+  }
+  const sourceIds = (filters.sourceIds ?? []).filter(Boolean).slice(0, 200);
+  if (filters.sourceIds) clauses.push(`d.source_id = ANY(${param(sourceIds)})`);
 
-  // Every word must appear somewhere in the subject/title or GO number.
+  // Finder terms: phrases and wildcard patterns over subject, section, category, number.
+  const finderTerms = [
+    ...(filters.phrases ?? []).map((phrase) => `%${likeEscape(clean(phrase))}%`),
+    ...(filters.patterns ?? []).map((pattern) => `%${wildcardToLike(clean(pattern))}%`),
+  ].filter((term) => term.replace(/%/g, "").length > 0).slice(0, 8);
+  if (finderTerms.length) {
+    const joiners = param(JOINERS);
+    for (const term of finderTerms) {
+      clauses.push(`translate(${SEARCHABLE_SQL}, ${joiners}, '') ILIKE ${param(term)}`);
+    }
+  }
+
+  // Every word must appear somewhere in the subject/title, section, category or GO number.
   const words = clean(filters.text ?? "").split(" ").filter(Boolean).slice(0, 8);
   if (words.length) {
     const joiners = param(JOINERS);
     for (const word of words) {
       const escaped = word.replace(/[\\%_]/g, (character) => `\\${character}`);
       clauses.push(
-        `translate(COALESCE(${SUBJECT_SQL}, '') || ' ' || COALESCE(d.go_number, ''), ${joiners}, '') ILIKE ${param(`%${escaped}%`)}`,
+        `translate(${SEARCHABLE_SQL}, ${joiners}, '') ILIKE ${param(`%${escaped}%`)}`,
       );
     }
   }

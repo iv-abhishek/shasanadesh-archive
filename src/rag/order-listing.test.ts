@@ -127,3 +127,72 @@ const list = (q: string) => detectListingRequest(q, TODAY);
 }
 
 console.log("order listing tests passed");
+
+// --- Finding orders (ADR-058) ------------------------------------------------
+{
+  const find = (q: string) => detectListingRequest(q, TODAY);
+
+  const byNumber = find("find GO 51/2026/918");
+  assert.equal(byNumber?.mode, "find");
+  assert.equal(byNumber?.goNumber, "51/2026/918");
+  assert.deepEqual(byNumber?.words, []);
+  assert.equal(find("शासनादेश संख्या 158 / 2026")?.goNumber, "158/2026");
+  assert.equal(find("orders on 21/09/2026")?.goNumber, undefined); // a date, not a number
+
+  const quoted = find('find "फार्मर रजिस्ट्री"');
+  assert.deepEqual(quoted?.phrases, ["फार्मर रजिस्ट्री"]);
+  assert.equal(quoted?.explicit, true);
+
+  const wild = find("solar* orders of agriculture");
+  assert.deepEqual(wild?.patterns, ["solar*"]);
+  assert.equal(wild?.department?.id, 37);
+  assert.deepEqual(find("orders with *पंप*")?.patterns, ["*पंप*"]);
+  assert.deepEqual(find("recent orders of PWD?")?.patterns, []); // a closing "?" is punctuation
+
+  const bySection = find("orders released by कृषि अनुभाग-5");
+  assert.equal(bySection?.department?.id, 37);
+  assert.equal(bySection?.section, "कृषि अनुभाग-5");
+  const hindiSection = find("लोक निर्माण अनुभाग-1 द्वारा जारी शासनादेश");
+  assert.equal(hindiSection?.department?.id, 34);
+  assert.equal(hindiSection?.section, "लोक निर्माण अनुभाग-1");
+  const thisWeek = find("orders released by लोक निर्माण अनुभाग-1 this week");
+  assert.equal(thisWeek?.section, "लोक निर्माण अनुभाग 1");
+  assert.equal(thisWeek?.dateFrom, "2026-09-21");
+  assert.equal(thisWeek?.explicit, true);
+  const englishSection = find("orders issued by Public Works section 1 in September");
+  assert.equal(englishSection?.section, "अनुभाग-1");
+  assert.equal(englishSection?.dateFrom, "2026-09-01");
+
+  assert.deepEqual(find("orders about farmer registry")?.words, ["farmer", "registry"]);
+  assert.deepEqual(find("किसान सम्मान निधि से संबंधित शासनादेश")?.words, ["किसान", "सम्मान", "निधि"]);
+  assert.equal(find("search metro rail order")?.explicit, true);
+
+  // A one-word department name next to other words is a subject word.
+  const home = find("is there any order on work from home?");
+  assert.equal(home?.department, null);
+  assert.deepEqual(home?.words, ["work", "home"]);
+  assert.equal(find("recent orders of finance")?.department?.id, 162); // alone, it is the department
+
+  // Questions about content still go to Ask.
+  assert.equal(find("What is the DA rate in the latest order?"), null);
+  assert.equal(find("what are the recent orders of PWD")?.mode, "recent");
+}
+
+// Answer text for a search: word matches numbered, meaning matches as a separate group.
+{
+  const request = detectListingRequest("orders about farmer registry", TODAY)!;
+  const order = (id: string, match: "words" | "similar") => ({
+    sourceId: id, department: "कृषि विभाग", goNumber: `${id}/2026`, goDate: "2026-09-21", subject: "फार्मर रजिस्ट्री हेतु विशेष अभियान", sourceUrl: "https://x", match,
+  });
+  const both = buildListingAnswer(request, { orders: [order("1", "words"), order("2", "similar")], total: 1, scope: { kind: "all" }, topicDropped: false, widened: false }, "en");
+  assert.match(both, /^Orders matching “farmer registry” — all departments \(newest first; 1 of 1\):/);
+  assert.match(both, /^1\. \*\*21\.09\.2026\*\* · GO 1\/2026 · कृषि विभाग — .* \[S1 p\.1\]$/m);
+  assert.match(both, /Also close in meaning \(subject does not contain the words\):/);
+  assert.match(both, /^- \*\*21\.09\.2026\*\* · GO 2\/2026 .* \[S2 p\.1\]$/m);
+  const onlySimilar = buildListingAnswer(request, { orders: [order("2", "similar")], total: 0, scope: { kind: "all" }, topicDropped: false, widened: false }, "en");
+  assert.match(onlySimilar, /^No order contains “farmer registry” word for word\. Orders whose subject is closest in meaning/);
+  const nothing = buildListingAnswer(request, { orders: [], total: 0, scope: { kind: "all" }, topicDropped: false, widened: false, similarUnavailable: true }, "en");
+  assert.match(nothing, /^No order matching “farmer registry” was found in the archive/);
+}
+
+console.log("order finder tests passed");

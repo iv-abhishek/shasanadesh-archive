@@ -40,6 +40,7 @@
     "db:setup:local": "./scripts/setup-local-postgres.sh",
     "embed:setup": "./scripts/setup-embedding-env.sh",
     "embed:chunks": "node --env-file-if-exists=.env scripts/with-env.mjs .venv-embeddings/bin/python scripts/embed-chunks.py",
+    "embed:subjects": "node --env-file-if-exists=.env scripts/with-env.mjs .venv-embeddings/bin/python scripts/embed-subjects.py",
     "search:hybrid": "node --env-file-if-exists=.env scripts/with-env.mjs .venv-embeddings/bin/python scripts/search-hybrid.py",
     "rerank:setup": "./scripts/setup-reranker-env.sh",
     "search:reranked": "node --env-file-if-exists=.env scripts/with-env.mjs .venv-embeddings/bin/python scripts/search-reranked.py",

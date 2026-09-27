@@ -2,6 +2,14 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 27 Sept 2026, 7:00 pm IST (Claude)
+
+- Find orders from Ask (ADR-058): number, phrase, wildcard, section/issuer, department,
+  dates, words; meaning-based subject matching (`embed:subjects`, migration 009,
+  retrieval `/subjects/search`). Word/number/section/wildcard paths checked on the 679
+  real orders in a temporary Postgres; the meaning search needs the Mac (model) to test.
+  3 eval cases (`order-find`).
+
 ## 27 Sept 2026, 5:45 pm IST (Claude)
 
 - Order lists (ADR-057) after Abhishek's screenshot ("recent … basic education" gave an

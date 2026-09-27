@@ -100,6 +100,8 @@ The long-term system is expected to include:
 - RAG-based AI assistant
 - Source and page-level citations
 - Government Order amendment and supersession tracking (`npm run relations:build`, ADR-054)
+- Find orders from Ask by GO number, "phrase", wildcard, issuing section, department, date
+  or subject, in English or Hindi (`npm run embed:subjects` for meaning-based matching, ADR-058)
 
 When `B2_KEY_ID`, `B2_APPLICATION_KEY`, and `B2_BUCKET` are configured,
 `npm run ingest:known` stores immutable original captures and metadata manifests in B2.

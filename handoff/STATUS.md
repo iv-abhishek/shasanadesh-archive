@@ -53,6 +53,10 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   "orders issued this week" are answered from the order list, newest first (no model).
   Departments named in English or Hindi resolve through `datasets/departments.json`
   (English names marked `translation` should be reviewed).
+- **Find orders from Ask (ADR-058):** GO number ("51/2026"), "quoted phrase", wildcards
+  (`solar*`, `*मेट्रो*`), issuing section ("released by लोक निर्माण अनुभाग-1"), department,
+  dates and subject words, in English or Hindi; English words find Hindi subjects once
+  `npm run embed:subjects` has run (migration 009).
 - Department picker: one choice per department (English name preferred).
 - Department filters (chat scope and Search) match by Shasanadesh department ID
   as well as by name (ADR-044).
@@ -98,7 +102,8 @@ run the regression set (~30–45 min):
 
 ```
 git push
-npm run db:migrate                         # adds document_relations (008)
+npm run db:migrate                         # adds document_relations (008), subject vectors (009)
+npm run embed:subjects                     # one vector per order subject (a few minutes)
 npm run relations:build
 npm run compare:suspicious -- --max 300    # repeat until no "Remaining" line
 npm run build:retrieval-variants

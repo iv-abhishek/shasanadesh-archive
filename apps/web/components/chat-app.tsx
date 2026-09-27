@@ -98,6 +98,8 @@ interface DoneEvent {
   bestRelevance?: number;
   /** Answered from the order list (ADR-057): dates, numbers and subjects as recorded. */
   listing?: boolean;
+  /** A search for particular orders (ADR-058) rather than a dated list. */
+  find?: boolean;
   listingTotal?: number;
 
 }
@@ -1672,9 +1674,9 @@ function TurnView({
             {turn.done.noEvidence || turn.done.usedFallback ? null : turn.done.listing ? (
               <span
                 className="badge badge-safe"
-                title="Listed from the recorded order dates, numbers and subjects; no text was generated."
+                title="Listed from the recorded order dates, numbers, sections and subjects; no text was generated."
               >
-                Order list
+                {turn.done.find ? "Order search" : "Order list"}
               </span>
             ) : <span
               className={

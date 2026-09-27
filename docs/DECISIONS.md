@@ -755,3 +755,37 @@ search stayed in the profile's departments.
   a missing year (the last such day that has passed) and misspelt months next to a day
   ("Sepetember"; within 1–2 edits of the name). A department named twice ("Public Works
   Department or PWD") is one department, not a subject word.
+
+## ADR-058 - Find any order from Ask
+
+Abhishek (27 Sept): Ask should also find orders — by phrase or sentence, GO number, date,
+subject, department, issuing office and wildcard text. The internal Search page stays for
+the team; end users only have Ask.
+
+- **Parsing** (`src/rag/order-listing.ts`): quoted phrases (exact), wildcard terms (`*`
+  any run, `?` one character inside a word), a GO number (serial/…year…, spaces ignored;
+  "51/2026" finds every 51/2026/…), the issuing office ("released/issued by …",
+  "… द्वारा जारी", "… अनुभाग-5", "section 1" → अनुभाग-1), the department (registry,
+  ADR-057; a one-word name next to other words is a subject word, so "work from home" is
+  not the Home department), dates (ADR-057) and the remaining subject words.
+- **When it is a search**: a find verb (find/search/खोजें…), a GO number, quotes, a
+  wildcard or an issuer makes it explicit; otherwise a question that mentions orders and
+  is not about their content ("what does…", procedure, eligibility, how much…, "what is
+  the <thing>") is treated as a search, and falls back to Ask when nothing matches.
+- **Matching**: every term must appear in subject, section, category or GO number
+  (sections match by regex, ignoring dash/spacing but not the number). Word matches are
+  listed newest first. When there are fewer than 10, orders whose **subject is close in
+  meaning** follow as a separate group: `embed:subjects` stores one Qwen3 vector per
+  order (subject + department + section + category, all tiers; table
+  `document_subject_embeddings`, migration 009) and the retrieval service's
+  `/subjects/search` returns the nearest (cosine ≥ FIND_MIN_SIMILARITY 0.45 and within
+  0.12 of the best; uncalibrated, `bestSimilarity` is in the done event). This is what
+  lets English words find Hindi subjects.
+- **Scope**: a named department, otherwise all departments (a search is not limited to
+  the profile; "recent orders" without a department still uses the profile).
+- **Answer**: the ADR-057 list with the criteria in the heading ("Orders matching GO
+  number “51/2026…”, section “…” — Public Works, this week"), meaning matches under "Also
+  close in meaning", and a clear "no order found" with hints for explicit searches. The
+  badge reads "Order search".
+- **Not possible from the data**: the signing officer's name is not recorded in the
+  portal listing, so "signed by <name>" is matched as text only.

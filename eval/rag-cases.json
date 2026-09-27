@@ -453,5 +453,47 @@
       "21.09.2026"
     ],
     "notes": "A date-bound list in Hindi."
+  },
+  {
+    "id": "find-go-number",
+    "query": "find GO 51/2026",
+    "language": "en",
+    "category": "order-find",
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectListing": true,
+    "expectedTextIncludesAny": [
+      "51/2026"
+    ],
+    "notes": "GO number prefix lookup across departments (ADR-058)."
+  },
+  {
+    "id": "find-quoted-phrase-hindi",
+    "query": "\"समयपूर्व रिहाई\" वाले शासनादेश खोजें",
+    "language": "hi",
+    "category": "order-find",
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectListing": true,
+    "expectedTextIncludesAny": [
+      "समयपूर्व रिहाई",
+      "समयपूर्व"
+    ],
+    "notes": "Exact phrase in quotes, Hindi."
+  },
+  {
+    "id": "find-english-for-hindi-subject",
+    "query": "orders about farmer registry",
+    "language": "en",
+    "category": "order-find",
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectListing": true,
+    "expectedTextIncludesAny": [
+      "फार्मर रजिस्ट्री",
+      "एग्रीस्टैक",
+      "एग्रीस्‍टैक"
+    ],
+    "notes": "English words, Hindi subject: needs embed:subjects (meaning-based match)."
   }
 ]
