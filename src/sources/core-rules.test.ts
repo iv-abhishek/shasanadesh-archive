@@ -31,6 +31,7 @@ async function main(): Promise<void> {
   assert.throws(bad({ slug: "Bad Slug" }), /slug/);
   assert.throws(bad({ date: "05/08/2017" }), /YYYY-MM-DD/);
   assert.throws(bad({ amends: ["nope"] }), /unknown entry/);
+  assert.throws(bad({ topics: ["financial"] }), /unknown topic/);
   assert.throws(() => validateCatalogue([good, good]), /duplicate/);
 
   // Curated core rules are tier A, typed from the catalogue.

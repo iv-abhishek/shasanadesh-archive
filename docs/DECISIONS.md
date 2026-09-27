@@ -880,6 +880,12 @@ are not on Shasanadesh, and those that are cannot be crawled there.
   Consultancy 2025, Non-Consultancy 2025, GeM GTC 4.0 v1.26, Make in India order
   (19.07.2024), UP Budget Manual, UP Conduct Rules 1956, five UP GeM GOs (2017–2025).
   Next candidates and the Shasanadesh capture list: `datasets/core-rules/README.md`.
+- 27 Sept (later): +10 central documents from Abhishek's list, each checked on the
+  issuer's site (arbitration & mediation OM 2024, Union Budget Manual 2022, DPDP Act 2023 and
+  Rules 2025, CERT-In Directions 2022 and government-entity guidelines 2023, GIGW 3.0, Open
+  API and Open Source policies, Open Data License 2017); 25 in all. Catalogue topics use the
+  topic codes (ADR-064) and are validated. Documents on script-rendered sites (CVC, CGA,
+  DARPG, DoPT, India Code) wait until their file URL is confirmed.
 
 ## ADR-063 - Permanent rules: government URLs only in chat; government sources only
 

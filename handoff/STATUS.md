@@ -57,7 +57,7 @@ Current phase: **Phase 0**, with Phase 1 started (classification rules pass done
   (`solar*`, `*मेट्रो*`), issuing section ("released by लोक निर्माण अनुभाग-1"), department,
   dates and subject words, in English or Hindi; English words find Hindi subjects once
   `npm run embed:subjects` has run (migration 009).
-- **Core rules collection (ADR-062):** 15 reviewed documents (GFR, DFPR, procurement
+- **Core rules collection (ADR-062):** 25 reviewed documents (+ DPDP, CERT-In, GIGW, Open API/OSS, arbitration OM, Union Budget Manual); (GFR, DFPR, procurement
   manuals, GeM GTC + UP GeM GOs, Make in India order, UP Budget Manual, Conduct Rules) in
   `datasets/core-rules/catalogue.json`; always tier A and never filtered out by department.
   **Not ingested yet:** `npm run ingest:source -- core-rules`, then the processing steps.

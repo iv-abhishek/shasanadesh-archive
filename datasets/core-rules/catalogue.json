@@ -11,7 +11,7 @@
       "department": null,
       "documentType": "rules",
       "topics": [
-        "financial",
+        "financial-rules",
         "procurement"
       ],
       "edition": "Updated up to 31 January 2026",
@@ -33,7 +33,7 @@
       "department": null,
       "documentType": "rules",
       "topics": [
-        "financial"
+        "financial-rules"
       ],
       "edition": "2024 booklet",
       "date": null,
@@ -97,8 +97,7 @@
       "department": null,
       "documentType": "guideline",
       "topics": [
-        "procurement",
-        "consultancy"
+        "procurement"
       ],
       "edition": "Second Edition, 2025",
       "date": null,
@@ -119,8 +118,7 @@
       "department": null,
       "documentType": "guideline",
       "topics": [
-        "procurement",
-        "services"
+        "procurement"
       ],
       "edition": "2025",
       "date": "2025-06-20",
@@ -163,8 +161,7 @@
       "department": null,
       "documentType": "policy",
       "topics": [
-        "procurement",
-        "make-in-india"
+        "procurement"
       ],
       "edition": "Revision of 19 July 2024",
       "date": "2024-07-19",
@@ -185,8 +182,8 @@
       "department": "वित्त विभाग",
       "documentType": "rules",
       "topics": [
-        "financial",
-        "budget"
+        "financial-rules",
+        "budget-accounts"
       ],
       "edition": "Chapters I–XIX (budget.up.nic.in)",
       "date": null,
@@ -208,7 +205,7 @@
       "documentType": "rules",
       "topics": [
         "service",
-        "conduct"
+        "conduct-discipline"
       ],
       "edition": "Compiled copy (IGRS UP)",
       "date": null,
@@ -336,8 +333,7 @@
       "documentType": "general-instruction",
       "topics": [
         "procurement",
-        "gem",
-        "auction"
+        "gem"
       ],
       "edition": null,
       "date": "2025-07-21",
@@ -351,6 +347,220 @@
         "goNumber": "20/2025/996/18-02-2025-ई-1787484",
         "date": "2025-07-21"
       },
+      "amends": []
+    },
+    {
+      "slug": "doe-arbitration-mediation-2024",
+      "title": "Guidelines for Arbitration and Mediation in Contracts of Domestic Public Procurement (OM dated 03.06.2024)",
+      "titleHi": "घरेलू सार्वजनिक खरीद अनुबंधों में मध्यस्थता एवं सुलह हेतु दिशानिर्देश (कार्यालय ज्ञाप दिनांक 03.06.2024)",
+      "issuer": "Department of Expenditure, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "procurement"
+      ],
+      "edition": null,
+      "date": "2024-06-03",
+      "goNumber": "F.1/2/2024-PPD",
+      "language": "en",
+      "officialPage": "https://doe.gov.in/circulars/guidelines-arbitration-and-mediation-contracts-domestic-publicprocurement-reg",
+      "downloadUrl": "https://doe.gov.in/files/circulars_document/Guidelines_for_Arbitration_and_Mediation_in_Contracts_of_Domestic_Public_Procurement.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "union-budget-manual-2022",
+      "title": "Budget Manual, Government of India (2022)",
+      "titleHi": "बजट मैनुअल, भारत सरकार (2022)",
+      "issuer": "Department of Economic Affairs, Ministry of Finance, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "budget-accounts",
+        "financial-rules"
+      ],
+      "edition": "2022 (final, 15.11.2022)",
+      "date": "2022-11-15",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://dea.gov.in/budget-division/budget-manual-2022",
+      "downloadUrl": "https://dea.gov.in/files/budget_division_documents/BUDGET_MANUAL_FINAL_15_11_22.pdf",
+      "sourceNote": "Official (issuer's website). The file did not download during verification (site timeout from this network); the title is confirmed by the issuer's listing.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "dpdp-act-2023",
+      "title": "The Digital Personal Data Protection Act, 2023 (No. 22 of 2023)",
+      "titleHi": "डिजिटल व्यक्तिगत डेटा संरक्षण अधिनियम, 2023",
+      "issuer": "Ministry of Electronics and Information Technology (MeitY), Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "data-protection"
+      ],
+      "edition": "Gazette of India, 11.08.2023",
+      "date": "2023-08-11",
+      "goNumber": "Act No. 22 of 2023",
+      "language": "mixed",
+      "officialPage": "https://www.meity.gov.in/documents/act-and-policies",
+      "downloadUrl": "https://www.meity.gov.in/static/uploads/2024/06/2bf1f0e9f04e6fb4f8fef35e82c42aa5.pdf",
+      "sourceNote": "Official (issuer's website; Gazette copy).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "dpdp-rules-2025",
+      "title": "Digital Personal Data Protection Rules, 2025 (G.S.R. 846(E))",
+      "titleHi": "डिजिटल व्यक्तिगत डेटा संरक्षण नियम, 2025",
+      "issuer": "Ministry of Electronics and Information Technology (MeitY), Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "data-protection"
+      ],
+      "edition": "Gazette of India, 14.11.2025",
+      "date": "2025-11-13",
+      "goNumber": "G.S.R. 846(E)",
+      "language": "mixed",
+      "officialPage": "https://www.meity.gov.in/documents/act-and-policies/digital-personal-data-protection-rules-2025-gDOxUjMtQWa",
+      "downloadUrl": "https://www.meity.gov.in/static/uploads/2025/11/53450e6e5dc0bfa85ebd78686cadad39.pdf",
+      "sourceNote": "Official (issuer's website; Gazette copy). Provisions come into force in phases; check the notification of dates.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "cert-in-directions-2022",
+      "title": "CERT-In Directions under section 70B(6) of the IT Act, 2000 (28.04.2022)",
+      "titleHi": "सीईआरटी-इन निर्देश, धारा 70बी(6), दिनांक 28.04.2022",
+      "issuer": "Indian Computer Emergency Response Team (CERT-In), MeitY, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "rules",
+      "topics": [
+        "cybersecurity"
+      ],
+      "edition": null,
+      "date": "2022-04-28",
+      "goNumber": "No. 20(3)/2022-CERT-In",
+      "language": "en",
+      "officialPage": "https://www.cert-in.org.in/Directions70B.jsp",
+      "downloadUrl": "https://www.cert-in.org.in/PDF/CERT-In_Directions_70B_28.04.2022.pdf",
+      "sourceNote": "Official (CERT-In).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "cert-in-guidelines-government-entities-2023",
+      "title": "Guidelines on Information Security Practices for Government Entities (CERT-In, 2023)",
+      "titleHi": "सरकारी संस्थाओं हेतु सूचना सुरक्षा पद्धतियों पर दिशानिर्देश",
+      "issuer": "Indian Computer Emergency Response Team (CERT-In), MeitY, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "cybersecurity",
+        "digital-it"
+      ],
+      "edition": "June 2023",
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.cert-in.org.in/guidelinesgovtentities.jsp",
+      "downloadUrl": "https://www.cert-in.org.in/PDF/guidelinesgovtentities.pdf",
+      "sourceNote": "Official (CERT-In). Applies to central and state government entities.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "gigw-3-0",
+      "title": "Guidelines for Indian Government Websites and Apps (GIGW 3.0)",
+      "titleHi": "भारतीय सरकारी वेबसाइटों एवं ऐप्स हेतु दिशानिर्देश (जीआईजीडब्ल्यू 3.0)",
+      "issuer": "National e-Governance Division / MeitY, Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "guideline",
+      "topics": [
+        "digital-it",
+        "accessibility"
+      ],
+      "edition": "3.0",
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://guidelines.india.gov.in/gigw3/",
+      "downloadUrl": "https://cdnbbsr.s3waas.gov.in/s3c92a10324374fac681719d63979d00fe/uploads/2025/02/2025021775.pdf",
+      "sourceNote": "Official (guidelines.india.gov.in, S3WaaS). Scope covers central and state government websites and apps.",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "policy-open-apis",
+      "title": "Policy on Open Application Programming Interfaces (APIs) for Government of India",
+      "titleHi": "भारत सरकार हेतु ओपन एपीआई नीति",
+      "issuer": "Ministry of Electronics and Information Technology (MeitY), Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "digital-it"
+      ],
+      "edition": null,
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.meity.gov.in/documents/act-and-policies",
+      "downloadUrl": "https://www.meity.gov.in/static/uploads/2024/03/Policy-Document.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "policy-open-source-software",
+      "title": "Policy on Adoption of Open Source Software for Government of India",
+      "titleHi": "भारत सरकार हेतु मुक्त स्रोत सॉफ्टवेयर अपनाने की नीति",
+      "issuer": "Ministry of Electronics and Information Technology (MeitY), Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "policy",
+      "topics": [
+        "digital-it"
+      ],
+      "edition": null,
+      "date": null,
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.meity.gov.in/documents/act-and-policies",
+      "downloadUrl": "https://www.meity.gov.in/static/uploads/2024/02/policy_on_adoption_of_oss.pdf",
+      "sourceNote": "Official (issuer's website).",
+      "preferredSource": null,
+      "amends": []
+    },
+    {
+      "slug": "gov-open-data-licence-2017",
+      "title": "Government Open Data License – India (Gazette notification 13.02.2017)",
+      "titleHi": "सरकारी मुक्त डेटा लाइसेंस – भारत",
+      "issuer": "Ministry of Electronics and Information Technology (MeitY), Government of India",
+      "jurisdiction": "central",
+      "department": null,
+      "documentType": "notification",
+      "topics": [
+        "data-protection",
+        "digital-it"
+      ],
+      "edition": null,
+      "date": "2017-02-13",
+      "goNumber": null,
+      "language": "en",
+      "officialPage": "https://www.meity.gov.in/documents/act-and-policies",
+      "downloadUrl": "https://www.meity.gov.in/static/uploads/2024/02/Gazette-Notification_OpenDataLicense_13.02.2017.pdf",
+      "sourceNote": "Official (issuer's website; Gazette copy). Use with the NDSAP.",
+      "preferredSource": null,
       "amends": []
     }
   ]

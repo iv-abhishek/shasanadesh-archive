@@ -20,6 +20,7 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { SourceAdapter, SourceDocument, SourceLanguage } from "./types.js";
 import { isGovernmentHost } from "../lib/government-hosts.js";
+import { TOPIC_CODES } from "../classify/topics.js";
 
 export interface CoreRuleEntry {
   slug: string;
@@ -58,6 +59,9 @@ export function validateCatalogue(entries: CoreRuleEntry[]): void {
     }
     if (entry.date && !/^\d{4}-\d{2}-\d{2}$/.test(entry.date)) throw new Error(`${where}: date must be YYYY-MM-DD`);
     if (!["central", "state"].includes(entry.jurisdiction)) throw new Error(`${where}: jurisdiction must be central or state`);
+    for (const topic of entry.topics) {
+      if (!(TOPIC_CODES as readonly string[]).includes(topic)) throw new Error(`${where}: unknown topic "${topic}" (see src/classify/topics.ts)`);
+    }
     for (const target of entry.amends ?? []) {
       if (!entries.some((other) => other.slug === target)) throw new Error(`${where}: amends unknown entry "${target}"`);
     }
