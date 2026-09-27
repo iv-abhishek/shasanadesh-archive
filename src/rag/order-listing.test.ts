@@ -17,6 +17,18 @@ const list = (q: string) => detectListingRequest(q, TODAY);
   assert.equal(list("recent jail orders")?.department?.id, 15);
   assert.equal(list("latest order on solar pump subsidy")?.topic, "solar pump subsidy");
 
+  // The department named twice is still the department, not a subject (27 Sept).
+  for (const q of [
+    "recent government orders released by Public Works Department or PWD",
+    "recent orders of PWD (लोक निर्माण विभाग)",
+    "लोक निर्माण विभाग / PWD के नवीनतम शासनादेश",
+  ]) {
+    const r = list(q);
+    assert.equal(r?.department?.id, 34, q);
+    assert.equal(r?.topic, null, q);
+  }
+  assert.equal(list("latest orders of कृषि विभाग / Agriculture")?.topic, null);
+
   // Content questions stay with Ask.
   for (const q of [
     "what does the latest order on DA say",

@@ -63,7 +63,8 @@ export function normalizeName(text: string): string {
 const DEPT_WORD = /^(?:department|departments|dept|विभाग|विभागों)(?:\s|$)/;
 const HINDI = /[ऀ-ॿ]/;
 
-function phrases(department: DepartmentEntry): string[] {
+/** Every normalised way of writing this department (names and aliases). */
+export function departmentPhrases(department: DepartmentEntry): string[] {
   const all = [department.en, department.hi, department.hi.replace(/\s*विभाग$/, ""), ...department.aliases];
   return [...new Set(all.map(normalizeName).filter((phrase) => phrase.length >= 2))];
 }
@@ -76,7 +77,7 @@ export function findDepartmentMention(
   let best: DepartmentMention | null = null;
 
   for (const department of departments) {
-    for (const phrase of phrases(department)) {
+    for (const phrase of departmentPhrases(department)) {
       // Word boundaries: spaces were normalised, so pad both sides.
       let index = haystack.indexOf(` ${phrase} `);
       if (index < 0 && HINDI.test(phrase)) {

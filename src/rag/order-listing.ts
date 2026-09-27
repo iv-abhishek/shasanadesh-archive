@@ -10,7 +10,13 @@
  */
 
 import type { Pool } from "pg";
-import { departmentLabel, findDepartmentMention, type DepartmentEntry } from "../departments/registry.js";
+import {
+  departmentLabel,
+  departmentPhrases,
+  findDepartmentMention,
+  normalizeName,
+  type DepartmentEntry,
+} from "../departments/registry.js";
 import { browseDocuments, type BrowseRequest } from "../documents/browse.js";
 import { normalizeDigits, parseReferenceDate } from "../relations/extract.js";
 
@@ -160,6 +166,7 @@ const FILLER = new Set([
   "orders", "order", "gos", "go", "g", "o", "government", "govt", "circulars", "circular", "notifications", "notification", "shasanadesh",
   "department", "departments", "dept", "of", "in", "the", "by", "for", "from", "on", "and", "show", "me", "all", "any", "please", "give",
   "which", "what", "were", "was", "are", "is", "there", "have", "has", "been", "a", "an", "release", "to", "up", "uttar", "pradesh", "state",
+  "or", "also", "our", "my", "tell", "about", "कृपया", "अथवा", "या", "तथा", "एवं", "और",
   "शासनादेश", "शासनादेशों", "आदेश", "आदेशों", "परिपत्र", "अधिसूचना", "विभाग", "विभागों", "हाल", "हालिया", "में", "के", "की", "का", "से", "द्वारा", "हेतु",
   "नवीनतम", "नए", "नये", "नवीन", "ताज़ा", "ताजा", "जारी", "निर्गत", "सूची", "किए", "किये", "गए", "गये", "हुए", "हैं", "है", "कौन", "कौनसे", "क्या", "बताइए",
   "बताएं", "बताओ", "दिखाइए", "दिखाएं", "सभी", "कोई", "उत्तर", "प्रदेश", "शासन", "दिनांकित", "तक", "बाद", "ही",
@@ -175,7 +182,15 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
   const mention = findDepartmentMention(query);
   let rest = ` ${lower} `;
   if (range) rest = rest.replace(range.matched, " ");
-  if (mention) rest = ` ${rest.replace(/[‌‍]/g, "")} `.replace(` ${mention.matched} `, " ");
+  if (mention) {
+    // Remove every way the question names this department ("Public Works
+    // Department or PWD"), not just the one that matched; otherwise a second
+    // name would be taken for a subject word.
+    rest = ` ${normalizeName(rest)} `;
+    for (const phrase of departmentPhrases(mention.department).sort((a, b) => b.length - a.length)) {
+      while (rest.includes(` ${phrase} `)) rest = rest.replace(` ${phrase} `, " ");
+    }
+  }
   const topicWords = rest
     .replace(/[(),.?!।:;"'/-]/g, " ")
     .split(/\s+/)
@@ -301,8 +316,15 @@ export async function listOrders(
     scope = { kind: "all" };
     widened = result.total > 0;
   }
-  // A subject word that matches nothing means this is a question about content.
-  if (!result.total && request.topic) return null;
+  // Subject words that match nothing: with a named department the question is
+  // still "that department's orders" (list them, with a note); without one it
+  // is a question about content, so Ask handles it.
+  let topicDropped = false;
+  if (!result.total && request.topic) {
+    if (!request.department) return null;
+    result = await browseDocuments(pool, { ...filters, text: undefined });
+    topicDropped = true;
+  }
 
   const outcome: ListingOutcome = {
     orders: result.rows.map((row) => ({
@@ -315,7 +337,7 @@ export async function listOrders(
     })),
     total: result.total,
     scope,
-    topicDropped: false,
+    topicDropped,
     widened,
   };
   return { text: buildListingAnswer(request, outcome, language), outcome };
