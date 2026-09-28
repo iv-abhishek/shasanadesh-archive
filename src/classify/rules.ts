@@ -19,7 +19,7 @@
  *   - bump RULES_VERSION whenever a rule changes, so stored results can be redone
  */
 
-export const RULES_VERSION = "rules-2026-09-26";
+export const RULES_VERSION = "rules-2026-09-28";
 
 export type DocType =
   | "rules" // नियमावली, विनियम, rules and their amendments
@@ -86,6 +86,9 @@ const HARD_CASE_RULES: Rule[] = [
   rule("units-count", /\d+\s*(औद्योगिक\s*)?(इकाइयों|इकाईयों|इकाइयाँ|फर्मों)/),
   rule("nominate-members", /(सदस्य|अधिकारी)\s*नामित|नामांकन|बैठक\s*(हेतु|के सम्बन्ध|के संबंध|की कार्यवृत्त)|कार्यवृत्त|पीठासीन\s*अधिकारी/),
   rule("transfer-posting", /स्थानान्तरण|स्थानांतरण|तैनाती|कार्यमुक्त|प्रतिनियुक्ति पर|पदोन्नति\s*दिनांक|ए0\s*सी0\s*पी0/),
+  // English titles (ministry websites, ADR-068).
+  rule("en-transfer-posting", /\btransfer\s*(&|and)\s*posting|\bposting\s+orders?\b/i),
+  rule("en-appointment", /\b(nominat(ion|e|ed|ing)|appoint(ment|s|ed|ing)?|designating)\b[^.]{0,80}\b(as|of|to)\b|\blist\s+of\s+cpios?\b|\bconstitut(es|ion)\b[^.]{0,40}\b(board|committee|commission|council)\b|\b(minutes|meeting)\s+of\b/i),
 ];
 
 const SOFT_CASE_RULES: Rule[] = [
@@ -111,9 +114,9 @@ const SANCTION_RULES: Rule[] = [
 
 // Generally applicable documents.
 const GENERAL_RULES: Array<Rule & { docType: DocType }> = [
-  { ...rule("rules", /नियमावली|विनियमावली|विनियम,?\s*\d{4}|सेवा\s*नियम|नियम,?\s*\d{4}|अवकाश\s*नियम|नियमों|नियम\s*के\s|परन्तुक|रूल्स|\bRules\b/i), docType: "rules" },
-  { ...rule("clarification", /स्पष्टीकरण|स्पष्ट\s*किए?\s*जाने|स्थिति\s*स्पष्ट/), docType: "clarification" },
-  { ...rule("guideline", /दिशा-?\s*निर्देश|दिशानिर्देश|गाइड\s*लाइन|गाइडलाइन|मार्गदर्शिका|मार्गदर्शी|मानक\s*संचालन\s*प्रक्रिया|\bSOP\b|प्रक्रिया\s*(का\s*)?निर्धारण|प्रक्रिया\s*निर्धारित|नियमपुस्तिका|हस्तपुस्तिका|मैनुअल|Guidelines?/i), docType: "guideline" },
+  { ...rule("rules", /नियमावली|विनियमावली|विनियम,?\s*\d{4}|सेवा\s*नियम|नियम,?\s*\d{4}|अवकाश\s*नियम|नियमों|नियम\s*के\s|परन्तुक|रूल्स|\bRules\b|\bRegulations?\b|\bAct,?\s*\d{4}\b|\(Amendment\)\s*(Act|Rules|Order)/i), docType: "rules" },
+  { ...rule("clarification", /स्पष्टीकरण|स्पष्ट\s*किए?\s*जाने|स्थिति\s*स्पष्ट|\bclarification\b/i), docType: "clarification" },
+  { ...rule("guideline", /दिशा-?\s*निर्देश|दिशानिर्देश|गाइड\s*लाइन|गाइडलाइन|मार्गदर्शिका|मार्गदर्शी|मानक\s*संचालन\s*प्रक्रिया|\bSOP\b|प्रक्रिया\s*(का\s*)?निर्धारण|प्रक्रिया\s*निर्धारित|नियमपुस्तिका|हस्तपुस्तिका|मैनुअल|Guidelines?|\bInstructions?\s+(for|on|regarding)\b|\bManual\b|\bProcedure\b/i), docType: "guideline" },
   { ...rule("policy", /नीति\s*[-–,]?\s*\d{4}(?!\s*(के|की)?\s*(अन्त|अंत))|नीति\s*\(\s*(प्रथम|द्वितीय|तृतीय)?\s*संशोधन|Policy\s*,?\s*\d{4}/i), docType: "policy" },
 ];
 
