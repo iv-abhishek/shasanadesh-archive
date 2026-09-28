@@ -1,0 +1,136 @@
+[
+  {
+    "slug": "central-civil-services-pension-amendment-rules-2024",
+    "title": "Central Civil Services (Pension) Amendment Rules, 2024",
+    "titleHi": null,
+    "issuer": "Department of Pension & Pensioners’ Welfare",
+    "jurisdiction": "central",
+    "department": "Department of Pension & Pensioners’ Welfare",
+    "documentType": "rules",
+    "topics": [
+      "pension",
+      "service"
+    ],
+    "edition": "2024 amendment to CCS (Pension) Rules, 2021",
+    "date": "2024-07-16",
+    "goNumber": "G.S.R. 410(E)",
+    "language": "en",
+    "officialPage": "https://www.doppw.gov.in/",
+    "downloadUrl": "https://doppw.gov.in/sites/default/files/OMdated%2011092024%20.pdf",
+    "sourceNote": "Official (DoPPW website).",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "mha-section-479-bnss-advisory-january-2025",
+    "title": "Implementation of the provisions of Section 479 of the Bharatiya Nagarik Suraksha Sanhita, 2023 (BNSS) by the State Prison authorities for providing relief to undertrial prisoners",
+    "titleHi": null,
+    "issuer": "Ministry of Home Affairs",
+    "jurisdiction": "central",
+    "department": "Women Safety Division",
+    "documentType": "general-instruction",
+    "topics": [
+      "law-order",
+      "grievances"
+    ],
+    "edition": "Advisory dated 1 January 2025",
+    "date": "2025-01-01",
+    "goNumber": "V-17013/20/2024-PR",
+    "language": "en",
+    "officialPage": "https://www.mha.gov.in/en/divisionofmha/Women_Safety_Division/prison-reforms",
+    "downloadUrl": "https://www.mha.gov.in/sites/default/files/2025-01/Prisonreforms_06012025.pdf",
+    "sourceNote": "Official (Ministry of Home Affairs website).",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "mha-training-new-criminal-laws-advisory-2024",
+    "title": "Training of State Police and Prison officers and staff of all States and UTs on new aspects of the three new criminal laws",
+    "titleHi": null,
+    "issuer": "Ministry of Home Affairs",
+    "jurisdiction": "central",
+    "department": "Women Safety Division",
+    "documentType": "general-instruction",
+    "topics": [
+      "law-order",
+      "service"
+    ],
+    "edition": "Advisory dated 30 April 2024",
+    "date": "2024-04-30",
+    "goNumber": "17013/20/2024-PR",
+    "language": "en",
+    "officialPage": "https://www.mha.gov.in/en/commoncontent/advisories-0",
+    "downloadUrl": "https://www.mha.gov.in/sites/default/files/2024-05/Advisory_01052024.pdf",
+    "sourceNote": "Official (Ministry of Home Affairs website).",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "sixteenth-finance-commission-rural-local-body-operational-guidelines-2026",
+    "title": "Operational Guidelines for RLBs recommended by the 16th Finance Commission for its award period from 2026-27 to 2030-31",
+    "titleHi": null,
+    "issuer": "Ministry of Panchayati Raj",
+    "jurisdiction": "central",
+    "department": "Ministry of Panchayati Raj",
+    "documentType": "guideline",
+    "topics": [
+      "budget-accounts",
+      "audit",
+      "schemes"
+    ],
+    "edition": "16th Finance Commission; 2026-27 to 2030-31",
+    "date": "2026-07-02",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://panchayat.gov.in/en/document/operational-guidelines-for-rlbs-recommended-by-the-16th-finance-commission-for-its-award-period-from-2026-27-to-2030-31/",
+    "downloadUrl": "https://cdnbbsr.s3waas.gov.in/s316026d60ff9b54410b3435b403afd226/uploads/2026/07/202607021580473448.pdf",
+    "sourceNote": "Official (Ministry of Panchayati Raj website; the PDF is served through the Government of India's S3WaaS infrastructure linked from the official page). This is the current Finance Commission award period and therefore supersedes the 15th Finance Commission RLB guidelines for 2021-22 to 2025-26.",
+    "preferredSource": null,
+    "amends": [],
+    "supersedes": [
+      "fifteenth-finance-commission-rural-local-body-guidelines-2021-2026"
+    ]
+  },
+  {
+    "slug": "facility-based-newborn-care-operational-guidelines-2025",
+    "title": "Facility Based Newborn Care Operational Guidelines (FBNC) 2025",
+    "titleHi": null,
+    "issuer": "National Health Mission",
+    "jurisdiction": "central",
+    "department": "Ministry of Health & Family Welfare",
+    "documentType": "guideline",
+    "topics": [
+      "health"
+    ],
+    "edition": "2025",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://nhm.gov.in/index1.php?lang=1&level=1&lid=766&sublinkid=1409",
+    "downloadUrl": "https://nhm.gov.in/images/pdf/programmes/CH-Programmes/FBNC/FBNC%20Operational%20Guidelines%202025.pdf",
+    "sourceNote": "Official (National Health Mission website). The current FBNC Guidelines page, updated September 2026, lists the 2025 edition and the verified direct PDF is hosted on nhm.gov.in.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "cag-auditing-standards-2017",
+    "title": "CAG’s Auditing Standards",
+    "titleHi": null,
+    "issuer": "Comptroller and Auditor General of India",
+    "jurisdiction": "central",
+    "department": "Comptroller and Auditor General of India",
+    "documentType": "guideline",
+    "topics": [
+      "audit"
+    ],
+    "edition": "Third edition; effective from 1 April 2017",
+    "date": "2017-03-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://cag.gov.in/ag1/tamil-nadu/en/page-ag1-tamil-nadu-page-gssa-tamil-nadu-cag-as",
+    "downloadUrl": "https://cag.gov.in/uploads/media/Auditing-Standards-new-20200721034212.pdf",
+    "sourceNote": "Official (Comptroller and Auditor General of India website). The official CAG page identifies this as the 2017 Auditing Standards and links the verified PDF. The PDF states that these standards are effective from 1 April 2017.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

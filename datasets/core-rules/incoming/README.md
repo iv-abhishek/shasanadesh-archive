@@ -20,3 +20,9 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
   consolidation to 18.10.2023), FR/SR compilation, CCS (Revised Pay) Rules 2016. Left out: MHA
   advisories of 30.04.2024 and 29.04.2025 and the UP Police Regulations (links return 404),
   CCS (Pension) Rules 2021 (no PDF link given).
+- 2026-09-28-retry-1.json: MHA advisories (Section 479 BNSS, 01.01.2025; police training,
+  30.04.2024), 16th FC rural local body guidelines 2026–31 (supersedes the 15th FC ones), FBNC
+  guidelines 2025, CAG Auditing Standards 2017, CCS (Pension) Amendment Rules 2024 (unverified).
+  Still missing (dead links or none): NEP 2020, Samagra Shiksha framework, RTE (Second
+  Amendment) Rules 2017, NCISM Act 2020, Code on Wages 2019, Code on Social Security 2020,
+  CCS (Pension) Rules 2021, UP Police Regulations, UP Panchayat Raj Rules, 15th FC ULB guidelines.
