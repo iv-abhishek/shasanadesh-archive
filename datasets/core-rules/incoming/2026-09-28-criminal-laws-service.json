@@ -1,0 +1,131 @@
+[
+  {
+    "slug": "bharatiya-nyaya-sanhita-2023",
+    "title": "The Bharatiya Nyaya Sanhita, 2023",
+    "titleHi": "भारतीय न्याय संहिता, 2023",
+    "issuer": "Ministry of Home Affairs / Ministry of Law and Justice",
+    "jurisdiction": "central",
+    "department": "Department of Internal Security / Legislative Department",
+    "documentType": "act",
+    "topics": [
+      "law-order"
+    ],
+    "edition": "Act No. 45 of 2023; in force from 2024-07-01",
+    "date": "2023-12-25",
+    "goNumber": null,
+    "language": "mixed",
+    "officialPage": "https://www.mha.gov.in/en/commoncontent/new-criminal-laws",
+    "downloadUrl": "https://www.mha.gov.in/sites/default/files/2024-04/250883_english_01042024.pdf",
+    "sourceNote": "Official (Ministry of Home Affairs website).",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "bharatiya-nagarik-suraksha-sanhita-2023",
+    "title": "The Bharatiya Nagarik Suraksha Sanhita, 2023",
+    "titleHi": "भारतीय नागरिक सुरक्षा संहिता, 2023",
+    "issuer": "Ministry of Home Affairs / Ministry of Law and Justice",
+    "jurisdiction": "central",
+    "department": "Department of Internal Security / Legislative Department",
+    "documentType": "act",
+    "topics": [
+      "law-order"
+    ],
+    "edition": "Act No. 46 of 2023; in force from 2024-07-01",
+    "date": "2023-12-25",
+    "goNumber": null,
+    "language": "mixed",
+    "officialPage": "https://www.mha.gov.in/en/commoncontent/new-criminal-laws",
+    "downloadUrl": "https://www.mha.gov.in/sites/default/files/2024-04/250884_2_english_01042024.pdf",
+    "sourceNote": "Official (Ministry of Home Affairs website).",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "bharatiya-sakshya-adhiniyam-2023",
+    "title": "The Bharatiya Sakshya Adhiniyam, 2023",
+    "titleHi": "भारतीय साक्ष्य अधिनियम, 2023",
+    "issuer": "Ministry of Home Affairs / Ministry of Law and Justice",
+    "jurisdiction": "central",
+    "department": "Department of Internal Security / Legislative Department",
+    "documentType": "act",
+    "topics": [
+      "law-order"
+    ],
+    "edition": "Act No. 47 of 2023; in force from 2024-07-01",
+    "date": "2023-12-25",
+    "goNumber": null,
+    "language": "mixed",
+    "officialPage": "https://www.mha.gov.in/en/commoncontent/new-criminal-laws",
+    "downloadUrl": "https://www.mha.gov.in/sites/default/files/2024-04/250882_english_01042024_0.pdf",
+    "sourceNote": "Official (Ministry of Home Affairs website).",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "central-civil-services-leave-rules-1972",
+    "title": "Central Civil Services (Leave) Rules, 1972",
+    "titleHi": null,
+    "issuer": "Department of Personnel and Training",
+    "jurisdiction": "central",
+    "department": "Department of Personnel and Training",
+    "documentType": "rules",
+    "topics": [
+      "service",
+      "pay-allowances"
+    ],
+    "edition": "Updated as on 18 October 2023",
+    "date": "1972-12-04",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://dopt.gov.in/acts/central-civil-services-leave-rules-0",
+    "downloadUrl": "https://documents.doptcirculars.nic.in/D2/D02est/latest%20consolidated%20ruleMsnzh.pdf",
+    "sourceNote": "Official (Department of Personnel and Training website). The official page identifies this edition as updated through 18 October 2023; the linked government PDF endpoint was not retrievable during verification.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "fundamental-rules-and-supplementary-rules-compilation",
+    "title": "Fundamental Rules and Supplementary Rules",
+    "titleHi": null,
+    "issuer": "Department of Personnel and Training",
+    "jurisdiction": "central",
+    "department": "Department of Personnel and Training",
+    "documentType": "rules",
+    "topics": [
+      "service",
+      "pay-allowances"
+    ],
+    "edition": "Official compilation",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://dopt.gov.in/",
+    "downloadUrl": "https://dopt.gov.in/sites/default/files/Compilation_FR_SR_English_2.pdf",
+    "sourceNote": "Official (Department of Personnel and Training website).",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "central-civil-services-revised-pay-rules-2016",
+    "title": "Central Civil Services (Revised Pay) Rules, 2016",
+    "titleHi": null,
+    "issuer": "Department of Expenditure, Ministry of Finance",
+    "jurisdiction": "central",
+    "department": "Department of Expenditure",
+    "documentType": "rules",
+    "topics": [
+      "pay-allowances",
+      "service"
+    ],
+    "edition": "2016, including the 2017 amendment",
+    "date": "2016-07-25",
+    "goNumber": "G.S.R. 721(E)",
+    "language": "mixed",
+    "officialPage": "https://doe.gov.in/order-central-pay-commission/16",
+    "downloadUrl": "https://doe.gov.in/files/cenetral-pay_document/7thCPC_revisedpayrules25072016.pdf",
+    "sourceNote": "Official (Department of Expenditure website). The Department's 7th CPC repository continues to host the Revised Pay Rules and subsequent clarification/amendment orders.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

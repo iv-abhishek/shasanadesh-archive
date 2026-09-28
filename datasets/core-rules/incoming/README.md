@@ -16,3 +16,7 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
   Corporation Act 1959. Left out (links dead or not PDFs when checked): RTE (Second Amendment)
   Rules 2017, NEP 2020, Samagra Shiksha framework, NCISM Act 2020, FBNC guidelines 2025, UP
   Panchayat Raj Rules, 16th FC rural local body guidelines, 15th FC urban local body guidelines.
+- 2026-09-28-criminal-laws-service.json: BNS, BNSS, BSA 2023 (MHA), CCS (Leave) Rules 1972 (DoPT
+  consolidation to 18.10.2023), FR/SR compilation, CCS (Revised Pay) Rules 2016. Left out: MHA
+  advisories of 30.04.2024 and 29.04.2025 and the UP Police Regulations (links return 404),
+  CCS (Pension) Rules 2021 (no PDF link given).
