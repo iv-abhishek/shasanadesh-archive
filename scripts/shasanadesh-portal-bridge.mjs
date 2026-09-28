@@ -110,7 +110,8 @@ function htmlEscape(value) {
 function captureScript(token) {
   const code = `(async()=>{
 const BRIDGE="http://${HOST}:${PORT}",TOKEN="${token}";
-const links=[...document.querySelectorAll('a[href*="ViewGOPDF_list_user.aspx"]')];
+if(location.origin!=="${PORTAL_ORIGIN}"){alert("Shasanadesh bridge: click this bookmark on the Shasanadesh results tab (${PORTAL_ORIGIN}), not on this page.");return;}
+const links=[...document.querySelectorAll('a[href*="ViewGOPDF_list_user.aspx"]')].filter(a=>new URL(a.getAttribute("href"),location.href).origin==="${PORTAL_ORIGIN}");
 if(!links.length){alert("Shasanadesh bridge: no order links on this page. Run the portal search first.");return;}
 const table=links[0].closest("table");
 let headers=[];
