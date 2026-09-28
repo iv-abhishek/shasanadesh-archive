@@ -1,0 +1,92 @@
+[
+  {
+    "slug": "gem-buyer-user-manual",
+    "title": "Government e-Marketplace — Buyer User Manual",
+    "titleHi": null,
+    "issuer": "Government e-Marketplace",
+    "jurisdiction": "central",
+    "department": "Ministry of Commerce & Industry",
+    "documentType": "guideline",
+    "topics": [
+      "procurement",
+      "gem"
+    ],
+    "edition": "Official Buyer User Manual",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://gem.gov.in/",
+    "downloadUrl": "https://assets-bg.gem.gov.in/resources/pdf/buyer-user-manual.pdf",
+    "sourceNote": "Official (Government e-Marketplace). The PDF is directly hosted on the official GeM assets domain and was verified as a 32-page Buyer User Manual.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "gem-seller-user-manual",
+    "title": "Government e-Marketplace — Seller User Manual",
+    "titleHi": null,
+    "issuer": "Government e-Marketplace",
+    "jurisdiction": "central",
+    "department": "Ministry of Commerce & Industry",
+    "documentType": "guideline",
+    "topics": [
+      "procurement",
+      "gem"
+    ],
+    "edition": "Official Seller User Manual",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://gem.gov.in/",
+    "downloadUrl": "https://assets-bg.gem.gov.in/resources/pdf/seller-user-manual.pdf",
+    "sourceNote": "Official (Government e-Marketplace). The PDF is directly hosted on the official GeM assets domain.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "gem-incident-management-policy",
+    "title": "Incident Management Policy",
+    "titleHi": null,
+    "issuer": "Government e-Marketplace",
+    "jurisdiction": "central",
+    "department": "Ministry of Commerce & Industry",
+    "documentType": "policy",
+    "topics": [
+      "procurement",
+      "gem",
+      "conduct-discipline",
+      "vigilance"
+    ],
+    "edition": "Official GeM Incident Management Policy",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://assets-bg.gem.gov.in/resources/upload/shared_doc/gem-overview-ppt-12-august-2024_1724322936.pdf",
+    "downloadUrl": "https://assets-bg.gem.gov.in/resources/upload/shared_doc/incident-Management-policy_1649329141.pdf",
+    "sourceNote": "Official (Government e-Marketplace). The official GeM overview explicitly identifies and provides the URL for the Incident Management Policy.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "gem-handbook",
+    "title": "Government e-Marketplace (GeM) Handbook",
+    "titleHi": null,
+    "issuer": "Government e-Marketplace",
+    "jurisdiction": "central",
+    "department": "Ministry of Commerce & Industry",
+    "documentType": "guideline",
+    "topics": [
+      "procurement",
+      "gem"
+    ],
+    "edition": "GeM Handbook",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://assets-bg.gem.gov.in/resources/pdf/GeM_handbook.pdf",
+    "downloadUrl": "https://assets-bg.gem.gov.in/resources/pdf/GeM_handbook.pdf",
+    "sourceNote": "Official (Government e-Marketplace). The Handbook covers GeM procurement modes, e-bid/RA, procurement guidelines and incident management.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

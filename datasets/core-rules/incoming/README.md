@@ -26,3 +26,6 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
   Still missing (dead links or none): NEP 2020, Samagra Shiksha framework, RTE (Second
   Amendment) Rules 2017, NCISM Act 2020, Code on Wages 2019, Code on Social Security 2020,
   CCS (Pension) Rules 2021, UP Police Regulations, UP Panchayat Raj Rules, 15th FC ULB guidelines.
+- 2026-09-28-gem.json: GeM buyer and seller user manuals, GeM handbook, incident management
+  policy (assets-bg.gem.gov.in: blocked outside India, not checked here; paths under
+  /resources/upload/shared_doc/ are disallowed by robots.txt and go to NEEDED.md).
