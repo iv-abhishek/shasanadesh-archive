@@ -83,6 +83,8 @@ interface KnownMetadata extends Record<string, unknown> {
 }
 
 const records = new Map<string, PortalRecord>();
+/** Saved orders whose inventory gained row details after they were stored. */
+const detailsPending = new Set<string>();
 const succeeded = new Set<string>();
 const unavailable = new Set<string>();
 const attempts = new Map<string, number>();
@@ -131,6 +133,11 @@ function portalFields(record: PortalRecord): Record<string, unknown> {
       capturedAt: record.capturedAt,
     },
   };
+}
+
+/** An inventory line captured without the row's subject and date. */
+function isThin(record: PortalRecord): boolean {
+  return !record.subject && !record.goDate;
 }
 
 function hasVerifiedB2(metadata: KnownMetadata, expectedSha256: string): boolean {
@@ -364,11 +371,62 @@ async function loadInventoryGrowth(): Promise<void> {
     for (const line of lines) {
       if (!line.trim()) continue;
       const record = parseInventoryLine(line);
-      if (!records.has(record.sourceId)) records.set(record.sourceId, record);
+      const known = records.get(record.sourceId);
+      if (!known) {
+        records.set(record.sourceId, record);
+      } else if (isThin(known) && !isThin(record)) {
+        // A later capture of the same order carries the row details the first
+        // one missed; it replaces the thin line (the first capture still wins
+        // otherwise).
+        records.set(record.sourceId, record);
+        detailsPending.add(record.sourceId);
+      }
     }
   } finally {
     await file.close();
   }
+}
+
+/**
+ * Write the fuller row details into metadata.json (and the B2 manifest) of an
+ * order that was stored before its details were captured. No portal request.
+ */
+async function refreshDetails(record: PortalRecord): Promise<boolean> {
+  const sourceDir = path.join(documentsRoot, sourceDirectory(record.sourceId));
+  const metadataPath = path.join(sourceDir, "metadata.json");
+  const metadata = await readFile(metadataPath, "utf8").then((value) => JSON.parse(value) as KnownMetadata).catch(() => null);
+  if (!metadata) return false;
+  const portal = metadata.portal ?? {};
+  if (portal.subject === record.subject && portal.section === record.section && metadata.goDate === record.goDate) return false;
+  const updated: KnownMetadata = { ...metadata, ...portalFields(record) };
+  const captureId = (metadata.capture as Record<string, unknown> | undefined)?.captureId;
+  const sha = (metadata.capture as Record<string, unknown> | undefined)?.rawSha256;
+  if (typeof captureId === "string" && typeof sha === "string" && hasVerifiedB2(metadata, sha)) {
+    updated.storage = await refreshCaptureManifestInB2({ sourceId: record.sourceId, captureId, metadata: updated, storage: metadata.storage! });
+  }
+  await atomicJson(metadataPath, updated);
+  // With a subject the classifier can now judge the order; routine ones free
+  // their local PDF as usual.
+  await evictIfRoutine(record, updated, metadataPath, path.join(sourceDir, "original.pdf"));
+  return true;
+}
+
+async function refreshPendingDetails(): Promise<void> {
+  let updated = 0;
+  for (const sourceId of [...detailsPending]) {
+    if (!succeeded.has(sourceId)) {
+      detailsPending.delete(sourceId); // not stored yet: the download uses the fuller line
+      continue;
+    }
+    try {
+      if (await refreshDetails(records.get(sourceId)!)) updated++;
+      detailsPending.delete(sourceId);
+    } catch (error) {
+      console.error(`DETAILS ${sourceId}: ${error instanceof Error ? error.message : String(error)} (will retry)`);
+      return;
+    }
+  }
+  if (updated) console.log(`Row details filled in for ${updated} saved orders.`);
 }
 
 async function isComplete(): Promise<{ complete: boolean; expected: number | null }> {
@@ -421,6 +479,7 @@ async function main(): Promise<void> {
 
   for (;;) {
     await loadInventoryGrowth();
+    await refreshPendingDetails();
     const now = Date.now();
     let candidate: PortalRecord | undefined;
     for (const record of records.values()) {

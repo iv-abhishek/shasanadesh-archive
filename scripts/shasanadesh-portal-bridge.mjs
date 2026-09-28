@@ -63,6 +63,9 @@ const formToken = await (async () => {
 })();
 
 const seenIds = new Set();
+/** Orders whose inventory line has no row details (captured by the old bookmark). */
+const thinIds = new Set();
+const isThin = (record) => !record.subject && !record.goDate;
 /** listingKey -> { filters, pages: Map<page, digest>, rows, uniqueAdded, reportedTotal, pageSize, reshuffles } */
 const listings = new Map();
 let completeMarker = { listings: {} };
@@ -115,16 +118,24 @@ if(!HOST_OK(location.hostname)){alert("Shasanadesh bridge: this tab is "+(locati
 const docs=[document,...[...document.querySelectorAll("iframe,frame")].map(f=>{try{return f.contentDocument;}catch(_){return null;}}).filter(Boolean)];
 const links=docs.flatMap(d=>[...d.querySelectorAll('a[href]')]).filter(a=>{try{const u=new URL(a.getAttribute("href"),location.href);return HOST_OK(u.hostname)&&/\\/go\\/viewgopdf_list_user\\.aspx$/i.test(u.pathname);}catch(_){return false;}});
 if(!links.length){alert("Shasanadesh bridge: no order links on this page. Run the portal search first.");return;}
-const table=links[0].closest("table");
-let headers=[];
-if(table){const head=table.querySelector("thead tr")||[...table.querySelectorAll("tr")].find(r=>r.querySelector("th"))||table.querySelector("tr");headers=head?[...head.children].map(c=>c.innerText.trim()):[];}
-const col=re=>headers.findIndex(t=>re.test(t));
-const idx={department:col(/विभाग|Department/i),section:col(/अनुभाग|Section/i),goNumber:col(/संख्या|G\\.?\\s*O\\.?\\s*No|Number/i),goDate:col(/दिनांक|Date/i),category:col(/श्रेणी|Category/i),subject:col(/विषय|Subject/i)};
-const records=links.map((a,i)=>{const row=a.closest("tr");const cells=row?[...row.children]:[];const text=k=>idx[k]>=0&&cells[idx[k]]?cells[idx[k]].innerText.trim()||null:null;return{sourceUrl:new URL(a.getAttribute("href"),location.href).href,department:text("department"),section:text("section"),goNumber:text("goNumber"),goDate:text("goDate"),category:text("category"),subject:text("subject")||(row?null:a.innerText.trim()||null),linkText:a.innerText.trim()||null,portalRow:i+1};});
+const table=links[0].closest("table"),linkRow=links[0].closest("tr"),width=linkRow?linkRow.children.length:0;
+const HEAD={department:/विभाग|Department/i,section:/अनुभाग|Section/i,goNumber:/संख्या|G\\.?\\s*O\\.?\\s*No|Number/i,goDate:/तिथि|दिनांक|Date/i,category:/श्रेणी|Category/i,subject:/विषय|Subject/i};
+const flat=c=>c.innerText.replace(/\\s+/g," ").trim();
+let headers=[],best=0;
+if(table){for(const r of table.querySelectorAll("tr")){if(r.contains(links[0])||r.querySelector("table"))continue;const cells=[...r.children];if(width&&cells.length!==width)continue;const t=cells.map(flat);const score=Object.values(HEAD).filter(re=>t.some(x=>re.test(x))).length;if(score>best){best=score;headers=t;}}}
+let idx={};
+if(best>=2){for(const k in HEAD)idx[k]=headers.findIndex(t=>HEAD[k].test(t));}
+else if(width===7){idx={department:1,section:1,goNumber:2,goDate:3,category:4,subject:5};}
+const shared=idx.department>=0&&idx.department===idx.section;
+const text=(cells,k)=>{const i=idx[k];if(!(i>=0)||!cells[i])return null;const lines=cells[i].innerText.split(/\\n+/).map(x=>x.replace(/\\s+/g," ").trim()).filter(Boolean);if(shared&&k==="department")return lines[0]||null;if(shared&&k==="section")return lines.slice(1).join(" ")||null;return lines.join(" ")||null;};
+const records=links.map((a,i)=>{const row=a.closest("tr");const cells=row?[...row.children]:[];return{sourceUrl:new URL(a.getAttribute("href"),location.href).href,department:text(cells,"department"),section:text(cells,"section"),goNumber:text(cells,"goNumber"),goDate:text(cells,"goDate"),category:text(cells,"category"),subject:text(cells,"subject"),linkText:a.innerText.trim()||null,portalRow:i+1};});
+const readable=records.filter(r=>r.subject&&/^\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{4}$/.test(r.goDate||"")).length;
+if(readable<Math.ceil(records.length/2)){alert("Shasanadesh bridge: the order details (subject, date) could not be read from this table, so nothing was sent. Save this page (Cmd+S, Webpage HTML Only) into data/tmp and ask Claude to check it.");return;}
 const pager=document.querySelector('[id*="DataPager"],[id*="Pager"]');
 let page=null;if(pager){const cur=[...pager.querySelectorAll("span")].find(s=>/^\\d+$/.test(s.innerText.trim())&&!s.closest("a"));if(cur)page=Number(cur.innerText.trim());}
 if(!page)page=Number(prompt("Results page number?","1"));
-const m=document.body.innerText.match(/(?:कुल|Total)[^\\d]{0,40}([\\d,]{1,9})/i);
+const bt=document.body.innerText;
+const m=bt.match(/कुल\\s*प्राप्त\\s*अभिलेख\\s*[-–:]*\\s*([\\d,]+)/)||bt.match(/Total\\s*(?:Records?|Results?)(?:\\s*Found)?\\s*[-–:]+\\s*([\\d,]+)/i);
 let total=m?Number(m[1].replace(/,/g,"")):null;
 if(!total)total=Number(prompt("Total results shown by the portal?",""));
 const sel=n=>{const e=document.querySelector('select[name$="'+n+'"]');return e&&e.selectedIndex>0?e.options[e.selectedIndex].text.trim():null;};
@@ -248,7 +259,12 @@ async function loadState() {
   await mkdir(DATA_DIR, { recursive: true });
   for (const line of (await readFile(INVENTORY_PATH, "utf8").catch(() => "")).split(/\r?\n/)) {
     if (!line.trim()) continue;
-    try { seenIds.add(JSON.parse(line).sourceId); } catch { /* the importer reports malformed inventory */ }
+    try {
+      const record = JSON.parse(line);
+      seenIds.add(record.sourceId);
+      if (isThin(record)) thinIds.add(record.sourceId);
+      else thinIds.delete(record.sourceId);
+    } catch { /* the importer reports malformed inventory */ }
   }
   for (const line of (await readFile(PAGES_PATH, "utf8").catch(() => "")).split(/\r?\n/)) {
     if (!line.trim()) continue;
@@ -256,6 +272,14 @@ async function loadState() {
       const entry = JSON.parse(line);
       const key = entry.listing ?? LEGACY_LISTING;
       const listing = listingFor(key, entry.filters);
+      if (entry.reportedTotal) listing.reportedTotal = entry.reportedTotal;
+      if (entry.resetPages) {
+        listing.pages.clear();
+        listing.rows = 0;
+        listing.pageSize = entry.pageSize ?? null;
+        continue;
+      }
+      if (entry.detailsOnly) continue;
       if (entry.reshuffle) {
         listing.reshuffles += 1;
         continue;
@@ -307,16 +331,40 @@ async function acceptBatch(batch) {
     throw new Error(`No official order links on this page (${skipped[0] ?? "no rows"}).`);
   }
   if (skipped.length) console.warn(`Page ${portalPage}: skipped ${skipped.length} row(s): ${skipped.slice(0, 3).join("; ")}`);
+  // A page whose rows came without subject and date was read by an outdated
+  // bookmark (it picked the wrong header row); storing it would lose the
+  // order details, so it is refused.
+  if (normalized.filter(isThin).length > normalized.length / 2) {
+    throw new Error("The order details (subject, date, GO number) were not read from this page. The bookmark is out of date: open this helper page, delete the old bookmark and drag the new one to the bookmarks bar.");
+  }
   const listing = listingFor(key, filters);
   const pageSize = Number.parseInt(String(batch.pageSize ?? ""), 10);
+  // Changing "records per page" renumbers every page, so page tracking for
+  // this listing starts again (orders already saved stay saved).
+  if (Number.isInteger(pageSize) && pageSize > 0 && listing.pageSize && listing.pageSize !== pageSize && listing.pages.size) {
+    listing.pages.clear();
+    listing.rows = 0;
+    await appendFile(PAGES_PATH, `${JSON.stringify({ listing: key, filters, resetPages: true, pageSize, capturedAt: new Date().toISOString() })}\n`, "utf8");
+  }
   if (Number.isInteger(pageSize) && pageSize > 0) listing.pageSize = pageSize;
   else listing.pageSize ??= records.length;
+  listing.reportedTotal = reportedTotal;
+
+  // Orders first saved without row details get a fuller inventory line; the
+  // importer merges it and updates the stored metadata.
+  const improved = normalized.filter((record) => thinIds.has(record.sourceId) && !isThin(record));
+  if (improved.length) {
+    for (const record of improved) thinIds.delete(record.sourceId);
+    await appendFile(INVENTORY_PATH, `${improved.map((record) => JSON.stringify(record)).join("\n")}\n`, "utf8");
+  }
+  const detailNote = improved.length ? ` Details filled in for ${improved.length} orders saved earlier.` : "";
 
   const pageDigest = createHash("sha256").update(normalized.map((record) => record.sourceId).join("\n")).digest("hex");
 
   if (listing.pages.has(portalPage)) {
     if (listing.pages.get(portalPage) === pageDigest) {
-      return `Page ${portalPage} of "${key}" was already saved; nothing added.`;
+      await appendFile(PAGES_PATH, `${JSON.stringify({ listing: key, filters, portalPage, detailsOnly: true, reportedTotal, detailsUpdated: improved.length, capturedAt: new Date().toISOString() })}\n`, "utf8");
+      return `Page ${portalPage} of "${key}" was already saved; no new orders.${detailNote}`;
     }
     // The portal served different orders for the same page number. Keep any
     // new orders, but do not count the page twice.
@@ -326,7 +374,7 @@ async function acceptBatch(batch) {
     listing.reshuffles += 1;
     listing.uniqueAdded += fresh.length;
     await appendFile(PAGES_PATH, `${JSON.stringify({ listing: key, filters, portalPage, reshuffle: true, rowsOnPage: normalized.length, pageDigest, uniqueAdded: fresh.length, capturedAt: new Date().toISOString() })}\n`, "utf8");
-    return `Page ${portalPage} of "${key}" came back with different orders (the portal reshuffled its list); ${fresh.length} new orders kept.`;
+    return `Page ${portalPage} of "${key}" came back with different orders (the portal reshuffled its list); ${fresh.length} new orders kept.${detailNote}`;
   }
 
   const lines = [];
@@ -352,9 +400,8 @@ async function acceptBatch(batch) {
   listing.pages.set(portalPage, pageDigest);
   listing.rows += normalized.length;
   listing.uniqueAdded += lines.length;
-  listing.reportedTotal = reportedTotal;
   const expected = expectedPages(listing);
-  return `"${key}" page ${portalPage}${expected ? ` of ${expected}` : ""}: ${normalized.length} rows, ${lines.length} new orders. Total unique orders: ${seenIds.size}.`;
+  return `"${key}" page ${portalPage}${expected ? ` of ${expected}` : ""}: ${normalized.length} rows, ${lines.length} new orders.${detailNote} Total unique orders: ${seenIds.size}.`;
 }
 
 function send(response, status, body, headers = {}) {

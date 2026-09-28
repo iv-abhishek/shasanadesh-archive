@@ -2,6 +2,19 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 28 Sept 2026, 8:30 pm IST (Claude)
+
+- Portal bookmark read the wrong header row on department-filtered listings (a caption row
+  sits above the column headings), so 201 कार्मिक orders were saved with the serial number as
+  department and no subject/date/GO number; the total came from "कुल-17" in a subject.
+  Fixed: header row chosen by how many known headings it matches (with the portal's 7-column
+  layout as fallback), "विभाग/अनुभाग" split into department and section, "तिथि" accepted as the
+  date heading, total read from "कुल प्राप्त अभिलेख". Verified on two saved result pages.
+- Bookmark refuses to send a page whose details it could not read; the bridge refuses such pages
+  (old bookmark). Re-capturing a page appends fuller lines for orders saved without details;
+  ingest:portal merges them and rewrites metadata.json + the B2 manifest (no re-download).
+  A "records per page" change restarts page tracking for that listing.
+
 ## 28 Sept 2026, 12:40 pm IST (Claude)
 
 - Core rules catalogue at 262 entries (ChatGPT-prepared batches in datasets/core-rules/incoming/,
