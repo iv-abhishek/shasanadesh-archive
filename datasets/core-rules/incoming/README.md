@@ -46,7 +46,7 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
   2026 (complaints, vigilance angle, CVO role, PIDPI, sanction for prosecution), UP Vigilance
   Establishment Act 1965, Manav Sampada property-return order 23.08.2023, NHM UP DHAP 2025-26.
 - 2026-09-28 six batches (land & revenue, UP finance/treasury, transfers/e-office/IGRS, rural
-  development, central personnel, disaster/DBT/Aadhaar): 36 entries. Left out: Treasury Rules,
+  development, central personnel, disaster/DBT/Aadhaar): 34 entries. Left out: Treasury Rules,
   Treasury Manual and Financial Handbook Vol. V (web pages: Handbook reader), MGNREGA master
   circular 2020-21 (404), duplicate UP Budget Manual; no link given for e-office mandatory
   processing 09.12.2025, IGRS GO 02.01.2024, DM (Amendment) Act 2025, Aadhaar good-governance
