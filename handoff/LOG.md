@@ -2,6 +2,15 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 28 Sept 2026, 12:40 pm IST (Claude)
+
+- Core rules catalogue at 262 entries (ChatGPT-prepared batches in datasets/core-rules/incoming/,
+  links checked, non-government hosts refused).
+- Portal bridge: the capture bookmark's token now persists in data/portal-capture/.bridge-token,
+  so the bookmark keeps working after the bridge restarts (a restart used to invalidate it —
+  the likely reason capture "stopped working" after a pause). All 1,025 captured orders are
+  stored in B2; the portal reports ~177,500 orders in total.
+
 ## 28 Sept 2026, 10:00 am IST (Claude)
 
 - Batch 2 ingested by Abhishek: 64 new, 6 to download by hand (NEEDED.md); ~20 scanned

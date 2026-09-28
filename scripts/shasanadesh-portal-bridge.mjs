@@ -45,7 +45,22 @@ const PAGING_STATE_PATH = path.join(DATA_DIR, "paging-state.json");
 const PORTAL_ORIGIN = "https://shasanadesh.up.gov.in";
 const MAX_BODY_BYTES = 2_000_000;
 const LEGACY_LISTING = "legacy";
-const formToken = randomBytes(24).toString("hex");
+// The capture bookmark embeds this token. It is kept in data/portal-capture/
+// .bridge-token (not in git) so a bookmark keeps working after the bridge is
+// stopped and started again; delete that file to issue a new one.
+const TOKEN_PATH = path.join(DATA_DIR, ".bridge-token");
+const formToken = await (async () => {
+  try {
+    const saved = (await readFile(TOKEN_PATH, "utf8")).trim();
+    if (/^[0-9a-f]{48}$/.test(saved)) return saved;
+  } catch {
+    /* first run */
+  }
+  const fresh = randomBytes(24).toString("hex");
+  await mkdir(DATA_DIR, { recursive: true });
+  await writeFile(TOKEN_PATH, fresh + "\n", { mode: 0o600 });
+  return fresh;
+})();
 
 const seenIds = new Set();
 /** listingKey -> { filters, pages: Map<page, digest>, rows, uniqueAdded, reportedTotal, pageSize, reshuffles } */
@@ -419,6 +434,7 @@ await loadState();
 server.listen(PORT, HOST, () => {
   console.log(`Shasanadesh portal bridge listening on http://${HOST}:${PORT}`);
   console.log(`Inventory: ${INVENTORY_PATH}`);
+  console.log("Capture bookmark: same as the last run (token in data/portal-capture/.bridge-token). Open the bridge page to copy it again if needed.");
   console.log(`Existing unique orders: ${seenIds.size}; listings: ${[...listings.keys()].join(", ") || "none"}`);
 });
 
