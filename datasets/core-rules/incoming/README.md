@@ -10,3 +10,9 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
   1971, UP Outsource Sewa Nigam GO (19.09.2025). Left out for now (no working official PDF
   link): Code on Wages 2019 and Code on Social Security 2020 (labour.gov.in links return 404),
   CAG Auditing Standards (the link was a web page, not a PDF).
+- 2026-09-28-education-health-rti-local-bodies.json: RTE Act 2009, PM POSHAN guidelines, NCH Act
+  2020, NHM framework, UP RTI Rules 2015, UP Panchayat Raj Act 1947, UP Kshetra/Zila Panchayat
+  Adhiniyam 1961, 15th FC rural local body guidelines, UP Municipalities Act 1916, UP Municipal
+  Corporation Act 1959. Left out (links dead or not PDFs when checked): RTE (Second Amendment)
+  Rules 2017, NEP 2020, Samagra Shiksha framework, NCISM Act 2020, FBNC guidelines 2025, UP
+  Panchayat Raj Rules, 16th FC rural local body guidelines, 15th FC urban local body guidelines.
