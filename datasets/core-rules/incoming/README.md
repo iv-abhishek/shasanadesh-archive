@@ -60,3 +60,11 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
   (Control) Order 2015. No link: TPDS amendment 2025, Poshan 2.0 revision, UP Urban Planning
   (Amendment) Act 2023, Water Act 1974, Van Rules 2023, EIA Notification 2006, Legal Metrology
   Act 2009.
+- 2026-09-28 seven batches (UP education acts, agriculture, health acts, home/police/social
+  justice, GST/tax, elections, retry 2): 43 entries. The Disaster Management Act 2005 original
+  is now status "historical"; the consolidated text as amended in 2025 is the current entry.
+  Refused: AICTE handbook (aicte-india.org). Dead: NEP 2020, Code on Wages 2019 (again). No
+  link: Intermediate Education Regulations, UPESSC Rules 2023, Seeds Act 1966, Fertiliser
+  Control Order, UP Clinical Establishments Rules 2016, FSS Act 2006, all UP panchayat and
+  municipal election rules and the SEC booklet, Water Act, Legal Metrology Act, Code on Social
+  Security, UP Retirement Benefits Rules.

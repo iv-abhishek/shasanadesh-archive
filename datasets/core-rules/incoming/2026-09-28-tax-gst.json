@@ -1,0 +1,172 @@
+[
+  {
+    "slug": "central-goods-and-services-tax-act-2017",
+    "title": "The Central Goods and Services Tax Act, 2017",
+    "titleHi": "केन्द्रीय माल और सेवा कर अधिनियम, 2017",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Finance, Department of Revenue",
+    "documentType": "act",
+    "topics": [
+      "financial-rules"
+    ],
+    "edition": "2017; as amended",
+    "date": "2017-04-12",
+    "goNumber": "Act No. 12 of 2017",
+    "language": "en",
+    "officialPage": "https://gstcouncil.gov.in/central-gst",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/15689/5/a2017-12.pdf",
+    "sourceNote": "Official India Code / GST Council. The current official statutory framework includes subsequent amendments; the GST Council maintains the central GST Acts, Rules, notifications and circulars repository.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-goods-and-services-tax-act-2017",
+    "title": "The Uttar Pradesh Goods and Services Tax Act, 2017",
+    "titleHi": "उत्तर प्रदेश माल और सेवा कर अधिनियम, 2017",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "राज्य कर विभाग",
+    "documentType": "act",
+    "topics": [
+      "financial-rules"
+    ],
+    "edition": "2017; as amended",
+    "date": "2017-05-19",
+    "goNumber": "U.P. Act No. 1 of 2017",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/15617",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/15617/1/english1of2017.pdf",
+    "sourceNote": "Official India Code. The current text incorporates amendments including U.P. Act No. 17 of 2024 and the section 74A framework.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-goods-and-services-tax-rules-2017",
+    "title": "The Uttar Pradesh Goods and Services Tax Rules, 2017",
+    "titleHi": "उत्तर प्रदेश माल और सेवा कर नियमावली, 2017",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "राज्य कर विभाग",
+    "documentType": "rules",
+    "topics": [
+      "financial-rules"
+    ],
+    "edition": "2017; compiled through 63rd Amendment dated 27 February 2024",
+    "date": "2017-06-21",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/15617",
+    "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_UP_88_448_00001_00001_1601884306960&filename=upgst_rules_2017_as_amended_upto_63rd_amendment_dated_27.02.2024.pdf&type=rule",
+    "sourceNote": "Official India Code / Commercial Tax Department compilation. The verified consolidated PDF incorporates amendments through the 63rd Amendment Rules dated 27 February 2024. Later individual amendments should be retained separately until an official newer consolidated compilation is verified.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "integrated-goods-and-services-tax-act-2017",
+    "title": "The Integrated Goods and Services Tax Act, 2017",
+    "titleHi": "एकीकृत माल और सेवा कर अधिनियम, 2017",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Finance, Department of Revenue",
+    "documentType": "act",
+    "topics": [
+      "financial-rules"
+    ],
+    "edition": "2017; as amended",
+    "date": "2017-04-12",
+    "goNumber": "Act No. 13 of 2017",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/2251",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/2251/1/A201713.pdf",
+    "sourceNote": "Official India Code. The Act provides for levy and collection of IGST on inter-State supplies and related matters.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "goods-and-services-tax-compensation-to-states-act-2017",
+    "title": "The Goods and Services Tax (Compensation to States) Act, 2017",
+    "titleHi": "माल और सेवा कर (राज्यों को प्रतिकर) अधिनियम, 2017",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Finance, Department of Revenue",
+    "documentType": "act",
+    "topics": [
+      "financial-rules",
+      "budget-accounts"
+    ],
+    "edition": "2017; as amended",
+    "date": "2017-04-12",
+    "goNumber": "Act No. 15 of 2017",
+    "language": "en",
+    "officialPage": "https://gstcouncil.gov.in/compensation",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/2253/1/a2017-15.pdf",
+    "sourceNote": "Official India Code / GST Council. The official GST Council repository separately maintains the Compensation to States Act, amendment Act, Rules and notifications.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "up-stamp-fifty-first-amendment-rules-2025",
+    "title": "The Uttar Pradesh Stamp (Fifty-first Amendment) Rules, 2025",
+    "titleHi": "उत्तर प्रदेश स्टाम्प (इक्यावनवां संशोधन) नियम, 2025",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "स्टाम्प तथा रजिस्ट्रेशन विभाग",
+    "documentType": "notification",
+    "topics": [
+      "land-revenue",
+      "financial-rules"
+    ],
+    "edition": "51st Amendment, 2025",
+    "date": "2025-03-11",
+    "goNumber": "4/2025/259/94-SR-2-2025-700(13)/2023-TC",
+    "language": "en",
+    "officialPage": "https://igrsup.gov.in/prernadoc/ViewGOPDF_list_user.pdf",
+    "downloadUrl": "https://igrsup.gov.in/prernadoc/ViewGOPDF_list_user.pdf",
+    "sourceNote": "Official Stamp and Registration Department, Government of Uttar Pradesh. The notification amends the United Provinces Stamp Rules, 1942 under sections 74 and 75 of the Indian Stamp Act, 1899 as applied in Uttar Pradesh.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "gst-tds-guidelines-deductions-deposits-by-ddo-2018",
+    "title": "Guidelines for Deductions and Deposits of TDS by the DDO under GST",
+    "titleHi": "जीएसटी के अंतर्गत डीडीओ द्वारा टीडीएस की कटौती एवं जमा करने संबंधी दिशानिर्देश",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Finance, Department of Revenue",
+    "documentType": "guideline",
+    "topics": [
+      "financial-rules"
+    ],
+    "edition": "2018",
+    "date": "2018-09-14",
+    "goNumber": "Circular No. 65/39/2018-DOR",
+    "language": "en",
+    "officialPage": "https://cbic-gst.gov.in/circulars.html",
+    "downloadUrl": "https://cbic-gst.gov.in/pdf/Circular_No_65.pdf",
+    "sourceNote": "Official CBIC. These guidelines cover GST-TDS deductions and deposits by Government DDOs, including registration, challan generation, deposit and GSTR-7 procedures. They were subsequently modified by Circular No. 67/41/2018-DOR.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "gst-tds-ddo-modification-circular-2018",
+    "title": "Modification to the Guidelines for Deductions and Deposits of TDS by the DDO under GST",
+    "titleHi": "जीएसटी के अंतर्गत डीडीओ द्वारा टीडीएस की कटौती एवं जमा करने संबंधी दिशानिर्देशों में संशोधन",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Finance, Department of Revenue",
+    "documentType": "clarification",
+    "topics": [
+      "financial-rules"
+    ],
+    "edition": "2018",
+    "date": "2018-09-28",
+    "goNumber": "Circular No. 67/41/2018-DOR",
+    "language": "en",
+    "officialPage": "https://cbic-gst.gov.in/circulars.html",
+    "downloadUrl": "https://cbic-gst.gov.in/pdf/Circular-on-TDS.pdf",
+    "sourceNote": "Official CBIC. This circular modifies Circular No. 65/39/2018-DOR, particularly the accounting treatment for GST-TDS bunched by DDOs.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

@@ -1,0 +1,111 @@
+[
+  {
+    "slug": "disaster-management-act-2005-as-amended-2025",
+    "title": "The Disaster Management Act, 2005",
+    "titleHi": "आपदा प्रबंधन अधिनियम, 2005",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Home Affairs",
+    "documentType": "act",
+    "topics": [
+      "law-order",
+      "schemes"
+    ],
+    "edition": "2005; consolidated as amended by the Disaster Management (Amendment) Act, 2025",
+    "date": "2005-12-23",
+    "goNumber": "Act No. 53 of 2005",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/2045",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/2045/5/A2005-53.pdf",
+    "sourceNote": "Official India Code consolidated text. The current PDF incorporates the Disaster Management (Amendment) Act, 2025, including amendments effective from 9 April 2025.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "disaster-management-amendment-act-2025",
+    "title": "The Disaster Management (Amendment) Act, 2025",
+    "titleHi": "आपदा प्रबंधन (संशोधन) अधिनियम, 2025",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Home Affairs",
+    "documentType": "act",
+    "topics": [
+      "law-order"
+    ],
+    "edition": "2025",
+    "date": "2025-04-09",
+    "goNumber": "Act No. 10 of 2025",
+    "language": "en",
+    "officialPage": "https://www.ndmindia.mha.gov.in/ndmi/laws-plans-and-policies",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/2045/1/aaa200553.pdf",
+    "sourceNote": "Official Government of India / NDM India and India Code. NDM India identifies the 2025 amendment as the current amendment to the Disaster Management Act.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-urban-planning-development-amendment-act-2023",
+    "title": "The Uttar Pradesh Urban Planning and Development (Amendment) Act, 2023",
+    "titleHi": "उत्तर प्रदेश नगर योजना और विकास (संशोधन) अधिनियम, 2023",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "आवास एवं शहरी नियोजन विभाग",
+    "documentType": "act",
+    "topics": [
+      "works",
+      "land-revenue"
+    ],
+    "edition": "2023",
+    "date": "2023-08-21",
+    "goNumber": "U.P. Act No. 12 of 2023",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_UP_88_471_00001_00001_1561527908604&filename=the_uttar_pradesh_urban_planning_and_development_act%2C_1973_amendment_2023.pdf&type=actfile",
+    "sourceNote": "Official India Code. The Act replaced the 2023 Ordinance and amended the Uttar Pradesh Urban Planning and Development Act, 1973.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "central-civil-services-pension-rules-2021",
+    "title": "Central Civil Services (Pension) Rules, 2021",
+    "titleHi": "केंद्रीय सिविल सेवा (पेंशन) नियम, 2021",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Pension and Pensioners' Welfare",
+    "documentType": "rules",
+    "topics": [
+      "pension",
+      "service"
+    ],
+    "edition": "2021; as amended",
+    "date": "2021-12-20",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://www.doppw.gov.in/RelatedLinks",
+    "downloadUrl": "https://documents.doptcirculars.nic.in/D3/D03ppw/CCS-Pension-Rules%202021-EnglishiPqOH.pdf",
+    "sourceNote": "Official Government of India document repository. The 2021 Rules replaced the CCS (Pension) Rules, 1972. DoPPW continues to identify the 2021 Rules as the applicable CCS pension framework.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "samagra-shiksha-framework-implementation-2022",
+    "title": "Samagra Shiksha: Framework for Implementation",
+    "titleHi": "समग्र शिक्षा: कार्यान्वयन हेतु रूपरेखा",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of School Education and Literacy, Ministry of Education",
+    "documentType": "guideline",
+    "topics": [
+      "education",
+      "schemes"
+    ],
+    "edition": "Updated Framework, 2022",
+    "date": "2022-10-12",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://samagra.education.gov.in/",
+    "downloadUrl": "https://samagra.education.gov.in/docs/ss_implementation.pdf",
+    "sourceNote": "Official Samagra Shiksha / Ministry of Education. The 12 October 2022 covering letter states that the updated Framework is aligned with NEP 2020 and provides programmatic and financial implementation guidance.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

@@ -1,0 +1,134 @@
+[
+  {
+    "slug": "drugs-and-cosmetics-act-1940",
+    "title": "The Drugs and Cosmetics Act, 1940",
+    "titleHi": "औषधि और प्रसाधन सामग्री अधिनियम, 1940",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Health and Family Welfare",
+    "documentType": "act",
+    "topics": [
+      "health",
+      "law-order"
+    ],
+    "edition": "1940; as amended",
+    "date": "1940-04-10",
+    "goNumber": "Act No. 23 of 1940",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/2409",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/8880/1/drugs%26cosmeticact.pdf",
+    "sourceNote": "Official India Code. The Act regulates import, manufacture, distribution and sale of drugs and cosmetics. The India Code record identifies Act No. 23 of 1940.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "drugs-and-cosmetics-rules-1945",
+    "title": "The Drugs and Cosmetics Rules, 1945",
+    "titleHi": "औषधि और प्रसाधन सामग्री नियम, 1945",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Health and Family Welfare",
+    "documentType": "rules",
+    "topics": [
+      "health",
+      "law-order"
+    ],
+    "edition": "1945; as amended",
+    "date": "1945-01-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/2409",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/19158/1/2016drugsandcosmeticsact1940rules1945.pdf",
+    "sourceNote": "Official India Code. The retrieved official PDF contains the Drugs and Cosmetics Rules, 1945 with amendments incorporated in the text.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "clinical-establishments-registration-regulation-act-2010",
+    "title": "The Clinical Establishments (Registration and Regulation) Act, 2010",
+    "titleHi": "नैदानिक स्थापन (रजिस्ट्रीकरण और विनियमन) अधिनियम, 2010",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Health and Family Welfare",
+    "documentType": "act",
+    "topics": [
+      "health",
+      "law-order"
+    ],
+    "edition": "2010; as applicable",
+    "date": "2010-08-18",
+    "goNumber": "Act No. 23 of 2010",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/handle/123456789/17785",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/2048/1/A2010-23.pdf",
+    "sourceNote": "Official India Code. The Act provides for registration and regulation of clinical establishments. India Code specifically records Uttar Pradesh as the location/state context for this Act entry.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "pcpndt-act-1994",
+    "title": "The Pre-conception and Pre-natal Diagnostic Techniques (Prohibition of Sex Selection) Act, 1994",
+    "titleHi": "गर्भधारण-पूर्व और प्रसव-पूर्व निदान-तकनीक (लिंग चयन प्रतिषेध) अधिनियम, 1994",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Health and Family Welfare",
+    "documentType": "act",
+    "topics": [
+      "health",
+      "law-order"
+    ],
+    "edition": "1994; as amended",
+    "date": "1994-09-20",
+    "goNumber": "Act No. 57 of 1994",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/1937/1/199457.pdf",
+    "sourceNote": "Official India Code. The Act regulates genetic counselling centres, genetic laboratories, genetic clinics and prenatal diagnostic techniques and prohibits sex selection.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "pcpndt-rules-1996",
+    "title": "The Pre-conception and Pre-natal Diagnostic Techniques (Prohibition of Sex Selection) Rules, 1996",
+    "titleHi": "गर्भधारण-पूर्व और प्रसव-पूर्व निदान-तकनीक (लिंग चयन प्रतिषेध) नियम, 1996",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Health and Family Welfare",
+    "documentType": "rules",
+    "topics": [
+      "health",
+      "law-order"
+    ],
+    "edition": "1996; as amended through 2017",
+    "date": "1996-01-01",
+    "goNumber": "G.S.R. 492(E) amendment dated 22 May 2017",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_UP_88_482_000010_000010_1652351696492&filename=pc-pndt_rules_-1996_compressed.pdf&type=rule",
+    "sourceNote": "Official India Code upload. The retrieved text identifies the Rules as amended by G.S.R. 492(E), dated 22 May 2017.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "mental-healthcare-act-2017",
+    "title": "The Mental Healthcare Act, 2017",
+    "titleHi": "मानसिक स्वास्थ्य देख-रेख अधिनियम, 2017",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Health and Family Welfare",
+    "documentType": "act",
+    "topics": [
+      "health",
+      "law-order"
+    ],
+    "edition": "2017",
+    "date": "2017-04-07",
+    "goNumber": "Act No. 10 of 2017",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/2249",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/20066/1/a2017-10.pdf",
+    "sourceNote": "Official India Code. The Act provides the statutory framework for mental healthcare and protection of rights of persons with mental illness; it came into force on 29 May 2018.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

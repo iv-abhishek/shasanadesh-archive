@@ -1,0 +1,175 @@
+[
+  {
+    "slug": "seeds-control-order-1983",
+    "title": "The Seeds (Control) Order, 1983",
+    "titleHi": "बीज (नियंत्रण) आदेश, 1983",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Agriculture and Farmers Welfare",
+    "documentType": "general-instruction",
+    "topics": [
+      "agriculture"
+    ],
+    "edition": "1983; as amended",
+    "date": "1983-12-30",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_DL_64_811_00001_00001_1547794056378&filename=seeds_control_order_1983.pdf&type=order",
+    "sourceNote": "Official India Code upload. The Order regulates licensing and sale/dealer controls for seeds.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "seeds-rules-1968",
+    "title": "The Seeds Rules, 1968",
+    "titleHi": "बीज नियम, 1968",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Agriculture and Farmers Welfare",
+    "documentType": "rules",
+    "topics": [
+      "agriculture"
+    ],
+    "edition": "1968; as amended",
+    "date": "1968-12-26",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_DL_64_811_00001_00001_1547794056378&filename=seeds_rule_1968.pdf&type=rule",
+    "sourceNote": "Official India Code upload. Included because the Seeds Act framework is implemented through the Seeds Rules and the Seeds (Control) Order.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "insecticides-act-1968",
+    "title": "The Insecticides Act, 1968",
+    "titleHi": "कीटनाशी अधिनियम, 1968",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Agriculture and Farmers Welfare",
+    "documentType": "act",
+    "topics": [
+      "agriculture",
+      "health"
+    ],
+    "edition": "1968; as amended",
+    "date": "1968-09-02",
+    "goNumber": "Act No. 46 of 1968",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/1551",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/1551/1/A1968-46.pdf",
+    "sourceNote": "Official India Code. The Act regulates import, manufacture, sale, transport, distribution and use of insecticides.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-krishi-utpadan-mandi-adhiniyam-1964",
+    "title": "The Uttar Pradesh Krishi Utpadan Mandi Adhiniyam, 1964",
+    "titleHi": "उत्तर प्रदेश कृषि उत्पादन मंडी अधिनियम, 1964",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "कृषि विपणन एवं कृषि विदेश व्यापार विभाग",
+    "documentType": "act",
+    "topics": [
+      "agriculture",
+      "law-order"
+    ],
+    "edition": "1964; as amended",
+    "date": "1964-10-28",
+    "goNumber": "U.P. Act No. 25 of 1964",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/15730/1/english25of1964.pdf",
+    "sourceNote": "Official India Code. The Act regulates sale and purchase of agricultural produce and establishes the agricultural market framework in Uttar Pradesh.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "pm-kusum-comprehensive-guidelines-2024",
+    "title": "Comprehensive Guidelines for Implementation of Pradhan Mantri Kisan Urja Suraksha Evam Utthaan Mahabhiyaan (PM-KUSUM) Scheme",
+    "titleHi": "प्रधानमंत्री किसान ऊर्जा सुरक्षा एवं उत्थान महाभियान (पीएम-कुसुम) योजना के कार्यान्वयन हेतु व्यापक दिशानिर्देश",
+    "issuer": "Ministry of New and Renewable Energy",
+    "jurisdiction": "central",
+    "department": "Ministry of New and Renewable Energy",
+    "documentType": "guideline",
+    "topics": [
+      "agriculture",
+      "schemes"
+    ],
+    "edition": "Comprehensive Guidelines, January 2024",
+    "date": "2024-01-17",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://mnre.gov.in/en/pradhan-mantri-kisan-urja-suraksha-evam-utthaan-mahabhiyaan-pm-kusum/",
+    "downloadUrl": "https://cdnbbsr.s3waas.gov.in/s3716e1b8c6cd17b771da77391355749f3/uploads/2024/01/20240118413909461.pdf",
+    "sourceNote": "Official MNRE. The January 2024 consolidated guidelines expressly state that they subsume previously issued amendments. The MNRE page currently lists them as the comprehensive implementation guidelines.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "national-livestock-mission-amended-implementation-guidelines",
+    "title": "Amended Implementation Guidelines for National Livestock Mission",
+    "titleHi": "राष्ट्रीय पशुधन मिशन की संशोधित कार्यान्वयन दिशानिर्देश",
+    "issuer": "Department of Animal Husbandry and Dairying",
+    "jurisdiction": "central",
+    "department": "Department of Animal Husbandry and Dairying",
+    "documentType": "guideline",
+    "topics": [
+      "agriculture",
+      "schemes"
+    ],
+    "edition": "Amended Implementation Guidelines, 2026",
+    "date": "2026-02-25",
+    "goNumber": "R-99014/15/2023-Anlm_Dadf",
+    "language": "en",
+    "officialPage": "https://dahd.gov.in/en/node/3986",
+    "downloadUrl": "https://dahd.gov.in/sites/default/files/2026-02/RevisedNLMGuidelines.pdf",
+    "sourceNote": "Official Department of Animal Husbandry and Dairying. The 25 February 2026 page provides the Revised NLM Guidelines and identifies the order number.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "up-agriculture-machinery-empanelment-2025-26",
+    "title": "Agricultural Machinery Empanelment and Sale under SMAM / Crop Residue Management Schemes, FY 2025-26",
+    "titleHi": "कृषि यंत्रों के इम्पैनलमेंट एवं विक्रय संबंधी आदेश, वित्तीय वर्ष 2025-26",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "कृषि विभाग",
+    "documentType": "notification",
+    "topics": [
+      "agriculture",
+      "schemes"
+    ],
+    "edition": "FY 2025-26",
+    "date": "2025-09-18",
+    "goNumber": "1351/2025/1429915/12-2099/151/2021",
+    "language": "hi",
+    "officialPage": "https://agridarshan.up.gov.in/",
+    "downloadUrl": "https://agridarshan.up.gov.in/api/v2/downloadPublic/14d9d606-2426-4d38-9fed-2ac00fad6af2",
+    "sourceNote": "Official Uttar Pradesh Agriculture Directorate. The Directorate's 23 September 2025 implementation order explicitly references the Government Order No. 1351/2025/1429915/12-2099/151/2021 dated 18 September 2025 concerning FY 2025-26 machinery empanelment.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "up-rabi-certified-seed-rates-2025-26",
+    "title": "Rates for Certified Seeds for Rabi 2025-26",
+    "titleHi": "रबी 2025-26 में विक्रय हेतु प्रमाणित बीजों की प्रदाय एवं फुटकर विक्रय दरें",
+    "issuer": "Agriculture Directorate, Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "कृषि विभाग",
+    "documentType": "notification",
+    "topics": [
+      "agriculture"
+    ],
+    "edition": "Rabi 2025-26",
+    "date": "2025-09-22",
+    "goNumber": "SF-1464-T / 29टी / बीज दर-17 / रबी-2025-26",
+    "language": "hi",
+    "officialPage": "https://agridarshan.up.gov.in/",
+    "downloadUrl": "https://agridarshan.up.gov.in/api/v2/downloadPublic/0a7396d2-8cea-4112-9d4f-9cf9e7bd634d",
+    "sourceNote": "Official Uttar Pradesh Agriculture Directorate. This order fixes supply and retail rates for certified wheat, barley, mustard, linseed, gram, pea and lentil seed for Rabi 2025-26.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

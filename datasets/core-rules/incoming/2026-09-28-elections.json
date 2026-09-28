@@ -1,0 +1,44 @@
+[
+  {
+    "slug": "representation-of-the-people-act-1950",
+    "title": "The Representation of the People Act, 1950",
+    "titleHi": "लोक प्रतिनिधित्व अधिनियम, 1950",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Law and Justice, Legislative Department",
+    "documentType": "act",
+    "topics": [
+      "law-order"
+    ],
+    "edition": "1950; as amended",
+    "date": "1950-05-12",
+    "goNumber": "Act No. 43 of 1950",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/1663",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/1663/1/A1950-43.pdf",
+    "sourceNote": "Official India Code. The Act governs allocation and delimitation of seats, electoral rolls and qualifications of voters for elections to Parliament and State Legislatures.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "representation-of-the-people-act-1951",
+    "title": "The Representation of the People Act, 1951",
+    "titleHi": "लोक प्रतिनिधित्व अधिनियम, 1951",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Law and Justice, Legislative Department",
+    "documentType": "act",
+    "topics": [
+      "law-order"
+    ],
+    "edition": "1951; as amended",
+    "date": "1951-07-17",
+    "goNumber": "Act No. 43 of 1951",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/2096",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/2096/1/A1951-43.pdf",
+    "sourceNote": "Official India Code. The Act governs conduct of elections to Parliament and State Legislatures, qualifications/disqualifications, corrupt practices, offences and election disputes.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

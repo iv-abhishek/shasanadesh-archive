@@ -17,9 +17,10 @@
     "language": "en",
     "officialPage": "https://ndmindia.mha.gov.in/ndmi/laws-plans-and-policies",
     "downloadUrl": "https://ndmindia.mha.gov.in/ndmi/images/The%20Disaster%20Management%20Act%2C%202005.pdf",
-    "sourceNote": "Official (Ministry of Home Affairs). The NDM India repository hosts the Disaster Management Act, 2005 and separately records the 2025 amendment. The 2025 amendment should be retained as a separate amending instrument rather than treating this 2005 PDF as a fully consolidated current Act.",
+    "sourceNote": "Official (Ministry of Home Affairs). The NDM India repository hosts the Disaster Management Act, 2005 and separately records the 2025 amendment. The 2025 amendment should be retained as a separate amending instrument rather than treating this 2005 PDF as a fully consolidated current Act. Original 2005 text kept for reference; the consolidated text as amended in 2025 is disaster-management-act-2005-as-amended-2025.",
     "preferredSource": null,
-    "amends": []
+    "amends": [],
+    "status": "historical"
   },
   {
     "slug": "sdrf-ndrf-items-and-norms-of-assistance",
