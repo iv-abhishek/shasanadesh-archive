@@ -16,7 +16,7 @@
  *     note, preferred Shasanadesh copy, what it amends)
  */
 
-import { readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import type { SourceAdapter, SourceDocument, SourceLanguage } from "./types.js";
 import { isGovernmentHost } from "../lib/government-hosts.js";
@@ -79,8 +79,37 @@ export function validateCatalogue(entries: CoreRuleEntry[]): void {
   }
 }
 
-export function loadCatalogue(file = CATALOGUE): CoreRuleEntry[] {
-  const entries = (JSON.parse(readFileSync(file, "utf8")) as { entries: CoreRuleEntry[] }).entries;
+const INCOMING = path.resolve("datasets/core-rules/incoming");
+
+/**
+ * Extra entry files (e.g. a list prepared with another assistant and reviewed):
+ * datasets/core-rules/incoming/*.json, each a JSON array of entries (or
+ * { "entries": [...] }). They are read after catalogue.json and validated with
+ * it, so a duplicate slug or a non-government link fails loudly. Central
+ * documents get department null (departments are UP departments).
+ */
+export function loadIncoming(dir = INCOMING): CoreRuleEntry[] {
+  if (!existsSync(dir)) return [];
+  return readdirSync(dir)
+    .filter((name) => name.endsWith(".json"))
+    .sort()
+    .flatMap((name) => {
+      const raw = JSON.parse(readFileSync(path.join(dir, name), "utf8")) as CoreRuleEntry[] | { entries: CoreRuleEntry[] };
+      const list = Array.isArray(raw) ? raw : raw.entries;
+      return list.map((entry) => ({
+        ...entry,
+        department: entry.jurisdiction === "central" ? null : entry.department ?? null,
+        amends: entry.amends ?? [],
+        sourceNote: `${entry.sourceNote ?? "Official (issuer's website)."} [incoming/${name}]`,
+      }));
+    });
+}
+
+export function loadCatalogue(file = CATALOGUE, incomingDir = INCOMING): CoreRuleEntry[] {
+  const entries = [
+    ...(JSON.parse(readFileSync(file, "utf8")) as { entries: CoreRuleEntry[] }).entries,
+    ...(file === CATALOGUE ? loadIncoming(incomingDir) : []),
+  ];
   validateCatalogue(entries);
   return entries;
 }
