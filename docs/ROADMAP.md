@@ -192,6 +192,8 @@ Fetching is opt-in (`--ingest`) while ingestion is on hold.
 
 ## 9. Hosting and budget (recommendation)
 
+> **Superseded (29 Sept 2026) by [docs/HOSTING.md](HOSTING.md)**: final hosting plan (VM + Cloudflare, model API for the pilot, IndiaAI-subsidised GPU at scale, Jev as helper). Kept below for history.
+
 Per question, Ask sends ~9–11k tokens of evidence and writes ~700–900 tokens (a repair
 pass on ~20% of answers is included). Prices checked 26 Sept 2026; USD, approximate.
 
