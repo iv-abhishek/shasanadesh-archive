@@ -344,7 +344,7 @@ async function ingestOne(
     const reason = error instanceof Error ? error.message : String(error);
     console.error("FAILED " + record.sourceId + ":", reason);
     // Refused by the site (robots.txt) or unreachable: a person can fetch it.
-    if (/robots\.txt|fetch failed|timed? ?out|aborted|HTTP 403/i.test(reason)) {
+    if (/robots\.txt|fetch failed|timed? ?out|aborted|HTTP (403|429|5\d\d)/i.test(reason)) {
       failures.push({ record, reason });
     }
     return "failed";
