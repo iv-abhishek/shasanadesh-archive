@@ -11,7 +11,10 @@
  * Keep apps/web/lib/government-hosts.ts identical (a test compares them).
  */
 
-export const GOVERNMENT_SUFFIXES = [".gov.in", ".nic.in"] as const;
+// ".xn--11b7cb3a6a.xn--h2brj9c" is ".सरकार.भारत", the Hindi-script equivalent of
+// .gov.in (e.g. सूक्ष्मलघुऔरमध्यमउद्यममंत्रालय.सरकार.भारत for the MSME ministry).
+// Hostnames reach us in punycode (URL parsing converts them).
+export const GOVERNMENT_SUFFIXES = [".gov.in", ".nic.in", ".xn--11b7cb3a6a.xn--h2brj9c"] as const;
 
 /** Government bodies on other domains: host → who they are (reviewed by hand). */
 export const GOVERNMENT_EXCEPTIONS: Record<string, string> = {

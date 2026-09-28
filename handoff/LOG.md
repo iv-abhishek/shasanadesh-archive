@@ -2,6 +2,13 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 28 Sept 2026, 10:00 am IST (Claude)
+
+- Batch 2 ingested by Abhishek: 64 new, 6 to download by hand (NEEDED.md); ~20 scanned
+  documents need ocr:needs. Duplicate DPIIT FAQ excluded (override); MII file numbers fixed.
+- gov-cms adapter (ADR-068): MSME ministry orders-and-notices, 42 PDFs; `.सरकार.भारत`
+  accepted as a government domain.
+
 ## 27 Sept 2026, 11:59 pm IST (Claude)
 
 - Core rules batch 2 in the catalogue (95 entries; complete Make in India set), design in

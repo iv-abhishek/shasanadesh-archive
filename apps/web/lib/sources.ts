@@ -14,6 +14,7 @@ const COLLECTION_LABELS: Array<{ prefix: string; label: string }> = [
   { prefix: "upgov-", label: "Raj Bhavan UP" },
   { prefix: "invest-up-", label: "Invest UP" },
   { prefix: "uppolice-", label: "UP Police" },
+  { prefix: "msme-", label: "Ministry of MSME" },
   { prefix: "submitted-", label: "Submitted link" },
 ];
 
@@ -24,6 +25,7 @@ export const SOURCE_COLLECTIONS: Array<{ provider: string; label: string }> = [
   { provider: "upgov", label: "Raj Bhavan UP" },
   { provider: "invest-up", label: "Invest UP" },
   { provider: "uppolice", label: "UP Police" },
+  { provider: "gov-cms-msme", label: "Ministry of MSME" },
   { provider: "doe-gfr", label: "Dept. of Expenditure, GoI" },
   { provider: "submitted", label: "Submitted links" },
 ];

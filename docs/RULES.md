@@ -22,7 +22,7 @@ Abhishek's explicit decision and an ADR. Code that enforces a rule points back h
 
 ## §2 Only government sources are ingested
 
-- A source is accepted only from a government host: `*.gov.in`, `*.nic.in` (central
+- A source is accepted only from a government host: `*.gov.in`, `*.nic.in`, `*.सरकार.भारत` (central
   ministries, every state such as `up.gov.in`, NIC and S3WaaS district sites), or a
   government body on another domain listed with a reason in
   `src/lib/government-hosts.ts` (e.g. CERT-In). Aggregators, blogs, law portals and

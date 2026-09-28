@@ -1,0 +1,17 @@
+{
+  "_about": "Ministry websites on the Government of India common CMS (the Next.js + WordPress platform many ministries now use; public JSON under /cms/wp-json/). One entry per ministry. Documents are fetched from the ministry's own PDF host. See src/sources/gov-cms.ts.",
+  "sites": [
+    {
+      "id": "msme",
+      "name": "Ministry of Micro, Small and Medium Enterprises",
+      "issuer": "Ministry of Micro, Small and Medium Enterprises, Government of India",
+      "origin": "https://xn--i1bn6adp9emg4dcbcajdeflxp1gua1n7bt10abief.xn--11b7cb3a6a.xn--h2brj9c",
+      "displayOrigin": "https://सूक्ष्मलघुऔरमध्यमउद्यममंत्रालय.सरकार.भारत",
+      "fileHosts": ["msme.gov.in", "www.msme.gov.in"],
+      "categories": [
+        { "slug": "orders-and-notices", "page": "orders-and-notices", "documentType": "notification" }
+      ],
+      "statuses": ["publish", "archive"]
+    }
+  ]
+}

@@ -7,13 +7,14 @@
 
 import { coreRulesAdapter } from "./core-rules.js";
 import { doeGfrAdapter } from "./doe-gfr.js";
+import { govCmsAdapters } from "./gov-cms.js";
 import { investUpAdapter } from "./invest-up.js";
 import { upgovAdapter } from "./upgov.js";
 import { upPoliceAdapter } from "./uppolice.js";
 import type { SourceAdapter } from "./types.js";
 
 const adapters = new Map<string, SourceAdapter>(
-  [coreRulesAdapter, doeGfrAdapter, upgovAdapter, investUpAdapter, upPoliceAdapter].map((adapter) => [adapter.id, adapter]),
+  [coreRulesAdapter, doeGfrAdapter, upgovAdapter, investUpAdapter, upPoliceAdapter, ...govCmsAdapters()].map((adapter) => [adapter.id, adapter]),
 );
 
 export function getSourceAdapter(id: string): SourceAdapter {

@@ -971,3 +971,24 @@ URL). Each run lists refused or unreachable files in `NEEDED.md` in that folder.
 
 `dev:all --restart` also stops a Next.js dev server that holds `apps/web/.next/dev/lock`
 without serving the port (the cause of "Another next dev server is already running").
+
+## ADR-068 - Ministry websites on the common government CMS (gov-cms adapter)
+
+Abhishek (28 Sept) asked for the MSME ministry's "Orders and Notices" archive
+(सूक्ष्मलघुऔरमध्यमउद्यममंत्रालय.सरकार.भारत). Many ministries now run the same site platform
+(Next.js front end, WordPress back end): the page is rendered by script, but its public
+JSON (`/cms/wp-json/document/documents?document_category=…&post_status=publish|archive`,
+then `post-page/post?id=<file id>` for the attachment) gives every document and its PDF on
+the ministry's own host (msme.gov.in/static/uploads/…). No key or login is needed.
+
+- `src/sources/gov-cms.ts` + `datasets/gov-cms/sites.json`: one adapter per configured
+  ministry (`gov-cms-<site>`, its own B2 collection); categories and statuses per site.
+  First site: MSME, orders-and-notices, current + archive = 42 PDFs (incl. the MSMED
+  (Amendment) Act, 2026 of 21.09.2026 and the MSE procurement review committee minutes).
+- Documents go through the normal classification, so narrow items (appointments,
+  transfers, CPIO lists) are archived but kept out of answers.
+- `.सरकार.भारत` (punycode `.xn--11b7cb3a6a.xn--h2brj9c`) is added to the government suffixes
+  (Rulebook §2): it is the Hindi-script equivalent of `.gov.in`.
+- This is the base for PLAN §0-C (department knowledge): adding a ministry on the same
+  platform is a sites.json entry (other categories: acts-and-policy, guidelines,
+  gazettes-notifications, reports).
