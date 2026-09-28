@@ -33,3 +33,9 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
   (uppolice.gov.in copy). The Financial Handbook Vol. II (UP FR/SR, leave) and Vol. III (TA)
   are HTML on budget.up.nic.in: they come in through the Financial Handbook reader (PLAN §0 A2).
   No official PDF found: UP Seniority Rules 1991, UP Retirement Benefits Rules 1961.
+- 2026-09-28-up-procurement-msme.json: UP MSME Promotion Policy 2022 (English), startup
+  procurement relaxation GO 11.03.2019, MSE/startup performance-security GO 31.05.2021.
+  Refused under Rulebook §2 (host is not a government domain): UP MSE Purchase Policy 2020 GO
+  and the e-tendering GOs of 24.04.2018 and 26.07.2018 (ntender.gdaghaziabad.in), the UP
+  Procurement Manual copy on www.uplc.in. Startup (First Amendment) Policy 2022: link returned
+  HTTP 500.

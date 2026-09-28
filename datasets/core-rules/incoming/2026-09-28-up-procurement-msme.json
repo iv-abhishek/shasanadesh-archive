@@ -1,0 +1,68 @@
+[
+  {
+    "slug": "uttar-pradesh-msme-promotion-policy-2022",
+    "title": "Uttar Pradesh Micro, Small & Medium Enterprises Promotion Policy – 2022",
+    "titleHi": "उत्तर प्रदेश सूक्ष्म, लघु एवं मध्यम उद्यम प्रोत्साहन नीति – 2022",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "सूक्ष्म, लघु एवं मध्यम उद्यम विभाग",
+    "documentType": "policy",
+    "topics": [
+      "procurement",
+      "schemes"
+    ],
+    "edition": "2022",
+    "date": "2022-09-28",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://invest.up.gov.in/uttar-pradesh-micro-small-medium-enterprises-promotion-policy-2022/",
+    "downloadUrl": "https://msme1connect.up.gov.in/pdf/Policies/UP%20MSME-Policy-2022.pdf",
+    "sourceNote": "Official (Government of Uttar Pradesh). The official Invest UP page lists the UP MSME Promotion Policy 2022; the official MSME 1-Connect PDF identifies the document as the English translation of the policy notified by Government Order dated 28 September 2022 and states that the Hindi GO prevails in case of discrepancy.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-startup-public-procurement-relaxation-2019",
+    "title": "Government order for empanelment and relaxations for Startups and support provided in Public Procurement",
+    "titleHi": "स्टार्टअप्स के पैनल में सूचीबद्धकरण, सार्वजनिक खरीद में छूट एवं सहायता सम्बन्धी शासनादेश",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "आईटी एवं इलेक्ट्रॉनिक्स विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "procurement",
+      "gem"
+    ],
+    "edition": "2019",
+    "date": "2019-03-11",
+    "goNumber": null,
+    "language": "hi",
+    "officialPage": "https://startinup.up.gov.in/other-policies-of-state-govt/",
+    "downloadUrl": "https://startinup.up.gov.in/wp-content/plugins/ds-order-manager/uploads/1627543539-15-12-20221671098614.pdf",
+    "sourceNote": "Official (Department of IT & Electronics, Government of Uttar Pradesh). The official StartinUP page lists this 11 March 2019 GO under Startup public-procurement relaxations. The linked PDF documents relaxation of prior-experience and turnover requirements for eligible UP startups in public procurement.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-micro-small-enterprises-startups-performance-security-relaxation-2021",
+    "title": "Regarding the grant of exemption and reduction in performance security to Micro and Small Enterprises and Startups in tenders for the purchase of materials and supply of services in Government departments and their subordinate institutions in the State",
+    "titleHi": "राज्य के शासकीय विभागों एवं उनके अधीनस्थ संस्थाओं में सामग्री क्रय एवं सेवाओं की आपूर्ति हेतु निविदाओं में सूक्ष्म एवं लघु उद्यमों तथा स्टार्टअप्स को परफारमेंस सिक्योरिटी में छूट एवं कमी प्रदान किये जाने के सम्बन्ध में",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "सूक्ष्म, लघु एवं मध्यम उद्यम विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "procurement",
+      "gem"
+    ],
+    "edition": "2021",
+    "date": "2021-05-31",
+    "goNumber": "17/2021/233/18-2-2020-97(Lucknow)/2016 T.C.",
+    "language": "hi",
+    "officialPage": "https://startinup.up.gov.in/other-policies-of-state-govt/",
+    "downloadUrl": "https://startinup.up.gov.in/wp-content/plugins/ds-order-manager/uploads/1627035934-15-12-20221671098414.pdf",
+    "sourceNote": "Official (Department of IT & Electronics / StartinUP, Government of Uttar Pradesh). The official portal lists this 31 May 2021 GO and identifies it as granting exemption/reduction in performance security to MSEs and startups in government procurement.",
+    "preferredSource": null,
+    "amends": []
+  }
+]
