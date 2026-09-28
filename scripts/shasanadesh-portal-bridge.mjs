@@ -110,8 +110,9 @@ function htmlEscape(value) {
 function captureScript(token) {
   const code = `(async()=>{
 const BRIDGE="http://${HOST}:${PORT}",TOKEN="${token}";
-if(location.origin!=="${PORTAL_ORIGIN}"){alert("Shasanadesh bridge: click this bookmark on the Shasanadesh results tab (${PORTAL_ORIGIN}), not on this page.");return;}
-const links=[...document.querySelectorAll('a[href*="ViewGOPDF_list_user.aspx"]')].filter(a=>new URL(a.getAttribute("href"),location.href).origin==="${PORTAL_ORIGIN}");
+const HOST_OK=h=>h.toLowerCase().replace(/^www\\./,"")==="shasanadesh.up.gov.in";
+if(!HOST_OK(location.hostname)){alert("Shasanadesh bridge: click this bookmark on the Shasanadesh results tab (shasanadesh.up.gov.in), not on this page.");return;}
+const links=[...document.querySelectorAll('a[href]')].filter(a=>{try{const u=new URL(a.getAttribute("href"),location.href);return HOST_OK(u.hostname)&&/\\/go\\/viewgopdf_list_user\\.aspx$/i.test(u.pathname);}catch(_){return false;}});
 if(!links.length){alert("Shasanadesh bridge: no order links on this page. Run the portal search first.");return;}
 const table=links[0].closest("table");
 let headers=[];
@@ -198,12 +199,24 @@ function decodeOrderId(base64) {
   return value;
 }
 
+class LinkError extends Error {}
+
 function validateRecord(record, portalPage, listingKey) {
   if (!record || typeof record !== "object") throw new Error("Batch contains a non-object record.");
-  const sourceUrl = new URL(record.sourceUrl);
-  if (sourceUrl.origin !== PORTAL_ORIGIN || sourceUrl.pathname !== "/GO/ViewGOPDF_list_user.aspx") {
-    throw new Error("A record link did not point to the official Shasanadesh PDF endpoint.");
+  let sourceUrl;
+  try {
+    sourceUrl = new URL(record.sourceUrl);
+  } catch {
+    throw new LinkError(`not a link: ${String(record.sourceUrl).slice(0, 120)}`);
   }
+  // The portal is reached as http or https, with or without "www.", and the
+  // path's letter case varies; all are the same official endpoint, stored in
+  // one canonical form.
+  const host = sourceUrl.hostname.toLowerCase().replace(/^www\./, "");
+  if (host !== new URL(PORTAL_ORIGIN).hostname || sourceUrl.pathname.toLowerCase() !== "/go/viewgopdf_list_user.aspx") {
+    throw new LinkError(`not the official PDF endpoint: ${sourceUrl.href.slice(0, 120)}`);
+  }
+  sourceUrl = new URL(`${PORTAL_ORIGIN}/GO/ViewGOPDF_list_user.aspx${sourceUrl.search}`);
   const encodedId = sourceUrl.searchParams.get("id1");
   if (!encodedId) throw new Error("A PDF link is missing its order identifier.");
   const sourceId = decodeOrderId(encodedId);
@@ -274,7 +287,24 @@ async function acceptBatch(batch) {
   const filters = batch.listing && typeof batch.listing === "object" ? batch.listing : null;
   const key = listingKeyOf(filters);
   // Validate every row before any state changes, so a rejected batch leaves no trace.
-  const normalized = records.map((record) => validateRecord(record, portalPage, key));
+  // Rows whose link is not an order PDF (a stray link in the table) are
+  // skipped and reported; a page with no valid order link is refused.
+  const skipped = [];
+  const normalized = records.flatMap((record) => {
+    try {
+      return [validateRecord(record, portalPage, key)];
+    } catch (error) {
+      if (error instanceof LinkError) {
+        skipped.push(error.message);
+        return [];
+      }
+      throw error;
+    }
+  });
+  if (!normalized.length) {
+    throw new Error(`No official order links on this page (${skipped[0] ?? "no rows"}).`);
+  }
+  if (skipped.length) console.warn(`Page ${portalPage}: skipped ${skipped.length} row(s): ${skipped.slice(0, 3).join("; ")}`);
   const listing = listingFor(key, filters);
   const pageSize = Number.parseInt(String(batch.pageSize ?? ""), 10);
   if (Number.isInteger(pageSize) && pageSize > 0) listing.pageSize = pageSize;
