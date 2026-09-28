@@ -8,7 +8,7 @@
  * Keep comments in this block style: the file becomes a javascript: URL.
  */
 (async () => {
-const BRIDGE = "__BRIDGE__", TOKEN = "__TOKEN__", PAGE_DELAY_MS = 4000;
+const BRIDGE = "__BRIDGE__", TOKEN = "__TOKEN__", PAGE_DELAY_MS = 4000, SEEN_DELAY_MS = 1000;
 const HOST_OK = (h) => /^shasanadesh\.up\.(gov|nic)\.in$/.test(h.toLowerCase().replace(/^www\./, ""));
 if (!HOST_OK(location.hostname)) {
   alert("Shasanadesh bridge: this tab is " + (location.hostname || location.href.slice(0, 60)) + ". Click the bookmark on the Shasanadesh results tab (shasanadesh.up.gov.in) after the search has shown the list of orders.");
@@ -79,7 +79,7 @@ async function send(r) {
   try {
     const res = await fetch(BRIDGE + "/api/batch", { method: "POST", headers: { "content-type": "application/json", "x-bridge-token": TOKEN }, body: JSON.stringify(batch) });
     const j = await res.json();
-    return { ok: res.ok && j.ok !== false, message: j.message };
+    return { ok: res.ok && j.ok !== false, message: j.message, seen: Boolean(j.seen) };
   } catch (e) {
     try { await navigator.clipboard.writeText(JSON.stringify(batch)); } catch (_) { console.log(JSON.stringify(batch)); }
     return { ok: false, message: "Bridge not reachable (" + e.message + "). Is npm run portal:bridge running? The page was copied: paste it into the bridge form." };
@@ -131,7 +131,8 @@ const show = (t) => { msg.textContent = t; document.title = t.slice(0, 60); };
 let doc = document, last = r.page, failures = 0, done = 1, end = "";
 while (!stopped && r.next) {
   show("Page " + last + (pages ? " of " + pages : "") + " saved. " + sent.message.slice(0, 160));
-  await sleep(PAGE_DELAY_MS);
+  /* Pages already captured (a resumed run) are passed quickly. */
+  await sleep(sent.seen ? SEEN_DELAY_MS : PAGE_DELAY_MS);
   if (stopped) break;
   let nr;
   try {
@@ -142,7 +143,7 @@ while (!stopped && r.next) {
     doc = nd;
   } catch (e) {
     if (++failures <= 3) { show("Page " + (last + 1) + ": " + e.message + ". Retrying in 30 s…"); await sleep(30000); continue; }
-    end = "Stopped at page " + last + ": " + e.message + ". Search again and use the portal's page links to reach page " + (last + 1) + ", then click the bookmark there.";
+    end = "Stopped at page " + last + ": " + e.message + ". Search again with the same filters and click the bookmark on page 1: pages already saved are passed in about a second each.";
     break;
   }
   failures = 0;

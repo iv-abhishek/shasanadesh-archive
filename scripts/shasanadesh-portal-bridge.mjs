@@ -413,11 +413,17 @@ const server = createServer(async (request, response) => {
     }
     if (request.method === "POST" && url.pathname === "/api/batch") {
       if (!validToken(request.headers["x-bridge-token"])) {
-        sendJson(response, 403, { ok: false, message: "Bridge token is invalid: re-drag the bookmark from the bridge page (the token changes on every bridge start)." });
+        sendJson(response, 403, { ok: false, message: "Bridge token is invalid: re-drag the bookmark from the bridge page (the token was reset)." });
         return;
       }
-      const message = await acceptBatch(JSON.parse(await readBody(request)));
-      sendJson(response, 200, { ok: true, message });
+      const batch = JSON.parse(await readBody(request));
+      // "seen": this page number was already captured for this listing, so the
+      // bookmark can move past it quickly when a run resumes from page 1.
+      const known = listings.get(listingKeyOf(batch?.listing && typeof batch.listing === "object" ? batch.listing : null));
+      const seen = Boolean(known?.pages.has(Number.parseInt(String(batch?.portalPage ?? ""), 10)) &&
+        known.pageSize === Number.parseInt(String(batch?.pageSize ?? ""), 10));
+      const message = await acceptBatch(batch);
+      sendJson(response, 200, { ok: true, message, seen });
       return;
     }
     if (request.method === "GET" && (url.pathname === "/" || url.pathname === "/status")) {
