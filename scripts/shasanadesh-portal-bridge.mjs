@@ -9,9 +9,10 @@
  *   The bridge never talks to the portal, and never solves or bypasses a CAPTCHA.
  *
  * How rows arrive:
- *   1. "Capture this page" bookmark (served on the bridge page, contains a
- *      per-run token): reads the results table in the portal tab and POSTs it
- *      to /api/batch. Chrome may ask once to allow the portal to reach
+ *   1. Capture bookmark (scripts/portal-bookmark.js, served on the bridge page
+ *      with the token): reads the results table in the portal tab and POSTs it
+ *      to /api/batch; on request it then follows the portal's "Next" pager in
+ *      the same browser session (no CAPTCHA involved) until the last page. Chrome may ask once to allow the portal to reach
  *      "devices on your local network" (the bridge on 127.0.0.1).
  *   2. Fallback: the bookmark copies the JSON; paste it into the form here.
  *
@@ -32,6 +33,7 @@
  */
 import { createServer } from "node:http";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -106,46 +108,18 @@ function htmlEscape(value) {
 }
 
 /**
- * Runs inside the portal tab (bookmark). Reads the results table by its
- * header labels (Hindi or English), the current page from the pager, the
- * total from the page text, and the search filters from the form fields.
+ * The bookmark's code lives in scripts/portal-bookmark.js; it runs inside the
+ * portal tab, reads the results table and can follow the portal's own "Next"
+ * link page by page (see that file). A dragged bookmark holds a copy of the
+ * code, so after editing that file the bookmark has to be dragged again.
  */
+const BOOKMARK_SOURCE = new URL("./portal-bookmark.js", import.meta.url);
+
 function captureScript(token) {
-  const code = `(async()=>{
-const BRIDGE="http://${HOST}:${PORT}",TOKEN="${token}";
-const HOST_OK=h=>/^shasanadesh\\.up\\.(gov|nic)\\.in$/.test(h.toLowerCase().replace(/^www\\./,""));
-if(!HOST_OK(location.hostname)){alert("Shasanadesh bridge: this tab is "+(location.hostname||location.href.slice(0,60))+". Click the bookmark on the Shasanadesh results tab (shasanadesh.up.gov.in) after the search has shown the list of orders.");return;}
-const docs=[document,...[...document.querySelectorAll("iframe,frame")].map(f=>{try{return f.contentDocument;}catch(_){return null;}}).filter(Boolean)];
-const links=docs.flatMap(d=>[...d.querySelectorAll('a[href]')]).filter(a=>{try{const u=new URL(a.getAttribute("href"),location.href);return HOST_OK(u.hostname)&&/\\/go\\/viewgopdf_list_user\\.aspx$/i.test(u.pathname);}catch(_){return false;}});
-if(!links.length){alert("Shasanadesh bridge: no order links on this page. Run the portal search first.");return;}
-const table=links[0].closest("table"),linkRow=links[0].closest("tr"),width=linkRow?linkRow.children.length:0;
-const HEAD={department:/विभाग|Department/i,section:/अनुभाग|Section/i,goNumber:/संख्या|G\\.?\\s*O\\.?\\s*No|Number/i,goDate:/तिथि|दिनांक|Date/i,category:/श्रेणी|Category/i,subject:/विषय|Subject/i};
-const flat=c=>c.innerText.replace(/\\s+/g," ").trim();
-let headers=[],best=0;
-if(table){for(const r of table.querySelectorAll("tr")){if(r.contains(links[0])||r.querySelector("table"))continue;const cells=[...r.children];if(width&&cells.length!==width)continue;const t=cells.map(flat);const score=Object.values(HEAD).filter(re=>t.some(x=>re.test(x))).length;if(score>best){best=score;headers=t;}}}
-let idx={};
-if(best>=2){for(const k in HEAD)idx[k]=headers.findIndex(t=>HEAD[k].test(t));}
-else if(width===7){idx={department:1,section:1,goNumber:2,goDate:3,category:4,subject:5};}
-const shared=idx.department>=0&&idx.department===idx.section;
-const text=(cells,k)=>{const i=idx[k];if(!(i>=0)||!cells[i])return null;const lines=cells[i].innerText.split(/\\n+/).map(x=>x.replace(/\\s+/g," ").trim()).filter(Boolean);if(shared&&k==="department")return lines[0]||null;if(shared&&k==="section")return lines.slice(1).join(" ")||null;return lines.join(" ")||null;};
-const records=links.map((a,i)=>{const row=a.closest("tr");const cells=row?[...row.children]:[];return{sourceUrl:new URL(a.getAttribute("href"),location.href).href,department:text(cells,"department"),section:text(cells,"section"),goNumber:text(cells,"goNumber"),goDate:text(cells,"goDate"),category:text(cells,"category"),subject:text(cells,"subject"),linkText:a.innerText.trim()||null,portalRow:i+1};});
-const readable=records.filter(r=>r.subject&&/^\\d{1,2}[\\/.-]\\d{1,2}[\\/.-]\\d{4}$/.test(r.goDate||"")).length;
-if(readable<Math.ceil(records.length/2)){alert("Shasanadesh bridge: the order details (subject, date) could not be read from this table, so nothing was sent. Save this page (Cmd+S, Webpage HTML Only) into data/tmp and ask Claude to check it.");return;}
-const pager=document.querySelector('[id*="DataPager"],[id*="Pager"]');
-let page=null;if(pager){const cur=[...pager.querySelectorAll("span")].find(s=>/^\\d+$/.test(s.innerText.trim())&&!s.closest("a"));if(cur)page=Number(cur.innerText.trim());}
-if(!page)page=Number(prompt("Results page number?","1"));
-const bt=document.body.innerText;
-const m=bt.match(/कुल\\s*प्राप्त\\s*अभिलेख\\s*[-–:]*\\s*([\\d,]+)/)||bt.match(/Total\\s*(?:Records?|Results?)(?:\\s*Found)?\\s*[-–:]+\\s*([\\d,]+)/i);
-let total=m?Number(m[1].replace(/,/g,"")):null;
-if(!total)total=Number(prompt("Total results shown by the portal?",""));
-const sel=n=>{const e=document.querySelector('select[name$="'+n+'"]');return e&&e.selectedIndex>0?e.options[e.selectedIndex].text.trim():null;};
-const val=n=>{const e=document.querySelector('input[name$="'+n+'"]');return e&&e.value.trim()?e.value.trim():null;};
-const size=document.querySelector('select[name$="ddlNoRec"]');
-const batch={listing:{department:sel("ddldept"),section:sel("ddlsection"),category:sel("ddlcat"),dateFrom:val("txtGOdate"),dateTo:val("txtGOdate0"),goNumber:val("txtGOid"),subject:val("txtSubj")},portalPage:page,reportedTotal:total,pageSize:size?Number(size.value)||records.length:records.length,records};
-try{const r=await fetch(BRIDGE+"/api/batch",{method:"POST",headers:{"content-type":"application/json","x-bridge-token":TOKEN},body:JSON.stringify(batch)});const j=await r.json();alert("Shasanadesh bridge: "+j.message);}
-catch(e){try{await navigator.clipboard.writeText(JSON.stringify(batch));alert("Bridge not reachable ("+e.message+"). The page was copied: paste it into the bridge form.");}catch(_){console.log(JSON.stringify(batch));alert("Bridge not reachable. The JSON was printed to the console.");}}
-})();`;
-  return "javascript:" + encodeURIComponent(code.replace(/\n/g, ""));
+  const code = readFileSync(BOOKMARK_SOURCE, "utf8")
+    .replace('"__BRIDGE__"', JSON.stringify(`http://${HOST}:${PORT}`))
+    .replace('"__TOKEN__"', JSON.stringify(token));
+  return "javascript:" + encodeURIComponent(code);
 }
 
 function page(message = "") {
@@ -173,9 +147,9 @@ ${message ? `<p class="status">${htmlEscape(message)}</p>` : ""}
 <p>Drag this to your bookmarks bar: <a class="bookmark" href="${captureScript(formToken)}">Capture Shasanadesh page</a>
 (it keeps working after the bridge restarts). Click it on the <b>Shasanadesh results tab</b>, not on this page.</p>
 <ol>
-<li>On shasanadesh.up.gov.in choose <strong>one department</strong> (and the largest "records per page"), complete the CAPTCHA and search.</li>
-<li>On each results page click the bookmark. Chrome may ask once to let the site reach your local network — allow it (only 127.0.0.1 is contacted).</li>
-<li>Move to the next page and repeat until the last page, then press <em>Mark complete</em> for that department below.</li>
+<li>On shasanadesh.up.gov.in choose <strong>one department</strong>, dates 01/01/1947 to today and <strong>100</strong> records per page, complete the CAPTCHA and search.</li>
+<li>Click the bookmark once on the results. It saves page 1 and offers to capture the remaining pages by itself, one every few seconds, using the portal's own "Next" link. Keep the tab open and the Mac awake; a box at the bottom right shows progress and has a Stop button. Chrome may ask once to let the site reach your local network — allow it (only 127.0.0.1 is contacted).</li>
+<li>When it finishes, check the row below: rows should reach the portal total. Then press <em>Mark complete</em> and search the next department.</li>
 </ol>
 <h2>2. Listings</h2>
 <table><tr><th>Listing (portal filters)</th><th>Pages</th><th>Rows</th><th>New orders</th><th>Portal total</th><th>Reshuffled pages</th><th>State</th><th></th></tr>${rows || '<tr><td colspan="8">Nothing captured yet.</td></tr>'}</table>

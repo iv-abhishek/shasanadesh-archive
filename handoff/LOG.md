@@ -2,6 +2,17 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 28 Sept 2026, 9:15 pm IST (Claude)
+
+- Capture bookmark moved to scripts/portal-bookmark.js and given an auto-pager: after the
+  person's search (CAPTCHA by them) and one click, it saves page 1, then — on confirmation —
+  posts the page's own form back with the pager's "Next" as event target (exactly what the
+  Next link does, same session, no CAPTCHA), parses the reply, sends each page to the bridge,
+  one page every ~4 s, with a progress box and Stop button; stops on a session expiry or a
+  page that does not advance. Tested in Chromium against the two saved result pages.
+- Plan (Abhishek): Part 1 = capture every department's listing (links + row details) first;
+  Part 2 = ingest:portal downloads all PDFs to B2 from that inventory.
+
 ## 28 Sept 2026, 8:30 pm IST (Claude)
 
 - Portal bookmark read the wrong header row on department-filtered listings (a caption row
