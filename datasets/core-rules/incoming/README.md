@@ -39,3 +39,9 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
   and the e-tendering GOs of 24.04.2018 and 26.07.2018 (ntender.gdaghaziabad.in), the UP
   Procurement Manual copy on www.uplc.in. Startup (First Amendment) Policy 2022: link returned
   HTTP 500.
+- 2026-09-28-vigilance-up-health-education.json: UP Lokayukta Act 1975 (India Code) and the Hindi
+  compilation with rules and notifications (lokayukta.up.nic.in), Prevention of Corruption Act
+  1988 (as on 21.05.2025), UP RTE Rules 2011, NHM UP PIP approval 2024–26, PM-JAY operation
+  manual and empanelment/de-empanelment guidelines. No PDF link given: CVC master circulars
+  2026 (complaints, vigilance angle, CVO role, PIDPI, sanction for prosecution), UP Vigilance
+  Establishment Act 1965, Manav Sampada property-return order 23.08.2023, NHM UP DHAP 2025-26.
