@@ -29,3 +29,7 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
 - 2026-09-28-gem.json: GeM buyer and seller user manuals, GeM handbook, incident management
   policy (assets-bg.gem.gov.in: blocked outside India, not checked here; paths under
   /resources/upload/shared_doc/ are disallowed by robots.txt and go to NEEDED.md).
+- 2026-09-28-up-service-rules.json: UP Government Servant (Discipline and Appeal) Rules 1999
+  (uppolice.gov.in copy). The Financial Handbook Vol. II (UP FR/SR, leave) and Vol. III (TA)
+  are HTML on budget.up.nic.in: they come in through the Financial Handbook reader (PLAN §0 A2).
+  No official PDF found: UP Seniority Rules 1991, UP Retirement Benefits Rules 1961.
