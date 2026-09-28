@@ -110,9 +110,10 @@ function htmlEscape(value) {
 function captureScript(token) {
   const code = `(async()=>{
 const BRIDGE="http://${HOST}:${PORT}",TOKEN="${token}";
-const HOST_OK=h=>h.toLowerCase().replace(/^www\\./,"")==="shasanadesh.up.gov.in";
-if(!HOST_OK(location.hostname)){alert("Shasanadesh bridge: click this bookmark on the Shasanadesh results tab (shasanadesh.up.gov.in), not on this page.");return;}
-const links=[...document.querySelectorAll('a[href]')].filter(a=>{try{const u=new URL(a.getAttribute("href"),location.href);return HOST_OK(u.hostname)&&/\\/go\\/viewgopdf_list_user\\.aspx$/i.test(u.pathname);}catch(_){return false;}});
+const HOST_OK=h=>/^shasanadesh\\.up\\.(gov|nic)\\.in$/.test(h.toLowerCase().replace(/^www\\./,""));
+if(!HOST_OK(location.hostname)){alert("Shasanadesh bridge: this tab is "+(location.hostname||location.href.slice(0,60))+". Click the bookmark on the Shasanadesh results tab (shasanadesh.up.gov.in) after the search has shown the list of orders.");return;}
+const docs=[document,...[...document.querySelectorAll("iframe,frame")].map(f=>{try{return f.contentDocument;}catch(_){return null;}}).filter(Boolean)];
+const links=docs.flatMap(d=>[...d.querySelectorAll('a[href]')]).filter(a=>{try{const u=new URL(a.getAttribute("href"),location.href);return HOST_OK(u.hostname)&&/\\/go\\/viewgopdf_list_user\\.aspx$/i.test(u.pathname);}catch(_){return false;}});
 if(!links.length){alert("Shasanadesh bridge: no order links on this page. Run the portal search first.");return;}
 const table=links[0].closest("table");
 let headers=[];
@@ -213,7 +214,8 @@ function validateRecord(record, portalPage, listingKey) {
   // path's letter case varies; all are the same official endpoint, stored in
   // one canonical form.
   const host = sourceUrl.hostname.toLowerCase().replace(/^www\./, "");
-  if (host !== new URL(PORTAL_ORIGIN).hostname || sourceUrl.pathname.toLowerCase() !== "/go/viewgopdf_list_user.aspx") {
+  // shasanadesh.up.nic.in is the portal's older address for the same application.
+  if (!["shasanadesh.up.gov.in", "shasanadesh.up.nic.in"].includes(host) || sourceUrl.pathname.toLowerCase() !== "/go/viewgopdf_list_user.aspx") {
     throw new LinkError(`not the official PDF endpoint: ${sourceUrl.href.slice(0, 120)}`);
   }
   sourceUrl = new URL(`${PORTAL_ORIGIN}/GO/ViewGOPDF_list_user.aspx${sourceUrl.search}`);
