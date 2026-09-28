@@ -6,8 +6,9 @@ _Last updated: 27 Sept 2026, 8:55 pm IST (Claude). Update at every milestone and
 
 1. **Search page review and improvements**: organised by department. **Done**, see below.
 2. **Model question**: can Qwen3.8-27B run usefully on the M5 MacBook Air? Answered (see PLAN.md › Models).
-3. **Ingestion is ON HOLD.** Do not start `ingest:portal`, `portal:bridge`,
-   `ingest:source*` or any crawl until Abhishek says so.
+3. **Shasanadesh capture resumed by Abhishek (28 Sept).** He runs `portal:bridge` (search + CAPTCHA by
+   hand, per department) and `ingest:portal`; Claude does not start them. 1,025 captured, all in B2;
+   the portal lists ~177,500.
 
 ## Roadmap
 
