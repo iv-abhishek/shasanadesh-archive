@@ -1,0 +1,153 @@
+[
+  {
+    "slug": "motor-vehicles-act-1988",
+    "title": "The Motor Vehicles Act, 1988",
+    "titleHi": "मोटर यान अधिनियम, 1988",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Road Transport and Highways",
+    "documentType": "act",
+    "topics": [
+      "law-order"
+    ],
+    "edition": "1988; official India Code text as on 21 May 2025, incorporating amendments including the Motor Vehicles (Amendment) Act, 2019",
+    "date": "1988-09-14",
+    "goNumber": "Act No. 59 of 1988",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_CEN_30_42_00009_198859_1517807326286&filename=a1988-59.pdf&type=actfile",
+    "sourceNote": "Official India Code. Current consolidated statutory text available there is stated to be as on 21 May 2025.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-motor-vehicles-rules-1998",
+    "title": "The Uttar Pradesh Motor Vehicles Rules, 1998",
+    "titleHi": "उत्तर प्रदेश मोटर यान नियमावली, 1998",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "परिवहन विभाग",
+    "documentType": "rules",
+    "topics": [
+      "law-order"
+    ],
+    "edition": "1998; as amended",
+    "date": "1998-01-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_UP_88_509_00005_00005_1603105671230&filename=the_uttar_pradesh_motor_vehicle_rules%2C_1998.pdf&type=rule",
+    "sourceNote": "Official India Code. The repository identifies these as the Uttar Pradesh Motor Vehicle Rules, 1998 (As Amended). The Rules have continued to receive amendments; an official UP notification dated 9 April 2026 records a further amendment to the 1998 Rules.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "electricity-act-2003",
+    "title": "The Electricity Act, 2003",
+    "titleHi": "विद्युत अधिनियम, 2003",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Power",
+    "documentType": "act",
+    "topics": [
+      "law-order"
+    ],
+    "edition": "2003; official India Code text as on 1 June 2026",
+    "date": "2003-05-26",
+    "goNumber": "Act No. 36 of 2003",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/2058",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/2058/1/a200336.pdf",
+    "sourceNote": "Official India Code. The current PDF is expressly marked 'As on the 1st June, 2026'.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-industrial-investment-employment-promotion-pol",
+    "title": "Uttar Pradesh Industrial Investment & Employment Promotion Policy 2022",
+    "titleHi": "उत्तर प्रदेश औद्योगिक निवेश एवं रोजगार प्रोत्साहन नीति 2022",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "औद्योगिक विकास विभाग",
+    "documentType": "policy",
+    "topics": [
+      "schemes",
+      "works"
+    ],
+    "edition": "2022",
+    "date": "2022-11-04",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://invest.up.gov.in/investup/uttar-pradesh-industrial-investment-employment-promotion-policy-2022/",
+    "downloadUrl": "https://invest.up.gov.in/wp-content/uploads/2023/02/Uttar_Pradesh_Industrial_Investment_Employment_Promotion_Policy_2022-en.pdf",
+    "sourceNote": "Official Invest UP, Government of Uttar Pradesh. The official policy page lists the English policy document and subsequent policy implementation GOs/SOPs, including fiscal-incentive guidelines and amendments.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-warehousing-logistics-policy-2022",
+    "title": "Uttar Pradesh Warehousing and Logistics Policy 2022",
+    "titleHi": "उत्तर प्रदेश वेयरहाउसिंग एवं लॉजिस्टिक्स नीति 2022",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "औद्योगिक विकास विभाग",
+    "documentType": "policy",
+    "topics": [
+      "schemes",
+      "works"
+    ],
+    "edition": "2022",
+    "date": "2022-12-28",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://invest.up.gov.in/uttar-pradesh-warehousing-logistics-policy-2022/",
+    "downloadUrl": "https://invest.up.gov.in/wp-content/uploads/2022/12/WL_281222.pdf",
+    "sourceNote": "Official Invest UP, Government of Uttar Pradesh. The official policy page identifies the 2022 policy and lists subsequent implementation GOs/SOPs, including Transport Department implementation measures.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "nivesh-mitra-services-integrated-2020",
+    "title": "Services Integrated with Nivesh Mitra are to be Availed through Nivesh Mitra Portal Only - 2020",
+    "titleHi": "निवेश मित्र से एकीकृत सेवाएं केवल निवेश मित्र पोर्टल के माध्यम से प्राप्त किए जाने के संबंध में - 2020",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "औद्योगिक विकास विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "digital-it",
+      "schemes"
+    ],
+    "edition": "2020",
+    "date": "2020-01-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://niveshmitra.up.gov.in/information/government-orders-circulars",
+    "downloadUrl": "https://niveshmitra.up.nic.in/Documents/Govt_Orders/G_27.pdf",
+    "sourceNote": "Official Nivesh Mitra / Government of Uttar Pradesh. The current Nivesh Mitra Government Orders & Circulars page lists this 2020 order and identifies Nivesh Mitra as the State's Single Window System.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "nivesh-mitra-services-integrated-2018",
+    "title": "Services Integrated with Nivesh Mitra are to be Availed through Nivesh Mitra Portal Only - 2018",
+    "titleHi": "निवेश मित्र से एकीकृत सेवाएं केवल निवेश मित्र पोर्टल के माध्यम से प्राप्त किए जाने के संबंध में - 2018",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "औद्योगिक विकास विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "digital-it",
+      "schemes"
+    ],
+    "edition": "2018",
+    "date": "2018-01-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://niveshmitra.up.gov.in/information/government-orders-circulars",
+    "downloadUrl": "https://niveshmitra.up.nic.in/Documents/Govt_Orders/G_1.pdf",
+    "sourceNote": "Official Nivesh Mitra / Government of Uttar Pradesh. The current Government Orders & Circulars page retains the 2018 order as an official Nivesh Mitra GO.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

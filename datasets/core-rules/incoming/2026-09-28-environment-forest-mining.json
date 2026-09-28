@@ -1,0 +1,156 @@
+[
+  {
+    "slug": "environment-protection-act-1986",
+    "title": "Environment (Protection) Act, 1986",
+    "titleHi": "पर्यावरण (संरक्षण) अधिनियम, 1986",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Environment, Forest and Climate Change",
+    "documentType": "act",
+    "topics": [
+      "law-order",
+      "works"
+    ],
+    "edition": "1986; official MoEFCC text",
+    "date": "1986-05-23",
+    "goNumber": "Act No. 29 of 1986",
+    "language": "en",
+    "officialPage": "https://moef.gov.in/index.php/environment-protection",
+    "downloadUrl": "https://www.moef.gov.in/uploads/2017/06/eprotect_act_1986.pdf",
+    "sourceNote": "Official MoEFCC. The Ministry's Environment Protection page lists the Environment (Protection) Act, 1986 and the Environment (Protection) Rules, 1986.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "air-prevention-and-control-of-pollution-act-1981",
+    "title": "Air (Prevention and Control of Pollution) Act, 1981",
+    "titleHi": "वायु (प्रदूषण निवारण और नियंत्रण) अधिनियम, 1981",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Environment, Forest and Climate Change",
+    "documentType": "act",
+    "topics": [
+      "law-order",
+      "works"
+    ],
+    "edition": "1981; official India Code PDF",
+    "date": "1981-03-29",
+    "goNumber": "Act No. 14 of 1981",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/1389",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/9462/1/air_act-1981.pdf",
+    "sourceNote": "Official India Code. The Act is identified as Act No. 14 of 1981 and administered by MoEFCC.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "van-sanrakshan-evam-samvardhan-adhiniyam-1980",
+    "title": "Van (Sanrakshan Evam Samvardhan) Adhiniyam, 1980",
+    "titleHi": "वन (संरक्षण एवं संवर्धन) अधिनियम, 1980",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Environment, Forest and Climate Change",
+    "documentType": "act",
+    "topics": [
+      "law-order",
+      "land-revenue"
+    ],
+    "edition": "As amended by the Van (Sanrakshan Evam Samvardhan) Adhiniyam, 2023",
+    "date": "1980-12-27",
+    "goNumber": "Act No. 69 of 1980",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/1760",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/1760/4/a1980-69.pdf",
+    "sourceNote": "Official India Code. The current PDF reflects the 2023 amendment, including the change of short title and insertion of section 1A, effective 1 December 2023.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "solid-waste-management-rules-2026",
+    "title": "Solid Waste Management Rules, 2026",
+    "titleHi": "ठोस अपशिष्ट प्रबंधन नियम, 2026",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Environment, Forest and Climate Change",
+    "documentType": "rules",
+    "topics": [
+      "law-order",
+      "works"
+    ],
+    "edition": "2026; effective 1 April 2026; supersedes Solid Waste Management Rules, 2016",
+    "date": "2026-01-27",
+    "goNumber": "S.O. 388(E)",
+    "language": "mixed",
+    "officialPage": "https://moef.gov.in/new_releases/update?archive=1",
+    "downloadUrl": "https://swm.cpcb.gov.in/images/solid-waste-management-rules-2026.pdf",
+    "sourceNote": "Official Government PDF hosted by CPCB. The notification expressly supersedes the Solid Waste Management Rules, 2016 and states that the 2026 Rules come into force on 1 April 2026. MoEFCC's current releases page lists S.O. 388(E).",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "plastic-waste-management-rules-2016",
+    "title": "Plastic Waste Management Rules, 2016",
+    "titleHi": "प्लास्टिक अपशिष्ट प्रबंधन नियम, 2016",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Environment, Forest and Climate Change",
+    "documentType": "rules",
+    "topics": [
+      "law-order",
+      "works"
+    ],
+    "edition": "2016 with amendments through 2024; latest verified amendment 2024",
+    "date": "2016-03-18",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://moef.gov.in/rules-regulations-3",
+    "downloadUrl": "https://moef.gov.in/storage/tender/GSR201%28E%29-%5B14032024%5D-Plastic-Waste-Mangement-Rules-2024.pdf",
+    "sourceNote": "Official MoEFCC. The 2024 amendment notification records the 2016 Rules and their successive amendments through 2023, then further amends them through G.S.R. 201(E) dated 14 March 2024.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-minor-minerals-concession-rules-2021",
+    "title": "Uttar Pradesh Minor Minerals (Concession) Rules, 2021",
+    "titleHi": "उत्तर प्रदेश उपखनिज (परिहार) नियमावली, 2021",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "भूतत्व एवं खनिकर्म विभाग",
+    "documentType": "rules",
+    "topics": [
+      "land-revenue",
+      "works"
+    ],
+    "edition": "2021; official India Code PDF with subsequent amendment material reflected in the repository",
+    "date": "2021-10-29",
+    "goNumber": "1157/86-2021-03 (Sa)/2021",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_UP_88_1427_00001_00001_1628318844566&filename=upconsen24feb2026.pdf&type=rule",
+    "sourceNote": "Official India Code / Government of Uttar Pradesh. The Rules supersede the Uttar Pradesh Minor Minerals (Concession) Rules, 1963 and apply throughout Uttar Pradesh. The current English PDF is dated/updated February 2026 while reproducing the 29 October 2021 notification.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-protection-of-trees-act-1976",
+    "title": "Uttar Pradesh Protection of Trees Act, 1976",
+    "titleHi": "उत्तर प्रदेश वृक्ष संरक्षण अधिनियम, 1976",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "वन एवं पर्यावरण विभाग",
+    "documentType": "act",
+    "topics": [
+      "law-order",
+      "land-revenue"
+    ],
+    "edition": "1976; official India Code PDF",
+    "date": "1976-11-22",
+    "goNumber": "U.P. Act No. 45 of 1976",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/16949/1/english45of1976.pdf",
+    "sourceNote": "Official India Code. The Act regulates felling/protection of specified trees in Uttar Pradesh and defines competent authorities and forest-related terms.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

@@ -1,0 +1,90 @@
+[
+  {
+    "slug": "real-estate-regulation-and-development-act-2016",
+    "title": "Real Estate (Regulation and Development) Act, 2016",
+    "titleHi": "रियल एस्टेट (विनियमन और विकास) अधिनियम, 2016",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Housing and Urban Affairs",
+    "documentType": "act",
+    "topics": [
+      "land-revenue",
+      "works"
+    ],
+    "edition": "As on 15 May 2026",
+    "date": "2016-03-25",
+    "goNumber": "Act No. 16 of 2016",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/2158",
+    "downloadUrl": "https://www.indiacode.nic.in/indiacode/bitstream/123456789/2158/1/A201616.pdf",
+    "sourceNote": "Official India Code. The current India Code PDF is expressly marked 'As on the 15th May, 2026'. The Act was enacted on 25 March 2016 and came into force in stages beginning 1 May 2016.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "pmay-u-2-0-scheme-guidelines",
+    "title": "Pradhan Mantri Awas Yojana (Urban) 2.0 — Scheme Guidelines",
+    "titleHi": "प्रधानमंत्री आवास योजना (शहरी) 2.0 — योजना दिशानिर्देश",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Housing and Urban Affairs",
+    "documentType": "guideline",
+    "topics": [
+      "schemes",
+      "works"
+    ],
+    "edition": "September 2024; PMAY-U 2.0",
+    "date": "2024-09-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://pmay-urban.gov.in/guideline",
+    "downloadUrl": "https://pmay-urban.gov.in/uploads/guidelines/Operational-Guidelines-of-PMAY-U-2.pdf",
+    "sourceNote": "Official PMAY-U. The current guideline repository lists the English PMAY-U 2.0 Scheme Guidelines (September 2024), and the official PDF states that PMAY-U 2.0 is administered according to these guidelines and amendments approved by MoHUA.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "amrut-2-0-operational-guidelines",
+    "title": "Atal Mission for Rejuvenation and Urban Transformation 2.0 — Operational Guidelines",
+    "titleHi": "अटल मिशन फॉर रिजुवनेशन एंड अर्बन ट्रांसफॉर्मेशन 2.0 — परिचालन दिशानिर्देश",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Housing and Urban Affairs",
+    "documentType": "guideline",
+    "topics": [
+      "schemes",
+      "works"
+    ],
+    "edition": "October 2021",
+    "date": "2021-10-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://amrut.mohua.gov.in/",
+    "downloadUrl": "https://amrut.mohua.gov.in/uploads/AMRUT_2.0_Operational_Guidelines.pdf",
+    "sourceNote": "Official AMRUT 2.0 portal / MoHUA. The official portal currently lists AMRUT 2.0 Operational Guidelines; the PDF is dated October 2021.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "up-building-bylaws-model-zoning-regulations-2025",
+    "title": "Uttar Pradesh Development Authority Building Construction and Development Byelaws and Model Zoning Regulations, 2025",
+    "titleHi": "उत्तर प्रदेश विकास प्राधिकरण भवन निर्माण एवं विकास उपविधि तथा मॉडल जोनिंग विनियम, 2025",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "आवास एवं शहरी नियोजन विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "works",
+      "land-revenue"
+    ],
+    "edition": "2025, with amendments issued in 2025-26",
+    "date": "2025-07-04",
+    "goNumber": "1323/2025/8-3099/208/2025",
+    "language": "en",
+    "officialPage": "https://sdma.up.gov.in/assets/uploads/geophysical/1770960782_UP%20Model%20Building%20Bylaws%202025%20English.pdf",
+    "downloadUrl": "https://sdma.up.gov.in/assets/uploads/geophysical/1770960782_UP%20Model%20Building%20Bylaws%202025%20English.pdf",
+    "sourceNote": "Official English copy hosted by UP SDMA (sdma.up.gov.in). Amendments of 21.11.2025 and 15.05.2026 and clarifications of 18.06.2026 are listed on the Housing Department portal (awasbandhu.in), not yet included.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

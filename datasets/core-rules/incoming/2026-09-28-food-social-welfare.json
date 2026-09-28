@@ -1,0 +1,89 @@
+[
+  {
+    "slug": "national-food-security-act-2013",
+    "title": "National Food Security Act, 2013",
+    "titleHi": "राष्ट्रीय खाद्य सुरक्षा अधिनियम, 2013",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Food and Public Distribution",
+    "documentType": "act",
+    "topics": [
+      "schemes"
+    ],
+    "edition": "2013; official India Code text",
+    "date": "2013-09-10",
+    "goNumber": "Act No. 20 of 2013",
+    "language": "en",
+    "officialPage": "https://dfpd.gov.in/acts-rules/en",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/2113/1/201320.pdf",
+    "sourceNote": "Official. The Department of Food and Public Distribution lists the National Food Security Act, 2013 in its current Acts & Rules repository; the India Code PDF is the official statutory text. DFPD separately lists subsequent amendments to the NFSA schedules.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "maintenance-and-welfare-of-parents-and-senior-citizens-act-2",
+    "title": "Maintenance and Welfare of Parents and Senior Citizens Act, 2007",
+    "titleHi": "माता-पिता और वरिष्ठ नागरिकों का भरण-पोषण तथा कल्याण अधिनियम, 2007",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Social Justice and Empowerment",
+    "documentType": "act",
+    "topics": [
+      "schemes",
+      "service"
+    ],
+    "edition": "2007; official India Code text",
+    "date": "2007-12-29",
+    "goNumber": "Act No. 56 of 2007",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/15948/1/the_maintenance_and_welfare_of_parents_and_senior_citizens_act%2C_2007.pdf",
+    "sourceNote": "Official India Code. The Act provides the statutory framework for maintenance of parents/senior citizens and welfare measures including old-age homes.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-maintenance-and-welfare-of-parents-and-senior",
+    "title": "Uttar Pradesh Maintenance and Welfare of Parents and Senior Citizens Rules, 2014",
+    "titleHi": "उत्तर प्रदेश माता-पिता और वरिष्ठ नागरिकों का भरण-पोषण तथा कल्याण नियमावली, 2014",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "समाज कल्याण विभाग",
+    "documentType": "rules",
+    "topics": [
+      "schemes",
+      "service"
+    ],
+    "edition": "2014",
+    "date": "2014-02-24",
+    "goNumber": "464/XXVI-2-2014-100(2)-2008",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/",
+    "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_UP_88_505_00001_00001_1613469661093&filename=niyamavali_senior_citizen_2014.pdf&type=rule",
+    "sourceNote": "Official India Code / Government of Uttar Pradesh. The official PDF contains Notification No. 464 dated 24 February 2014 and the Uttar Pradesh Rules made under section 32 of the 2007 Act.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "up-scholarship-2025-26-revised-schedule-order",
+    "title": "UP Scholarship — Revised Schedule for Pre-Matric and Post-Matric Scholarship, 2025-26",
+    "titleHi": "उत्तर प्रदेश छात्रवृत्ति — पूर्वदशम एवं दशमोत्तर छात्रवृत्ति हेतु संशोधित समय-सारिणी, 2025-26",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "समाज कल्याण विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "education",
+      "schemes"
+    ],
+    "edition": "2025-26",
+    "date": "2025-10-06",
+    "goNumber": "161/2025/2720/26-3-2025-1396097",
+    "language": "hi",
+    "officialPage": "https://scholarship.up.gov.in/",
+    "downloadUrl": "https://upidadv.up.gov.in/upload/PublicationRequest/173879/Social%20WelfareLKO1101025Notice638957107620310058.pdf",
+    "sourceNote": "Official Government of Uttar Pradesh. The Department's official press release identifies Government Order No. 161/2025/2720/26-3-2025-1396097 dated 06 October 2025 and states that the revised schedule applies to 2025-26 pre-matric (classes 9-10) and post-matric (classes 11-12) scholarship schemes.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

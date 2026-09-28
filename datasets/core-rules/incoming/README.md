@@ -52,3 +52,11 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
   processing 09.12.2025, IGRS GO 02.01.2024, DM (Amendment) Act 2025, Aadhaar good-governance
   rules 2020, UP IT/ITeS policy amendment 2026, UP Data Centre Policy 2026. The central GPF
   entry is the 2022 amendment (₹5 lakh ceiling), not the full 1960 Rules.
+- 2026-09-28 six batches (food/social welfare, women & child, urban/housing, environment/
+  forest/mining, transport/energy/industry, cooperatives/excise/consumer): 39 entries. Refused
+  (not a government domain): UP RERA Rules (up-rera.in), SBM-U 2.0 guidelines (swminfo.in),
+  Smart Cities guidelines (sscm.uphq.in), UP Urban Planning Act 1973 and bylaw amendments
+  (awasbandhu.in), UP Electricity Supply Code + 13th amendment (uperc.org). Dead link: TPDS
+  (Control) Order 2015. No link: TPDS amendment 2025, Poshan 2.0 revision, UP Urban Planning
+  (Amendment) Act 2023, Water Act 1974, Van Rules 2023, EIA Notification 2006, Legal Metrology
+  Act 2009.
