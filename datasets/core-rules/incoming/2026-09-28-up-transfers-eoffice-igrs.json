@@ -1,0 +1,111 @@
+[
+  {
+    "slug": "uttar-pradesh-annual-transfer-policy-2026-27",
+    "title": "Annual Transfer Policy of Government Officers/Employees, Uttar Pradesh, 2026-27",
+    "titleHi": "सरकारी अधिकारियों/कर्मचारियों की वार्षिक स्थानान्तरण नीति वर्ष 2026-27",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "कार्मिक विभाग",
+    "documentType": "policy",
+    "topics": [
+      "service"
+    ],
+    "edition": "2026-27",
+    "date": "2026-05-11",
+    "goNumber": null,
+    "language": "hi",
+    "officialPage": "https://www.dgmh.up.gov.in/en/GovernmentOrder",
+    "downloadUrl": "https://www.dgmh.up.gov.in/Content/BottomNews/2026/05/GOs.pdf",
+    "sourceNote": "Official. The Directorate General Medical & Health, Uttar Pradesh government-order page lists the Annual Transfer Policy for government officers/employees for 2026-27 dated 11 May 2026.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "up-e-office-implementation-go-2024",
+    "title": "E-Office Implementation — Uttar Pradesh Government",
+    "titleHi": "ई-ऑफिस क्रियान्वयन — उत्तर प्रदेश शासन",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "आई.टी. एवं इलेक्ट्रॉनिक्स विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "digital-it",
+      "records-office"
+    ],
+    "edition": "2024 implementation directions",
+    "date": "2024-12-20",
+    "goNumber": "आर-81(ई-ऑफिस)/चौतीस-सांख्यिक-2024",
+    "language": "hi",
+    "officialPage": "https://www.uplc.up.gov.in/en/article/e-office-gos",
+    "downloadUrl": "https://uplc.up.gov.in/downloadmedia/siteContent/202508011411190517Instructions.pdf",
+    "sourceNote": "Official. The document directs implementation of E-Office across departments, directorates, divisions, districts, municipal corporations, development authorities and other government offices, including PMU and organisation-unit arrangements.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "up-e-office-go-2023",
+    "title": "E-Office Government Order, 2023",
+    "titleHi": "ई-ऑफिस शासनादेश, 2023",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "आई.टी. एवं इलेक्ट्रॉनिक्स विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "digital-it",
+      "records-office"
+    ],
+    "edition": "2023",
+    "date": "2023-07-04",
+    "goNumber": null,
+    "language": "hi",
+    "officialPage": "https://www.uplc.up.gov.in/en/article/e-office-gos",
+    "downloadUrl": "https://www.uplc.up.gov.in/downloadmedia/siteContent/202508011407213905eoffice-GO-2023.pdf",
+    "sourceNote": "Official UPLC repository. The current E-Office GO page lists the 2023 government order dated 4 July 2023.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "jansunwai-igrs-go-2025-amendment",
+    "title": "Jan Sunwai-Samadhan (IGRS) System — Amendment to Government Order dated 2 January 2024",
+    "titleHi": "जनसुनवाई-समाधान (IGRS) प्रणाली — 02 जनवरी 2024 के शासनादेश में आंशिक संशोधन",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "लोक शिकायत विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "grievances",
+      "digital-it"
+    ],
+    "edition": "2025 amendment",
+    "date": "2025-01-15",
+    "goNumber": "1/2025/31/चौंतीस-लो०शि०-5/2025-5लो0शि0/2019",
+    "language": "hi",
+    "officialPage": "https://www.jansunwai.up.nic.in/IGRSGOE",
+    "downloadUrl": "https://www.jansunwai.up.nic.in/resources/pdf/IGRSGO/sashanadesh02042025.pdf",
+    "sourceNote": "Official Jan Sunwai/IGRS repository. The order modifies the 2 January 2024 IGRS government order and makes the revised monthly evaluation arrangement effective from 1 February 2025.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "jansunwai-igrs-go-2026-feedback-amendment",
+    "title": "Jan Sunwai-Samadhan (IGRS) — Amendment concerning prohibited subjects for feedback",
+    "titleHi": "जनसुनवाई-समाधान (IGRS) — फीडबैक हेतु निषेधित विषयों की व्यवस्था में संशोधन",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "लोक शिकायत विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "grievances",
+      "digital-it"
+    ],
+    "edition": "2026 amendment",
+    "date": "2026-04-02",
+    "goNumber": "1/1283221/चौंतीस-लो०शि०-05/2026",
+    "language": "hi",
+    "officialPage": "https://www.jansunwai.up.nic.in/IGRSGOE",
+    "downloadUrl": "https://www.jansunwai.up.nic.in/resources/pdf/IGRSGO/go_atrs_spl_close_02_04_2026.pdf",
+    "sourceNote": "Official Jan Sunwai/IGRS repository. The April 2026 order is the latest IGRS government order currently listed on the official repository and amends the earlier IGRS framework concerning feedback-related arrangements.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

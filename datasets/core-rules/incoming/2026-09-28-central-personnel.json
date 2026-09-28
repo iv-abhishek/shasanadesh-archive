@@ -1,0 +1,91 @@
+[
+  {
+    "slug": "gpf-central-services-amendment-2022-subscription-ceiling",
+    "title": "General Provident Fund (Central Services) Rules, 1960 — amendment of Rules 7, 8 and 10 (₹5 lakh annual subscription ceiling), 2022",
+    "titleHi": "सामान्य भविष्य निधि (केन्द्रीय सेवाएं) नियम, 1960",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Pension and Pensioners' Welfare",
+    "documentType": "rules",
+    "topics": [
+      "service",
+      "pension",
+      "pay-allowances"
+    ],
+    "edition": "2022 amendment (not the full Rules)",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://doppw.gov.in/",
+    "downloadUrl": "https://dopt.gov.in/sites/default/files/ceiling%20of%20GPF.pdf",
+    "sourceNote": "Official (DoPPW/DoPT). The official 2022 DoPPW/DoPT OM confirms the GPF Rules were originally issued through S.O. 3000 dated 01.12.1960 and records the 2022 amendments to Rules 7, 8 and 10, including the Rs.5 lakh annual subscription ceiling. This PDF is the official amendment/implementation document, not a consolidated reproduction of the entire 1960 Rules.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "ccs-leave-travel-concession-rules-1988",
+    "title": "Central Civil Services (Leave Travel Concession) Rules, 1988",
+    "titleHi": "केन्द्रीय सिविल सेवा (अवकाश यात्रा रियायत) नियम, 1988",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Personnel and Training",
+    "documentType": "rules",
+    "topics": [
+      "service",
+      "pay-allowances"
+    ],
+    "edition": "1988; official DoPT Rules notification with subsequent DoPT amendments/relaxations",
+    "date": "1988-05-01",
+    "goNumber": "S.O.  — Notification No. 31011/10/85-Estt.(A)",
+    "language": "en",
+    "officialPage": "https://dopt.gov.in/",
+    "downloadUrl": "https://dopt.gov.in/sites/default/files/31011_10_85-Estt.A_English_0.pdf",
+    "sourceNote": "Official (DoPT). This is the original official notification promulgating the CCS (LTC) Rules, 1988. DoPT's later annual report confirms subsequent LTC relaxations and amendments, so this should be retained as the foundational Rules document rather than treated as a consolidated 2026 compilation.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "ccs-leave-travel-concession-rules-current-doe-dopt-instructi",
+    "title": "CCS (Leave Travel Concession) Rules, 1988 — Current DoPT Instructions and Relaxations",
+    "titleHi": "केन्द्रीय सिविल सेवा (अवकाश यात्रा रियायत) नियम, 1988 — वर्तमान डीओपीटी निर्देश एवं शिथिलीकरण",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Personnel and Training",
+    "documentType": "general-instruction",
+    "topics": [
+      "service",
+      "pay-allowances"
+    ],
+    "edition": "DoPT instructions through 2022-23 annual compilation",
+    "date": "2022-10-11",
+    "goNumber": "31011/15/2022-Estt-A-IV",
+    "language": "en",
+    "officialPage": "https://dopt.gov.in/sites/default/files/AR2022-23English.pdf",
+    "downloadUrl": "https://dopt.gov.in/sites/default/files/OM31011152022_11102022.PDF",
+    "sourceNote": "Official (DoPT). The 11 October 2022 OM extended the special air-travel dispensation for NER, J&K, Ladakh and A&N up to 25 September 2024. It is an important subsequent instruction under the 1988 Rules, but is not itself a replacement for the Rules.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "modified-assured-career-progression-scheme-macps",
+    "title": "Modified Assured Career Progression Scheme (MACPS) — DoPT",
+    "titleHi": "संशोधित सुनिश्चित कैरियर प्रगति योजना (एमएसीपीएस)",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Personnel and Training",
+    "documentType": "general-instruction",
+    "topics": [
+      "service",
+      "pay-allowances"
+    ],
+    "edition": "MACPS with DoPT FAQs/clarifications",
+    "date": "2009-05-19",
+    "goNumber": "35034/3/2008-Estt.(D)",
+    "language": "en",
+    "officialPage": "https://dopt.gov.in/",
+    "downloadUrl": "https://dopt.gov.in/sites/default/files/FAQMACPS_Estt_D.pdf",
+    "sourceNote": "Official (DoPT). The official DoPT MACP FAQ expressly refers to the MACP dated 19.05.2009 and the foundational OM No. 35034/3/2008-Estt.(D). The retrieved official PDF is the DoPT MACP FAQ/clarification compilation rather than the original 19 May 2009 OM.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

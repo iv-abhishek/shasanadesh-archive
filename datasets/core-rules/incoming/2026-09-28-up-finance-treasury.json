@@ -1,0 +1,113 @@
+[
+  {
+    "slug": "uttar-pradesh-general-provident-fund-rules-1985",
+    "title": "General Provident Fund (Uttar Pradesh) Rules, 1985",
+    "titleHi": "सामान्य भविष्य निधि (उत्तर प्रदेश) नियमावली, 1985",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "वित्त विभाग",
+    "documentType": "rules",
+    "topics": [
+      "service",
+      "pension",
+      "pay-allowances"
+    ],
+    "edition": "1985 with amendments incorporated in the official Vitta-Path compilation",
+    "date": "1985-03-07",
+    "goNumber": null,
+    "language": "mixed",
+    "officialPage": "https://budget.up.nic.in/vittapath/Downloads.aspx",
+    "downloadUrl": "https://budget.up.nic.in/vittapath/pdfs/25P269-288.pdf",
+    "sourceNote": "Official (Finance Department, Government of Uttar Pradesh). The Vitta-Path GPF chapter describes the U.P. General Provident Fund Rules, 1985 and records subsequent amendments including the 1997, 2000 and 2005 amendments.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-new-defined-contributory-pension-scheme",
+    "title": "Newly Defined Contributory Pension Scheme",
+    "titleHi": "नवपरिभाषित अंशदायी पेंशन योजना",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "वित्त विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "pension",
+      "pay-allowances"
+    ],
+    "edition": "Official Vitta-Path compilation covering the New Defined Contributory Pension Scheme",
+    "date": null,
+    "goNumber": null,
+    "language": "mixed",
+    "officialPage": "https://budget.up.nic.in/vittapath/Downloads.aspx",
+    "downloadUrl": "https://budget.up.nic.in/vittapath/pdfs/24P245-258.pdf",
+    "sourceNote": "Official (Finance Department, Government of Uttar Pradesh). The official Vitta-Path download repository provides a dedicated chapter titled 'Newly Defined Pension Scheme'.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-ta-ltc-rules",
+    "title": "Travelling Allowance and Leave Travel Concession Rules",
+    "titleHi": "यात्रा भत्ता एवं अवकाश यात्रा सुविधा नियम",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "वित्त विभाग",
+    "documentType": "rules",
+    "topics": [
+      "pay-allowances",
+      "service"
+    ],
+    "edition": "Official Vitta-Path compilation",
+    "date": null,
+    "goNumber": null,
+    "language": "mixed",
+    "officialPage": "https://budget.up.nic.in/vittapath/Downloads.aspx",
+    "downloadUrl": "https://budget.up.nic.in/vittapath/pdfs/12P85-99.pdf",
+    "sourceNote": "Official (Finance Department, Government of Uttar Pradesh). The official Vitta-Path repository provides a dedicated TA and LTC chapter.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-pay-fixation-rules-and-orders",
+    "title": "Pay Fixation — Uttar Pradesh Government Rules and Orders",
+    "titleHi": "वेतन निर्धारण — उत्तर प्रदेश शासन नियम एवं आदेश",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "वित्त विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "pay-allowances",
+      "service"
+    ],
+    "edition": "Official Vitta-Path compilation",
+    "date": null,
+    "goNumber": null,
+    "language": "mixed",
+    "officialPage": "https://budget.up.nic.in/vittapath/Downloads.aspx",
+    "downloadUrl": "https://budget.up.nic.in/vittapath/pdfs/11P58-84e.pdf",
+    "sourceNote": "Official (Finance Department, Government of Uttar Pradesh). The official Vitta-Path repository provides a dedicated Pay Fixation chapter containing UP government pay-fixation rules and orders.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-budget-manual-reappropriation-form",
+    "title": "Uttar Pradesh Budget Manual — Re-appropriation Procedure and Form",
+    "titleHi": "उत्तर प्रदेश बजट मैनुअल — पुनर्विनियोजन प्रक्रिया एवं प्रपत्र",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "वित्त विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "budget-accounts",
+      "financial-rules"
+    ],
+    "edition": "Official Budget Manual Form BM-9, Part I",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://budget.up.nic.in/Manual/Final/Forms/form_bud.pdf",
+    "downloadUrl": "https://budget.up.nic.in/Manual/Final/Forms/form_bud.pdf",
+    "sourceNote": "Official (Finance Department, Government of Uttar Pradesh). The official form is the application for sanction of re-appropriation under paragraph 158 of the Budget Manual.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

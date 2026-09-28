@@ -1,0 +1,130 @@
+[
+  {
+    "slug": "mahatma-gandhi-national-rural-employment-guarantee-act-2005",
+    "title": "Mahatma Gandhi National Rural Employment Guarantee Act, 2005",
+    "titleHi": "महात्मा गांधी राष्ट्रीय ग्रामीण रोजगार गारंटी अधिनियम, 2005",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Rural Development",
+    "documentType": "act",
+    "topics": [
+      "schemes"
+    ],
+    "edition": "2005; official India Code text",
+    "date": "2005-09-05",
+    "goNumber": "Act No. 42 of 2005",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/handle/123456789/12887",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/4649/1/a2005-42.pdf",
+    "sourceNote": "Official (India Code / Ministry of Rural Development). The Act provides the statutory framework for guaranteed rural wage employment.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "pmay-g-framework-for-implementation-2022",
+    "title": "Framework for Implementation of Pradhan Mantri Awaas Yojana-Gramin (PMAY-G)",
+    "titleHi": "प्रधानमंत्री आवास योजना-ग्रामीण के क्रियान्वयन हेतु रूपरेखा",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Rural Development",
+    "documentType": "guideline",
+    "topics": [
+      "schemes"
+    ],
+    "edition": "2022 Framework for Implementation",
+    "date": "2022-01-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://pmayg.dord.gov.in/",
+    "downloadUrl": "https://pmayg.nic.in/netiayHome/Uploaded/Guidelines-English_Book_Final.pdf",
+    "sourceNote": "Official (PMAY-G / Ministry of Rural Development). The 2022 Framework for Implementation is the official implementation framework; the PMAY-G programme has subsequently been continued through FY 2028-29, but the framework remains the principal implementation document located in the official repository.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "day-nrlm-framework-for-implementation",
+    "title": "National Rural Livelihoods Mission — Framework for Implementation",
+    "titleHi": "राष्ट्रीय ग्रामीण आजीविका मिशन — क्रियान्वयन हेतु रूपरेखा",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Rural Development",
+    "documentType": "guideline",
+    "topics": [
+      "schemes"
+    ],
+    "edition": "Foundational DAY-NRLM Framework for Implementation",
+    "date": "2010-12-09",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://aajeevika.gov.in/",
+    "downloadUrl": "https://aajeevika.gov.in/sites/default/files/resources/NRLM-Framework-for-implementation.pdf",
+    "sourceNote": "Official (Aajeevika / Ministry of Rural Development). The framework was approved by the Ministry on 9 December 2010 and formed the implementation framework for NRLM, subsequently renamed DAY-NRLM.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "pm-kisan-operational-guidelines-revised-2020",
+    "title": "Pradhan Mantri Kisan Samman Nidhi (PM-KISAN) Scheme — Revised Operational Guidelines",
+    "titleHi": "प्रधानमंत्री किसान सम्मान निधि योजना — संशोधित परिचालन दिशानिर्देश",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Agriculture & Farmers Welfare",
+    "documentType": "guideline",
+    "topics": [
+      "schemes",
+      "agriculture"
+    ],
+    "edition": "Revised as on 29 March 2020",
+    "date": "2020-03-29",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://pmkisan.gov.in/LetterandCirculars.aspx",
+    "downloadUrl": "https://pmkisan.gov.in/Documents/RevisedPM-KISANOperationalGuidelines%28English%29.pdf",
+    "sourceNote": "Official (PM-KISAN / Department of Agriculture & Farmers Welfare). The official PM-KISAN site identifies this as the Revised Operational Guidelines, revised as on 29 March 2020; the site was last updated 17 February 2026.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "pradhan-mantri-fasal-bima-yojana-operational-guidelines-2023",
+    "title": "Pradhan Mantri Fasal Bima Yojana — Operational Guidelines",
+    "titleHi": "प्रधानमंत्री फसल बीमा योजना — परिचालन दिशानिर्देश",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Agriculture & Farmers Welfare",
+    "documentType": "guideline",
+    "topics": [
+      "schemes",
+      "agriculture"
+    ],
+    "edition": "2023 Operational Guidelines",
+    "date": "2023-01-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://pmfby.gov.in/policyClaim",
+    "downloadUrl": "https://pmfby.gov.in/pdf/Revised_Operational_Guidelines.pdf",
+    "sourceNote": "Official (PMFBY / Department of Agriculture & Farmers Welfare). The current PMFBY government portal specifically lists the '2023 Operational Guidelines of Pradhan Mantri Fasal Bima Yojana' under its current documents.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "swachh-bharat-mission-grameen-phase-ii-operational-guideline",
+    "title": "Swachh Bharat Mission (Grameen) — Phase II Operational Guidelines",
+    "titleHi": "स्वच्छ भारत मिशन (ग्रामीण) — चरण-II परिचालन दिशानिर्देश",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Drinking Water and Sanitation, Ministry of Jal Shakti",
+    "documentType": "guideline",
+    "topics": [
+      "schemes"
+    ],
+    "edition": "Phase II Operational Guidelines, 2020, with subsequent amendments/clarifications listed on the official repository",
+    "date": "2020-02-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://swachhbharatmission.ddws.gov.in/guidelines",
+    "downloadUrl": "https://www.swachhbharatmission.ddws.gov.in/sites/default/files/Guidelines/SBMG%20Phase-II%20Operational%20Guidelines.pdf",
+    "sourceNote": "Official (Department of Drinking Water and Sanitation). The official SBM-G guidelines repository lists the Phase-II Operational Guidelines and subsequent amendments/clarifications, including amendments to funding provisions and ODF Plus criteria.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

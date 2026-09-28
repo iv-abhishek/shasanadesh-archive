@@ -1,0 +1,197 @@
+[
+  {
+    "slug": "uttar-pradesh-revenue-code-2006",
+    "title": "Uttar Pradesh Revenue Code, 2006",
+    "titleHi": "उत्तर प्रदेश राजस्व संहिता, 2006",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "राजस्व विभाग",
+    "documentType": "act",
+    "topics": [
+      "land-revenue",
+      "records-office",
+      "law-order"
+    ],
+    "edition": "U.P. Act No. 8 of 2012; India Code consolidated PDF",
+    "date": "2012-12-12",
+    "goNumber": "U.P. Act No. 8 of 2012",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/indiacode/handle/123456789/2510",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/17001/3/pradesh_revenue_code_2006.pdf",
+    "sourceNote": "Official (India Code). The India Code record identifies the Uttar Pradesh Revenue Code-2006 as a Uttar Pradesh State Act under the Revenue Department.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-revenue-code-rules-2016",
+    "title": "Uttar Pradesh Revenue Code Rules, 2016",
+    "titleHi": "उत्तर प्रदेश राजस्व संहिता नियमावली, 2016",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "राजस्व विभाग",
+    "documentType": "rules",
+    "topics": [
+      "land-revenue",
+      "records-office"
+    ],
+    "edition": "2016; official English PDF",
+    "date": "2016-02-10",
+    "goNumber": "1701-1-2016-15(1)/1998-19",
+    "language": "en",
+    "officialPage": "https://bor.up.nic.in/",
+    "downloadUrl": "https://bor.up.nic.in/pdf/ENGLISH_UPLAD.pdf",
+    "sourceNote": "Official (Board of Revenue, Uttar Pradesh). The notification states that these rules were made under section 233 of the Uttar Pradesh Revenue Code, 2006 and rescind rules made under the repealed enactments.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "revenue-code-first-amendment-rules-2016",
+    "title": "Uttar Pradesh Revenue Code (First Amendment) Rules, 2016",
+    "titleHi": "उत्तर प्रदेश राजस्व संहिता (प्रथम संशोधन) नियमावली, 2016",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "राजस्व विभाग",
+    "documentType": "rules",
+    "topics": [
+      "land-revenue",
+      "records-office"
+    ],
+    "edition": "First Amendment Rules, 2016",
+    "date": "2016-05-27",
+    "goNumber": "696/1-1-2016-20(8)/2016",
+    "language": "en",
+    "officialPage": "https://bor.up.nic.in/",
+    "downloadUrl": "https://bor.up.nic.in/pdf/adhisuchana1_eng.pdf",
+    "sourceNote": "Official (Board of Revenue, Uttar Pradesh). Amends rules 5 and 6 of the Uttar Pradesh Revenue Code Rules, 2016.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "rfctlarr-act-2013",
+    "title": "Right to Fair Compensation and Transparency in Land Acquisition, Rehabilitation and Resettlement Act, 2013",
+    "titleHi": "भूमि अर्जन, पुनर्वासन और पुनर्व्यवस्थापन में उचित प्रतिकर और पारदर्शिता का अधिकार अधिनियम, 2013",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Department of Land Resources, Ministry of Rural Development",
+    "documentType": "act",
+    "topics": [
+      "land-revenue"
+    ],
+    "edition": "2013; official India Code PDF",
+    "date": "2013-09-26",
+    "goNumber": "Act No. 30 of 2013",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/handle/123456789/17043",
+    "downloadUrl": "https://www.indiacode.nic.in/bitstream/123456789/15991/1/right_to_fair_compansation_and_transparency_in_land_aquisition%2C_rehabilitation_and_resettlement_act%2C_2013_new.pdf",
+    "sourceNote": "Official (India Code). The India Code record identifies Act No. 30 of 2013 and separately lists the Uttar Pradesh Rules, 2016.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "rfctlarr-uttar-pradesh-rules-2016",
+    "title": "Right to Fair Compensation and Transparency in Land Acquisition, Rehabilitation and Resettlement (Uttar Pradesh) Rules, 2016",
+    "titleHi": "भूमि अर्जन, पुनर्वासन और पुनर्व्यवस्थापन में उचित प्रतिकर और पारदर्शिता का अधिकार (उत्तर प्रदेश) नियमावली, 2016",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "राजस्व विभाग",
+    "documentType": "rules",
+    "topics": [
+      "land-revenue"
+    ],
+    "edition": "2016",
+    "date": "2016-11-23",
+    "goNumber": "624/1-13-2016-5Ka(25)-2013",
+    "language": "en",
+    "officialPage": "https://www.indiacode.nic.in/handle/123456789/17043",
+    "downloadUrl": "https://upload.indiacode.nic.in/showfile?actid=AC_UP_88_495_00008_00008_1638956306592&filename=the_right_to_fair_compensation_and_transparency_in_land_acquistion_rehabilation_and_resettelment_rules_%28english%29.pdf&type=rule",
+    "sourceNote": "Official (India Code). The India Code record lists the UP Rules dated 23 November 2016, and the linked official PDF contains Notification No. 624 and the full rules.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "indian-stamp-act-1899-up-application",
+    "title": "Indian Stamp Act, 1899 — as amended in its application to Uttar Pradesh",
+    "titleHi": "भारतीय स्टाम्प अधिनियम, 1899 — उत्तर प्रदेश में लागू संशोधित रूप",
+    "issuer": "Government of Uttar Pradesh / Stamp and Registration Department",
+    "jurisdiction": "state",
+    "department": "स्टाम्प तथा रजिस्ट्रेशन विभाग",
+    "documentType": "act",
+    "topics": [
+      "land-revenue"
+    ],
+    "edition": "Official UP version",
+    "date": "1899-07-01",
+    "goNumber": "Act No. 2 of 1899",
+    "language": "en",
+    "officialPage": "https://igrsup.gov.in/igrsup/scheduleIB",
+    "downloadUrl": "https://igrsup.gov.in/prernadoc/Adhiniyam/3/IndianStampActEnglish.pdf",
+    "sourceNote": "Official (Stamp and Registration Department, Uttar Pradesh). The Department's current Schedule I-B page expressly describes the stamp-duty schedule as amended up to date in its application to Uttar Pradesh; the official PDF contains the Act as applied in UP.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "united-provinces-stamp-rules-1942",
+    "title": "United Provinces Stamp Rules, 1942",
+    "titleHi": "यूनाइटेड प्रोविन्सेज स्टाम्प रूल्स, 1942",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "स्टाम्प तथा रजिस्ट्रेशन विभाग",
+    "documentType": "rules",
+    "topics": [
+      "land-revenue"
+    ],
+    "edition": "1942; official UP publication",
+    "date": "1942-03-25",
+    "goNumber": "M.598/X-503",
+    "language": "en",
+    "officialPage": "https://igrsup.gov.in/igrsup/upStampRule",
+    "downloadUrl": "https://igrsup.gov.in/prernadoc/Adhiniyam/rule/pdf11/english/index.pdf",
+    "sourceNote": "Official (Stamp and Registration Department, Uttar Pradesh). The official page identifies these as the United Provinces Stamp Rules, 1942.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-registration-manual",
+    "title": "Registration Manual",
+    "titleHi": "पंजीकरण मैनुअल",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "स्टाम्प तथा रजिस्ट्रेशन विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "land-revenue",
+      "records-office"
+    ],
+    "edition": "Official English Registration Manual",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://igrsup.gov.in/",
+    "downloadUrl": "https://igrsup.gov.in/prernadoc/Adhiniyam/rule/pdf9/RegistrationManualEnglish.pdf",
+    "sourceNote": "Official (Stamp and Registration Department, Uttar Pradesh). The PDF is the department-hosted Registration Manual and contains operational provisions concerning registration offices, searches, copies, registers and related procedures.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "uttar-pradesh-revenue-manual",
+    "title": "Revenue Manual",
+    "titleHi": "राजस्व मैनुअल",
+    "issuer": "Government of Uttar Pradesh",
+    "jurisdiction": "state",
+    "department": "राजस्व विभाग",
+    "documentType": "general-instruction",
+    "topics": [
+      "land-revenue",
+      "records-office"
+    ],
+    "edition": "Official Board of Revenue compilation",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://bor.up.nic.in/",
+    "downloadUrl": "https://bor.up.nic.in/book_detail/pdf/book_Revenue/62.pdf",
+    "sourceNote": "Official (Board of Revenue, Uttar Pradesh). The Board hosts the Revenue Manual as a departmental compilation; the verified PDF contains Revenue Manual provisions and historical revenue instructions.",
+    "preferredSource": null,
+    "amends": []
+  }
+]

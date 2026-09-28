@@ -1,0 +1,114 @@
+[
+  {
+    "slug": "disaster-management-act-2005",
+    "title": "Disaster Management Act, 2005",
+    "titleHi": "आपदा प्रबंधन अधिनियम, 2005",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Home Affairs",
+    "documentType": "act",
+    "topics": [
+      "law-order",
+      "schemes"
+    ],
+    "edition": "2005; subsequently amended, including the Disaster Management (Amendment) Act, 2025",
+    "date": "2005-12-23",
+    "goNumber": "Act No. 53 of 2005",
+    "language": "en",
+    "officialPage": "https://ndmindia.mha.gov.in/ndmi/laws-plans-and-policies",
+    "downloadUrl": "https://ndmindia.mha.gov.in/ndmi/images/The%20Disaster%20Management%20Act%2C%202005.pdf",
+    "sourceNote": "Official (Ministry of Home Affairs). The NDM India repository hosts the Disaster Management Act, 2005 and separately records the 2025 amendment. The 2025 amendment should be retained as a separate amending instrument rather than treating this 2005 PDF as a fully consolidated current Act.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "sdrf-ndrf-items-and-norms-of-assistance",
+    "title": "State Disaster Response Fund / National Disaster Response Fund — Items and Norms of Assistance",
+    "titleHi": "राज्य आपदा मोचन निधि / राष्ट्रीय आपदा मोचन निधि — सहायता की मदें एवं मानदंड",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Home Affairs",
+    "documentType": "guideline",
+    "topics": [
+      "schemes",
+      "financial-rules"
+    ],
+    "edition": "Current MHA SDRF/NDRF framework; 15th Finance Commission award period 2021-22 to 2025-26",
+    "date": "2021-04-01",
+    "goNumber": "33-02/2020-NDM-I",
+    "language": "en",
+    "officialPage": "https://ndmindia.mha.gov.in/ndmi/responsefund",
+    "downloadUrl": "https://ndmindia.mha.gov.in/ndmi/viewUploadedDocument?uid=NEW155",
+    "sourceNote": "Official (Ministry of Home Affairs). The official response-fund repository identifies SDRF as the primary State fund and NDRF as supplementary assistance for disasters of severe nature. The linked official document contains the 2021-22 to 2025-26 funding framework.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "dbt-standard-operating-procedure-for-payments",
+    "title": "Standard Operating Procedure for DBT Payments",
+    "titleHi": "डीबीटी भुगतान हेतु मानक संचालन प्रक्रिया",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "DBT Mission, Cabinet Secretariat",
+    "documentType": "guideline",
+    "topics": [
+      "schemes",
+      "digital-it",
+      "financial-rules"
+    ],
+    "edition": "January 2019",
+    "date": "2019-01-01",
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://dbtbharat.gov.in/static-page-content/spagecont?id=4",
+    "downloadUrl": "https://dbtbharat.gov.in/data/documents/SOP%20for%20DBT%20Payments.pdf",
+    "sourceNote": "Official (DBT Mission). The official DBT Bharat repository identifies this as the Standard Operating Procedure for DBT Payments and describes the beneficiary identification, validation, payment-file and payment-processing workflow.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "dbt-guidelines-for-state-dbt-cell",
+    "title": "Guidelines for State DBT Cell",
+    "titleHi": "राज्य डीबीटी सेल हेतु दिशानिर्देश",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "DBT Mission",
+    "documentType": "guideline",
+    "topics": [
+      "schemes",
+      "digital-it"
+    ],
+    "edition": "Official DBT Mission guidance",
+    "date": null,
+    "goNumber": null,
+    "language": "en",
+    "officialPage": "https://dbtbharat.gov.in/static-page-content/spagecont?id=6",
+    "downloadUrl": "https://dbtbharat.gov.in/data/documents/Guidelines-for-State-DBT-Cell.pdf",
+    "sourceNote": "Official (DBT Mission). The document defines the State DBT Cell's coordination, technical, implementation and monitoring role between Central Ministries, State departments and district/block/panchayat administration.",
+    "preferredSource": null,
+    "amends": []
+  },
+  {
+    "slug": "aadhaar-targeted-delivery-act-2016",
+    "title": "Aadhaar (Targeted Delivery of Financial and Other Subsidies, Benefits and Services) Act, 2016",
+    "titleHi": "आधार (वित्तीय और अन्य सहायिकियों, प्रसुविधाओं और सेवाओं का लक्षित परिदान) अधिनियम, 2016",
+    "issuer": "Government of India",
+    "jurisdiction": "central",
+    "department": "Ministry of Electronics and Information Technology / UIDAI",
+    "documentType": "act",
+    "topics": [
+      "digital-it",
+      "data-protection",
+      "schemes"
+    ],
+    "edition": "Updated up to 10 October 2023",
+    "date": "2016-03-25",
+    "goNumber": "Act No. 18 of 2016",
+    "language": "en",
+    "officialPage": "https://uidai.gov.in/en/legal",
+    "downloadUrl": "https://www.uidai.gov.in/images/Aadhaar_Act_2016_English.pdf",
+    "sourceNote": "Official (UIDAI). UIDAI's current Legal repository identifies the Act as updated up to 10 October 2023 and published/updated on its current legal portal in 2026.",
+    "preferredSource": null,
+    "amends": []
+  }
+]
