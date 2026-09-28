@@ -157,7 +157,7 @@ table{border-collapse:collapse;width:100%;margin:1rem 0} td,th{border-bottom:1px
 ${message ? `<p class="status">${htmlEscape(message)}</p>` : ""}
 <h2>1. Capture bookmark</h2>
 <p>Drag this to your bookmarks bar: <a class="bookmark" href="${captureScript(formToken)}">Capture Shasanadesh page</a>
-(re-drag after restarting the bridge: it contains this run's token).</p>
+(it keeps working after the bridge restarts). Click it on the <b>Shasanadesh results tab</b>, not on this page.</p>
 <ol>
 <li>On shasanadesh.up.gov.in choose <strong>one department</strong> (and the largest "records per page"), complete the CAPTCHA and search.</li>
 <li>On each results page click the bookmark. Chrome may ask once to let the site reach your local network — allow it (only 127.0.0.1 is contacted).</li>
