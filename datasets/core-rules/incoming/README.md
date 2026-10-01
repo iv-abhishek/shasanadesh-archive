@@ -68,3 +68,11 @@ known topic codes, unique slugs). One file per batch, named by date and topic.
   Control Order, UP Clinical Establishments Rules 2016, FSS Act 2006, all UP panchayat and
   municipal election rules and the SEC booklet, Water Act, Legal Metrology Act, Code on Social
   Security, UP Retirement Benefits Rules.
+- 2026-10-01-up-financial-handbook.json (Claude, from budget.up.nic.in): Financial Handbook
+  Vol. VI (Public Works Department) — 25 chapters and 9 appendices as scanned PDFs (OCR); and
+  19 chapters of Vitta Path (वित्त पथ), the Finance Department's 2012 guide (Kruti Dev text,
+  converted to Unicode at build, ADR-070). The 4 Vitta Path chapters already in
+  2026-09-28-up-finance-treasury.json were retitled "Vitta Path … (2012)": they are the
+  guide's chapters, not the rules themselves. Dead links: Vol. VI chapters 18, 20, 21,
+  Appendix IV; Vitta Path chapter 13. The HTML volumes (II, III, V, VII, CSR) are read by
+  `npm run ingest:handbook`, not this catalogue.

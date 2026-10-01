@@ -371,19 +371,29 @@ export async function storeCaptureInB2(input: {
   captureId: string;
   pdf: Buffer;
   metadata: Record<string, unknown>;
+  /**
+   * Raw object type for captures that are not PDFs (the Financial Handbook's
+   * HTML pages are archived as one JSON bundle: rawExtension "html.json").
+   */
+  rawExtension?: string;
+  rawContentType?: string;
 }): Promise<B2CaptureStorage> {
   const context = await getAuthorization();
   const collection = input.collection ?? "shasanadesh";
+  const rawExtension = input.rawExtension ?? "pdf";
+  if (!/^[a-z0-9]+(\.[a-z0-9]+)?$/.test(rawExtension)) {
+    throw new Error("B2 raw extensions may contain lowercase letters and digits only (one dot allowed).");
+  }
   if (!/^[a-z0-9-]+$/.test(collection)) {
     throw new Error("B2 collection names may contain lowercase letters, digits, and hyphens only.");
   }
   const archivePrefix = `${ARCHIVE_ROOT}${collection}/`;
   const sourcePath = objectPathSegment(input.sourceId);
   const capturePath = objectPathSegment(input.captureId);
-  const rawKey = `${archivePrefix}raw/${sourcePath}/${capturePath}.pdf`;
+  const rawKey = `${archivePrefix}raw/${sourcePath}/${capturePath}.${rawExtension}`;
   const metadataKey = `${archivePrefix}processed/${sourcePath}/${capturePath}.metadata.json`;
 
-  const raw = await uploadObject(rawKey, input.pdf, "application/pdf");
+  const raw = await uploadObject(rawKey, input.pdf, input.rawContentType ?? "application/pdf");
   const remoteManifest = {
     ...input.metadata,
     storage: {
@@ -435,13 +445,17 @@ export async function refreshCaptureManifestInB2(input: {
     const sourcePath = segment(input.sourceId);
     const capturePath = segment(input.captureId);
     return {
-      rawKey: archivePrefix + "raw/" + sourcePath + "/" + capturePath + ".pdf",
+      // The raw object is a PDF, or another type stored by storeCaptureInB2
+      // (rawExtension); only the name before the extension must match.
+      rawStem: archivePrefix + "raw/" + sourcePath + "/" + capturePath + ".",
       metadataKey:
         archivePrefix + "processed/" + sourcePath + "/" + capturePath + ".metadata.json",
     };
   });
   const matchedScheme = keySchemes.find(
-    (scheme) => scheme.rawKey === input.storage.raw.key,
+    (scheme) =>
+      input.storage.raw.key.startsWith(scheme.rawStem) &&
+      /^[a-z0-9]+(\.[a-z0-9]+)?$/.test(input.storage.raw.key.slice(scheme.rawStem.length)),
   );
   if (!matchedScheme) {
     throw new Error("The B2 raw-object key does not match the capture being refreshed.");

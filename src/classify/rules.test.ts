@@ -48,5 +48,9 @@ assert.deepEqual(
   ["B", "low"],
 );
 assert.equal(classifyOrder({ provider: "doe-gfr" }).tier, "A");
+assert.deepEqual(
+  (({ tier, confidence, docType }) => ({ tier, confidence, docType }))(classifyOrder({ provider: "up-fhb", subject: "Financial Handbook, Volume V, Part I (Account Rules), Uttar Pradesh", category: "rules" })),
+  { tier: "A", confidence: "high", docType: "rules" },
+);
 
 console.log(`classification rule tests passed (${cases.length} labelled subjects)`);

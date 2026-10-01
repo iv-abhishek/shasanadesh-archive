@@ -147,7 +147,8 @@ export function classifyOrder(input: ClassificationInput): Classification {
 
   // Curated core rules (ADR-062) are chosen by hand as generally applicable;
   // the catalogue states the document type (it arrives here as the category).
-  if (input.provider === "core-rules") {
+  // The UP Financial Handbook volumes (src/ingest-handbook.ts) are rulebooks too.
+  if (input.provider === "core-rules" || input.provider === "up-fhb") {
     const stated = (input.category ?? "").trim() as DocType;
     const docType: DocType = CORE_RULE_TYPES.includes(stated) ? stated : "guideline";
     return result(docType, "A", "high", ["curated core rule (datasets/core-rules)"]);

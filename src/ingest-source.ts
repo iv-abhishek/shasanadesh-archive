@@ -239,6 +239,30 @@ async function persistB2(
   return storage;
 }
 
+/** Copy what the listing says about a document onto stored metadata; true when anything changed. */
+function refreshListingFields(metadata: Record<string, unknown>, record: SourceDocument): boolean {
+  const listing: Record<string, unknown> = {
+    title: record.title,
+    issuer: record.issuer,
+    jurisdiction: record.jurisdiction,
+    department: record.department,
+    documentType: record.documentType,
+    language: record.language,
+    goDate: record.goDate,
+    goNumber: record.goNumber,
+    ...(record.titles ? { titles: record.titles } : {}),
+    ...(record.sourceRecord ? { sourceRecord: record.sourceRecord } : {}),
+  };
+  let changed = false;
+  for (const [key, value] of Object.entries(listing)) {
+    if (JSON.stringify(metadata[key] ?? null) !== JSON.stringify(value ?? null)) {
+      metadata[key] = value;
+      changed = true;
+    }
+  }
+  return changed;
+}
+
 async function ingestOne(
   record: SourceDocument,
   adapter: SourceAdapter,
@@ -264,6 +288,13 @@ async function ingestOne(
     await mkdir(sourceDir, { recursive: true });
     if (!force && (await exists(pdfPath)) && (await exists(metadataPath))) {
       const existingMetadata = JSON.parse(await readFile(metadataPath, "utf8")) as Record<string, unknown>;
+      if (refreshListingFields(existingMetadata, record)) {
+        // A corrected catalogue entry (title, type, topics) reaches documents
+        // that are already stored, without downloading them again. The B2
+        // manifest follows on the next metadata save (build:pages).
+        await writeFile(metadataPath, JSON.stringify(existingMetadata, null, 2) + "\n");
+        console.log("UPDATED listing details of " + record.sourceId);
+      }
       if (!b2Enabled) {
         console.log("SKIP " + record.sourceId);
         return "skipped";

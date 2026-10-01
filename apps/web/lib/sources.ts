@@ -10,6 +10,7 @@ import { formatDayKey } from "./app-time";
 
 const COLLECTION_LABELS: Array<{ prefix: string; label: string }> = [
   { prefix: "core-rules-", label: "Core rules" },
+  { prefix: "up-fhb-", label: "UP Financial Handbook" },
   { prefix: "doe-gfr-", label: "Dept. of Expenditure, GoI" },
   { prefix: "upgov-", label: "Raj Bhavan UP" },
   { prefix: "invest-up-", label: "Invest UP" },
@@ -22,6 +23,7 @@ const COLLECTION_LABELS: Array<{ prefix: string; label: string }> = [
 export const SOURCE_COLLECTIONS: Array<{ provider: string; label: string }> = [
   { provider: "shasanadesh-up", label: "Shasanadesh" },
   { provider: "core-rules", label: "Core rules" },
+  { provider: "up-fhb", label: "UP Financial Handbook" },
   { provider: "upgov", label: "Raj Bhavan UP" },
   { provider: "invest-up", label: "Invest UP" },
   { provider: "uppolice", label: "UP Police" },

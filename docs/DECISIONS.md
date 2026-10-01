@@ -992,3 +992,55 @@ the ministry's own host (msme.gov.in/static/uploads/…). No key or login is nee
 - This is the base for PLAN §0-C (department knowledge): adding a ministry on the same
   platform is a sites.json entry (other categories: acts-and-policy, guidelines,
   gazettes-notifications, reports).
+
+## ADR-069 - UP Financial Handbook: HTML volumes read page by page, cited at their own URL
+
+The Financial Handbook (वित्तीय हस्तपुस्तिका), the most-used UP rulebook, is published by the
+Finance Department on budget.up.nic.in mostly as web pages, not PDFs (checked 1 Oct 2026;
+no official PDF of these volumes exists; copies on document-sharing sites are not
+government sources, Rulebook §2).
+
+- `src/sources/up-fhb.ts` + `npm run ingest:handbook` (`src/ingest-handbook.ts`): Vol. II
+  Parts II–IV (Fundamental and Subsidiary Rules), Vol. III (TA rules), Vol. V Part I
+  (account rules), Vol. V Part II (treasury rules), Vol. VII (Forest accounts) and the Civil
+  Service Regulations. One document per volume (`up-fhb-<volume>`, provider and B2
+  collection `up-fhb`); each chapter page becomes text and is split into parts of at most
+  3,500 characters at paragraph boundaries, each headed with volume and chapter.
+- **Citations**: `metadata.pageUrls[i]` is the official URL of page i+1; the retrieval
+  service returns it as `page_url`, so a citation opens the exact chapter page on
+  budget.up.nic.in instead of `#page=N` (Rulebook §1).
+- The pipeline treats these like PDFs without a PDF: `build:pages` reads
+  `html-pages/page-NNN.txt`; `storage:restore` skips them; the raw HTML of every chapter
+  is archived in B2 as one `raw.html.json` bundle (b2.ts gained `rawExtension`).
+- A volume is replaced only when every page was read; a 404 in the official index (Vol. V
+  Part II "030.HMT", Vol. II chapters 6 and 53 published as .doc and now missing) is
+  recorded in `html.skippedLinks`. Unchanged text does not create a new capture. The daily
+  sync re-reads a volume after 30 days.
+- Classified tier A (rulebook) like the curated core rules.
+- Vol. VI (PWD/irrigation accounts) is chapter PDFs (scanned → OCR) and goes through the
+  core-rules catalogue (`incoming/2026-10-01-up-financial-handbook.json`), as do the 24
+  chapters of **Vitta Path** (वित्त पथ, budget.up.nic.in/vittapath), the Finance
+  Department's 2012 guide to financial and service rules (delegation of financial powers,
+  leave, pay fixation, store purchase, pension, GPF, office procedure…). Vitta Path is
+  typed "guideline", titled with its year, and its note says later rules prevail. Missing
+  on the site (404): Vol. VI chapters 18, 20, 21 and Appendix IV; Vitta Path chapter 13
+  (medical reimbursement). Vol. I (delegation of financial powers) is not online.
+
+## ADR-070 - Kruti Dev text converted to Unicode when pages are built
+
+Vitta Path and many older UP documents were typed in the Kruti Dev font: the PDF text layer
+holds Latin codes ("foŸkh; vf/kdkj" for "वित्तीय अधिकार"), which the text-quality checks do not
+flag (they look for broken Devanagari) and which search and the model cannot use.
+
+- `src/lib/krutidev.ts`: exact mapping (longest sequence first, then the short-i and reph
+  re-ordering), including the alternate glyph slots these PDFs use (त्त, ो, ौ, ध्, भ, ०), the
+  rupee sign, digit separators, and English phrases typed in a Latin font inside the Hindi
+  text ("(Standards of Financial Propriety)" stays English).
+- `looksLikeKrutiDev` is strict (Kruti Dev function words must clearly outnumber English
+  ones, little real Devanagari); on a 400-order Shasanadesh sample it flagged nothing (those
+  are Unicode) and on the English Handbook it flagged nothing.
+- `build:pages` converts a native page that looks like Kruti Dev; the page record says
+  `converted: "krutidev"` and `pageCorpus.krutiDevPages` counts them. Conversion is exact
+  for the font, so it is preferred to OCR; OCR remains the fallback for scans.
+- `ingest:source` now copies corrected catalogue details (title, type, topics) onto
+  documents already stored, so fixing a catalogue entry does not need a re-download.

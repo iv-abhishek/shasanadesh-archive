@@ -187,6 +187,9 @@ async function restore(): Promise<void> {
   let restored = 0, failed = 0;
   for await (const doc of documents()) {
     if (sourceId ? doc.metadata.sourceId !== sourceId : gate.skips(doc.metadata.sourceId)) continue;
+    // HTML sources (Financial Handbook) archive an HTML bundle, not a PDF;
+    // their text lives in html-pages/ and needs no original.
+    if ((doc.metadata as { html?: unknown }).html) continue;
     const pdfPath = path.join(doc.dir, "original.pdf");
     if (await readIfExists(pdfPath)) continue;
     const raw = doc.metadata.storage?.raw;

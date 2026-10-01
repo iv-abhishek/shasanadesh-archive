@@ -62,6 +62,10 @@ interface Metadata {
   pdf?: {
     pages?: number | null;
   };
+  /** HTML sources (Financial Handbook): page count without a PDF. */
+  html?: {
+    pages?: number | null;
+  };
 }
 
 interface RetrievalPageVariant {
@@ -198,7 +202,7 @@ async function loadDocuments(client: PoolClient): Promise<number> {
         metadata.capture?.contentType ?? null,
         metadata.capture?.bytes ?? null,
         metadata.capture?.rawSha256 ?? null,
-        metadata.pdf?.pages ?? null,
+        metadata.pdf?.pages ?? metadata.html?.pages ?? null,
         JSON.stringify(metadata),
       ],
     );

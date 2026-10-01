@@ -31,6 +31,7 @@ import type { B2CaptureStorage } from "./storage/b2.js";
 import { saveDocumentMetadata } from "./storage/document-metadata.js";
 import { PDFTOTEXT_BIN } from "./lib/tool-config.js";
 import { describeGate, loadProcessingGate } from "./classify/processing-gate.js";
+import { krutiDevToUnicode, looksLikeKrutiDev } from "./lib/krutidev.js";
 
 const execFileAsync = promisify(execFile);
 const documentsRoot = path.resolve("data/documents");
@@ -47,6 +48,10 @@ interface Metadata {
   pdf?: {
     pages?: number | null;
   };
+  /** HTML sources (src/ingest-handbook.ts): page texts in html-pages/, no PDF. */
+  html?: {
+    pages?: number | null;
+  };
   text?: {
     bytes?: number;
     hasNativeText?: boolean;
@@ -59,6 +64,8 @@ interface Metadata {
     completed?: boolean;
     pages?: number;
     textSource?: "native" | "ocr" | "mixed";
+    /** Pages whose native text was legacy Kruti Dev and was converted to Unicode. */
+    krutiDevPages?: number;
     totalTextBytes?: number;
     normalizedTextSha256?: string | null;
   };
@@ -68,6 +75,8 @@ interface PageRecord {
   sourceId: string;
   pageNumber: number;
   textSource: "native" | "ocr";
+  /** Set when the native text was Kruti Dev and converted (src/lib/krutidev.ts). */
+  converted?: "krutidev";
   text: string;
   chars: number;
   bytes: number;
@@ -136,11 +145,19 @@ async function readOcrPage(
   }
 }
 
+async function readHtmlPage(
+  documentDir: string,
+  pageNumber: number,
+): Promise<string> {
+  return readFile(path.join(documentDir, "html-pages", pageFile(pageNumber)), "utf8");
+}
+
 async function buildForDocument(
   documentDir: string,
   metadata: Metadata,
 ): Promise<"built" | "skipped" | "failed"> {
-  const pages = metadata.pdf?.pages ?? 0;
+  const fromHtml = Boolean(metadata.html?.pages);
+  const pages = (fromHtml ? metadata.html?.pages : metadata.pdf?.pages) ?? 0;
 
   if (!pages || pages < 1) {
     console.log(`SKIP ${metadata.sourceId}: page count unavailable`);
@@ -159,13 +176,24 @@ async function buildForDocument(
   const records: PageRecord[] = [];
   const canonicalPages: string[] = [];
   const usedSources = new Set<"native" | "ocr">();
+  let krutiDevPages = 0;
 
   console.log(`\nBUILD ${metadata.sourceId} (${pages} pages)`);
 
   try {
     for (let pageNumber = 1; pageNumber <= pages; pageNumber++) {
-      const nativeRaw = await extractNativePage(pdfPath, pageNumber);
-      const native = normalizeText(nativeRaw);
+      // HTML sources are already text (one file per page); PDFs go through pdftotext.
+      const nativeRaw = fromHtml
+        ? await readHtmlPage(documentDir, pageNumber)
+        : await extractNativePage(pdfPath, pageNumber);
+      let native = normalizeText(nativeRaw);
+      // Legacy Kruti Dev text ("foŸkh; vf/kdkj") is converted exactly to
+      // Unicode Hindi; it stays the native variant.
+      const converted = looksLikeKrutiDev(native);
+      if (converted) {
+        native = normalizeText(krutiDevToUnicode(native));
+        krutiDevPages++;
+      }
 
       let text = native;
       let textSource: "native" | "ocr" = "native";
@@ -190,6 +218,7 @@ async function buildForDocument(
         sourceId: metadata.sourceId,
         pageNumber,
         textSource,
+        ...(converted && textSource === "native" ? { converted: "krutidev" as const } : {}),
         text,
         chars: text.length,
         bytes: Buffer.byteLength(text, "utf8"),
@@ -227,6 +256,7 @@ async function buildForDocument(
       completed: true,
       pages: records.length,
       textSource,
+      ...(krutiDevPages ? { krutiDevPages } : {}),
       totalTextBytes: Buffer.byteLength(canonicalText, "utf8"),
       normalizedTextSha256:
         normalizedCanonical.length > 0

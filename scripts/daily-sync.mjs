@@ -55,6 +55,8 @@ const STEPS = [
   ...(ingest
     ? [
         { name: "ingest:sources", run: ["ingest:sources"], critical: false },
+        // Re-reads a Financial Handbook volume only when its last read is 30+ days old.
+        { name: "ingest:handbook", run: ["ingest:handbook"], critical: false },
         { name: "ingest:portal", run: ["ingest:portal", "--", "--until-idle"], critical: false },
       ]
     : []),

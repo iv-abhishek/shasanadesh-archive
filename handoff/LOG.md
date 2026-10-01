@@ -2,6 +2,17 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 1 Oct 2026, 7:30 am IST (Claude)
+
+- Portal: 157,989 orders listed (all-departments pass, 1,777/1,777 pages, 28 Sept); about
+  19,660 (11%) not seen yet — second pass after the downloads. Downloads: 43,746 stored
+  in B2 at ~1,090/hour; finish around 5–6 Oct.
+- UP Financial Handbook reader (ADR-069): `npm run ingest:handbook` reads Vol. II, III,
+  V-I, V-II, VII and CSR from budget.up.nic.in (≈600 chapter pages, ~35 min), cited per
+  chapter page. Vol. VI (34 PDFs) and Vitta Path (19 more chapters) added to the core-rules
+  catalogue. Kruti Dev → Unicode conversion at build:pages (ADR-070). Tests: up-fhb,
+  krutidev, rules, core-rules (315 entries), b2; whole project typechecks.
+
 ## 28 Sept 2026, 9:15 pm IST (Claude)
 
 - Capture bookmark moved to scripts/portal-bookmark.js and given an auto-pager: after the

@@ -661,6 +661,18 @@ def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
     selected_text = selected["text_content"] if selected else hit.text
     canonical_text = canonical["text_content"] if canonical else selected_text
 
+    # HTML sources (UP Financial Handbook) keep one official URL per page in
+    # documents.metadata.pageUrls; PDFs link to the page with #page=N.
+    page_link = conn.execute(
+        "SELECT metadata->'pageUrls'->>%s AS url FROM documents WHERE source_id=%s",
+        (hit.page_number - 1, hit.source_id),
+    ).fetchone()
+    page_url = (
+        page_link["url"]
+        if page_link and page_link["url"]
+        else f"{hit.source_url}#page={hit.page_number}"
+    )
+
     return Evidence(
         label=label,
         source_id=hit.source_id,
@@ -670,7 +682,7 @@ def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
         go_number=hit.go_number,
         go_date=hit.go_date,
         source_url=hit.source_url,
-        page_url=f"{hit.source_url}#page={hit.page_number}",
+        page_url=page_url,
         jurisdiction_code=hit.jurisdiction_code,
         status=hit.status,
         retrieval_role=hit.retrieval_role,
