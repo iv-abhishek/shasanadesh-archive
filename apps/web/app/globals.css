@@ -4384,3 +4384,53 @@ h1 {
   align-items: baseline;
   gap: 6px;
 }
+
+/* हिन्दी / English switch for department names */
+.dept-lang-toggle {
+  display: inline-flex;
+  flex: 0 0 auto;
+  padding: 2px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-soft);
+}
+
+.dept-lang-toggle button {
+  padding: 3px 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 650;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.dept-lang-toggle button.active {
+  background: var(--action);
+  color: var(--action-text);
+}
+
+.dept-lang-toggle button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.history-scope-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+@media (max-width: 560px) {
+  .department-search-row {
+    flex-wrap: wrap;
+  }
+
+  .department-search-row .department-search {
+    flex-basis: 100%;
+  }
+}

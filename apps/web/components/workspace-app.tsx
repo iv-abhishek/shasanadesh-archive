@@ -147,9 +147,59 @@ const INDIA_STATES_AND_UTS = [
 type DepartmentLabels = Record<string, { en: string; aliases: string[] }>;
 const DepartmentLabelsContext = createContext<DepartmentLabels>({});
 
-function departmentOptionText(department: string, labels: DepartmentLabels): string {
-  const en = labels[department]?.en;
-  return en ? `${department} — ${en}` : department;
+// Which name comes first wherever departments are listed: the portal's Hindi
+// name or the English one. One switch for the whole app, remembered in the
+// browser (DEPARTMENT_NAMES_STORAGE_KEY).
+type DepartmentNameLanguage = "hi" | "en";
+const DEPARTMENT_NAMES_STORAGE_KEY = "shasanadesh.departmentNames";
+const DepartmentNameLanguageContext = createContext<{
+  language: DepartmentNameLanguage;
+  setLanguage: (next: DepartmentNameLanguage) => void;
+}>({ language: "en", setLanguage: () => {} });
+
+function useDepartmentNames() {
+  const labels = useContext(DepartmentLabelsContext);
+  const { language, setLanguage } = useContext(DepartmentNameLanguageContext);
+  const english = (name: string) => labels[name]?.en;
+  /** The name shown first. */
+  const main = (name: string) => (language === "en" ? english(name) ?? name : name);
+  /** The other language, shown smaller (null when there is no English name). */
+  const sub = (name: string) => {
+    const en = english(name);
+    if (!en) return null;
+    return language === "en" ? name : en;
+  };
+  const option = (name: string) => {
+    const other = sub(name);
+    return other ? `${main(name)} — ${other}` : main(name);
+  };
+  /** English order in English; the portal's order in Hindi. */
+  const sort = (names: string[]) =>
+    language === "en"
+      ? [...names].sort((a, b) => main(a).localeCompare(main(b), "en"))
+      : names;
+  return { labels, language, setLanguage, main, sub, option, sort };
+}
+
+/** हिन्दी / English switch for department names; sits beside each department list. */
+function DepartmentNameToggle() {
+  const { language, setLanguage } = useContext(DepartmentNameLanguageContext);
+  return (
+    <span className="dept-lang-toggle" role="group" aria-label="Department names in">
+      {([["hi", "हिन्दी"], ["en", "English"]] as const).map(([value, label]) => (
+        <button
+          key={value}
+          type="button"
+          className={language === value ? "active" : ""}
+          aria-pressed={language === value}
+          title={value === "en" ? "Show department names in English" : "विभागों के नाम हिन्दी में दिखाएँ"}
+          onClick={() => setLanguage(value)}
+        >
+          {label}
+        </button>
+      ))}
+    </span>
+  );
 }
 
 function searchKey(text: string): string {
@@ -183,9 +233,10 @@ function DepartmentChecklist({
   charged: string[];
   onChargedChange: (next: string[]) => void;
 }) {
-  const labels = useContext(DepartmentLabelsContext);
+  const names = useDepartmentNames();
+  const labels = names.labels;
   const [query, setQuery] = useState("");
-  const selectable = departments.filter(
+  const selectable = names.sort(departments).filter(
     (department) => department !== primaryDepartment,
   );
   // Ticked departments stay in view while searching, so they can be unticked.
@@ -242,6 +293,7 @@ function DepartmentChecklist({
           }
         }}
       />
+      <DepartmentNameToggle />
       <span className="department-count">
         {selected.length} selected{selected.length >= 12 ? " (max 12)" : ""}
       </span>
@@ -266,8 +318,8 @@ function DepartmentChecklist({
                 onChange={() => toggle(department)}
               />
               <span className="department-name">
-                {department}
-                {labels[department]?.en ? <small>{labels[department].en}</small> : null}
+                {names.main(department)}
+                {names.sub(department) ? <small>{names.sub(department)}</small> : null}
               </span>
             </label>
             {isSelected ? (
@@ -397,7 +449,7 @@ function ProfileEditor({
     additionalChargeDepartments: string[];
   }) => Promise<void>;
 }) {
-  const departmentLabels = useContext(DepartmentLabelsContext);
+  const departmentNames = useDepartmentNames();
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [designation, setDesignation] = useState(profile.designation ?? "");
   const [stateName, setStateName] = useState(profile.stateName ?? "");
@@ -544,9 +596,9 @@ function ProfileEditor({
               }}
             >
               <option value="">None</option>
-              {departments.map((department) => (
+              {departmentNames.sort(departments).map((department) => (
                 <option key={department} value={department}>
-                  {departmentOptionText(department, departmentLabels)}
+                  {departmentNames.option(department)}
                 </option>
               ))}
             </select>
@@ -647,7 +699,7 @@ function Onboarding({
         WorkspaceProfile,
     ) => void;
 }) {
-  const departmentLabels = useContext(DepartmentLabelsContext);
+  const departmentNames = useDepartmentNames();
   const [
     displayName,
     setDisplayName,
@@ -830,7 +882,7 @@ function Onboarding({
   }, [creating, onCancel, profiles.length]);
 
   const showForm = creating || profiles.length === 0;
-  const departmentText = (name: string) => departmentLabels[name]?.en ?? name;
+  const departmentText = departmentNames.main;
   const others = departments.length;
 
   return (
@@ -994,9 +1046,9 @@ function Onboarding({
                   }}
                 >
                   <option value="">None</option>
-                  {departments.map((department) => (
+                  {departmentNames.sort(departments).map((department) => (
                     <option key={department} value={department}>
-                      {departmentOptionText(department, departmentLabels)}
+                      {departmentNames.option(department)}
                     </option>
                   ))}
                 </select>
@@ -1110,6 +1162,27 @@ export function WorkspaceApp() {
   ] =
     useState<string[]>([]);
   const [departmentLabels, setDepartmentLabels] = useState<DepartmentLabels>({});
+  const [departmentNameLanguage, setDepartmentNameLanguageState] =
+    useState<DepartmentNameLanguage>("en");
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem(DEPARTMENT_NAMES_STORAGE_KEY);
+      if (stored === "hi" || stored === "en") setDepartmentNameLanguageState(stored);
+    } catch {
+      // English first when browser storage is unavailable.
+    }
+  }, []);
+  const departmentNameChoice = {
+    language: departmentNameLanguage,
+    setLanguage: (next: DepartmentNameLanguage) => {
+      setDepartmentNameLanguageState(next);
+      try {
+        window.localStorage.setItem(DEPARTMENT_NAMES_STORAGE_KEY, next);
+      } catch {
+        // The choice still applies on this page.
+      }
+    },
+  };
 
   const [
     devProfiles,
@@ -1932,6 +2005,7 @@ export function WorkspaceApp() {
   if (!profile || switchingProfile) {
     return (
       <DepartmentLabelsContext.Provider value={departmentLabels}>
+      <DepartmentNameLanguageContext.Provider value={departmentNameChoice}>
       <Onboarding
         departments={
           departments
@@ -1959,12 +2033,14 @@ export function WorkspaceApp() {
           void loadDevProfiles();
         }}
       />
+      </DepartmentNameLanguageContext.Provider>
       </DepartmentLabelsContext.Provider>
     );
   }
 
   return (
     <DepartmentLabelsContext.Provider value={departmentLabels}>
+    <DepartmentNameLanguageContext.Provider value={departmentNameChoice}>
     <div className={sidebarHidden ? "workspace-layout sidebar-hidden" : "workspace-layout"}>
       <aside className="history-sidebar" id="workspace-history-sidebar">
         <div className="history-search">
@@ -2011,8 +2087,11 @@ export function WorkspaceApp() {
         </button>
 
         <div className="history-scope">
-          <div className="section-label">
-            Working scope
+          <div className="history-scope-head">
+            <div className="section-label">
+              Working scope
+            </div>
+            {profile.departments.length ? <DepartmentNameToggle /> : null}
           </div>
 
           {profile.departments.length === 0 ? (
@@ -2027,8 +2106,9 @@ export function WorkspaceApp() {
                 <span
                   key={department}
                   className={primary ? "scope-department scope-primary" : "scope-department"}
+                  title={departmentLabels[department]?.en ? `${department} — ${departmentLabels[department].en}` : undefined}
                 >
-                  {department}
+                  {departmentNameLanguage === "en" ? departmentLabels[department]?.en ?? department : department}
                   {charge ? <em className="scope-tag">Addl. charge</em> : null}
                 </span>
               );
@@ -2297,6 +2377,7 @@ export function WorkspaceApp() {
         </svg>
       </button>
     </div>
+    </DepartmentNameLanguageContext.Provider>
     </DepartmentLabelsContext.Provider>
   );
 }
