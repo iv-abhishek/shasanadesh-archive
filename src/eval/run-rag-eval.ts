@@ -83,6 +83,9 @@ interface DoneEvent {
   scopeFallback?: boolean;
   bestRelevance?: number;
   conversational?: boolean;
+  /** Which model wrote the answer, and whether the primary failed first (ADR-075). */
+  model?: string;
+  modelFellBack?: boolean;
 }
 
 interface ChatResult {
@@ -108,6 +111,8 @@ interface CaseResult {
   repaired: boolean | null;
   usedQualitativeSalvage: boolean | null;
   usedFallback: boolean | null;
+  model?: string;
+  modelFellBack?: boolean;
   citationCount: number | null;
   expectedCitationPageHit: boolean | null;
   internalPlaceholderLeak: boolean | null;
@@ -1034,6 +1039,8 @@ async function evaluateCase(
         ?.usedQualitativeSalvage ??
       null,
     usedFallback,
+    model: chat.done?.model,
+    modelFellBack: chat.done?.modelFellBack,
     citationCount:
       citations.length,
     expectedCitationPageHit,
@@ -1293,6 +1300,9 @@ function buildSummary(
       results.filter((item) => !item.expectNoEvidence && item.noEvidence !== undefined).map((item) => item.noEvidence ?? null),
     ),
     shortenedRate: rate(results.map((item) => item.shortened ?? null)),
+    // Answers the fallback model wrote: a mixed run is not a fair model comparison.
+    modelFellBackRate: rate(results.map((item) => item.modelFellBack ?? null)),
+    models: [...new Set(results.map((item) => item.model).filter((model): model is string => Boolean(model)))],
     scopeFallbackRate: rate(results.map((item) => item.scopeFallback ?? null)),
     relevance: relevanceCalibration(results),
     medianChatMs:
@@ -1350,6 +1360,8 @@ function markdownReport(
     `| "Not found" answered correctly | ${pct(summary.notFoundCorrectRate)} |`,
     `| Wrong "not found" on answerable questions | ${pct(summary.falseNotFoundRate)} |`,
     `| Shortened answers | ${pct(summary.shortenedRate)} |`,
+    `| Answer model(s) | ${summary.models.join(", ") || "-"} |`,
+    `| Written by the fallback model | ${pct(summary.modelFellBackRate)} |`,
     `| Searched beyond profile departments | ${pct(summary.scopeFallbackRate)} |`,
     `| Best match: lowest answerable / highest not-found | ${summary.relevance.lowestAnswerable ?? "-"} / ${summary.relevance.highestUnanswerable ?? "-"} |`,
     `| Suggested RAG_MIN_RELEVANCE | ${summary.relevance.suggestion ?? "not separable yet"} |`,
@@ -1639,6 +1651,7 @@ async function main():
   ) {
     console.log(
       `Median chat:            ${ms(summary.medianChatMs)}`,
+      `Answer model(s):        ${summary.models.join(", ") || "-"} (fallback wrote ${pct(summary.modelFellBackRate)})`,
     );
   }
 
