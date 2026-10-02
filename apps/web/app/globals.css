@@ -4662,3 +4662,8 @@ h1 {
   background: var(--action);
   color: var(--action-text);
 }
+
+.dept-combo-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}

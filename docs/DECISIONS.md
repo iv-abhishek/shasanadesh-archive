@@ -1077,3 +1077,29 @@ Source cards now say so when a cited page's official copy is in a Kruti Dev font
 (`metadata.html.legacyFontPages` for Handbook pages, `pageCorpus.krutiDevPages` for PDFs;
 `legacy_font` on retrieval evidence): "the text here was converted; without that font the
 official copy may look garbled".
+
+## ADR-072 - Profile state and district from the Local Government Directory (2 Oct 2026)
+
+Profiles took the district as free text ("Lucknow", "लखनऊ", "Lko"), which cannot scope
+anything for district officials and breaks on renames. States/UTs and districts now come
+from the Local Government Directory (LGD, Ministry of Panchayati Raj), the code list other
+government systems use:
+
+- `npm run ingest:lgd` (scripts/ingest-lgd.mjs) reads LGD's public web service
+  (`lgdirectory.gov.in/webservices/lgdws` stateList / districtList: form POST, no key, no
+  CAPTCHA; robots.txt and the 3 s crawl gap honoured; ~37 requests) into
+  `datasets/lgd/lgd-states-districts.json` (36 states/UTs, 784 districts on 2 Oct 2026).
+  The daily sync refreshes it when the copy is 30+ days old; the file is replaced only
+  when every state was read. data.gov.in's CSV copies need a download form, so are not used.
+- LGD's "local name" for UP districts is English, so Hindi names and former names
+  (Allahabad → Prayagraj, Faizabad → Ayodhya, Noida, Lakhimpur Kheri, Sant Ravidas Nagar …)
+  for all 75 UP districts are kept in `datasets/lgd/district-names-up.json`
+  (hiSource: translation, to review) and merged by the script.
+- The profile's state and district are search-and-pick fields (any spelling, Hindi or
+  former name; district lists only the chosen state's). "Central Government / Other" has
+  no district. The server stores the LGD names plus `state_lgd_code` /
+  `district_lgd_code` (migration 013; profiles save names only until it has run).
+
+Not yet: using the district in retrieval (district-specific orders, "orders for my
+district") and block/tehsil levels; the codes are stored so that can be added without
+asking officers again.

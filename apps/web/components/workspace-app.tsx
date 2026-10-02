@@ -428,6 +428,310 @@ function DepartmentChecklist({
   );
 }
 
+// States/UTs and districts from the Local Government Directory (LGD), via
+// /api/workspace/places. The server stores LGD codes beside the names, so a
+// district officer's profile survives renames and matches other systems.
+interface PlaceDistrict {
+  code: number;
+  name: string;
+  hi: string | null;
+  aliases: string[];
+}
+interface PlaceState {
+  code: number;
+  name: string;
+  local: string | null;
+  districts: PlaceDistrict[];
+}
+const PlacesContext = createContext<PlaceState[]>([]);
+const OTHER_STATE = "Central Government / Other";
+
+function placeKey(text: string): string {
+  return text.toLocaleLowerCase("en").replace(/[‌‍]/g, "").replace(/[.,()'-]/g, " ").replace(/\s+/g, "");
+}
+
+interface SearchOption {
+  value: string;
+  label: string;
+  sub?: string | null;
+  keywords?: string[];
+}
+
+/**
+ * Search-and-pick for one value from a list (our own control). Type any
+ * spelling the option knows (Hindi, former names); arrow keys + Enter, or
+ * click. A stored value that is not in the list is still shown.
+ */
+function SearchSelect({
+  label,
+  optional,
+  value,
+  onChange,
+  options,
+  noneLabel,
+  disabled,
+  disabledHint,
+  searchPlaceholder,
+}: {
+  label: string;
+  optional?: boolean;
+  value: string;
+  onChange: (next: string) => void;
+  options: SearchOption[];
+  noneLabel: string;
+  disabled?: boolean;
+  disabledHint?: string;
+  searchPlaceholder: string;
+}) {
+  const id = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
+
+  const wanted = placeKey(query);
+  const matches = wanted
+    ? options.filter((option) =>
+        [option.label, option.sub ?? "", ...(option.keywords ?? [])].some((text) => placeKey(text).includes(wanted)),
+      )
+    : options;
+  const list: Array<SearchOption | null> = wanted ? matches : [null, ...matches];
+  const selected = options.find((option) => option.value === value);
+
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+  };
+  const pick = (next: string) => {
+    onChange(next);
+    close();
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) close();
+    };
+    document.addEventListener("mousedown", onDown);
+    inputRef.current?.focus();
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  useEffect(() => {
+    listRef.current?.querySelector(`[data-index="${active}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [active, open]);
+
+  const openList = () => {
+    if (disabled) return;
+    const index = list.findIndex((option) => (option?.value ?? "") === value);
+    setActive(index >= 0 ? index : 0);
+    setOpen(true);
+  };
+
+  return (
+    <div className="dept-combo" ref={rootRef}>
+      <div className="profile-field-label label-row" id={`${id}-label`}>
+        {label}
+        {optional ? <span className="field-optional">optional</span> : null}
+      </div>
+      <button
+        type="button"
+        className={open ? "dept-combo-button open" : "dept-combo-button"}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-labelledby={`${id}-label`}
+        disabled={disabled}
+        onClick={() => (open ? close() : openList())}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            openList();
+          }
+        }}
+      >
+        {disabled && disabledHint ? (
+          <span className="dept-combo-value placeholder">{disabledHint}</span>
+        ) : value ? (
+          <span className="dept-combo-value">
+            <strong>{selected?.label ?? value}</strong>
+            {selected ? (selected.sub ? <small>{selected.sub}</small> : null) : <small>Not in the LGD list</small>}
+          </span>
+        ) : (
+          <span className="dept-combo-value placeholder">{noneLabel}</span>
+        )}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+      </button>
+
+      {open ? (
+        <div className="dept-combo-pop">
+          <input
+            ref={inputRef}
+            type="search"
+            className="department-search"
+            placeholder={searchPlaceholder}
+            role="combobox"
+            aria-expanded="true"
+            aria-controls={`${id}-list`}
+            aria-activedescendant={list.length ? `${id}-opt-${active}` : undefined}
+            aria-label={`Search ${label}`}
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setActive(0);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                setActive((current) => Math.min(current + 1, list.length - 1));
+              } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                setActive((current) => Math.max(current - 1, 0));
+              } else if (event.key === "Enter") {
+                event.preventDefault();
+                const option = list[Math.min(active, list.length - 1)];
+                if (list.length) pick(option?.value ?? "");
+              } else if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                close();
+              } else if (event.key === "Tab") {
+                close();
+              }
+            }}
+          />
+          <ul className="dept-combo-list" role="listbox" id={`${id}-list`} ref={listRef}>
+            {list.length === 0 ? (
+              <li className="dept-combo-empty">Nothing matches “{query.trim()}”.</li>
+            ) : (
+              list.map((option, index) => {
+                const optionValue = option?.value ?? "";
+                return (
+                  <li
+                    key={optionValue || "(none)"}
+                    id={`${id}-opt-${index}`}
+                    data-index={index}
+                    role="option"
+                    aria-selected={optionValue === value}
+                    className={[
+                      "dept-combo-option",
+                      index === active ? "active" : "",
+                      optionValue === value ? "selected" : "",
+                    ].join(" ")}
+                    onMouseEnter={() => setActive(index)}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => pick(optionValue)}
+                  >
+                    {option ? (
+                      <span className="department-name">
+                        {option.label}
+                        {option.sub ? <small>{option.sub}</small> : null}
+                      </span>
+                    ) : (
+                      <span className="department-name none">{noneLabel}</span>
+                    )}
+                    {optionValue === value ? <span className="dept-combo-check" aria-hidden="true">✓</span> : null}
+                  </li>
+                );
+              })
+            )}
+          </ul>
+          <div className="dept-combo-foot">
+            <span>{matches.length} of {options.length}</span>
+            <span>Source: Local Government Directory</span>
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** State/UT and district pickers (LGD); district lists only the chosen state's. */
+function PlaceFields({
+  stateName,
+  district,
+  onStateChange,
+  onDistrictChange,
+}: {
+  stateName: string;
+  district: string;
+  onStateChange: (next: string) => void;
+  onDistrictChange: (next: string) => void;
+}) {
+  const places = useContext(PlacesContext);
+  const states = places.length
+    ? places
+    : INDIA_STATES_AND_UTS.filter((name) => name !== OTHER_STATE).map((name, index) => ({
+        code: -index - 1,
+        name,
+        local: null,
+        districts: [],
+      }));
+  const stateOptions: SearchOption[] = [
+    ...[...states]
+      .sort((a, b) => a.name.localeCompare(b.name, "en"))
+      .map((state) => ({
+        value: state.name,
+        label: state.name,
+        sub: state.local,
+        // "UP", "MP", "J&K"-style initials.
+        keywords: [
+          state.name
+            .split(/\s+/)
+            .filter((word) => !/^(and|the|of)$/i.test(word))
+            .map((word) => word[0])
+            .join(""),
+        ],
+      })),
+    { value: OTHER_STATE, label: OTHER_STATE, sub: "No district", keywords: ["central", "india", "other"] },
+  ];
+  const chosen = states.find((state) => placeKey(state.name) === placeKey(stateName));
+  const districtOptions: SearchOption[] = (chosen?.districts ?? []).map((item) => ({
+    value: item.name,
+    label: item.name,
+    sub: [item.hi, item.aliases.filter((alias) => /[A-Za-z]/.test(alias)).slice(0, 2).join(", ")]
+      .filter(Boolean)
+      .join(" · ") || null,
+    keywords: [item.hi ?? "", ...item.aliases],
+  }));
+  // A stored name LGD knows under another spelling ("Allahabad") shows as the
+  // LGD district (Prayagraj); it is saved that way on the next save.
+  const districtValue =
+    districtOptions.find((option) =>
+      [option.label, ...(option.keywords ?? [])].some((name) => name && placeKey(name) === placeKey(district)),
+    )?.value ?? district;
+  const stateValue = chosen?.name ?? stateName;
+
+  return (
+    <>
+      <SearchSelect
+        label="State or Union Territory"
+        value={stateValue}
+        onChange={(next) => {
+          onStateChange(next);
+          const nextState = states.find((state) => state.name === next);
+          if (!nextState?.districts.some((item) => item.name === districtValue)) onDistrictChange("");
+        }}
+        options={stateOptions}
+        noneLabel="Not specified"
+        searchPlaceholder="Search state or UT (e.g. Uttar Pradesh, UP)"
+      />
+      <SearchSelect
+        label="District"
+        optional
+        value={districtValue}
+        onChange={onDistrictChange}
+        options={districtOptions}
+        noneLabel="Not specified"
+        disabled={!chosen || districtOptions.length === 0}
+        disabledHint={stateValue === OTHER_STATE ? "Not applicable" : "Choose a state first"}
+        searchPlaceholder="Search district (e.g. लखनऊ, Allahabad, Noida)"
+      />
+    </>
+  );
+}
+
 function initials(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
   const letters = words.length > 1 ? [words[0], words[words.length - 1]] : words;
@@ -663,27 +967,12 @@ function ProfileEditor({
                 placeholder="e.g. Principal Secretary"
               />
             </label>
-            <label>
-              State or Union Territory
-              <select
-                value={stateName}
-                onChange={(event) => setStateName(event.target.value)}
-              >
-                <option value="">Not specified</option>
-                {INDIA_STATES_AND_UTS.map((state) => (
-                  <option key={state} value={state}>{state}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              District
-              <input
-                value={district}
-                onChange={(event) => setDistrict(event.target.value)}
-                placeholder="Optional"
-                autoComplete="address-level2"
-              />
-            </label>
+            <PlaceFields
+              stateName={stateName}
+              district={district}
+              onStateChange={setStateName}
+              onDistrictChange={setDistrict}
+            />
             <label>
               Contact number <span className="field-optional">Optional</span>
               <input
@@ -1070,23 +1359,12 @@ function Onboarding({
                     placeholder="e.g. Principal Secretary"
                   />
                 </label>
-                <label>
-                  State or Union Territory
-                  <select value={stateName} onChange={(event) => setStateName(event.target.value)}>
-                    <option value="">Not specified</option>
-                    {INDIA_STATES_AND_UTS.map((state) => (
-                      <option key={state} value={state}>{state}</option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span className="label-row">District <span className="field-optional">optional</span></span>
-                  <input
-                    value={district}
-                    onChange={(event) => setDistrict(event.target.value)}
-                    placeholder="e.g. Lucknow"
-                  />
-                </label>
+                <PlaceFields
+                  stateName={stateName}
+                  district={district}
+                  onStateChange={setStateName}
+                  onDistrictChange={setDistrict}
+                />
                 <label className="span-2">
                   <span className="label-row">Contact number <span className="field-optional">optional</span></span>
                   <input
@@ -1213,6 +1491,7 @@ export function WorkspaceApp() {
   ] =
     useState<string[]>([]);
   const [departmentLabels, setDepartmentLabels] = useState<DepartmentLabels>({});
+  const [places, setPlaces] = useState<PlaceState[]>([]);
   const [departmentNameLanguage, setDepartmentNameLanguageState] =
     useState<DepartmentNameLanguage>("en");
   useEffect(() => {
@@ -1468,6 +1747,13 @@ export function WorkspaceApp() {
                 .departments,
             );
             setDepartmentLabels(departmentData.labels ?? {});
+            // LGD states and districts; the profile form falls back to a plain
+            // state list if this is unavailable.
+            void jsonRequest<{ states: PlaceState[] }>("/api/workspace/places")
+              .then((data) => {
+                if (!cancelled) setPlaces(data.states);
+              })
+              .catch(() => undefined);
 
             const sessionResponse =
               await fetch(
@@ -2057,6 +2343,7 @@ export function WorkspaceApp() {
     return (
       <DepartmentLabelsContext.Provider value={departmentLabels}>
       <DepartmentNameLanguageContext.Provider value={departmentNameChoice}>
+      <PlacesContext.Provider value={places}>
       <Onboarding
         departments={
           departments
@@ -2084,6 +2371,7 @@ export function WorkspaceApp() {
           void loadDevProfiles();
         }}
       />
+      </PlacesContext.Provider>
       </DepartmentNameLanguageContext.Provider>
       </DepartmentLabelsContext.Provider>
     );
@@ -2092,6 +2380,7 @@ export function WorkspaceApp() {
   return (
     <DepartmentLabelsContext.Provider value={departmentLabels}>
     <DepartmentNameLanguageContext.Provider value={departmentNameChoice}>
+    <PlacesContext.Provider value={places}>
     <div className={sidebarHidden ? "workspace-layout sidebar-hidden" : "workspace-layout"}>
       <aside className="history-sidebar" id="workspace-history-sidebar">
         <div className="history-search">
@@ -2431,6 +2720,7 @@ export function WorkspaceApp() {
         </svg>
       </button>
     </div>
+    </PlacesContext.Provider>
     </DepartmentNameLanguageContext.Provider>
     </DepartmentLabelsContext.Provider>
   );

@@ -1,0 +1,5350 @@
+{
+ "_about": "States/UTs and districts with LGD codes from the Local Government Directory, Ministry of Panchayati Raj (https://lgdirectory.gov.in). Regenerate with npm run ingest:lgd. 'local' is LGD's local-language name when it is in an Indian script; UP districts also carry 'hi' and former names ('aliases') from datasets/lgd/district-names-up.json.",
+ "source": "https://lgdirectory.gov.in/webservices/lgdws",
+ "fetchedAt": "2026-10-02T08:31:38.775Z",
+ "stateCount": 36,
+ "districtCount": 784,
+ "states": [
+  {
+   "code": 1,
+   "name": "Jammu and Kashmir",
+   "local": null,
+   "census2011Code": "01",
+   "districts": [
+    {
+     "code": 1,
+     "name": "Anantnag",
+     "local": null,
+     "census2011Code": "014"
+    },
+    {
+     "code": 623,
+     "name": "Bandipora",
+     "local": null,
+     "census2011Code": "009"
+    },
+    {
+     "code": 3,
+     "name": "Baramulla",
+     "local": null,
+     "census2011Code": "008"
+    },
+    {
+     "code": 2,
+     "name": "Budgam",
+     "local": null,
+     "census2011Code": "002"
+    },
+    {
+     "code": 4,
+     "name": "Doda",
+     "local": null,
+     "census2011Code": "016"
+    },
+    {
+     "code": 626,
+     "name": "Ganderbal",
+     "local": null,
+     "census2011Code": "011"
+    },
+    {
+     "code": 5,
+     "name": "Jammu",
+     "local": null,
+     "census2011Code": "021"
+    },
+    {
+     "code": 7,
+     "name": "Kathua",
+     "local": null,
+     "census2011Code": "007"
+    },
+    {
+     "code": 620,
+     "name": "Kishtwar",
+     "local": null,
+     "census2011Code": "018"
+    },
+    {
+     "code": 622,
+     "name": "Kulgam",
+     "local": null,
+     "census2011Code": "015"
+    },
+    {
+     "code": 8,
+     "name": "Kupwara",
+     "local": null,
+     "census2011Code": "001"
+    },
+    {
+     "code": 10,
+     "name": "Poonch",
+     "local": null,
+     "census2011Code": "005"
+    },
+    {
+     "code": 11,
+     "name": "Pulwama",
+     "local": null,
+     "census2011Code": "012"
+    },
+    {
+     "code": 12,
+     "name": "Rajouri",
+     "local": null,
+     "census2011Code": "006"
+    },
+    {
+     "code": 621,
+     "name": "Ramban",
+     "local": null,
+     "census2011Code": "017"
+    },
+    {
+     "code": 627,
+     "name": "Reasi",
+     "local": null,
+     "census2011Code": "020"
+    },
+    {
+     "code": 624,
+     "name": "Samba",
+     "local": null,
+     "census2011Code": "022"
+    },
+    {
+     "code": 625,
+     "name": "Shopian",
+     "local": null,
+     "census2011Code": "013"
+    },
+    {
+     "code": 13,
+     "name": "Srinagar",
+     "local": null,
+     "census2011Code": "010"
+    },
+    {
+     "code": 14,
+     "name": "Udhampur",
+     "local": null,
+     "census2011Code": "019"
+    }
+   ]
+  },
+  {
+   "code": 2,
+   "name": "Himachal Pradesh",
+   "local": null,
+   "census2011Code": "02",
+   "districts": [
+    {
+     "code": 15,
+     "name": "Bilaspur",
+     "local": null,
+     "census2011Code": "030"
+    },
+    {
+     "code": 16,
+     "name": "Chamba",
+     "local": null,
+     "census2011Code": "023"
+    },
+    {
+     "code": 17,
+     "name": "Hamirpur",
+     "local": null,
+     "census2011Code": "028"
+    },
+    {
+     "code": 18,
+     "name": "Kangra",
+     "local": null,
+     "census2011Code": "024"
+    },
+    {
+     "code": 19,
+     "name": "Kinnaur",
+     "local": null,
+     "census2011Code": "034"
+    },
+    {
+     "code": 20,
+     "name": "Kullu",
+     "local": null,
+     "census2011Code": "026"
+    },
+    {
+     "code": 21,
+     "name": "Lahaul And Spiti",
+     "local": null,
+     "census2011Code": "025"
+    },
+    {
+     "code": 22,
+     "name": "Mandi",
+     "local": null,
+     "census2011Code": "027"
+    },
+    {
+     "code": 23,
+     "name": "Shimla",
+     "local": null,
+     "census2011Code": "033"
+    },
+    {
+     "code": 24,
+     "name": "Sirmaur",
+     "local": null,
+     "census2011Code": "032"
+    },
+    {
+     "code": 25,
+     "name": "Solan",
+     "local": null,
+     "census2011Code": "031"
+    },
+    {
+     "code": 26,
+     "name": "Una",
+     "local": null,
+     "census2011Code": "029"
+    }
+   ]
+  },
+  {
+   "code": 3,
+   "name": "Punjab",
+   "local": null,
+   "census2011Code": "03",
+   "districts": [
+    {
+     "code": 27,
+     "name": "Amritsar",
+     "local": null,
+     "census2011Code": "049"
+    },
+    {
+     "code": 605,
+     "name": "Barnala",
+     "local": null,
+     "census2011Code": "054"
+    },
+    {
+     "code": 28,
+     "name": "Bathinda",
+     "local": null,
+     "census2011Code": "046"
+    },
+    {
+     "code": 29,
+     "name": "Faridkot",
+     "local": null,
+     "census2011Code": "045"
+    },
+    {
+     "code": 30,
+     "name": "Fatehgarh Sahib",
+     "local": null,
+     "census2011Code": "040"
+    },
+    {
+     "code": 651,
+     "name": "Fazilka",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 31,
+     "name": "Ferozepur",
+     "local": null,
+     "census2011Code": "043"
+    },
+    {
+     "code": 32,
+     "name": "Gurdaspur",
+     "local": null,
+     "census2011Code": "035"
+    },
+    {
+     "code": 33,
+     "name": "Hoshiarpur",
+     "local": null,
+     "census2011Code": "038"
+    },
+    {
+     "code": 34,
+     "name": "Jalandhar",
+     "local": null,
+     "census2011Code": "037"
+    },
+    {
+     "code": 35,
+     "name": "Kapurthala",
+     "local": null,
+     "census2011Code": "036"
+    },
+    {
+     "code": 36,
+     "name": "Ludhiana",
+     "local": "ਲੂਿਧਆਣਾ",
+     "census2011Code": "041"
+    },
+    {
+     "code": 737,
+     "name": "Malerkotla",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 37,
+     "name": "Mansa",
+     "local": "ਮਾਨਸਾ",
+     "census2011Code": "047"
+    },
+    {
+     "code": 38,
+     "name": "Moga",
+     "local": null,
+     "census2011Code": "042"
+    },
+    {
+     "code": 662,
+     "name": "Pathankot",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 41,
+     "name": "Patiala",
+     "local": null,
+     "census2011Code": "048"
+    },
+    {
+     "code": 42,
+     "name": "Rupnagar",
+     "local": "ਰੂਪਨਗਰ",
+     "census2011Code": "051"
+    },
+    {
+     "code": 608,
+     "name": "S.A.S Nagar",
+     "local": null,
+     "census2011Code": "052"
+    },
+    {
+     "code": 43,
+     "name": "Sangrur",
+     "local": null,
+     "census2011Code": "053"
+    },
+    {
+     "code": 40,
+     "name": "Shahid Bhagat Singh Nagar",
+     "local": null,
+     "census2011Code": "039"
+    },
+    {
+     "code": 39,
+     "name": "Sri Muktsar Sahib",
+     "local": "ਸ੍ਰੀ ਮੁਕਤਸਰ ਸਾਹਿਬ",
+     "census2011Code": "044"
+    },
+    {
+     "code": 609,
+     "name": "Tarn Taran",
+     "local": null,
+     "census2011Code": "050"
+    }
+   ]
+  },
+  {
+   "code": 4,
+   "name": "Chandigarh",
+   "local": null,
+   "census2011Code": "04",
+   "districts": [
+    {
+     "code": 44,
+     "name": "Chandigarh",
+     "local": null,
+     "census2011Code": "055"
+    }
+   ]
+  },
+  {
+   "code": 5,
+   "name": "Uttarakhand",
+   "local": null,
+   "census2011Code": "05",
+   "districts": [
+    {
+     "code": 45,
+     "name": "Almora",
+     "local": null,
+     "census2011Code": "064"
+    },
+    {
+     "code": 46,
+     "name": "Bageshwar",
+     "local": null,
+     "census2011Code": "063"
+    },
+    {
+     "code": 47,
+     "name": "Chamoli",
+     "local": null,
+     "census2011Code": "057"
+    },
+    {
+     "code": 48,
+     "name": "Champawat",
+     "local": null,
+     "census2011Code": "065"
+    },
+    {
+     "code": 49,
+     "name": "Dehradun",
+     "local": null,
+     "census2011Code": "060"
+    },
+    {
+     "code": 50,
+     "name": "Haridwar",
+     "local": null,
+     "census2011Code": "068"
+    },
+    {
+     "code": 51,
+     "name": "Nainital",
+     "local": null,
+     "census2011Code": "066"
+    },
+    {
+     "code": 52,
+     "name": "Pauri Garhwal",
+     "local": null,
+     "census2011Code": "061"
+    },
+    {
+     "code": 53,
+     "name": "Pithoragarh",
+     "local": null,
+     "census2011Code": "062"
+    },
+    {
+     "code": 54,
+     "name": "Rudraprayag",
+     "local": "रूद्रप्रयाग",
+     "census2011Code": "058"
+    },
+    {
+     "code": 55,
+     "name": "Tehri Garhwal",
+     "local": null,
+     "census2011Code": "059"
+    },
+    {
+     "code": 56,
+     "name": "Udham Singh Nagar",
+     "local": null,
+     "census2011Code": "067"
+    },
+    {
+     "code": 57,
+     "name": "Uttarkashi",
+     "local": null,
+     "census2011Code": "056"
+    }
+   ]
+  },
+  {
+   "code": 6,
+   "name": "Haryana",
+   "local": null,
+   "census2011Code": "06",
+   "districts": [
+    {
+     "code": 58,
+     "name": "Ambala",
+     "local": null,
+     "census2011Code": "070"
+    },
+    {
+     "code": 59,
+     "name": "Bhiwani",
+     "local": null,
+     "census2011Code": "081"
+    },
+    {
+     "code": 701,
+     "name": "Charkhi Dadri",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 60,
+     "name": "Faridabad",
+     "local": null,
+     "census2011Code": "088"
+    },
+    {
+     "code": 61,
+     "name": "Fatehabad",
+     "local": null,
+     "census2011Code": "078"
+    },
+    {
+     "code": 62,
+     "name": "Gurugram",
+     "local": null,
+     "census2011Code": "086"
+    },
+    {
+     "code": 792,
+     "name": "Hansi",
+     "local": "हांसी",
+     "census2011Code": null
+    },
+    {
+     "code": 63,
+     "name": "Hisar",
+     "local": null,
+     "census2011Code": "080"
+    },
+    {
+     "code": 64,
+     "name": "Jhajjar",
+     "local": null,
+     "census2011Code": "083"
+    },
+    {
+     "code": 65,
+     "name": "Jind",
+     "local": null,
+     "census2011Code": "077"
+    },
+    {
+     "code": 66,
+     "name": "Kaithal",
+     "local": null,
+     "census2011Code": "073"
+    },
+    {
+     "code": 67,
+     "name": "Karnal",
+     "local": null,
+     "census2011Code": "074"
+    },
+    {
+     "code": 68,
+     "name": "Kurukshetra",
+     "local": null,
+     "census2011Code": "072"
+    },
+    {
+     "code": 69,
+     "name": "Mahendragarh",
+     "local": null,
+     "census2011Code": "084"
+    },
+    {
+     "code": 604,
+     "name": "Nuh",
+     "local": "नूँह",
+     "census2011Code": "087"
+    },
+    {
+     "code": 619,
+     "name": "Palwal",
+     "local": null,
+     "census2011Code": "089"
+    },
+    {
+     "code": 70,
+     "name": "Panchkula",
+     "local": null,
+     "census2011Code": "069"
+    },
+    {
+     "code": 71,
+     "name": "Panipat",
+     "local": null,
+     "census2011Code": "075"
+    },
+    {
+     "code": 72,
+     "name": "Rewari",
+     "local": null,
+     "census2011Code": "085"
+    },
+    {
+     "code": 73,
+     "name": "Rohtak",
+     "local": null,
+     "census2011Code": "082"
+    },
+    {
+     "code": 74,
+     "name": "Sirsa",
+     "local": null,
+     "census2011Code": "079"
+    },
+    {
+     "code": 75,
+     "name": "Sonipat",
+     "local": null,
+     "census2011Code": "076"
+    },
+    {
+     "code": 76,
+     "name": "Yamunanagar",
+     "local": null,
+     "census2011Code": "071"
+    }
+   ]
+  },
+  {
+   "code": 7,
+   "name": "Delhi",
+   "local": null,
+   "census2011Code": "07",
+   "districts": [
+    {
+     "code": 77,
+     "name": "Central",
+     "local": null,
+     "census2011Code": "095"
+    },
+    {
+     "code": 796,
+     "name": "Central North",
+     "local": null,
+     "census2011Code": null
+    },
+    {
+     "code": 78,
+     "name": "East",
+     "local": null,
+     "census2011Code": "093"
+    },
+    {
+     "code": 79,
+     "name": "New Delhi",
+     "local": null,
+     "census2011Code": "094"
+    },
+    {
+     "code": 80,
+     "name": "North",
+     "local": null,
+     "census2011Code": "091"
+    },
+    {
+     "code": 81,
+     "name": "North East",
+     "local": null,
+     "census2011Code": "092"
+    },
+    {
+     "code": 82,
+     "name": "North West",
+     "local": null,
+     "census2011Code": "090"
+    },
+    {
+     "code": 795,
+     "name": "Old Delhi",
+     "local": null,
+     "census2011Code": null
+    },
+    {
+     "code": 794,
+     "name": "Outer North",
+     "local": null,
+     "census2011Code": null
+    },
+    {
+     "code": 83,
+     "name": "South",
+     "local": null,
+     "census2011Code": "098"
+    },
+    {
+     "code": 670,
+     "name": "South East",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 84,
+     "name": "South West",
+     "local": null,
+     "census2011Code": "097"
+    },
+    {
+     "code": 85,
+     "name": "West",
+     "local": null,
+     "census2011Code": "096"
+    }
+   ]
+  },
+  {
+   "code": 8,
+   "name": "Rajasthan",
+   "local": null,
+   "census2011Code": "08",
+   "districts": [
+    {
+     "code": 86,
+     "name": "Ajmer",
+     "local": null,
+     "census2011Code": "119"
+    },
+    {
+     "code": 87,
+     "name": "Alwar",
+     "local": null,
+     "census2011Code": "104"
+    },
+    {
+     "code": 775,
+     "name": "Balotra",
+     "local": "बालोतरा",
+     "census2011Code": null
+    },
+    {
+     "code": 88,
+     "name": "Banswara",
+     "local": null,
+     "census2011Code": "125"
+    },
+    {
+     "code": 89,
+     "name": "Baran",
+     "local": null,
+     "census2011Code": "128"
+    },
+    {
+     "code": 90,
+     "name": "Barmer",
+     "local": null,
+     "census2011Code": "115"
+    },
+    {
+     "code": 774,
+     "name": "Beawar",
+     "local": "ब्‍यावर",
+     "census2011Code": null
+    },
+    {
+     "code": 91,
+     "name": "Bharatpur",
+     "local": null,
+     "census2011Code": "105"
+    },
+    {
+     "code": 92,
+     "name": "Bhilwara",
+     "local": null,
+     "census2011Code": "122"
+    },
+    {
+     "code": 93,
+     "name": "Bikaner",
+     "local": null,
+     "census2011Code": "101"
+    },
+    {
+     "code": 94,
+     "name": "Bundi",
+     "local": null,
+     "census2011Code": "121"
+    },
+    {
+     "code": 95,
+     "name": "Chittorgarh",
+     "local": null,
+     "census2011Code": "126"
+    },
+    {
+     "code": 96,
+     "name": "Churu",
+     "local": null,
+     "census2011Code": "102"
+    },
+    {
+     "code": 97,
+     "name": "Dausa",
+     "local": null,
+     "census2011Code": "109"
+    },
+    {
+     "code": 767,
+     "name": "Deeg",
+     "local": "डीग",
+     "census2011Code": null
+    },
+    {
+     "code": 98,
+     "name": "Dholpur",
+     "local": null,
+     "census2011Code": "106"
+    },
+    {
+     "code": 768,
+     "name": "Didwana-Kuchaman",
+     "local": "डीडवाना-कुचामन",
+     "census2011Code": null
+    },
+    {
+     "code": 99,
+     "name": "Dungarpur",
+     "local": null,
+     "census2011Code": "124"
+    },
+    {
+     "code": 100,
+     "name": "Ganganagar",
+     "local": null,
+     "census2011Code": "099"
+    },
+    {
+     "code": 101,
+     "name": "Hanumangarh",
+     "local": null,
+     "census2011Code": "100"
+    },
+    {
+     "code": 102,
+     "name": "Jaipur",
+     "local": null,
+     "census2011Code": "110"
+    },
+    {
+     "code": 103,
+     "name": "Jaisalmer",
+     "local": null,
+     "census2011Code": "114"
+    },
+    {
+     "code": 104,
+     "name": "Jalore",
+     "local": null,
+     "census2011Code": "116"
+    },
+    {
+     "code": 105,
+     "name": "Jhalawar",
+     "local": null,
+     "census2011Code": "129"
+    },
+    {
+     "code": 106,
+     "name": "Jhunjhunu",
+     "local": null,
+     "census2011Code": "103"
+    },
+    {
+     "code": 107,
+     "name": "Jodhpur",
+     "local": null,
+     "census2011Code": "113"
+    },
+    {
+     "code": 108,
+     "name": "Karauli",
+     "local": null,
+     "census2011Code": "107"
+    },
+    {
+     "code": 770,
+     "name": "Khairthal-Tijara",
+     "local": "खैरथल-तिजारा",
+     "census2011Code": null
+    },
+    {
+     "code": 109,
+     "name": "Kota",
+     "local": null,
+     "census2011Code": "127"
+    },
+    {
+     "code": 782,
+     "name": "Kotputli-Behror",
+     "local": "कोटपूतली-बहरोड",
+     "census2011Code": null
+    },
+    {
+     "code": 110,
+     "name": "Nagaur",
+     "local": null,
+     "census2011Code": "112"
+    },
+    {
+     "code": 111,
+     "name": "Pali",
+     "local": null,
+     "census2011Code": "118"
+    },
+    {
+     "code": 772,
+     "name": "Phalodi",
+     "local": "फलाैदी",
+     "census2011Code": null
+    },
+    {
+     "code": 629,
+     "name": "Pratapgarh",
+     "local": null,
+     "census2011Code": "131"
+    },
+    {
+     "code": 112,
+     "name": "Rajsamand",
+     "local": null,
+     "census2011Code": "123"
+    },
+    {
+     "code": 777,
+     "name": "Salumbar",
+     "local": "सलूम्‍बर",
+     "census2011Code": null
+    },
+    {
+     "code": 113,
+     "name": "Sawai Madhopur",
+     "local": null,
+     "census2011Code": "108"
+    },
+    {
+     "code": 114,
+     "name": "Sikar",
+     "local": null,
+     "census2011Code": "111"
+    },
+    {
+     "code": 115,
+     "name": "Sirohi",
+     "local": null,
+     "census2011Code": "117"
+    },
+    {
+     "code": 116,
+     "name": "Tonk",
+     "local": null,
+     "census2011Code": "120"
+    },
+    {
+     "code": 117,
+     "name": "Udaipur",
+     "local": null,
+     "census2011Code": "130"
+    }
+   ]
+  },
+  {
+   "code": 9,
+   "name": "Uttar Pradesh",
+   "local": null,
+   "census2011Code": "09",
+   "districts": [
+    {
+     "code": 118,
+     "name": "Agra",
+     "local": null,
+     "hi": "आगरा",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "146"
+    },
+    {
+     "code": 119,
+     "name": "Aligarh",
+     "local": null,
+     "hi": "अलीगढ़",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "143"
+    },
+    {
+     "code": 121,
+     "name": "Ambedkar Nagar",
+     "local": null,
+     "hi": "अम्बेडकर नगर",
+     "hiSource": "translation",
+     "aliases": [
+      "Ambedkarnagar",
+      "अंबेडकर नगर"
+     ],
+     "census2011Code": "178"
+    },
+    {
+     "code": 640,
+     "name": "Amethi",
+     "local": null,
+     "hi": "अमेठी",
+     "hiSource": "translation",
+     "aliases": [
+      "Chhatrapati Shahuji Maharaj Nagar",
+      "Gauriganj"
+     ],
+     "census2011Code": "000"
+    },
+    {
+     "code": 154,
+     "name": "Amroha",
+     "local": null,
+     "hi": "अमरोहा",
+     "hiSource": "translation",
+     "aliases": [
+      "Jyotiba Phule Nagar",
+      "J.P. Nagar",
+      "ज्योतिबा फुले नगर"
+     ],
+     "census2011Code": "137"
+    },
+    {
+     "code": 122,
+     "name": "Auraiya",
+     "local": null,
+     "hi": "औरैया",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "162"
+    },
+    {
+     "code": 140,
+     "name": "Ayodhya",
+     "local": null,
+     "hi": "अयोध्या",
+     "hiSource": "translation",
+     "aliases": [
+      "Faizabad",
+      "फैजाबाद",
+      "फ़ैज़ाबाद"
+     ],
+     "census2011Code": "177"
+    },
+    {
+     "code": 123,
+     "name": "Azamgarh",
+     "local": null,
+     "hi": "आजमगढ़",
+     "hiSource": "translation",
+     "aliases": [
+      "आज़मगढ़"
+     ],
+     "census2011Code": "191"
+    },
+    {
+     "code": 124,
+     "name": "Baghpat",
+     "local": null,
+     "hi": "बागपत",
+     "hiSource": "translation",
+     "aliases": [
+      "Bagpat"
+     ],
+     "census2011Code": "139"
+    },
+    {
+     "code": 125,
+     "name": "Bahraich",
+     "local": null,
+     "hi": "बहराइच",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "180"
+    },
+    {
+     "code": 126,
+     "name": "Ballia",
+     "local": null,
+     "hi": "बलिया",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "193"
+    },
+    {
+     "code": 127,
+     "name": "Balrampur",
+     "local": null,
+     "hi": "बलरामपुर",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "182"
+    },
+    {
+     "code": 128,
+     "name": "Banda",
+     "local": null,
+     "hi": "बाँदा",
+     "hiSource": "translation",
+     "aliases": [
+      "बांदा"
+     ],
+     "census2011Code": "170"
+    },
+    {
+     "code": 129,
+     "name": "Bara Banki",
+     "local": null,
+     "hi": "बाराबंकी",
+     "hiSource": "translation",
+     "aliases": [
+      "Barabanki"
+     ],
+     "census2011Code": "176"
+    },
+    {
+     "code": 130,
+     "name": "Bareilly",
+     "local": null,
+     "hi": "बरेली",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "150"
+    },
+    {
+     "code": 131,
+     "name": "Basti",
+     "local": null,
+     "hi": "बस्ती",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "185"
+    },
+    {
+     "code": 179,
+     "name": "Bhadohi",
+     "local": null,
+     "hi": "भदोही",
+     "hiSource": "translation",
+     "aliases": [
+      "Sant Ravidas Nagar",
+      "संत रविदास नगर",
+      "Gyanpur"
+     ],
+     "census2011Code": "198"
+    },
+    {
+     "code": 132,
+     "name": "Bijnor",
+     "local": null,
+     "hi": "बिजनौर",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "134"
+    },
+    {
+     "code": 133,
+     "name": "Budaun",
+     "local": null,
+     "hi": "बदायूँ",
+     "hiSource": "translation",
+     "aliases": [
+      "Badaun",
+      "बदायूं"
+     ],
+     "census2011Code": "149"
+    },
+    {
+     "code": 134,
+     "name": "Bulandshahr",
+     "local": null,
+     "hi": "बुलन्दशहर",
+     "hiSource": "translation",
+     "aliases": [
+      "बुलंदशहर"
+     ],
+     "census2011Code": "142"
+    },
+    {
+     "code": 135,
+     "name": "Chandauli",
+     "local": null,
+     "hi": "चन्दौली",
+     "hiSource": "translation",
+     "aliases": [
+      "चंदौली"
+     ],
+     "census2011Code": "196"
+    },
+    {
+     "code": 136,
+     "name": "Chitrakoot",
+     "local": null,
+     "hi": "चित्रकूट",
+     "hiSource": "translation",
+     "aliases": [
+      "Chitrakut"
+     ],
+     "census2011Code": "171"
+    },
+    {
+     "code": 137,
+     "name": "Deoria",
+     "local": null,
+     "hi": "देवरिया",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "190"
+    },
+    {
+     "code": 138,
+     "name": "Etah",
+     "local": null,
+     "hi": "एटा",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "201"
+    },
+    {
+     "code": 139,
+     "name": "Etawah",
+     "local": null,
+     "hi": "इटावा",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "161"
+    },
+    {
+     "code": 141,
+     "name": "Farrukhabad",
+     "local": null,
+     "hi": "फर्रुखाबाद",
+     "hiSource": "translation",
+     "aliases": [
+      "Fatehgarh"
+     ],
+     "census2011Code": "159"
+    },
+    {
+     "code": 142,
+     "name": "Fatehpur",
+     "local": null,
+     "hi": "फतेहपुर",
+     "hiSource": "translation",
+     "aliases": [
+      "फ़तेहपुर"
+     ],
+     "census2011Code": "172"
+    },
+    {
+     "code": 143,
+     "name": "Firozabad",
+     "local": null,
+     "hi": "फिरोजाबाद",
+     "hiSource": "translation",
+     "aliases": [
+      "Firozabad",
+      "फ़िरोज़ाबाद"
+     ],
+     "census2011Code": "147"
+    },
+    {
+     "code": 144,
+     "name": "Gautam Buddha Nagar",
+     "local": null,
+     "hi": "गौतम बुद्ध नगर",
+     "hiSource": "translation",
+     "aliases": [
+      "Noida",
+      "Greater Noida",
+      "नोएडा",
+      "G.B. Nagar",
+      "Gautam Budh Nagar"
+     ],
+     "census2011Code": "141"
+    },
+    {
+     "code": 145,
+     "name": "Ghaziabad",
+     "local": null,
+     "hi": "गाजियाबाद",
+     "hiSource": "translation",
+     "aliases": [
+      "ग़ाज़ियाबाद"
+     ],
+     "census2011Code": "140"
+    },
+    {
+     "code": 146,
+     "name": "Ghazipur",
+     "local": null,
+     "hi": "गाजीपुर",
+     "hiSource": "translation",
+     "aliases": [
+      "ग़ाज़ीपुर"
+     ],
+     "census2011Code": "195"
+    },
+    {
+     "code": 147,
+     "name": "Gonda",
+     "local": null,
+     "hi": "गोण्डा",
+     "hiSource": "translation",
+     "aliases": [
+      "गोंडा"
+     ],
+     "census2011Code": "183"
+    },
+    {
+     "code": 148,
+     "name": "Gorakhpur",
+     "local": null,
+     "hi": "गोरखपुर",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "188"
+    },
+    {
+     "code": 149,
+     "name": "Hamirpur",
+     "local": null,
+     "hi": "हमीरपुर",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "168"
+    },
+    {
+     "code": 661,
+     "name": "Hapur",
+     "local": null,
+     "hi": "हापुड़",
+     "hiSource": "translation",
+     "aliases": [
+      "Panchsheel Nagar",
+      "पंचशील नगर"
+     ],
+     "census2011Code": "000"
+    },
+    {
+     "code": 150,
+     "name": "Hardoi",
+     "local": null,
+     "hi": "हरदोई",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "155"
+    },
+    {
+     "code": 163,
+     "name": "Hathras",
+     "local": null,
+     "hi": "हाथरस",
+     "hiSource": "translation",
+     "aliases": [
+      "Mahamaya Nagar",
+      "महामाया नगर"
+     ],
+     "census2011Code": "144"
+    },
+    {
+     "code": 151,
+     "name": "Jalaun",
+     "local": null,
+     "hi": "जालौन",
+     "hiSource": "translation",
+     "aliases": [
+      "Orai",
+      "उरई"
+     ],
+     "census2011Code": "165"
+    },
+    {
+     "code": 152,
+     "name": "Jaunpur",
+     "local": null,
+     "hi": "जौनपुर",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "194"
+    },
+    {
+     "code": 153,
+     "name": "Jhansi",
+     "local": null,
+     "hi": "झाँसी",
+     "hiSource": "translation",
+     "aliases": [
+      "झांसी"
+     ],
+     "census2011Code": "166"
+    },
+    {
+     "code": 155,
+     "name": "Kannauj",
+     "local": null,
+     "hi": "कन्नौज",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "160"
+    },
+    {
+     "code": 156,
+     "name": "Kanpur Dehat",
+     "local": null,
+     "hi": "कानपुर देहात",
+     "hiSource": "translation",
+     "aliases": [
+      "Ramabai Nagar",
+      "रमाबाई नगर",
+      "Akbarpur (Kanpur Dehat)"
+     ],
+     "census2011Code": "163"
+    },
+    {
+     "code": 157,
+     "name": "Kanpur Nagar",
+     "local": null,
+     "hi": "कानपुर नगर",
+     "hiSource": "translation",
+     "aliases": [
+      "Kanpur",
+      "कानपुर"
+     ],
+     "census2011Code": "164"
+    },
+    {
+     "code": 633,
+     "name": "Kasganj",
+     "local": null,
+     "hi": "कासगंज",
+     "hiSource": "translation",
+     "aliases": [
+      "Kanshiram Nagar",
+      "कांशीराम नगर"
+     ],
+     "census2011Code": "202"
+    },
+    {
+     "code": 158,
+     "name": "Kaushambi",
+     "local": null,
+     "hi": "कौशाम्बी",
+     "hiSource": "translation",
+     "aliases": [
+      "कौशांबी"
+     ],
+     "census2011Code": "174"
+    },
+    {
+     "code": 159,
+     "name": "Kheri",
+     "local": null,
+     "hi": "खीरी",
+     "hiSource": "translation",
+     "aliases": [
+      "Lakhimpur Kheri",
+      "Lakhimpur",
+      "लखीमपुर खीरी"
+     ],
+     "census2011Code": "153"
+    },
+    {
+     "code": 160,
+     "name": "Kushinagar",
+     "local": null,
+     "hi": "कुशीनगर",
+     "hiSource": "translation",
+     "aliases": [
+      "Padrauna",
+      "पडरौना"
+     ],
+     "census2011Code": "189"
+    },
+    {
+     "code": 161,
+     "name": "Lalitpur",
+     "local": null,
+     "hi": "ललितपुर",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "167"
+    },
+    {
+     "code": 162,
+     "name": "Lucknow",
+     "local": null,
+     "hi": "लखनऊ",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "157"
+    },
+    {
+     "code": 165,
+     "name": "Mahoba",
+     "local": null,
+     "hi": "महोबा",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "169"
+    },
+    {
+     "code": 164,
+     "name": "Mahrajganj",
+     "local": null,
+     "hi": "महराजगंज",
+     "hiSource": "translation",
+     "aliases": [
+      "Maharajganj",
+      "महाराजगंज"
+     ],
+     "census2011Code": "187"
+    },
+    {
+     "code": 166,
+     "name": "Mainpuri",
+     "local": null,
+     "hi": "मैनपुरी",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "148"
+    },
+    {
+     "code": 167,
+     "name": "Mathura",
+     "local": null,
+     "hi": "मथुरा",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "145"
+    },
+    {
+     "code": 168,
+     "name": "Mau",
+     "local": null,
+     "hi": "मऊ",
+     "hiSource": "translation",
+     "aliases": [
+      "Maunath Bhanjan"
+     ],
+     "census2011Code": "192"
+    },
+    {
+     "code": 169,
+     "name": "Meerut",
+     "local": null,
+     "hi": "मेरठ",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "138"
+    },
+    {
+     "code": 170,
+     "name": "Mirzapur",
+     "local": "मिर्ज़ापुर",
+     "hi": "मिर्जापुर",
+     "hiSource": "translation",
+     "aliases": [
+      "मिर्ज़ापुर"
+     ],
+     "census2011Code": "199"
+    },
+    {
+     "code": 171,
+     "name": "Moradabad",
+     "local": null,
+     "hi": "मुरादाबाद",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "135"
+    },
+    {
+     "code": 172,
+     "name": "Muzaffarnagar",
+     "local": null,
+     "hi": "मुजफ्फरनगर",
+     "hiSource": "translation",
+     "aliases": [
+      "मुज़फ़्फ़रनगर"
+     ],
+     "census2011Code": "133"
+    },
+    {
+     "code": 173,
+     "name": "Pilibhit",
+     "local": null,
+     "hi": "पीलीभीत",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "151"
+    },
+    {
+     "code": 174,
+     "name": "Pratapgarh",
+     "local": null,
+     "hi": "प्रतापगढ़",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "173"
+    },
+    {
+     "code": 120,
+     "name": "Prayagraj",
+     "local": null,
+     "hi": "प्रयागराज",
+     "hiSource": "translation",
+     "aliases": [
+      "Allahabad",
+      "इलाहाबाद"
+     ],
+     "census2011Code": "175"
+    },
+    {
+     "code": 175,
+     "name": "Rae Bareli",
+     "local": null,
+     "hi": "रायबरेली",
+     "hiSource": "translation",
+     "aliases": [
+      "Raebareli",
+      "Rae Bareilly"
+     ],
+     "census2011Code": "158"
+    },
+    {
+     "code": 176,
+     "name": "Rampur",
+     "local": null,
+     "hi": "रामपुर",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "136"
+    },
+    {
+     "code": 177,
+     "name": "Saharanpur",
+     "local": null,
+     "hi": "सहारनपुर",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "132"
+    },
+    {
+     "code": 659,
+     "name": "Sambhal",
+     "local": null,
+     "hi": "सम्भल",
+     "hiSource": "translation",
+     "aliases": [
+      "Bhim Nagar",
+      "भीम नगर",
+      "संभल"
+     ],
+     "census2011Code": "000"
+    },
+    {
+     "code": 178,
+     "name": "Sant Kabir Nagar",
+     "local": null,
+     "hi": "संत कबीर नगर",
+     "hiSource": "translation",
+     "aliases": [
+      "Khalilabad",
+      "सन्त कबीर नगर"
+     ],
+     "census2011Code": "186"
+    },
+    {
+     "code": 180,
+     "name": "Shahjahanpur",
+     "local": null,
+     "hi": "शाहजहाँपुर",
+     "hiSource": "translation",
+     "aliases": [
+      "शाहजहांपुर"
+     ],
+     "census2011Code": "152"
+    },
+    {
+     "code": 660,
+     "name": "Shamli",
+     "local": null,
+     "hi": "शामली",
+     "hiSource": "translation",
+     "aliases": [
+      "Prabuddh Nagar",
+      "प्रबुद्ध नगर"
+     ],
+     "census2011Code": "000"
+    },
+    {
+     "code": 181,
+     "name": "Shrawasti",
+     "local": null,
+     "hi": "श्रावस्ती",
+     "hiSource": "translation",
+     "aliases": [
+      "Shravasti"
+     ],
+     "census2011Code": "181"
+    },
+    {
+     "code": 182,
+     "name": "Siddharthnagar",
+     "local": null,
+     "hi": "सिद्धार्थनगर",
+     "hiSource": "translation",
+     "aliases": [
+      "Siddharth Nagar",
+      "सिद्धार्थ नगर"
+     ],
+     "census2011Code": "184"
+    },
+    {
+     "code": 183,
+     "name": "Sitapur",
+     "local": null,
+     "hi": "सीतापुर",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "154"
+    },
+    {
+     "code": 184,
+     "name": "Sonbhadra",
+     "local": null,
+     "hi": "सोनभद्र",
+     "hiSource": "translation",
+     "aliases": [
+      "Robertsganj"
+     ],
+     "census2011Code": "200"
+    },
+    {
+     "code": 185,
+     "name": "Sultanpur",
+     "local": null,
+     "hi": "सुलतानपुर",
+     "hiSource": "translation",
+     "aliases": [
+      "सुल्तानपुर"
+     ],
+     "census2011Code": "179"
+    },
+    {
+     "code": 186,
+     "name": "Unnao",
+     "local": null,
+     "hi": "उन्नाव",
+     "hiSource": "translation",
+     "aliases": [],
+     "census2011Code": "156"
+    },
+    {
+     "code": 187,
+     "name": "Varanasi",
+     "local": null,
+     "hi": "वाराणसी",
+     "hiSource": "translation",
+     "aliases": [
+      "Banaras",
+      "Benares",
+      "बनारस"
+     ],
+     "census2011Code": "197"
+    }
+   ]
+  },
+  {
+   "code": 10,
+   "name": "Bihar",
+   "local": null,
+   "census2011Code": "10",
+   "districts": [
+    {
+     "code": 188,
+     "name": "Araria",
+     "local": "अररिया",
+     "census2011Code": "209"
+    },
+    {
+     "code": 611,
+     "name": "Arwal",
+     "local": "अरवल",
+     "census2011Code": "240"
+    },
+    {
+     "code": 189,
+     "name": "Aurangabad",
+     "local": "औरंगाबाद",
+     "census2011Code": "235"
+    },
+    {
+     "code": 190,
+     "name": "Banka",
+     "local": "बांका",
+     "census2011Code": "225"
+    },
+    {
+     "code": 191,
+     "name": "Begusarai",
+     "local": "बेगूसराय",
+     "census2011Code": "222"
+    },
+    {
+     "code": 192,
+     "name": "Bhagalpur",
+     "local": "भागलपुर",
+     "census2011Code": "224"
+    },
+    {
+     "code": 193,
+     "name": "Bhojpur",
+     "local": "भोजपुर",
+     "census2011Code": "231"
+    },
+    {
+     "code": 194,
+     "name": "Buxar",
+     "local": "बक्सर",
+     "census2011Code": "232"
+    },
+    {
+     "code": 195,
+     "name": "Darbhanga",
+     "local": "दरभंगा",
+     "census2011Code": "215"
+    },
+    {
+     "code": 196,
+     "name": "Gaya",
+     "local": "गया",
+     "census2011Code": "236"
+    },
+    {
+     "code": 197,
+     "name": "Gopalganj",
+     "local": "गोपालगंज",
+     "census2011Code": "217"
+    },
+    {
+     "code": 198,
+     "name": "Jamui",
+     "local": "जमुई",
+     "census2011Code": "238"
+    },
+    {
+     "code": 199,
+     "name": "Jehanabad",
+     "local": "जहानाबाद",
+     "census2011Code": "239"
+    },
+    {
+     "code": 200,
+     "name": "Kaimur (Bhabua)",
+     "local": "कैमूर ( भभुआ )",
+     "census2011Code": "233"
+    },
+    {
+     "code": 201,
+     "name": "Katihar",
+     "local": "कटिहार",
+     "census2011Code": "212"
+    },
+    {
+     "code": 202,
+     "name": "Khagaria",
+     "local": "खगड़िया",
+     "census2011Code": "223"
+    },
+    {
+     "code": 203,
+     "name": "Kishanganj",
+     "local": "किशनगंज",
+     "census2011Code": "210"
+    },
+    {
+     "code": 204,
+     "name": "Lakhisarai",
+     "local": "लखीसराय",
+     "census2011Code": "227"
+    },
+    {
+     "code": 205,
+     "name": "Madhepura",
+     "local": "मधेपुरा",
+     "census2011Code": "213"
+    },
+    {
+     "code": 206,
+     "name": "Madhubani",
+     "local": "मधुबनी",
+     "census2011Code": "207"
+    },
+    {
+     "code": 207,
+     "name": "Munger",
+     "local": "मुंगेर",
+     "census2011Code": "226"
+    },
+    {
+     "code": 208,
+     "name": "Muzaffarpur",
+     "local": "मुजफ्फरपुर",
+     "census2011Code": "216"
+    },
+    {
+     "code": 209,
+     "name": "Nalanda",
+     "local": "नालंदा",
+     "census2011Code": "229"
+    },
+    {
+     "code": 210,
+     "name": "Nawada",
+     "local": "नवादा",
+     "census2011Code": "237"
+    },
+    {
+     "code": 211,
+     "name": "Pashchim Champaran",
+     "local": "पश्चिम चम्पारण",
+     "census2011Code": "203"
+    },
+    {
+     "code": 212,
+     "name": "Patna",
+     "local": "पटना",
+     "census2011Code": "230"
+    },
+    {
+     "code": 213,
+     "name": "Purbi Champaran",
+     "local": "पूर्वी चंपारण",
+     "census2011Code": "204"
+    },
+    {
+     "code": 214,
+     "name": "Purnia",
+     "local": "पूर्णिया",
+     "census2011Code": "211"
+    },
+    {
+     "code": 215,
+     "name": "Rohtas",
+     "local": "रोहतास",
+     "census2011Code": "234"
+    },
+    {
+     "code": 216,
+     "name": "Saharsa",
+     "local": "सहरसा",
+     "census2011Code": "214"
+    },
+    {
+     "code": 217,
+     "name": "Samastipur",
+     "local": "समस्तीपुर",
+     "census2011Code": "221"
+    },
+    {
+     "code": 218,
+     "name": "Saran",
+     "local": "सारण",
+     "census2011Code": "219"
+    },
+    {
+     "code": 219,
+     "name": "Sheikhpura",
+     "local": "शेखपुरा",
+     "census2011Code": "228"
+    },
+    {
+     "code": 220,
+     "name": "Sheohar",
+     "local": "शिवहर",
+     "census2011Code": "205"
+    },
+    {
+     "code": 221,
+     "name": "Sitamarhi",
+     "local": "सीतामढी",
+     "census2011Code": "206"
+    },
+    {
+     "code": 222,
+     "name": "Siwan",
+     "local": "सिवान",
+     "census2011Code": "218"
+    },
+    {
+     "code": 223,
+     "name": "Supaul",
+     "local": "सुपौल",
+     "census2011Code": "208"
+    },
+    {
+     "code": 224,
+     "name": "Vaishali",
+     "local": "वैशाली",
+     "census2011Code": "220"
+    }
+   ]
+  },
+  {
+   "code": 11,
+   "name": "Sikkim",
+   "local": null,
+   "census2011Code": "11",
+   "districts": [
+    {
+     "code": 225,
+     "name": "Gangtok",
+     "local": null,
+     "census2011Code": "244"
+    },
+    {
+     "code": 228,
+     "name": "Gyalshing",
+     "local": null,
+     "census2011Code": "242"
+    },
+    {
+     "code": 226,
+     "name": "Mangan",
+     "local": null,
+     "census2011Code": "241"
+    },
+    {
+     "code": 227,
+     "name": "Namchi",
+     "local": null,
+     "census2011Code": "243"
+    },
+    {
+     "code": 741,
+     "name": "Pakyong",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 742,
+     "name": "Soreng",
+     "local": null,
+     "census2011Code": "000"
+    }
+   ]
+  },
+  {
+   "code": 12,
+   "name": "Arunachal Pradesh",
+   "local": null,
+   "census2011Code": "12",
+   "districts": [
+    {
+     "code": 628,
+     "name": "Anjaw",
+     "local": null,
+     "census2011Code": "260"
+    },
+    {
+     "code": 787,
+     "name": "Bichom",
+     "local": null,
+     "census2011Code": null
+    },
+    {
+     "code": 229,
+     "name": "Changlang",
+     "local": null,
+     "census2011Code": "253"
+    },
+    {
+     "code": 230,
+     "name": "Dibang Valley",
+     "local": null,
+     "census2011Code": "257"
+    },
+    {
+     "code": 231,
+     "name": "East Kameng",
+     "local": null,
+     "census2011Code": "247"
+    },
+    {
+     "code": 232,
+     "name": "East Siang",
+     "local": null,
+     "census2011Code": "251"
+    },
+    {
+     "code": 718,
+     "name": "Kamle",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 786,
+     "name": "Keyi Panyor",
+     "local": null,
+     "census2011Code": null
+    },
+    {
+     "code": 677,
+     "name": "Kra Daadi",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 233,
+     "name": "Kurung Kumey",
+     "local": null,
+     "census2011Code": "256"
+    },
+    {
+     "code": 724,
+     "name": "Leparada",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 234,
+     "name": "Lohit",
+     "local": null,
+     "census2011Code": "259"
+    },
+    {
+     "code": 666,
+     "name": "Longding",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 235,
+     "name": "Lower Dibang Valley",
+     "local": null,
+     "census2011Code": "258"
+    },
+    {
+     "code": 719,
+     "name": "Lower Siang",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 236,
+     "name": "Lower Subansiri",
+     "local": null,
+     "census2011Code": "255"
+    },
+    {
+     "code": 678,
+     "name": "Namsai",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 723,
+     "name": "Pakke Kessang",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 237,
+     "name": "Papum Pare",
+     "local": null,
+     "census2011Code": "248"
+    },
+    {
+     "code": 725,
+     "name": "Shi Yomi",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 679,
+     "name": "Siang",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 238,
+     "name": "Tawang",
+     "local": null,
+     "census2011Code": "245"
+    },
+    {
+     "code": 239,
+     "name": "Tirap",
+     "local": null,
+     "census2011Code": "254"
+    },
+    {
+     "code": 240,
+     "name": "Upper Siang",
+     "local": null,
+     "census2011Code": "252"
+    },
+    {
+     "code": 241,
+     "name": "Upper Subansiri",
+     "local": null,
+     "census2011Code": "249"
+    },
+    {
+     "code": 242,
+     "name": "West Kameng",
+     "local": null,
+     "census2011Code": "246"
+    },
+    {
+     "code": 243,
+     "name": "West Siang",
+     "local": null,
+     "census2011Code": "250"
+    }
+   ]
+  },
+  {
+   "code": 13,
+   "name": "Nagaland",
+   "local": null,
+   "census2011Code": "13",
+   "districts": [
+    {
+     "code": 758,
+     "name": "Chumoukedima",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 244,
+     "name": "Dimapur",
+     "local": null,
+     "census2011Code": "265"
+    },
+    {
+     "code": 614,
+     "name": "Kiphire",
+     "local": null,
+     "census2011Code": "269"
+    },
+    {
+     "code": 245,
+     "name": "Kohima",
+     "local": null,
+     "census2011Code": "270"
+    },
+    {
+     "code": 615,
+     "name": "Longleng",
+     "local": null,
+     "census2011Code": "268"
+    },
+    {
+     "code": 788,
+     "name": "Meluri",
+     "local": null,
+     "census2011Code": null
+    },
+    {
+     "code": 246,
+     "name": "Mokokchung",
+     "local": null,
+     "census2011Code": "262"
+    },
+    {
+     "code": 247,
+     "name": "Mon",
+     "local": null,
+     "census2011Code": "261"
+    },
+    {
+     "code": 764,
+     "name": "Niuland",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 736,
+     "name": "Noklak",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 613,
+     "name": "Peren",
+     "local": null,
+     "census2011Code": "271"
+    },
+    {
+     "code": 248,
+     "name": "Phek",
+     "local": null,
+     "census2011Code": "266"
+    },
+    {
+     "code": 765,
+     "name": "Shamator",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 757,
+     "name": "Tseminyu",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 249,
+     "name": "Tuensang",
+     "local": null,
+     "census2011Code": "267"
+    },
+    {
+     "code": 250,
+     "name": "Wokha",
+     "local": null,
+     "census2011Code": "264"
+    },
+    {
+     "code": 251,
+     "name": "Zunheboto",
+     "local": null,
+     "census2011Code": "263"
+    }
+   ]
+  },
+  {
+   "code": 14,
+   "name": "Manipur",
+   "local": null,
+   "census2011Code": "14",
+   "districts": [
+    {
+     "code": 252,
+     "name": "Bishnupur",
+     "local": null,
+     "census2011Code": "275"
+    },
+    {
+     "code": 253,
+     "name": "Chandel",
+     "local": null,
+     "census2011Code": "280"
+    },
+    {
+     "code": 254,
+     "name": "Churachandpur",
+     "local": null,
+     "census2011Code": "274"
+    },
+    {
+     "code": 255,
+     "name": "Imphal East",
+     "local": null,
+     "census2011Code": "278"
+    },
+    {
+     "code": 256,
+     "name": "Imphal West",
+     "local": null,
+     "census2011Code": "277"
+    },
+    {
+     "code": 713,
+     "name": "Jiribam",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 711,
+     "name": "Kakching",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 717,
+     "name": "Kamjong",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 712,
+     "name": "Kangpokpi",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 714,
+     "name": "Noney",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 715,
+     "name": "Pherzawl",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 257,
+     "name": "Senapati",
+     "local": null,
+     "census2011Code": "272"
+    },
+    {
+     "code": 258,
+     "name": "Tamenglong",
+     "local": null,
+     "census2011Code": "273"
+    },
+    {
+     "code": 716,
+     "name": "Tengnoupal",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 259,
+     "name": "Thoubal",
+     "local": null,
+     "census2011Code": "276"
+    },
+    {
+     "code": 260,
+     "name": "Ukhrul",
+     "local": null,
+     "census2011Code": "279"
+    }
+   ]
+  },
+  {
+   "code": 15,
+   "name": "Mizoram",
+   "local": null,
+   "census2011Code": "15",
+   "districts": [
+    {
+     "code": 261,
+     "name": "Aizawl",
+     "local": null,
+     "census2011Code": "283"
+    },
+    {
+     "code": 262,
+     "name": "Champhai",
+     "local": null,
+     "census2011Code": "284"
+    },
+    {
+     "code": 726,
+     "name": "Hnahthial",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 728,
+     "name": "Khawzawl",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 263,
+     "name": "Kolasib",
+     "local": null,
+     "census2011Code": "282"
+    },
+    {
+     "code": 264,
+     "name": "Lawngtlai",
+     "local": null,
+     "census2011Code": "287"
+    },
+    {
+     "code": 265,
+     "name": "Lunglei",
+     "local": null,
+     "census2011Code": "286"
+    },
+    {
+     "code": 266,
+     "name": "Mamit",
+     "local": null,
+     "census2011Code": "281"
+    },
+    {
+     "code": 727,
+     "name": "Saitual",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 268,
+     "name": "Serchhip",
+     "local": null,
+     "census2011Code": "285"
+    },
+    {
+     "code": 267,
+     "name": "Siaha",
+     "local": null,
+     "census2011Code": "288"
+    }
+   ]
+  },
+  {
+   "code": 16,
+   "name": "Tripura",
+   "local": "ত্রিপুরা",
+   "census2011Code": "16",
+   "districts": [
+    {
+     "code": 269,
+     "name": "Dhalai",
+     "local": "ধলাই",
+     "census2011Code": "291"
+    },
+    {
+     "code": 654,
+     "name": "Gomati",
+     "local": "গোমতি",
+     "census2011Code": "000"
+    },
+    {
+     "code": 652,
+     "name": "Khowai",
+     "local": "খোয়াই",
+     "census2011Code": "000"
+    },
+    {
+     "code": 270,
+     "name": "North Tripura",
+     "local": "উত্তর ত্রিপুরা",
+     "census2011Code": "292"
+    },
+    {
+     "code": 653,
+     "name": "Sepahijala",
+     "local": "সিপাহিজলা",
+     "census2011Code": "000"
+    },
+    {
+     "code": 271,
+     "name": "South Tripura",
+     "local": "দক্ষিন ত্রিপুরা",
+     "census2011Code": "290"
+    },
+    {
+     "code": 655,
+     "name": "Unakoti",
+     "local": "ঊনকোটি",
+     "census2011Code": "000"
+    },
+    {
+     "code": 272,
+     "name": "West Tripura",
+     "local": "পশ্চিম ত্রিপুরা",
+     "census2011Code": "289"
+    }
+   ]
+  },
+  {
+   "code": 17,
+   "name": "Meghalaya",
+   "local": null,
+   "census2011Code": "17",
+   "districts": [
+    {
+     "code": 273,
+     "name": "East Garo Hills",
+     "local": null,
+     "census2011Code": "294"
+    },
+    {
+     "code": 657,
+     "name": "East Jaintia Hills",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 274,
+     "name": "East Khasi Hills",
+     "local": null,
+     "census2011Code": "298"
+    },
+    {
+     "code": 740,
+     "name": "Eastern West Khasi Hills",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 656,
+     "name": "North Garo Hills",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 276,
+     "name": "Ri Bhoi",
+     "local": null,
+     "census2011Code": "297"
+    },
+    {
+     "code": 277,
+     "name": "South Garo Hills",
+     "local": null,
+     "census2011Code": "295"
+    },
+    {
+     "code": 663,
+     "name": "South West Garo Hills",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 658,
+     "name": "South West Khasi Hills",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 278,
+     "name": "West Garo Hills",
+     "local": null,
+     "census2011Code": "293"
+    },
+    {
+     "code": 275,
+     "name": "West Jaintia Hills",
+     "local": null,
+     "census2011Code": "299"
+    },
+    {
+     "code": 279,
+     "name": "West Khasi Hills",
+     "local": null,
+     "census2011Code": "296"
+    }
+   ]
+  },
+  {
+   "code": 18,
+   "name": "Assam",
+   "local": null,
+   "census2011Code": "18",
+   "districts": [
+    {
+     "code": 739,
+     "name": "Bajali",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 616,
+     "name": "Baksa",
+     "local": null,
+     "census2011Code": "324"
+    },
+    {
+     "code": 280,
+     "name": "Barpeta",
+     "local": null,
+     "census2011Code": "303"
+    },
+    {
+     "code": 705,
+     "name": "Biswanath",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 281,
+     "name": "Bongaigaon",
+     "local": null,
+     "census2011Code": "319"
+    },
+    {
+     "code": 282,
+     "name": "Cachar",
+     "local": null,
+     "census2011Code": "316"
+    },
+    {
+     "code": 708,
+     "name": "Charaideo",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 612,
+     "name": "Chirang",
+     "local": null,
+     "census2011Code": "320"
+    },
+    {
+     "code": 283,
+     "name": "Darrang",
+     "local": null,
+     "census2011Code": "325"
+    },
+    {
+     "code": 284,
+     "name": "Dhemaji",
+     "local": null,
+     "census2011Code": "308"
+    },
+    {
+     "code": 285,
+     "name": "Dhubri",
+     "local": null,
+     "census2011Code": "301"
+    },
+    {
+     "code": 286,
+     "name": "Dibrugarh",
+     "local": null,
+     "census2011Code": "310"
+    },
+    {
+     "code": 299,
+     "name": "Dima Hasao",
+     "local": null,
+     "census2011Code": "315"
+    },
+    {
+     "code": 287,
+     "name": "Goalpara",
+     "local": null,
+     "census2011Code": "302"
+    },
+    {
+     "code": 288,
+     "name": "Golaghat",
+     "local": null,
+     "census2011Code": "313"
+    },
+    {
+     "code": 289,
+     "name": "Hailakandi",
+     "local": null,
+     "census2011Code": "318"
+    },
+    {
+     "code": 709,
+     "name": "Hojai",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 290,
+     "name": "Jorhat",
+     "local": null,
+     "census2011Code": "312"
+    },
+    {
+     "code": 291,
+     "name": "Kamrup",
+     "local": null,
+     "census2011Code": "321"
+    },
+    {
+     "code": 618,
+     "name": "Kamrup Metro",
+     "local": null,
+     "census2011Code": "322"
+    },
+    {
+     "code": 292,
+     "name": "Karbi Anglong",
+     "local": null,
+     "census2011Code": "314"
+    },
+    {
+     "code": 294,
+     "name": "Kokrajhar",
+     "local": null,
+     "census2011Code": "300"
+    },
+    {
+     "code": 295,
+     "name": "Lakhimpur",
+     "local": null,
+     "census2011Code": "307"
+    },
+    {
+     "code": 706,
+     "name": "Majuli",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 296,
+     "name": "Marigaon",
+     "local": null,
+     "census2011Code": "304"
+    },
+    {
+     "code": 297,
+     "name": "Nagaon",
+     "local": null,
+     "census2011Code": "305"
+    },
+    {
+     "code": 298,
+     "name": "Nalbari",
+     "local": null,
+     "census2011Code": "323"
+    },
+    {
+     "code": 300,
+     "name": "Sivasagar",
+     "local": null,
+     "census2011Code": "311"
+    },
+    {
+     "code": 301,
+     "name": "Sonitpur",
+     "local": null,
+     "census2011Code": "306"
+    },
+    {
+     "code": 707,
+     "name": "South Salmara Mancachar",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 293,
+     "name": "Sribhumi",
+     "local": "শ্ৰীভূমি",
+     "census2011Code": "317"
+    },
+    {
+     "code": 756,
+     "name": "Tamulpur",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 302,
+     "name": "Tinsukia",
+     "local": null,
+     "census2011Code": "309"
+    },
+    {
+     "code": 617,
+     "name": "Udalguri",
+     "local": null,
+     "census2011Code": "326"
+    },
+    {
+     "code": 710,
+     "name": "West Karbi Anglong",
+     "local": null,
+     "census2011Code": "000"
+    }
+   ]
+  },
+  {
+   "code": 19,
+   "name": "West Bengal",
+   "local": null,
+   "census2011Code": "19",
+   "districts": [
+    {
+     "code": 664,
+     "name": "Alipurduar",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 305,
+     "name": "Bankura",
+     "local": null,
+     "census2011Code": "339"
+    },
+    {
+     "code": 307,
+     "name": "Birbhum",
+     "local": null,
+     "census2011Code": "334"
+    },
+    {
+     "code": 308,
+     "name": "Cooch Behar",
+     "local": null,
+     "census2011Code": "329"
+    },
+    {
+     "code": 310,
+     "name": "Dakshin Dinajpur",
+     "local": null,
+     "census2011Code": "331"
+    },
+    {
+     "code": 309,
+     "name": "Darjeeling",
+     "local": null,
+     "census2011Code": "327"
+    },
+    {
+     "code": 312,
+     "name": "Hooghly",
+     "local": null,
+     "census2011Code": "338"
+    },
+    {
+     "code": 313,
+     "name": "Howrah",
+     "local": null,
+     "census2011Code": "341"
+    },
+    {
+     "code": 314,
+     "name": "Jalpaiguri",
+     "local": null,
+     "census2011Code": "328"
+    },
+    {
+     "code": 703,
+     "name": "Jhargram",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 702,
+     "name": "Kalimpong",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 315,
+     "name": "Kolkata",
+     "local": null,
+     "census2011Code": "342"
+    },
+    {
+     "code": 316,
+     "name": "Malda",
+     "local": null,
+     "census2011Code": "332"
+    },
+    {
+     "code": 319,
+     "name": "Murshidabad",
+     "local": null,
+     "census2011Code": "333"
+    },
+    {
+     "code": 320,
+     "name": "Nadia",
+     "local": null,
+     "census2011Code": "336"
+    },
+    {
+     "code": 303,
+     "name": "North 24 Parganas",
+     "local": null,
+     "census2011Code": "337"
+    },
+    {
+     "code": 704,
+     "name": "Paschim Bardhaman",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 318,
+     "name": "Paschim Medinipur",
+     "local": null,
+     "census2011Code": "344"
+    },
+    {
+     "code": 306,
+     "name": "Purba Bardhaman",
+     "local": null,
+     "census2011Code": "335"
+    },
+    {
+     "code": 317,
+     "name": "Purba Medinipur",
+     "local": null,
+     "census2011Code": "345"
+    },
+    {
+     "code": 321,
+     "name": "Purulia",
+     "local": null,
+     "census2011Code": "340"
+    },
+    {
+     "code": 304,
+     "name": "South 24 Parganas",
+     "local": null,
+     "census2011Code": "343"
+    },
+    {
+     "code": 311,
+     "name": "Uttar Dinajpur",
+     "local": null,
+     "census2011Code": "330"
+    }
+   ]
+  },
+  {
+   "code": 20,
+   "name": "Jharkhand",
+   "local": "झारखंड",
+   "census2011Code": "20",
+   "districts": [
+    {
+     "code": 322,
+     "name": "Bokaro",
+     "local": "बोकारो",
+     "census2011Code": "355"
+    },
+    {
+     "code": 323,
+     "name": "Chatra",
+     "local": "चतरा",
+     "census2011Code": "347"
+    },
+    {
+     "code": 324,
+     "name": "Deoghar",
+     "local": "देवघर",
+     "census2011Code": "350"
+    },
+    {
+     "code": 325,
+     "name": "Dhanbad",
+     "local": "धनबाद",
+     "census2011Code": "354"
+    },
+    {
+     "code": 326,
+     "name": "Dumka",
+     "local": "दुमका",
+     "census2011Code": "362"
+    },
+    {
+     "code": 327,
+     "name": "East Singhbum",
+     "local": "पूर्वी सिंघभूम",
+     "census2011Code": "357"
+    },
+    {
+     "code": 328,
+     "name": "Garhwa",
+     "local": "गढ़वा",
+     "census2011Code": "346"
+    },
+    {
+     "code": 329,
+     "name": "Giridih",
+     "local": "गिरिडीह",
+     "census2011Code": "349"
+    },
+    {
+     "code": 330,
+     "name": "Godda",
+     "local": "गोड्डा",
+     "census2011Code": "351"
+    },
+    {
+     "code": 331,
+     "name": "Gumla",
+     "local": "गुमला",
+     "census2011Code": "366"
+    },
+    {
+     "code": 332,
+     "name": "Hazaribagh",
+     "local": "हज़ारीबाग",
+     "census2011Code": "360"
+    },
+    {
+     "code": 333,
+     "name": "Jamtara",
+     "local": "जामताड़ा",
+     "census2011Code": "363"
+    },
+    {
+     "code": 606,
+     "name": "Khunti",
+     "local": "खूंटी",
+     "census2011Code": "365"
+    },
+    {
+     "code": 334,
+     "name": "Koderma",
+     "local": "कोडरमा",
+     "census2011Code": "348"
+    },
+    {
+     "code": 335,
+     "name": "Latehar",
+     "local": "लातेहार",
+     "census2011Code": "359"
+    },
+    {
+     "code": 336,
+     "name": "Lohardaga",
+     "local": "लोहरदगा",
+     "census2011Code": "356"
+    },
+    {
+     "code": 337,
+     "name": "Pakur",
+     "local": "पाकुर",
+     "census2011Code": "353"
+    },
+    {
+     "code": 338,
+     "name": "Palamu",
+     "local": "पलामू",
+     "census2011Code": "358"
+    },
+    {
+     "code": 607,
+     "name": "Ramgarh",
+     "local": "रामगढ़",
+     "census2011Code": "361"
+    },
+    {
+     "code": 339,
+     "name": "Ranchi",
+     "local": "रांची",
+     "census2011Code": "364"
+    },
+    {
+     "code": 340,
+     "name": "Sahebganj",
+     "local": "साहेबगंज",
+     "census2011Code": "352"
+    },
+    {
+     "code": 341,
+     "name": "Saraikela Kharsawan",
+     "local": "सरायकेला खरसावां",
+     "census2011Code": "369"
+    },
+    {
+     "code": 342,
+     "name": "Simdega",
+     "local": "सिमडेगा",
+     "census2011Code": "367"
+    },
+    {
+     "code": 343,
+     "name": "West Singhbhum",
+     "local": "पश्चिमी सिंघभूम",
+     "census2011Code": "368"
+    }
+   ]
+  },
+  {
+   "code": 21,
+   "name": "Odisha",
+   "local": "ଓଡ଼ିଶା",
+   "census2011Code": "21",
+   "districts": [
+    {
+     "code": 344,
+     "name": "Anugola",
+     "local": "ଅନୁଗୋଳ",
+     "census2011Code": "384"
+    },
+    {
+     "code": 345,
+     "name": "Balangir",
+     "local": null,
+     "census2011Code": "393"
+    },
+    {
+     "code": 346,
+     "name": "Baleshwar",
+     "local": "ବାଲେଶ୍ୱର",
+     "census2011Code": "377"
+    },
+    {
+     "code": 347,
+     "name": "Baragada",
+     "local": "ବରଗଡ଼",
+     "census2011Code": "370"
+    },
+    {
+     "code": 348,
+     "name": "Bhadrak",
+     "local": null,
+     "census2011Code": "378"
+    },
+    {
+     "code": 349,
+     "name": "Boudh",
+     "local": null,
+     "census2011Code": "391"
+    },
+    {
+     "code": 351,
+     "name": "Debagada",
+     "local": "ଦେବଗଡ଼",
+     "census2011Code": "373"
+    },
+    {
+     "code": 352,
+     "name": "Dhenkanal",
+     "local": null,
+     "census2011Code": "383"
+    },
+    {
+     "code": 353,
+     "name": "Gajapati",
+     "local": null,
+     "census2011Code": "389"
+    },
+    {
+     "code": 354,
+     "name": "Ganjam",
+     "local": null,
+     "census2011Code": "388"
+    },
+    {
+     "code": 355,
+     "name": "Jagatsinghapur",
+     "local": null,
+     "census2011Code": "380"
+    },
+    {
+     "code": 356,
+     "name": "Jajpur",
+     "local": "ଯାଜପୁର",
+     "census2011Code": "382"
+    },
+    {
+     "code": 357,
+     "name": "Jharsuguda",
+     "local": null,
+     "census2011Code": "371"
+    },
+    {
+     "code": 358,
+     "name": "Kalahandi",
+     "local": null,
+     "census2011Code": "395"
+    },
+    {
+     "code": 359,
+     "name": "Kandhamala",
+     "local": "କନ୍ଧମାଳ",
+     "census2011Code": "390"
+    },
+    {
+     "code": 350,
+     "name": "Kataka",
+     "local": "କଟକ",
+     "census2011Code": "381"
+    },
+    {
+     "code": 360,
+     "name": "Kendrapada",
+     "local": "କେନ୍ଦ୍ରାପଡ଼ା",
+     "census2011Code": "379"
+    },
+    {
+     "code": 361,
+     "name": "Kendujhar",
+     "local": "କେନ୍ଦୁଝର",
+     "census2011Code": "375"
+    },
+    {
+     "code": 362,
+     "name": "Khordha",
+     "local": null,
+     "census2011Code": "386"
+    },
+    {
+     "code": 363,
+     "name": "Koraput",
+     "local": null,
+     "census2011Code": "398"
+    },
+    {
+     "code": 364,
+     "name": "Malkangiri",
+     "local": null,
+     "census2011Code": "399"
+    },
+    {
+     "code": 365,
+     "name": "Mayurbhanj",
+     "local": null,
+     "census2011Code": "376"
+    },
+    {
+     "code": 366,
+     "name": "Nabarangpur",
+     "local": null,
+     "census2011Code": "397"
+    },
+    {
+     "code": 367,
+     "name": "Nayagada",
+     "local": "ନୟାଗଡ଼",
+     "census2011Code": "385"
+    },
+    {
+     "code": 368,
+     "name": "Nuapada",
+     "local": null,
+     "census2011Code": "394"
+    },
+    {
+     "code": 369,
+     "name": "Puri",
+     "local": null,
+     "census2011Code": "387"
+    },
+    {
+     "code": 370,
+     "name": "Rayagada",
+     "local": null,
+     "census2011Code": "396"
+    },
+    {
+     "code": 371,
+     "name": "Sambalpur",
+     "local": null,
+     "census2011Code": "372"
+    },
+    {
+     "code": 372,
+     "name": "Subarnapur",
+     "local": "ସୁବର୍ଣ୍ଣପୁର",
+     "census2011Code": "392"
+    },
+    {
+     "code": 373,
+     "name": "Sundaragada",
+     "local": "ସୁନ୍ଦରଗଡ଼",
+     "census2011Code": "374"
+    }
+   ]
+  },
+  {
+   "code": 22,
+   "name": "Chhattisgarh",
+   "local": "छत्तीसगढ़",
+   "census2011Code": "22",
+   "districts": [
+    {
+     "code": 646,
+     "name": "Balod",
+     "local": "बालोद",
+     "census2011Code": "000"
+    },
+    {
+     "code": 644,
+     "name": "Balodabazar-Bhatapara",
+     "local": "बलौदाबाजार-भाटापारा",
+     "census2011Code": "000"
+    },
+    {
+     "code": 649,
+     "name": "Balrampur-Ramanujganj",
+     "local": "बलरामपुर-रामानुजगंज",
+     "census2011Code": "000"
+    },
+    {
+     "code": 374,
+     "name": "Bastar",
+     "local": "बस्तर",
+     "census2011Code": "414"
+    },
+    {
+     "code": 650,
+     "name": "Bemetara",
+     "local": "बेमेतरा",
+     "census2011Code": "000"
+    },
+    {
+     "code": 636,
+     "name": "Bijapur",
+     "local": "बीजापुर",
+     "census2011Code": "417"
+    },
+    {
+     "code": 375,
+     "name": "Bilaspur",
+     "local": "बिलासपुर",
+     "census2011Code": "406"
+    },
+    {
+     "code": 376,
+     "name": "Dakshin Bastar Dantewada",
+     "local": "दक्षिण बस्तर दंतेवाड़ा",
+     "census2011Code": "416"
+    },
+    {
+     "code": 377,
+     "name": "Dhamtari",
+     "local": "धमतरी",
+     "census2011Code": "412"
+    },
+    {
+     "code": 378,
+     "name": "Durg",
+     "local": "दुर्ग",
+     "census2011Code": "409"
+    },
+    {
+     "code": 645,
+     "name": "Gariyaband",
+     "local": "गरियाबंद",
+     "census2011Code": "000"
+    },
+    {
+     "code": 734,
+     "name": "Gaurela-Pendra-Marwahi",
+     "local": "गौरेला-पेंड्रा-मरवाही",
+     "census2011Code": "000"
+    },
+    {
+     "code": 379,
+     "name": "Janjgir-Champa",
+     "local": "जांजगीर - चाम्पा",
+     "census2011Code": "405"
+    },
+    {
+     "code": 380,
+     "name": "Jashpur",
+     "local": "जशपुर",
+     "census2011Code": "402"
+    },
+    {
+     "code": 382,
+     "name": "Kabeerdham",
+     "local": "कबीरधाम",
+     "census2011Code": "407"
+    },
+    {
+     "code": 759,
+     "name": "Khairagarh-Chhuikhadan-Gandai",
+     "local": "खैरागढ़-छुईखदान-गंडई",
+     "census2011Code": "000"
+    },
+    {
+     "code": 643,
+     "name": "Kondagaon",
+     "local": "कोंडागांव",
+     "census2011Code": "000"
+    },
+    {
+     "code": 383,
+     "name": "Korba",
+     "local": "कोरबा",
+     "census2011Code": "404"
+    },
+    {
+     "code": 384,
+     "name": "Korea",
+     "local": "कोरिया",
+     "census2011Code": "400"
+    },
+    {
+     "code": 385,
+     "name": "Mahasamund",
+     "local": "महासमुंद",
+     "census2011Code": "411"
+    },
+    {
+     "code": 760,
+     "name": "Manendragarh-Chirmiri-Bharatpur(M C B)",
+     "local": "मनेन्द्रगढ़-चिरमिरी-भरतपुर(ऍम.सी.बी.)",
+     "census2011Code": "000"
+    },
+    {
+     "code": 761,
+     "name": "Mohla-Manpur-Ambagarh Chouki",
+     "local": "मोहला-मानपुर-अम्बागढ़ चौकी",
+     "census2011Code": "000"
+    },
+    {
+     "code": 647,
+     "name": "Mungeli",
+     "local": "मुंगेली",
+     "census2011Code": "000"
+    },
+    {
+     "code": 637,
+     "name": "Narayanpur",
+     "local": "नारायणपुर",
+     "census2011Code": "415"
+    },
+    {
+     "code": 386,
+     "name": "Raigarh",
+     "local": "रायगढ़",
+     "census2011Code": "403"
+    },
+    {
+     "code": 387,
+     "name": "Raipur",
+     "local": "रायपुर",
+     "census2011Code": "410"
+    },
+    {
+     "code": 388,
+     "name": "Rajnandgaon",
+     "local": "राजनंदगांव",
+     "census2011Code": "408"
+    },
+    {
+     "code": 762,
+     "name": "Sakti",
+     "local": "सक्ती",
+     "census2011Code": "000"
+    },
+    {
+     "code": 763,
+     "name": "Sarangarh-Bilaigarh",
+     "local": "सारंगढ़-बिलाईगढ़",
+     "census2011Code": "000"
+    },
+    {
+     "code": 642,
+     "name": "Sukma",
+     "local": "सुकमा",
+     "census2011Code": "000"
+    },
+    {
+     "code": 648,
+     "name": "Surajpur",
+     "local": "सूरजपुर",
+     "census2011Code": "000"
+    },
+    {
+     "code": 389,
+     "name": "Surguja",
+     "local": "सरगुजा",
+     "census2011Code": "401"
+    },
+    {
+     "code": 381,
+     "name": "Uttar Bastar Kanker",
+     "local": "उत्तर बस्तर कांकेर",
+     "census2011Code": "413"
+    }
+   ]
+  },
+  {
+   "code": 23,
+   "name": "Madhya Pradesh",
+   "local": null,
+   "census2011Code": "23",
+   "districts": [
+    {
+     "code": 667,
+     "name": "Agar-Malwa",
+     "local": "आगर-मालवा",
+     "census2011Code": "000"
+    },
+    {
+     "code": 639,
+     "name": "Alirajpur",
+     "local": "अलीराजपुर",
+     "census2011Code": "465"
+    },
+    {
+     "code": 390,
+     "name": "Anuppur",
+     "local": "अनूपपुर",
+     "census2011Code": "461"
+    },
+    {
+     "code": 391,
+     "name": "Ashoknagar",
+     "local": "अशोकनगर",
+     "census2011Code": "459"
+    },
+    {
+     "code": 392,
+     "name": "Balaghat",
+     "local": "बालाघाट",
+     "census2011Code": "457"
+    },
+    {
+     "code": 393,
+     "name": "Barwani",
+     "local": "बड़वानी",
+     "census2011Code": "441"
+    },
+    {
+     "code": 394,
+     "name": "Betul",
+     "local": "बैतूल",
+     "census2011Code": "447"
+    },
+    {
+     "code": 395,
+     "name": "Bhind",
+     "local": "भिण्ड",
+     "census2011Code": "420"
+    },
+    {
+     "code": 396,
+     "name": "Bhopal",
+     "local": "भोपाल",
+     "census2011Code": "444"
+    },
+    {
+     "code": 397,
+     "name": "Burhanpur",
+     "local": "बुरहानपुर",
+     "census2011Code": "467"
+    },
+    {
+     "code": 398,
+     "name": "Chhatarpur",
+     "local": "छ्तरपुर",
+     "census2011Code": "425"
+    },
+    {
+     "code": 399,
+     "name": "Chhindwara",
+     "local": "छिन्दवाड़ा",
+     "census2011Code": "455"
+    },
+    {
+     "code": 400,
+     "name": "Damoh",
+     "local": "दमोह",
+     "census2011Code": "428"
+    },
+    {
+     "code": 401,
+     "name": "Datia",
+     "local": "दतिया",
+     "census2011Code": "422"
+    },
+    {
+     "code": 402,
+     "name": "Dewas",
+     "local": "देवास",
+     "census2011Code": "437"
+    },
+    {
+     "code": 403,
+     "name": "Dhar",
+     "local": "धार",
+     "census2011Code": "438"
+    },
+    {
+     "code": 404,
+     "name": "Dindori",
+     "local": "डिंडोरी",
+     "census2011Code": "453"
+    },
+    {
+     "code": 406,
+     "name": "Guna",
+     "local": "गुना",
+     "census2011Code": "458"
+    },
+    {
+     "code": 407,
+     "name": "Gwalior",
+     "local": "ग्वालियर",
+     "census2011Code": "421"
+    },
+    {
+     "code": 408,
+     "name": "Harda",
+     "local": "हरदा",
+     "census2011Code": "448"
+    },
+    {
+     "code": 410,
+     "name": "Indore",
+     "local": "इन्दौर",
+     "census2011Code": "439"
+    },
+    {
+     "code": 411,
+     "name": "Jabalpur",
+     "local": "जबलपुर",
+     "census2011Code": "451"
+    },
+    {
+     "code": 412,
+     "name": "Jhabua",
+     "local": "झाबुआ",
+     "census2011Code": "464"
+    },
+    {
+     "code": 413,
+     "name": "Katni",
+     "local": "कटनी",
+     "census2011Code": "450"
+    },
+    {
+     "code": 405,
+     "name": "Khandwa (East Nimar)",
+     "local": "खण्डवा (पूर्व निमाड़)",
+     "census2011Code": "466"
+    },
+    {
+     "code": 414,
+     "name": "Khargone (West Nimar)",
+     "local": "खरगोन (पश्चिम निमाड़)",
+     "census2011Code": "440"
+    },
+    {
+     "code": 784,
+     "name": "Maihar",
+     "local": "मैहर",
+     "census2011Code": null
+    },
+    {
+     "code": 415,
+     "name": "Mandla",
+     "local": "मंडला",
+     "census2011Code": "454"
+    },
+    {
+     "code": 416,
+     "name": "Mandsaur",
+     "local": "मन्दसौर",
+     "census2011Code": "433"
+    },
+    {
+     "code": 766,
+     "name": "MAUGANJ",
+     "local": "मऊगंज",
+     "census2011Code": null
+    },
+    {
+     "code": 417,
+     "name": "Morena",
+     "local": "मुरैना",
+     "census2011Code": "419"
+    },
+    {
+     "code": 409,
+     "name": "Narmadapuram",
+     "local": "नर्मदापुरम",
+     "census2011Code": "449"
+    },
+    {
+     "code": 418,
+     "name": "Narsimhapur",
+     "local": "नरसिंहपुर",
+     "census2011Code": "452"
+    },
+    {
+     "code": 419,
+     "name": "Neemuch",
+     "local": "नीमच",
+     "census2011Code": "432"
+    },
+    {
+     "code": 722,
+     "name": "Niwari",
+     "local": "निवारी",
+     "census2011Code": "000"
+    },
+    {
+     "code": 785,
+     "name": "Pandhurna",
+     "local": "पांढुर्णा",
+     "census2011Code": null
+    },
+    {
+     "code": 420,
+     "name": "Panna",
+     "local": "पन्ना",
+     "census2011Code": "426"
+    },
+    {
+     "code": 421,
+     "name": "Raisen",
+     "local": "रायसेन",
+     "census2011Code": "446"
+    },
+    {
+     "code": 422,
+     "name": "Rajgarh",
+     "local": "राजगढ़",
+     "census2011Code": "442"
+    },
+    {
+     "code": 423,
+     "name": "Ratlam",
+     "local": "रतलाम",
+     "census2011Code": "434"
+    },
+    {
+     "code": 424,
+     "name": "Rewa",
+     "local": "रीवा",
+     "census2011Code": "430"
+    },
+    {
+     "code": 425,
+     "name": "Sagar",
+     "local": "सागर",
+     "census2011Code": "427"
+    },
+    {
+     "code": 426,
+     "name": "Satna",
+     "local": "सतना",
+     "census2011Code": "429"
+    },
+    {
+     "code": 427,
+     "name": "Sehore",
+     "local": "सीहोर",
+     "census2011Code": "445"
+    },
+    {
+     "code": 428,
+     "name": "Seoni",
+     "local": "सिवनी",
+     "census2011Code": "456"
+    },
+    {
+     "code": 429,
+     "name": "Shahdol",
+     "local": "शहडोल",
+     "census2011Code": "460"
+    },
+    {
+     "code": 430,
+     "name": "Shajapur",
+     "local": "शाजापुर",
+     "census2011Code": "436"
+    },
+    {
+     "code": 431,
+     "name": "Sheopur",
+     "local": "श्योपुर",
+     "census2011Code": "418"
+    },
+    {
+     "code": 432,
+     "name": "Shivpuri",
+     "local": "शिवपुरी",
+     "census2011Code": "423"
+    },
+    {
+     "code": 433,
+     "name": "Sidhi",
+     "local": "सीधी",
+     "census2011Code": "462"
+    },
+    {
+     "code": 638,
+     "name": "Singrauli",
+     "local": "सिंगरौली",
+     "census2011Code": "463"
+    },
+    {
+     "code": 434,
+     "name": "Tikamgarh",
+     "local": "टीकमगढ़",
+     "census2011Code": "424"
+    },
+    {
+     "code": 435,
+     "name": "Ujjain",
+     "local": "उज्जैन",
+     "census2011Code": "435"
+    },
+    {
+     "code": 436,
+     "name": "Umaria",
+     "local": "उमरिया",
+     "census2011Code": "431"
+    },
+    {
+     "code": 437,
+     "name": "Vidisha",
+     "local": "विदिशा",
+     "census2011Code": "443"
+    }
+   ]
+  },
+  {
+   "code": 24,
+   "name": "Gujarat",
+   "local": null,
+   "census2011Code": "24",
+   "districts": [
+    {
+     "code": 438,
+     "name": "Ahmedabad",
+     "local": null,
+     "census2011Code": "474"
+    },
+    {
+     "code": 439,
+     "name": "Amreli",
+     "local": null,
+     "census2011Code": "480"
+    },
+    {
+     "code": 440,
+     "name": "Anand",
+     "local": null,
+     "census2011Code": "482"
+    },
+    {
+     "code": 672,
+     "name": "Arvalli",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 441,
+     "name": "Banas Kantha",
+     "local": null,
+     "census2011Code": "469"
+    },
+    {
+     "code": 442,
+     "name": "Bharuch",
+     "local": null,
+     "census2011Code": "488"
+    },
+    {
+     "code": 443,
+     "name": "Bhavnagar",
+     "local": null,
+     "census2011Code": "481"
+    },
+    {
+     "code": 676,
+     "name": "Botad",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 668,
+     "name": "Chhotaudepur",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 445,
+     "name": "Dahod",
+     "local": null,
+     "census2011Code": "485"
+    },
+    {
+     "code": 444,
+     "name": "Dangs",
+     "local": null,
+     "census2011Code": "489"
+    },
+    {
+     "code": 674,
+     "name": "Devbhumi Dwarka",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 446,
+     "name": "Gandhinagar",
+     "local": null,
+     "census2011Code": "473"
+    },
+    {
+     "code": 675,
+     "name": "Gir Somnath",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 447,
+     "name": "Jamnagar",
+     "local": null,
+     "census2011Code": "477"
+    },
+    {
+     "code": 448,
+     "name": "Junagadh",
+     "local": null,
+     "census2011Code": "479"
+    },
+    {
+     "code": 449,
+     "name": "Kachchh",
+     "local": null,
+     "census2011Code": "468"
+    },
+    {
+     "code": 450,
+     "name": "Kheda",
+     "local": null,
+     "census2011Code": "483"
+    },
+    {
+     "code": 451,
+     "name": "Mahesana",
+     "local": null,
+     "census2011Code": "471"
+    },
+    {
+     "code": 669,
+     "name": "Mahisagar",
+     "local": "મહિસાગર",
+     "census2011Code": "000"
+    },
+    {
+     "code": 673,
+     "name": "Morbi",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 452,
+     "name": "Narmada",
+     "local": null,
+     "census2011Code": "487"
+    },
+    {
+     "code": 453,
+     "name": "Navsari",
+     "local": null,
+     "census2011Code": "490"
+    },
+    {
+     "code": 454,
+     "name": "Panch Mahals",
+     "local": null,
+     "census2011Code": "484"
+    },
+    {
+     "code": 455,
+     "name": "Patan",
+     "local": null,
+     "census2011Code": "470"
+    },
+    {
+     "code": 456,
+     "name": "Porbandar",
+     "local": null,
+     "census2011Code": "478"
+    },
+    {
+     "code": 457,
+     "name": "Rajkot",
+     "local": null,
+     "census2011Code": "476"
+    },
+    {
+     "code": 458,
+     "name": "Sabar Kantha",
+     "local": null,
+     "census2011Code": "472"
+    },
+    {
+     "code": 459,
+     "name": "Surat",
+     "local": null,
+     "census2011Code": "492"
+    },
+    {
+     "code": 460,
+     "name": "Surendranagar",
+     "local": null,
+     "census2011Code": "475"
+    },
+    {
+     "code": 641,
+     "name": "Tapi",
+     "local": null,
+     "census2011Code": "493"
+    },
+    {
+     "code": 461,
+     "name": "Vadodara",
+     "local": null,
+     "census2011Code": "486"
+    },
+    {
+     "code": 462,
+     "name": "Valsad",
+     "local": null,
+     "census2011Code": "491"
+    },
+    {
+     "code": 789,
+     "name": "Vav-Tharad",
+     "local": "વાવ થરાદ",
+     "census2011Code": null
+    }
+   ]
+  },
+  {
+   "code": 27,
+   "name": "Maharashtra",
+   "local": "महाराष्ट्र",
+   "census2011Code": "27",
+   "districts": [
+    {
+     "code": 466,
+     "name": "Ahilyanagar",
+     "local": "अहिल्यानगर",
+     "census2011Code": "522"
+    },
+    {
+     "code": 467,
+     "name": "Akola",
+     "local": "अकोला",
+     "census2011Code": "501"
+    },
+    {
+     "code": 468,
+     "name": "Amravati",
+     "local": "अमरावती",
+     "census2011Code": "503"
+    },
+    {
+     "code": 470,
+     "name": "Beed",
+     "local": "बीड",
+     "census2011Code": "523"
+    },
+    {
+     "code": 471,
+     "name": "Bhandara",
+     "local": "भंडारा",
+     "census2011Code": "506"
+    },
+    {
+     "code": 472,
+     "name": "Buldhana",
+     "local": "बुलढाणा",
+     "census2011Code": "500"
+    },
+    {
+     "code": 473,
+     "name": "Chandrapur",
+     "local": "चंद्रपूर",
+     "census2011Code": "509"
+    },
+    {
+     "code": 469,
+     "name": "Chhatrapati Sambhajinagar",
+     "local": "छत्रपती संभाजीनगर",
+     "census2011Code": "515"
+    },
+    {
+     "code": 488,
+     "name": "Dharashiv",
+     "local": "धाराशिव",
+     "census2011Code": "525"
+    },
+    {
+     "code": 474,
+     "name": "Dhule",
+     "local": "धुळे",
+     "census2011Code": "498"
+    },
+    {
+     "code": 475,
+     "name": "Gadchiroli",
+     "local": "गडचिरोली",
+     "census2011Code": "508"
+    },
+    {
+     "code": 476,
+     "name": "Gondia",
+     "local": "गोंदीया",
+     "census2011Code": "507"
+    },
+    {
+     "code": 477,
+     "name": "Hingoli",
+     "local": "हिंगोली",
+     "census2011Code": "512"
+    },
+    {
+     "code": 478,
+     "name": "Jalgaon",
+     "local": "जळगाव",
+     "census2011Code": "499"
+    },
+    {
+     "code": 479,
+     "name": "Jalna",
+     "local": "जालना",
+     "census2011Code": "514"
+    },
+    {
+     "code": 480,
+     "name": "Kolhapur",
+     "local": "कोल्हापूर",
+     "census2011Code": "530"
+    },
+    {
+     "code": 481,
+     "name": "Latur",
+     "local": "लातूर",
+     "census2011Code": "524"
+    },
+    {
+     "code": 482,
+     "name": "Mumbai",
+     "local": "मुंबई",
+     "census2011Code": "519"
+    },
+    {
+     "code": 483,
+     "name": "Mumbai Suburban",
+     "local": "मुंबई उपनगर",
+     "census2011Code": "518"
+    },
+    {
+     "code": 484,
+     "name": "Nagpur",
+     "local": "नागपूर",
+     "census2011Code": "505"
+    },
+    {
+     "code": 485,
+     "name": "Nanded",
+     "local": "नांदेड",
+     "census2011Code": "511"
+    },
+    {
+     "code": 486,
+     "name": "Nandurbar",
+     "local": "नंदूरबार",
+     "census2011Code": "497"
+    },
+    {
+     "code": 487,
+     "name": "Nashik",
+     "local": "नाशिक",
+     "census2011Code": "516"
+    },
+    {
+     "code": 665,
+     "name": "Palghar",
+     "local": "पालघर",
+     "census2011Code": "000"
+    },
+    {
+     "code": 489,
+     "name": "Parbhani",
+     "local": "परभणी",
+     "census2011Code": "513"
+    },
+    {
+     "code": 490,
+     "name": "Pune",
+     "local": "पुणे",
+     "census2011Code": "521"
+    },
+    {
+     "code": 491,
+     "name": "Raigad",
+     "local": "रायगड",
+     "census2011Code": "520"
+    },
+    {
+     "code": 492,
+     "name": "Ratnagiri",
+     "local": "रत्नागिरी",
+     "census2011Code": "528"
+    },
+    {
+     "code": 493,
+     "name": "Sangli",
+     "local": "सांगली",
+     "census2011Code": "531"
+    },
+    {
+     "code": 494,
+     "name": "Satara",
+     "local": "सातारा",
+     "census2011Code": "527"
+    },
+    {
+     "code": 495,
+     "name": "Sindhudurg",
+     "local": "सिंधुदुर्ग",
+     "census2011Code": "529"
+    },
+    {
+     "code": 496,
+     "name": "Solapur",
+     "local": "सोलापूर",
+     "census2011Code": "526"
+    },
+    {
+     "code": 497,
+     "name": "Thane",
+     "local": "ठाणे",
+     "census2011Code": "517"
+    },
+    {
+     "code": 498,
+     "name": "Wardha",
+     "local": "वर्धा",
+     "census2011Code": "504"
+    },
+    {
+     "code": 499,
+     "name": "Washim",
+     "local": "वाशिम",
+     "census2011Code": "502"
+    },
+    {
+     "code": 500,
+     "name": "Yavatmal",
+     "local": "यवतमाळ",
+     "census2011Code": "510"
+    }
+   ]
+  },
+  {
+   "code": 28,
+   "name": "Andhra Pradesh",
+   "local": null,
+   "census2011Code": "28",
+   "districts": [
+    {
+     "code": 745,
+     "name": "Alluri Sitharama Raju",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 744,
+     "name": "Anakapalli",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 502,
+     "name": "Ananthapuramu",
+     "local": "అనంతపురము",
+     "census2011Code": "553"
+    },
+    {
+     "code": 753,
+     "name": "Annamayya",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 750,
+     "name": "Bapatla",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 503,
+     "name": "Chittoor",
+     "local": null,
+     "census2011Code": "554"
+    },
+    {
+     "code": 747,
+     "name": "Dr. B.R. Ambedkar Konaseema",
+     "local": "డా బి ఆర్ అంబేడ్కర్ కోనసీమ",
+     "census2011Code": "000"
+    },
+    {
+     "code": 505,
+     "name": "East Godavari",
+     "local": null,
+     "census2011Code": "545"
+    },
+    {
+     "code": 748,
+     "name": "Eluru",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 506,
+     "name": "Guntur",
+     "local": null,
+     "census2011Code": "548"
+    },
+    {
+     "code": 746,
+     "name": "Kakinada",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 510,
+     "name": "Krishna",
+     "local": null,
+     "census2011Code": "547"
+    },
+    {
+     "code": 511,
+     "name": "Kurnool",
+     "local": null,
+     "census2011Code": "552"
+    },
+    {
+     "code": 790,
+     "name": "Markapuram",
+     "local": null,
+     "census2011Code": null
+    },
+    {
+     "code": 755,
+     "name": "Nandyal",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 749,
+     "name": "Ntr",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 751,
+     "name": "Palnadu",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 743,
+     "name": "Parvathipuram Manyam",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 791,
+     "name": "Polavaram",
+     "local": null,
+     "census2011Code": null
+    },
+    {
+     "code": 517,
+     "name": "Prakasam",
+     "local": null,
+     "census2011Code": "549"
+    },
+    {
+     "code": 515,
+     "name": "Sri Potti Sriramulu Nellore",
+     "local": "శ్రీ పొట్టి శ్రీరాములు నెల్లూరు",
+     "census2011Code": "550"
+    },
+    {
+     "code": 754,
+     "name": "Sri Sathya Sai",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 519,
+     "name": "Srikakulam",
+     "local": null,
+     "census2011Code": "542"
+    },
+    {
+     "code": 752,
+     "name": "Tirupati",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 520,
+     "name": "Visakhapatnam",
+     "local": "విశాఖపట్నం",
+     "census2011Code": "544"
+    },
+    {
+     "code": 521,
+     "name": "Vizianagaram",
+     "local": null,
+     "census2011Code": "543"
+    },
+    {
+     "code": 523,
+     "name": "West Godavari",
+     "local": "పశ్చిమగోదావరి",
+     "census2011Code": "546"
+    },
+    {
+     "code": 504,
+     "name": "Y.S.R. Kadapa",
+     "local": "వై.ఎస్.ఆర్. కడప",
+     "census2011Code": "551"
+    }
+   ]
+  },
+  {
+   "code": 29,
+   "name": "Karnataka",
+   "local": "ಕರ್ನಾಟಕ",
+   "census2011Code": "29",
+   "districts": [
+    {
+     "code": 524,
+     "name": "Bagalkote",
+     "local": "ಬಾಗಲಕೋಟೆ",
+     "census2011Code": "556"
+    },
+    {
+     "code": 528,
+     "name": "Ballari",
+     "local": "ಬಳ್ಳಾರಿ",
+     "census2011Code": "565"
+    },
+    {
+     "code": 527,
+     "name": "Belagavi",
+     "local": "ಬೆಳಗಾವಿ",
+     "census2011Code": "555"
+    },
+    {
+     "code": 526,
+     "name": "Bengaluru Rural",
+     "local": "ಬೆಂಗಳೂರು ಗ್ರಾಮಾಂತರ",
+     "census2011Code": "583"
+    },
+    {
+     "code": 631,
+     "name": "Bengaluru South",
+     "local": "ಬೆಂಗಳೂರು ದಕ್ಷಿಣ",
+     "census2011Code": "584"
+    },
+    {
+     "code": 525,
+     "name": "Bengaluru Urban",
+     "local": "ಬೆಂಗಳೂರು",
+     "census2011Code": "572"
+    },
+    {
+     "code": 529,
+     "name": "Bidar",
+     "local": "ಬೀದರ್‌",
+     "census2011Code": "558"
+    },
+    {
+     "code": 531,
+     "name": "Chamarajanagar",
+     "local": "ಚಾಮರಾಜನಗರ",
+     "census2011Code": "578"
+    },
+    {
+     "code": 630,
+     "name": "Chikkaballapura",
+     "local": "ಚಿಕ್ಕಬಳ್ಳಾಪುರ",
+     "census2011Code": "582"
+    },
+    {
+     "code": 532,
+     "name": "Chikkamagaluru",
+     "local": "ಚಿಕ್ಕಮಗಳೂರು",
+     "census2011Code": "570"
+    },
+    {
+     "code": 533,
+     "name": "Chitradurga",
+     "local": "ಚಿತ್ರದುರ್ಗ",
+     "census2011Code": "566"
+    },
+    {
+     "code": 534,
+     "name": "Dakshina Kannada",
+     "local": "ದಕ್ಷಿಣ ಕನ್ನಡ",
+     "census2011Code": "575"
+    },
+    {
+     "code": 535,
+     "name": "Davanagere",
+     "local": "ದಾವಣಗೆರೆ",
+     "census2011Code": "567"
+    },
+    {
+     "code": 536,
+     "name": "Dharwad",
+     "local": "ಧಾರವಾಡ",
+     "census2011Code": "562"
+    },
+    {
+     "code": 537,
+     "name": "Gadag",
+     "local": "ಗದಗ",
+     "census2011Code": "561"
+    },
+    {
+     "code": 539,
+     "name": "Hassan",
+     "local": "ಹಾಸನ",
+     "census2011Code": "574"
+    },
+    {
+     "code": 540,
+     "name": "Haveri",
+     "local": "ಹಾವೇರಿ",
+     "census2011Code": "564"
+    },
+    {
+     "code": 538,
+     "name": "Kalaburagi",
+     "local": "ಕಲಬುರಗಿ",
+     "census2011Code": "579"
+    },
+    {
+     "code": 541,
+     "name": "Kodagu",
+     "local": "ಕೊಡಗು",
+     "census2011Code": "576"
+    },
+    {
+     "code": 542,
+     "name": "Kolar",
+     "local": "ಕೋಲಾರ",
+     "census2011Code": "581"
+    },
+    {
+     "code": 543,
+     "name": "Koppal",
+     "local": "ಕೊಪ್ಪಳ",
+     "census2011Code": "560"
+    },
+    {
+     "code": 544,
+     "name": "Mandya",
+     "local": "ಮಂಡ್ಯ",
+     "census2011Code": "573"
+    },
+    {
+     "code": 545,
+     "name": "Mysuru",
+     "local": "ಮೈಸೂರು",
+     "census2011Code": "577"
+    },
+    {
+     "code": 546,
+     "name": "Raichur",
+     "local": "ರಾಯಚೂರು",
+     "census2011Code": "559"
+    },
+    {
+     "code": 547,
+     "name": "Shivamogga",
+     "local": "ಶಿವಮೊಗ್ಗ",
+     "census2011Code": "568"
+    },
+    {
+     "code": 548,
+     "name": "Tumakuru",
+     "local": "ತುಮಕೂರು",
+     "census2011Code": "571"
+    },
+    {
+     "code": 549,
+     "name": "Udupi",
+     "local": "ಉಡುಪಿ",
+     "census2011Code": "569"
+    },
+    {
+     "code": 550,
+     "name": "Uttara Kannada",
+     "local": "ಉತ್ತರ ಕನ್ನಡ",
+     "census2011Code": "563"
+    },
+    {
+     "code": 738,
+     "name": "Vijayanagara",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 530,
+     "name": "Vijayapura",
+     "local": "ವಿಜಯಾಪುರ",
+     "census2011Code": "557"
+    },
+    {
+     "code": 635,
+     "name": "Yadgir",
+     "local": "ಯಾದಗಿರಿ",
+     "census2011Code": "580"
+    }
+   ]
+  },
+  {
+   "code": 30,
+   "name": "Goa",
+   "local": null,
+   "census2011Code": "30",
+   "districts": [
+    {
+     "code": 793,
+     "name": "Kushavati",
+     "local": null,
+     "census2011Code": null
+    },
+    {
+     "code": 551,
+     "name": "North Goa",
+     "local": null,
+     "census2011Code": "585"
+    },
+    {
+     "code": 552,
+     "name": "South Goa",
+     "local": null,
+     "census2011Code": "586"
+    }
+   ]
+  },
+  {
+   "code": 31,
+   "name": "Lakshadweep",
+   "local": null,
+   "census2011Code": "31",
+   "districts": [
+    {
+     "code": 553,
+     "name": "Lakshadweep District",
+     "local": null,
+     "census2011Code": "587"
+    }
+   ]
+  },
+  {
+   "code": 32,
+   "name": "Kerala",
+   "local": null,
+   "census2011Code": "32",
+   "districts": [
+    {
+     "code": 554,
+     "name": "Alappuzha",
+     "local": "ആലപ്പുഴ",
+     "census2011Code": "598"
+    },
+    {
+     "code": 555,
+     "name": "Ernakulam",
+     "local": "എറണാകുളം",
+     "census2011Code": "595"
+    },
+    {
+     "code": 556,
+     "name": "Idukki",
+     "local": "ഇടുക്കി",
+     "census2011Code": "596"
+    },
+    {
+     "code": 557,
+     "name": "Kannur",
+     "local": "കണ്ണൂര്‍",
+     "census2011Code": "589"
+    },
+    {
+     "code": 558,
+     "name": "Kasaragod",
+     "local": "കാസര്‍കോഡ്",
+     "census2011Code": "588"
+    },
+    {
+     "code": 559,
+     "name": "Kollam",
+     "local": "കൊല്ലം",
+     "census2011Code": "600"
+    },
+    {
+     "code": 560,
+     "name": "Kottayam",
+     "local": "കോട്ടയം",
+     "census2011Code": "597"
+    },
+    {
+     "code": 561,
+     "name": "Kozhikode",
+     "local": "കോഴിക്കോട്",
+     "census2011Code": "591"
+    },
+    {
+     "code": 562,
+     "name": "Malappuram",
+     "local": "മലപ്പുറം",
+     "census2011Code": "592"
+    },
+    {
+     "code": 563,
+     "name": "Palakkad",
+     "local": "പാലക്കാട്",
+     "census2011Code": "593"
+    },
+    {
+     "code": 564,
+     "name": "Pathanamthitta",
+     "local": "പത്തനംതിട്ട",
+     "census2011Code": "599"
+    },
+    {
+     "code": 565,
+     "name": "Thiruvananthapuram",
+     "local": "തിരുവനന്തപുരം",
+     "census2011Code": "601"
+    },
+    {
+     "code": 566,
+     "name": "Thrissur",
+     "local": "തൃശ്ശൂര്‍",
+     "census2011Code": "594"
+    },
+    {
+     "code": 567,
+     "name": "Wayanad",
+     "local": "വയനാട്",
+     "census2011Code": "590"
+    }
+   ]
+  },
+  {
+   "code": 33,
+   "name": "Tamil Nadu",
+   "local": null,
+   "census2011Code": "33",
+   "districts": [
+    {
+     "code": 610,
+     "name": "Ariyalur",
+     "local": "அரியலூர்",
+     "census2011Code": "616"
+    },
+    {
+     "code": 730,
+     "name": "Chengalpattu",
+     "local": "செங்கல்பட்டு",
+     "census2011Code": "000"
+    },
+    {
+     "code": 568,
+     "name": "Chennai",
+     "local": null,
+     "census2011Code": "603"
+    },
+    {
+     "code": 569,
+     "name": "Coimbatore",
+     "local": null,
+     "census2011Code": "632"
+    },
+    {
+     "code": 570,
+     "name": "Cuddalore",
+     "local": null,
+     "census2011Code": "617"
+    },
+    {
+     "code": 571,
+     "name": "Dharmapuri",
+     "local": null,
+     "census2011Code": "630"
+    },
+    {
+     "code": 572,
+     "name": "Dindigul",
+     "local": null,
+     "census2011Code": "612"
+    },
+    {
+     "code": 573,
+     "name": "Erode",
+     "local": null,
+     "census2011Code": "610"
+    },
+    {
+     "code": 729,
+     "name": "Kallakurichi",
+     "local": "கள்ளக்குறிச்சி",
+     "census2011Code": "000"
+    },
+    {
+     "code": 574,
+     "name": "Kancheepuram",
+     "local": null,
+     "census2011Code": "604"
+    },
+    {
+     "code": 575,
+     "name": "Kanniyakumari",
+     "local": null,
+     "census2011Code": "629"
+    },
+    {
+     "code": 576,
+     "name": "Karur",
+     "local": null,
+     "census2011Code": "613"
+    },
+    {
+     "code": 577,
+     "name": "Krishnagiri",
+     "local": null,
+     "census2011Code": "631"
+    },
+    {
+     "code": 578,
+     "name": "Madurai",
+     "local": null,
+     "census2011Code": "623"
+    },
+    {
+     "code": 735,
+     "name": "Mayiladuthurai",
+     "local": null,
+     "census2011Code": "000"
+    },
+    {
+     "code": 579,
+     "name": "Nagapattinam",
+     "local": null,
+     "census2011Code": "618"
+    },
+    {
+     "code": 580,
+     "name": "Namakkal",
+     "local": null,
+     "census2011Code": "609"
+    },
+    {
+     "code": 581,
+     "name": "Perambalur",
+     "local": null,
+     "census2011Code": "615"
+    },
+    {
+     "code": 582,
+     "name": "Pudukkottai",
+     "local": null,
+     "census2011Code": "621"
+    },
+    {
+     "code": 583,
+     "name": "Ramanathapuram",
+     "local": null,
+     "census2011Code": "626"
+    },
+    {
+     "code": 731,
+     "name": "Ranipet",
+     "local": "ராணிப்பேட்டை",
+     "census2011Code": "000"
+    },
+    {
+     "code": 584,
+     "name": "Salem",
+     "local": null,
+     "census2011Code": "608"
+    },
+    {
+     "code": 585,
+     "name": "Sivaganga",
+     "local": null,
+     "census2011Code": "622"
+    },
+    {
+     "code": 733,
+     "name": "Tenkasi",
+     "local": "தென்காசி",
+     "census2011Code": "000"
+    },
+    {
+     "code": 586,
+     "name": "Thanjavur",
+     "local": null,
+     "census2011Code": "620"
+    },
+    {
+     "code": 587,
+     "name": "The Nilgiris",
+     "local": null,
+     "census2011Code": "611"
+    },
+    {
+     "code": 588,
+     "name": "Theni",
+     "local": null,
+     "census2011Code": "624"
+    },
+    {
+     "code": 589,
+     "name": "Thiruvallur",
+     "local": null,
+     "census2011Code": "602"
+    },
+    {
+     "code": 590,
+     "name": "Thiruvarur",
+     "local": null,
+     "census2011Code": "619"
+    },
+    {
+     "code": 594,
+     "name": "Thoothukkudi",
+     "local": null,
+     "census2011Code": "627"
+    },
+    {
+     "code": 591,
+     "name": "Tiruchirappalli",
+     "local": null,
+     "census2011Code": "614"
+    },
+    {
+     "code": 592,
+     "name": "Tirunelveli",
+     "local": null,
+     "census2011Code": "628"
+    },
+    {
+     "code": 732,
+     "name": "Tirupathur",
+     "local": "திருப்பத்தூர்",
+     "census2011Code": "000"
+    },
+    {
+     "code": 634,
+     "name": "Tiruppur",
+     "local": null,
+     "census2011Code": "633"
+    },
+    {
+     "code": 593,
+     "name": "Tiruvannamalai",
+     "local": null,
+     "census2011Code": "606"
+    },
+    {
+     "code": 595,
+     "name": "Vellore",
+     "local": null,
+     "census2011Code": "605"
+    },
+    {
+     "code": 596,
+     "name": "Viluppuram",
+     "local": null,
+     "census2011Code": "607"
+    },
+    {
+     "code": 597,
+     "name": "Virudhunagar",
+     "local": null,
+     "census2011Code": "625"
+    }
+   ]
+  },
+  {
+   "code": 34,
+   "name": "Puducherry",
+   "local": null,
+   "census2011Code": "34",
+   "districts": [
+    {
+     "code": 598,
+     "name": "Karaikal",
+     "local": "காரைக்கால்",
+     "census2011Code": "637"
+    },
+    {
+     "code": 600,
+     "name": "Puducherry",
+     "local": "புதுச்சேரி",
+     "census2011Code": "635"
+    }
+   ]
+  },
+  {
+   "code": 35,
+   "name": "Andaman and Nicobar Islands",
+   "local": null,
+   "census2011Code": "35",
+   "districts": [
+    {
+     "code": 603,
+     "name": "Nicobars",
+     "local": null,
+     "census2011Code": "638"
+    },
+    {
+     "code": 632,
+     "name": "North And Middle Andaman",
+     "local": null,
+     "census2011Code": "639"
+    },
+    {
+     "code": 602,
+     "name": "South Andamans",
+     "local": null,
+     "census2011Code": "640"
+    }
+   ]
+  },
+  {
+   "code": 36,
+   "name": "Telangana",
+   "local": "తెలంగాణ",
+   "census2011Code": "00",
+   "districts": [
+    {
+     "code": 501,
+     "name": "Adilabad",
+     "local": "ఆదిలాబాద్",
+     "census2011Code": "532"
+    },
+    {
+     "code": 690,
+     "name": "Bhadradri Kothagudem",
+     "local": "భద్రాద్రి కొత్తగూడెం",
+     "census2011Code": "000"
+    },
+    {
+     "code": 686,
+     "name": "Hanumakonda",
+     "local": "హనుమకొండ",
+     "census2011Code": "000"
+    },
+    {
+     "code": 507,
+     "name": "Hyderabad",
+     "local": "హైదరాబాద్",
+     "census2011Code": "536"
+    },
+    {
+     "code": 681,
+     "name": "Jagitial",
+     "local": "జగిత్యాల",
+     "census2011Code": "000"
+    },
+    {
+     "code": 689,
+     "name": "Jangoan",
+     "local": "జనగాం",
+     "census2011Code": "000"
+    },
+    {
+     "code": 687,
+     "name": "Jayashankar Bhupalapally",
+     "local": "జయశంకర్ భూపాలపల్లి",
+     "census2011Code": "000"
+    },
+    {
+     "code": 695,
+     "name": "Jogulamba Gadwal",
+     "local": "జోగులాంబ గద్వాల",
+     "census2011Code": "000"
+    },
+    {
+     "code": 685,
+     "name": "Kamareddy",
+     "local": "కామారెడ్డి",
+     "census2011Code": "000"
+    },
+    {
+     "code": 508,
+     "name": "Karimnagar",
+     "local": "కరీంనగర్",
+     "census2011Code": "534"
+    },
+    {
+     "code": 509,
+     "name": "Khammam",
+     "local": "ఖమ్మం",
+     "census2011Code": "541"
+    },
+    {
+     "code": 699,
+     "name": "Kumuram Bheem Asifabad",
+     "local": "కుమురం భీమ్ ఆసిఫాబాద్",
+     "census2011Code": "000"
+    },
+    {
+     "code": 688,
+     "name": "Mahabubabad",
+     "local": "మహబుబాబాద్",
+     "census2011Code": "000"
+    },
+    {
+     "code": 512,
+     "name": "Mahabubnagar",
+     "local": "మహబూబ్ నగర్",
+     "census2011Code": "538"
+    },
+    {
+     "code": 684,
+     "name": "Mancherial",
+     "local": "మంచిర్యాల్",
+     "census2011Code": "000"
+    },
+    {
+     "code": 513,
+     "name": "Medak",
+     "local": "మెదక్",
+     "census2011Code": "535"
+    },
+    {
+     "code": 700,
+     "name": "Medchal Malkajgiri",
+     "local": "మేడ్చల్ మల్కాజిగిరి",
+     "census2011Code": "000"
+    },
+    {
+     "code": 720,
+     "name": "Mulugu",
+     "local": "ములుగు",
+     "census2011Code": "000"
+    },
+    {
+     "code": 694,
+     "name": "Nagarkurnool",
+     "local": "నాగర్ కర్నూల్",
+     "census2011Code": "000"
+    },
+    {
+     "code": 514,
+     "name": "Nalgonda",
+     "local": "నల్గొండ",
+     "census2011Code": "539"
+    },
+    {
+     "code": 721,
+     "name": "Narayanpet",
+     "local": "నారాయణ్ పేట్",
+     "census2011Code": "000"
+    },
+    {
+     "code": 680,
+     "name": "Nirmal",
+     "local": "నిర్మల్",
+     "census2011Code": "000"
+    },
+    {
+     "code": 516,
+     "name": "Nizamabad",
+     "local": "నిజామాబాదు",
+     "census2011Code": "533"
+    },
+    {
+     "code": 682,
+     "name": "Peddapalli",
+     "local": "పెద్దపల్లి",
+     "census2011Code": "000"
+    },
+    {
+     "code": 683,
+     "name": "Rajanna Sircilla",
+     "local": "రాజన్న సిరిసిల్ల",
+     "census2011Code": "000"
+    },
+    {
+     "code": 518,
+     "name": "Ranga Reddy",
+     "local": "రంగా రెడ్డి",
+     "census2011Code": "537"
+    },
+    {
+     "code": 691,
+     "name": "Sangareddy",
+     "local": "సంగారెడ్డి",
+     "census2011Code": "000"
+    },
+    {
+     "code": 692,
+     "name": "Siddipet",
+     "local": "సిద్దిపేట",
+     "census2011Code": "000"
+    },
+    {
+     "code": 696,
+     "name": "Suryapet",
+     "local": "సూర్యాపేట",
+     "census2011Code": "000"
+    },
+    {
+     "code": 698,
+     "name": "Vikarabad",
+     "local": "వికారాబాద్",
+     "census2011Code": "000"
+    },
+    {
+     "code": 693,
+     "name": "Wanaparthy",
+     "local": "వనపర్తి",
+     "census2011Code": "000"
+    },
+    {
+     "code": 522,
+     "name": "Warangal",
+     "local": "వరంగల్",
+     "census2011Code": "540"
+    },
+    {
+     "code": 697,
+     "name": "Yadadri Bhuvanagiri",
+     "local": "యదాద్రి భువనగిరి",
+     "census2011Code": "000"
+    }
+   ]
+  },
+  {
+   "code": 37,
+   "name": "Ladakh",
+   "local": null,
+   "census2011Code": "00",
+   "districts": [
+    {
+     "code": 6,
+     "name": "Kargil",
+     "local": null,
+     "census2011Code": "004"
+    },
+    {
+     "code": 9,
+     "name": "Leh Ladakh",
+     "local": null,
+     "census2011Code": "003"
+    }
+   ]
+  },
+  {
+   "code": 38,
+   "name": "The Dadra and Nagar Haveli and Daman and Diu",
+   "local": null,
+   "census2011Code": null,
+   "districts": [
+    {
+     "code": 465,
+     "name": "Dadra And Nagar Haveli",
+     "local": null,
+     "census2011Code": "496"
+    },
+    {
+     "code": 463,
+     "name": "Daman",
+     "local": null,
+     "census2011Code": "495"
+    },
+    {
+     "code": 464,
+     "name": "Diu",
+     "local": null,
+     "census2011Code": "494"
+    }
+   ]
+  }
+ ]
+}

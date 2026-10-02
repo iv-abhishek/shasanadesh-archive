@@ -6,6 +6,7 @@
  * still open because there is no production identity provider yet.
  */
 
+import { loadLgdStates } from "../places/lgd.js";
 import { departmentChoices } from "../departments/registry.js";
 import type {
   FastifyInstance,
@@ -259,6 +260,23 @@ async function authorizeWorkspaceUser(
 export function registerWorkspaceRoutes(
   server: FastifyInstance,
 ): void {
+  // States/UTs and districts from the Local Government Directory, for the
+  // profile's state and district pickers (names, Hindi names, former names).
+  server.get("/api/workspace/places", async () => ({
+    source: "Local Government Directory (lgdirectory.gov.in)",
+    states: loadLgdStates().map((state) => ({
+      code: state.code,
+      name: state.name,
+      local: state.local ?? null,
+      districts: state.districts.map((district) => ({
+        code: district.code,
+        name: district.name,
+        hi: district.hi ?? district.local ?? null,
+        aliases: district.aliases ?? [],
+      })),
+    })),
+  }));
+
   server.get(
     "/api/workspace/departments",
     async (

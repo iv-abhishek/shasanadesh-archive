@@ -6,6 +6,7 @@
  * added separately.
  */
 
+import { profilePlace } from "../places/lgd.js";
 import {
   randomUUID,
 } from "node:crypto";
@@ -238,6 +239,23 @@ export async function createWorkspaceUser(
   );
 }
 
+// Migration 013 adds the LGD code columns; until it has run, profiles save
+// without them (names only) instead of failing.
+let lgdColumns: Promise<boolean> | null = null;
+function hasLgdColumns(): Promise<boolean> {
+  lgdColumns ??= pool
+    .query(
+      `SELECT COUNT(*)::int AS n FROM information_schema.columns
+       WHERE table_name = 'workspace_users' AND column_name IN ('state_lgd_code', 'district_lgd_code')`,
+    )
+    .then((result) => result.rows[0]?.n === 2)
+    .catch(() => false);
+  return lgdColumns.then((ok) => {
+    if (!ok) lgdColumns = null; // check again next time (after npm run db:migrate)
+    return ok;
+  });
+}
+
 async function saveWorkspaceProfile(
   userId: string,
   input: WorkspaceProfileInput,
@@ -262,6 +280,10 @@ async function saveWorkspaceProfile(
       input.additionalDepartments,
       input.additionalChargeDepartments,
     );
+
+  // State and district as LGD names + codes when LGD lists them.
+  const place = profilePlace(input.stateName, input.district);
+  const withCodes = await hasLgdColumns();
 
   const client =
     await pool.connect();
@@ -300,10 +322,8 @@ async function saveWorkspaceProfile(
           displayName,
           input.designation
             ?.trim() || null,
-          input.stateName
-            ?.trim() || null,
-          input.district
-            ?.trim() || null,
+          place.stateName,
+          place.district,
           input.contactNumber
             ?.trim() || null,
           input.preferredLanguage,
@@ -331,10 +351,8 @@ async function saveWorkspaceProfile(
             displayName,
             input.designation
               ?.trim() || null,
-            input.stateName
-              ?.trim() || null,
-            input.district
-              ?.trim() || null,
+            place.stateName,
+            place.district,
             input.contactNumber
               ?.trim() || null,
             input.preferredLanguage,
@@ -402,6 +420,13 @@ async function saveWorkspaceProfile(
             department,
           ),
         ],
+      );
+    }
+
+    if (withCodes) {
+      await client.query(
+        `UPDATE workspace_users SET state_lgd_code = $2, district_lgd_code = $3 WHERE id = $1`,
+        [userId, place.stateCode, place.districtCode],
       );
     }
 

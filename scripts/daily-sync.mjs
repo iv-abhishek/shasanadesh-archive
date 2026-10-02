@@ -57,6 +57,8 @@ const STEPS = [
         { name: "ingest:sources", run: ["ingest:sources"], critical: false },
         // Re-reads a Financial Handbook volume only when its last read is 30+ days old.
         { name: "ingest:handbook", run: ["ingest:handbook"], critical: false },
+        // LGD states/districts: refreshed when the copy is 30+ days old (LGD updates monthly).
+        { name: "ingest:lgd", run: ["ingest:lgd", "--", "--refresh-days", "30"], critical: false },
         { name: "ingest:portal", run: ["ingest:portal", "--", "--until-idle"], critical: false },
       ]
     : []),

@@ -1,0 +1,579 @@
+{
+ "_about": "Hindi names and other names people use for Uttar Pradesh districts, keyed by LGD district code. LGD's 'local name' for UP districts is English, so 'hi' is a standard rendering to review (hiSource: translation); 'aliases' are former names (Allahabad → Prayagraj) and common spellings. Merged into lgd-states-districts.json by npm run ingest:lgd.",
+ "districts": {
+  "118": {
+   "en": "Agra",
+   "hi": "आगरा",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "119": {
+   "en": "Aligarh",
+   "hi": "अलीगढ़",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "121": {
+   "en": "Ambedkar Nagar",
+   "hi": "अम्बेडकर नगर",
+   "hiSource": "translation",
+   "aliases": [
+    "Ambedkarnagar",
+    "अंबेडकर नगर"
+   ]
+  },
+  "640": {
+   "en": "Amethi",
+   "hi": "अमेठी",
+   "hiSource": "translation",
+   "aliases": [
+    "Chhatrapati Shahuji Maharaj Nagar",
+    "Gauriganj"
+   ]
+  },
+  "154": {
+   "en": "Amroha",
+   "hi": "अमरोहा",
+   "hiSource": "translation",
+   "aliases": [
+    "Jyotiba Phule Nagar",
+    "J.P. Nagar",
+    "ज्योतिबा फुले नगर"
+   ]
+  },
+  "122": {
+   "en": "Auraiya",
+   "hi": "औरैया",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "140": {
+   "en": "Ayodhya",
+   "hi": "अयोध्या",
+   "hiSource": "translation",
+   "aliases": [
+    "Faizabad",
+    "फैजाबाद",
+    "फ़ैज़ाबाद"
+   ]
+  },
+  "123": {
+   "en": "Azamgarh",
+   "hi": "आजमगढ़",
+   "hiSource": "translation",
+   "aliases": [
+    "आज़मगढ़"
+   ]
+  },
+  "124": {
+   "en": "Baghpat",
+   "hi": "बागपत",
+   "hiSource": "translation",
+   "aliases": [
+    "Bagpat"
+   ]
+  },
+  "125": {
+   "en": "Bahraich",
+   "hi": "बहराइच",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "126": {
+   "en": "Ballia",
+   "hi": "बलिया",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "127": {
+   "en": "Balrampur",
+   "hi": "बलरामपुर",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "128": {
+   "en": "Banda",
+   "hi": "बाँदा",
+   "hiSource": "translation",
+   "aliases": [
+    "बांदा"
+   ]
+  },
+  "129": {
+   "en": "Bara Banki",
+   "hi": "बाराबंकी",
+   "hiSource": "translation",
+   "aliases": [
+    "Barabanki"
+   ]
+  },
+  "130": {
+   "en": "Bareilly",
+   "hi": "बरेली",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "131": {
+   "en": "Basti",
+   "hi": "बस्ती",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "179": {
+   "en": "Bhadohi",
+   "hi": "भदोही",
+   "hiSource": "translation",
+   "aliases": [
+    "Sant Ravidas Nagar",
+    "संत रविदास नगर",
+    "Gyanpur"
+   ]
+  },
+  "132": {
+   "en": "Bijnor",
+   "hi": "बिजनौर",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "133": {
+   "en": "Budaun",
+   "hi": "बदायूँ",
+   "hiSource": "translation",
+   "aliases": [
+    "Badaun",
+    "बदायूं"
+   ]
+  },
+  "134": {
+   "en": "Bulandshahr",
+   "hi": "बुलन्दशहर",
+   "hiSource": "translation",
+   "aliases": [
+    "बुलंदशहर"
+   ]
+  },
+  "135": {
+   "en": "Chandauli",
+   "hi": "चन्दौली",
+   "hiSource": "translation",
+   "aliases": [
+    "चंदौली"
+   ]
+  },
+  "136": {
+   "en": "Chitrakoot",
+   "hi": "चित्रकूट",
+   "hiSource": "translation",
+   "aliases": [
+    "Chitrakut"
+   ]
+  },
+  "137": {
+   "en": "Deoria",
+   "hi": "देवरिया",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "138": {
+   "en": "Etah",
+   "hi": "एटा",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "139": {
+   "en": "Etawah",
+   "hi": "इटावा",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "141": {
+   "en": "Farrukhabad",
+   "hi": "फर्रुखाबाद",
+   "hiSource": "translation",
+   "aliases": [
+    "Fatehgarh"
+   ]
+  },
+  "142": {
+   "en": "Fatehpur",
+   "hi": "फतेहपुर",
+   "hiSource": "translation",
+   "aliases": [
+    "फ़तेहपुर"
+   ]
+  },
+  "143": {
+   "en": "Firozabad",
+   "hi": "फिरोजाबाद",
+   "hiSource": "translation",
+   "aliases": [
+    "Firozabad",
+    "फ़िरोज़ाबाद"
+   ]
+  },
+  "144": {
+   "en": "Gautam Buddha Nagar",
+   "hi": "गौतम बुद्ध नगर",
+   "hiSource": "translation",
+   "aliases": [
+    "Noida",
+    "Greater Noida",
+    "नोएडा",
+    "G.B. Nagar",
+    "Gautam Budh Nagar"
+   ]
+  },
+  "145": {
+   "en": "Ghaziabad",
+   "hi": "गाजियाबाद",
+   "hiSource": "translation",
+   "aliases": [
+    "ग़ाज़ियाबाद"
+   ]
+  },
+  "146": {
+   "en": "Ghazipur",
+   "hi": "गाजीपुर",
+   "hiSource": "translation",
+   "aliases": [
+    "ग़ाज़ीपुर"
+   ]
+  },
+  "147": {
+   "en": "Gonda",
+   "hi": "गोण्डा",
+   "hiSource": "translation",
+   "aliases": [
+    "गोंडा"
+   ]
+  },
+  "148": {
+   "en": "Gorakhpur",
+   "hi": "गोरखपुर",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "149": {
+   "en": "Hamirpur",
+   "hi": "हमीरपुर",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "661": {
+   "en": "Hapur",
+   "hi": "हापुड़",
+   "hiSource": "translation",
+   "aliases": [
+    "Panchsheel Nagar",
+    "पंचशील नगर"
+   ]
+  },
+  "150": {
+   "en": "Hardoi",
+   "hi": "हरदोई",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "163": {
+   "en": "Hathras",
+   "hi": "हाथरस",
+   "hiSource": "translation",
+   "aliases": [
+    "Mahamaya Nagar",
+    "महामाया नगर"
+   ]
+  },
+  "151": {
+   "en": "Jalaun",
+   "hi": "जालौन",
+   "hiSource": "translation",
+   "aliases": [
+    "Orai",
+    "उरई"
+   ]
+  },
+  "152": {
+   "en": "Jaunpur",
+   "hi": "जौनपुर",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "153": {
+   "en": "Jhansi",
+   "hi": "झाँसी",
+   "hiSource": "translation",
+   "aliases": [
+    "झांसी"
+   ]
+  },
+  "155": {
+   "en": "Kannauj",
+   "hi": "कन्नौज",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "156": {
+   "en": "Kanpur Dehat",
+   "hi": "कानपुर देहात",
+   "hiSource": "translation",
+   "aliases": [
+    "Ramabai Nagar",
+    "रमाबाई नगर",
+    "Akbarpur (Kanpur Dehat)"
+   ]
+  },
+  "157": {
+   "en": "Kanpur Nagar",
+   "hi": "कानपुर नगर",
+   "hiSource": "translation",
+   "aliases": [
+    "Kanpur",
+    "कानपुर"
+   ]
+  },
+  "633": {
+   "en": "Kasganj",
+   "hi": "कासगंज",
+   "hiSource": "translation",
+   "aliases": [
+    "Kanshiram Nagar",
+    "कांशीराम नगर"
+   ]
+  },
+  "158": {
+   "en": "Kaushambi",
+   "hi": "कौशाम्बी",
+   "hiSource": "translation",
+   "aliases": [
+    "कौशांबी"
+   ]
+  },
+  "159": {
+   "en": "Kheri",
+   "hi": "खीरी",
+   "hiSource": "translation",
+   "aliases": [
+    "Lakhimpur Kheri",
+    "Lakhimpur",
+    "लखीमपुर खीरी"
+   ]
+  },
+  "160": {
+   "en": "Kushinagar",
+   "hi": "कुशीनगर",
+   "hiSource": "translation",
+   "aliases": [
+    "Padrauna",
+    "पडरौना"
+   ]
+  },
+  "161": {
+   "en": "Lalitpur",
+   "hi": "ललितपुर",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "162": {
+   "en": "Lucknow",
+   "hi": "लखनऊ",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "165": {
+   "en": "Mahoba",
+   "hi": "महोबा",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "164": {
+   "en": "Mahrajganj",
+   "hi": "महराजगंज",
+   "hiSource": "translation",
+   "aliases": [
+    "Maharajganj",
+    "महाराजगंज"
+   ]
+  },
+  "166": {
+   "en": "Mainpuri",
+   "hi": "मैनपुरी",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "167": {
+   "en": "Mathura",
+   "hi": "मथुरा",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "168": {
+   "en": "Mau",
+   "hi": "मऊ",
+   "hiSource": "translation",
+   "aliases": [
+    "Maunath Bhanjan"
+   ]
+  },
+  "169": {
+   "en": "Meerut",
+   "hi": "मेरठ",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "170": {
+   "en": "Mirzapur",
+   "hi": "मिर्जापुर",
+   "hiSource": "translation",
+   "aliases": [
+    "मिर्ज़ापुर"
+   ]
+  },
+  "171": {
+   "en": "Moradabad",
+   "hi": "मुरादाबाद",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "172": {
+   "en": "Muzaffarnagar",
+   "hi": "मुजफ्फरनगर",
+   "hiSource": "translation",
+   "aliases": [
+    "मुज़फ़्फ़रनगर"
+   ]
+  },
+  "173": {
+   "en": "Pilibhit",
+   "hi": "पीलीभीत",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "174": {
+   "en": "Pratapgarh",
+   "hi": "प्रतापगढ़",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "120": {
+   "en": "Prayagraj",
+   "hi": "प्रयागराज",
+   "hiSource": "translation",
+   "aliases": [
+    "Allahabad",
+    "इलाहाबाद"
+   ]
+  },
+  "175": {
+   "en": "Rae Bareli",
+   "hi": "रायबरेली",
+   "hiSource": "translation",
+   "aliases": [
+    "Raebareli",
+    "Rae Bareilly"
+   ]
+  },
+  "176": {
+   "en": "Rampur",
+   "hi": "रामपुर",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "177": {
+   "en": "Saharanpur",
+   "hi": "सहारनपुर",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "659": {
+   "en": "Sambhal",
+   "hi": "सम्भल",
+   "hiSource": "translation",
+   "aliases": [
+    "Bhim Nagar",
+    "भीम नगर",
+    "संभल"
+   ]
+  },
+  "178": {
+   "en": "Sant Kabir Nagar",
+   "hi": "संत कबीर नगर",
+   "hiSource": "translation",
+   "aliases": [
+    "Khalilabad",
+    "सन्त कबीर नगर"
+   ]
+  },
+  "180": {
+   "en": "Shahjahanpur",
+   "hi": "शाहजहाँपुर",
+   "hiSource": "translation",
+   "aliases": [
+    "शाहजहांपुर"
+   ]
+  },
+  "660": {
+   "en": "Shamli",
+   "hi": "शामली",
+   "hiSource": "translation",
+   "aliases": [
+    "Prabuddh Nagar",
+    "प्रबुद्ध नगर"
+   ]
+  },
+  "181": {
+   "en": "Shrawasti",
+   "hi": "श्रावस्ती",
+   "hiSource": "translation",
+   "aliases": [
+    "Shravasti"
+   ]
+  },
+  "182": {
+   "en": "Siddharthnagar",
+   "hi": "सिद्धार्थनगर",
+   "hiSource": "translation",
+   "aliases": [
+    "Siddharth Nagar",
+    "सिद्धार्थ नगर"
+   ]
+  },
+  "183": {
+   "en": "Sitapur",
+   "hi": "सीतापुर",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "184": {
+   "en": "Sonbhadra",
+   "hi": "सोनभद्र",
+   "hiSource": "translation",
+   "aliases": [
+    "Robertsganj"
+   ]
+  },
+  "185": {
+   "en": "Sultanpur",
+   "hi": "सुलतानपुर",
+   "hiSource": "translation",
+   "aliases": [
+    "सुल्तानपुर"
+   ]
+  },
+  "186": {
+   "en": "Unnao",
+   "hi": "उन्नाव",
+   "hiSource": "translation",
+   "aliases": []
+  },
+  "187": {
+   "en": "Varanasi",
+   "hi": "वाराणसी",
+   "hiSource": "translation",
+   "aliases": [
+    "Banaras",
+    "Benares",
+    "बनारस"
+   ]
+  }
+ }
+}
