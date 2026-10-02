@@ -268,7 +268,7 @@ const ORDER_WORD = /\b(?:orders?|gos?|g\.o\.s?|government orders?|circulars?|not
 const RECENT_WORD = /\b(?:recent|recently|latest|newest|new|fresh|last\s+\d+|released|issued|published|came out|list|dated)\b|हाल|हालिया|नवीनतम|नए|नये|नवीन|ताज़ा|ताजा|जारी|निर्गत|सूची|दिनांकित/;
 // Questions about what an order says go to Ask, even if they mention "latest".
 const CONTENT_QUESTION =
-  /\b(?:what does|what do|says?|provisions?|rules? for|eligibility|procedure|process|how to|how do|how much|how many|explain|summar(?:y|ise|ize)|conditions?|limit|entitle|amount of|what (?:is|are) the (?!latest|recent|newest|new|last|orders?\b|gos?\b))\b|क्या\s+(?:प्रावधान|नियम|कहता|कहते|शर्त)|प्रावधान|प्रक्रिया|पात्रता|शर्तें|कैसे|कितना|कितनी|कितने|किस प्रकार/;
+  /^(?:can|could|is|are|does|do|should|may|must|whether)\s+(?!there\s+(?:(?:any|a|an|some)\s+)?(?:new\s+|recent\s+|latest\s+)?(?:orders?|gos?|g\.o\.?|circulars?|notifications?|shasanadesh)\b)|\bwhat\s+\w+\s+does\b|डिटेल|विवरण|बताने\s+का\s+कष्ट|\b(?:what does|what do|says?|provisions?|rules? for|eligibility|procedure|process|how to|how do|how much|how many|explain|summar(?:y|ise|ize)|conditions?|limit|entitle|amount of|what (?:is|are) the (?!latest|recent|newest|new|last|orders?\b|gos?\b))\b|क्या\s+(?:प्रावधान|नियम|कहता|कहते|शर्त)|प्रावधान|प्रक्रिया|पात्रता|शर्तें|कैसे|कितना|कितनी|कितने|किस प्रकार/;
 
 // Asking what a particular order says ("… में क्या निर्देश है?", "what does GO 12/2025 say").
 const ORDER_CONTENT_QUESTION =
@@ -383,6 +383,9 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
   });
 
   // Jurisdiction and topic words become filters, not subject words (ADR-064).
+  const withoutGoNumber = goNumber
+    ? text.replace(new RegExp(goNumber.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"), " ")
+    : query;
   const jurisdiction = jurisdictionsInQuery(text);
   const topicHits = topicsInQuery(text);
   for (const phrase of [...jurisdiction.matched, ...topicHits.matched]) {
@@ -400,7 +403,7 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
   // request for that department's orders of that day.
   const bareDepartmentDate = (() => {
     if (hasOrderWord || explicit) return false;
-    const range = parseDateRange(query, today);
+    const range = parseDateRange(withoutGoNumber, today);
     const named = findDepartmentMention(lower);
     if (!range || !named) return false;
     let leftover = ` ${normalizeName(lower)} `.replace(normalizeName(range.matched), " ");
@@ -412,8 +415,9 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
   if (!hasOrderWord && !explicit && !asksForDocuments && !bareDepartmentDate) return null;
 
   // Dates first, so neither the issuer ("released by X this week") nor a
-  // subject word ("Sepetember") swallows them.
-  const range = parseDateRange(query, today);
+  // subject word ("Sepetember") swallows them. Not from inside a GO number:
+  // "61/2023/1100/12-5-2023/…" contains "12-5-2023", which is not the date.
+  const range = parseDateRange(withoutGoNumber, today);
   if (range) {
     const matched = normalizeName(range.matched);
     rest = ` ${normalizeName(rest)} `.replace(` ${matched} `, " ").replace(matched, " ");

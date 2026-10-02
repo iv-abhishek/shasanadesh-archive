@@ -1170,3 +1170,24 @@ Answer-writing moves to an OpenRouter Qwen model (HOSTING.md pilot plan); retrie
   the `:free` Qwen 3.8-27B was rate-limited upstream, so free models are not a dependable
   primary.
 - The model is a setting: the eval (`npm run eval:ask`) compares candidates.
+
+## ADR-077 - Fixes from the 2 Oct baseline eval (2 Oct 2026)
+
+Baseline (local Qwen3-8B, 43 cases): 72.1% pass, "not found" correct 25%, median chat 85 s.
+Report `data/eval/runs/2026-10-02T18-03-28-287Z.json`. (ADR-076 is reserved for the planner.)
+
+- Question reading: questions about content went to the order finder. Now Ask:
+  "… का डिटेल / विवरण / बताने का कष्ट करें", "What support does …", a question opening
+  with can/is/does/should … (but "Is there any order on …" still searches).
+- A GO number's own date part ("61/2023/1100/12-5-2023/…") is no longer read as a date
+  filter; dates are parsed from the question with the GO number removed.
+- "Not found" in prose ("The provided evidence does not contain …", "… कोई जानकारी नहीं दी
+  गई है") is treated as NO_ANSWER: the clean not-found reply, no citations
+  (`isProseNonAnswer`: two or more sentences, a strict majority of them "not found").
+- The not-found reply is not a dead end: it says what the archive holds (UP + Government of
+  India) and what to try next. The last-resort fallback no longer talks about "safety
+  checks"; it points to the page and the source card.
+- Eval runner: the cached test profile is checked against the development profile list
+  (the profile route needs a session, so each run made a new profile until the 5-profile
+  limit refused them). Two expectations updated (medical probation is now scoped directly;
+  the vague solar question accepts any PM-KUSUM order).

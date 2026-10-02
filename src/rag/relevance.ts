@@ -90,6 +90,40 @@ export function isNoAnswer(draft: string): boolean {
   return draft.includes(NO_ANSWER_TOKEN) && draft.replace(NO_ANSWER_TOKEN, "").trim().length < 160;
 }
 
+// "The provided evidence does not contain …", "आदेशों में … कोई जानकारी नहीं दी
+// गई है": the model saying "not found" in prose instead of NO_ANSWER_IN_EVIDENCE.
+const NON_ANSWER_SENTENCE = new RegExp(
+  [
+    String.raw`\b(?:provided|given|retrieved|available|cited)\s+(?:evidence|documents?|pages?|orders?|excerpts?)\b[^.]*\b(?:do(?:es)?\s+not|doesn't|don't)\b`,
+    String.raw`\b(?:evidence|documents?|pages?|orders?|excerpts?)\s+(?:do(?:es)?\s+not|doesn't|don't)\s+(?:contain|address|cover|mention|provide|include|specify|discuss)`,
+    String.raw`\bnot\s+(?:established|specified|mentioned|covered|addressed|available)\s+(?:by|in)\s+the\s+(?:provided\s+|given\s+|retrieved\s+)?(?:evidence|documents?|pages?|orders?)`,
+    String.raw`\bno\s+(?:specific\s+|relevant\s+)?information\s+(?:about|on|regarding|is\s+available)`,
+    String.raw`\bthere\s+is\s+no\s+(?:specific\s+)?information\b`,
+    "कोई\\s+(?:विशिष्ट\\s+|स्पष्ट\\s+|संबंधित\\s+)?जानकारी\\s+(?:नहीं|उपलब्ध\\s+नहीं)",
+    "जानकारी\\s+(?:नहीं\\s+(?:दी|मिली|है)|उपलब्ध\\s+नहीं)",
+    "(?:साक्ष्य|प्रमाण|दस्तावेज़ों|दस्तावेजों|पृष्ठों)\\s+में\\s+[^।]*?(?:उल्लेख|जानकारी|प्रावधान)\\s+नहीं",
+  ].join("|"),
+  "iu",
+);
+
+/**
+ * True when most of an answer only says the pages do not answer the question
+ * (two or more sentences, a strict majority of them "not found"). One such
+ * sentence beside real content is a normal answer: "the order sets no time
+ * limit, but …".
+ */
+export function isProseNonAnswer(draft: string): boolean {
+  if (draft.length > 1500) return false;
+  const sentences = draft
+    .replace(/\[S\d+[^\]]*\]/g, " ")
+    .split(/(?<=[.!?।])\s+|\n+/)
+    .map((sentence) => sentence.replace(/^[-*•\d.)\s]+/, "").trim())
+    .filter((sentence) => sentence.replace(/[\s.।]/g, "").length > 3);
+  if (sentences.length < 2) return false;
+  const nonAnswers = sentences.filter((sentence) => NON_ANSWER_SENTENCE.test(sentence)).length;
+  return nonAnswers * 2 > sentences.length;
+}
+
 /** A suggested follow-up the cited orders do not answer (they are the only ones searched). */
 export function followUpNotCoveredMessage(language: "en" | "hi"): string {
   return language === "hi"
@@ -98,16 +132,19 @@ export function followUpNotCoveredMessage(language: "en" | "hi"): string {
 }
 
 export function noEvidenceMessage(language: "en" | "hi", searchedAllDepartments: boolean): string {
+  // No dead end: say what the archive holds and what to try next.
   if (language === "hi") {
     return [
       "संग्रहित शासनादेशों में इस प्रश्न का उत्तर देने वाला कोई आदेश नहीं मिला",
       searchedAllDepartments ? " (सभी विभागों में खोजा गया)।" : "।",
-      " कृपया प्रश्न को दूसरे शब्दों में पूछें, या विभाग, योजना अथवा शासनादेश संख्या का उल्लेख करें।",
+      " संग्रह में उत्तर प्रदेश शासन और भारत सरकार के आदेश व नियम हैं; अन्य राज्यों या निजी संस्थाओं के नियम इसमें नहीं हैं।",
+      " प्रश्न में विभाग, योजना का नाम या शासनादेश संख्या जोड़कर दोबारा पूछें, अथवा “आदेश खोजें” से विषय के शब्दों द्वारा आदेश ढूँढें।",
     ].join("");
   }
   return [
     "I could not find a government order in the archive that answers this question",
     searchedAllDepartments ? " (all departments were searched)." : ".",
-    " Try rephrasing it, or mention the department, scheme or GO number.",
+    " The archive holds Uttar Pradesh and Government of India orders and rules; other states' and private bodies' rules are not in it.",
+    " Ask again with the department, scheme name or GO number, or use order search to find orders by subject words.",
   ].join("");
 }

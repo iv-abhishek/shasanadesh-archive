@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { hasEvidenceFromDepartments } from "./relevance.js";
-import { assessRelevance, isNoAnswer, noEvidenceMessage, toRelevance } from "./relevance.js";
+import { assessRelevance, isNoAnswer, isProseNonAnswer, noEvidenceMessage, toRelevance } from "./relevance.js";
 import type { RetrievalEvidence } from "./types.js";
 
 const page = (label: string, sourceId: string, pageNumber: number, score: number, extra: Partial<RetrievalEvidence> = {}) =>
@@ -57,3 +57,12 @@ assert.match(noEvidenceMessage("en", false), /could not find/);
 }
 
 console.log("relevance gate tests passed");
+
+// "Not found" written as prose (baseline eval, 2 Oct 2026).
+assert.ok(isProseNonAnswer("The provided evidence does not contain information about the procedure to obtain a driving licence in Delhi. The retrieved documents pertain to the Uttar Pradesh Motor Vehicles Rules and do not address the process for obtaining a driving licence in Delhi [S1 p.8]. Therefore, the procedures for obtaining a driving licence in Delhi are not established by the provided evidence."));
+assert.ok(isProseNonAnswer("लखनऊ मेट्रो में एक यात्रा का किराया निर्धारित नहीं किया गया है। उत्तर प्रदेश सरकार के आदेशों में लखनऊ मेट्रो के यात्रा किराया के बारे में कोई जानकारी नहीं दी गई है [S1 p.1]। इसलिए, यात्रा किराया के बारे में कोई विशिष्ट जानकारी उपलब्ध नहीं है।"));
+// A real answer with one "not specified" point is still an answer.
+assert.equal(isProseNonAnswer("Maternity leave is 180 days [S1 p.2]. It may be taken twice in service [S1 p.2]. The order does not specify a separate rule for adoption [S1 p.3]."), false);
+assert.equal(isProseNonAnswer("The order does not specify a time limit [S1 p.2]."), false);
+assert.match(noEvidenceMessage("en", true), /Uttar Pradesh and Government of India/);
+console.log("prose non-answer tests passed");

@@ -506,17 +506,17 @@ export function buildConservativeFallback(
   const first = evidence[0];
   const citation = `[${first.label} p.${first.page_number}]`;
 
+  // Plain and short: what was found and where to read it. No talk of
+  // "safety checks"; an officer only needs the page.
   if (hi) {
     return [
-      "संबंधित शासनादेश के पृष्ठ मिले, लेकिन तैयार किया गया उत्तर उद्धरण और संख्या-सत्यापन की सुरक्षा जाँच में पास नहीं हुआ।",
-      `कृपया मूल स्रोत पृष्ठ सीधे देखें ${citation}।`,
-      "OCR से पढ़े गए या परस्पर भिन्न पाठ वाले पृष्ठों की कोई भी तिथि, राशि, प्रतिशत, नियम संख्या, स्तर या शासनादेश संख्या उपयोग से पहले मूल पृष्ठ से अवश्य मिला लें।",
+      `इस विषय का आदेश मिला है, पर उसका जाँचा हुआ सारांश नहीं बन सका। संबंधित पृष्ठ यहाँ पढ़ें ${citation}।`,
+      "नीचे स्रोत कार्ड से पूरा आदेश खुलेगा; तिथि, राशि या संख्या मूल पृष्ठ से ही लें।",
     ].join(" ");
   }
 
   return [
-    "Relevant government-order evidence was retrieved, but a fully generated answer did not pass the citation and numeric-verification safety checks.",
-    `Please review the original source page directly ${citation}.`,
-    "Any critical date, amount, percentage, rule number, level, Government Order number, or identifier from OCR-only or conflicting extraction should be verified against the original page before it is relied upon.",
+    `I found an order on this, but could not produce a checked summary of it. Read the page here ${citation}.`,
+    "The source card below opens the full order; take dates, amounts and numbers from the original page.",
   ].join(" ");
 }

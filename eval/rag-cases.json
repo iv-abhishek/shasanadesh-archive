@@ -64,8 +64,10 @@
       "लोक निर्माण विभाग",
       "Agriculture"
     ],
-    "expectScopeFallback": true,
-    "notes": "26 Sept: profile without Medical and Health returned unrelated Agriculture pages (ADR-047)."
+    "notes": "26 Sept: profile without Medical and Health returned unrelated Agriculture pages (ADR-047). 2 Oct: the question names medical officers, so the finder scopes to Medical and Health directly; no fallback is needed, only the right rules.",
+    "expectedChatSourceIdsAny": [
+      "25#201#2#2020"
+    ]
   },
   {
     "id": "solar-pump-mandatory-guidelines",
@@ -99,12 +101,13 @@
     "query": "कृपया सोलर पंप के बारे में बताएं",
     "language": "hi",
     "category": "scheme-guideline",
-    "expectedSourceIds": [
-      "61#37#5#2023"
-    ],
     "requireCitation": true,
     "allowFallback": false,
-    "notes": "25 Sept: safe fallback after garbled native text (ADR-043)."
+    "notes": "25 Sept: safe fallback after garbled native text (ADR-043). 2 Oct: a vague question; any PM-KUSUM order with a cited answer is correct, not one fixed order.",
+    "expectedTextIncludesAny": [
+      "सोलर पंप",
+      "सोलर पम्प"
+    ]
   },
   {
     "id": "project-alankar-hindi",

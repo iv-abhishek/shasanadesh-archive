@@ -429,8 +429,13 @@ async function evalUserFor(
 
   const cached = evalUsers[key];
   if (cached) {
-    const check = await fetch(`${options.apiBase}/api/workspace/users/${cached}`).catch(() => null);
-    if (check?.ok) return cached;
+    // The profile route needs a signed-in session; the development list does
+    // not. (Checking the profile route failed every time, so each run made a
+    // new test profile until the 5-profile limit refused them.)
+    const list = await fetch(`${options.apiBase}/api/session/dev-users`)
+      .then((response) => (response.ok ? (response.json() as Promise<{ profiles?: Array<{ id: string }> }>) : null))
+      .catch(() => null);
+    if (!list || list.profiles?.some((profile) => profile.id === cached)) return cached;
   }
 
   const [primary, ...additional] = departments;

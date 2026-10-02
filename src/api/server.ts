@@ -64,7 +64,7 @@ import {
   findExplicitDepartment,
   requestsGlobalScope,
 } from "../rag/intent-routing.js";
-import { assessRelevance, followUpNotCoveredMessage, hasEvidenceFromDepartments, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
+import { assessRelevance, followUpNotCoveredMessage, hasEvidenceFromDepartments, isNoAnswer, isProseNonAnswer, noEvidenceMessage } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
 import { asksWhatOrderSays, detectListingRequest, jurisdictionsInQuery, listOrders, type SubjectSearch } from "../rag/order-listing.js";
@@ -1884,7 +1884,9 @@ server.post(
 
     // The prompt asks for NO_ANSWER_IN_EVIDENCE when the pages do not answer
     // the question; answer "not found" instead of validating a non-answer.
-    if (isNoAnswer(firstDraft)) {
+    // Models also say it in prose ("The provided evidence does not contain
+    // …"), with a citation to the page that does not answer; same reply.
+    if (isNoAnswer(firstDraft) || isProseNonAnswer(firstDraft)) {
       sendNoEvidence("model_found_no_answer", generationMs);
       return;
     }
@@ -2026,6 +2028,15 @@ server.post(
               [];
           }
         }
+      }
+
+      // A repair that ends in "the pages do not say" is a "not found" too.
+      if (repaired && isProseNonAnswer(finalAnswer)) {
+        sendNoEvidence(
+          "model_found_no_answer",
+          performance.now() - generationStartedAt,
+        );
+        return;
       }
 
       if (!finalValidation.ok) {

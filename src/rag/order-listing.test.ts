@@ -255,3 +255,20 @@ console.log("jurisdiction/topic filter tests passed");
   assert.deepEqual(list("*Solar पम्प*")?.patterns, ["*solar पम्प*"]);
   console.log("2 Oct conversation finder tests passed");
 }
+
+// Baseline eval, 2 Oct 2026: content questions go to Ask; a GO number's own
+// date part is not a date filter.
+{
+  const list = (query: string) => detectListingRequest(query, "2026-10-02");
+  assert.equal(list("प्रोजेक्ट अलंकार के शासनादेश का डिटेल बताने का कष्ट करें"), null);
+  assert.equal(list("What support does the UP Startup Policy 2026 give to deeptech startups?"), null);
+  assert.equal(list("Can a punishment order be set aside on a technical ground?"), null);
+  // Still searches:
+  assert.ok(list("Is there any order on solar pumps?"));
+  assert.ok(list("Are there new GOs on solar pumps?"));
+  const go = list("GO 61/2023/1100/12-5-2023/पीएम कुसुम क्या कहता है");
+  assert.ok(!go || go.dateFrom === undefined, `GO number date leaked: ${go?.dateFrom}`);
+  const dated = list("GO 61/2023/1100/12-5-2023 dated 15.05.2023");
+  assert.ok(!dated || dated.dateFrom === undefined || dated.dateFrom === "2023-05-15");
+  console.log("baseline routing tests passed");
+}
