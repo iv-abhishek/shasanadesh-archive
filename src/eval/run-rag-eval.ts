@@ -37,6 +37,18 @@ interface EvalCase {
   expectedTextIncludesAny?: string[];
   /** Must be answered from the order list, newest first (ADR-057). */
   expectListing?: boolean;
+  /**
+   * Two-turn case: ask this first, then send `query` as the suggested
+   * follow-up the user clicked under that answer (followUp + the answer's
+   * cited orders, as the web app does).
+   */
+  previousQuery?: string;
+  /** The follow-up may only cite or show the orders the previous answer cited. */
+  expectOnlyPreviousSources?: boolean;
+  /** Any of these source IDs must be cited/shown (checked on the chat answer, not search). */
+  expectedChatSourceIdsAny?: string[];
+  /** None of these providers may appear among the shown sources (e.g. "core-rules"). */
+  forbiddenSourcePrefixes?: string[];
 }
 
 interface SearchEvidence {
@@ -74,6 +86,8 @@ interface DoneEvent {
 }
 
 interface ChatResult {
+  /** Two-turn cases: the orders the first answer cited. */
+  previousSourceIds?: string[];
   answer: string;
   sources: ChatSource[];
   done: DoneEvent | null;
@@ -443,9 +457,37 @@ async function evalUserFor(
   return created.id;
 }
 
+/** The orders an answer cited (all shown orders when it cited none). */
+function citedSourceIds(result: ChatResult): string[] {
+  const labels = new Set(
+    (result.done?.citations ?? [])
+      .map((citation) => /S\d+/.exec(citation)?.[0])
+      .filter((label): label is string => Boolean(label)),
+  );
+  const cited = result.sources.filter((source) => labels.has(source.label));
+  return [...new Set((cited.length ? cited : result.sources).map((source) => source.sourceId))].slice(0, 8);
+}
+
 async function runChat(
   testCase: EvalCase,
   options: CliOptions,
+): Promise<ChatResult> {
+  if (!testCase.previousQuery) return runChatTurn(testCase, options, [testCase.query], {});
+  const first = await runChatTurn(testCase, options, [testCase.previousQuery], {});
+  if (first.error) return { ...first, error: `first turn: ${first.error}` };
+  const previousSourceIds = citedSourceIds(first);
+  const second = await runChatTurn(testCase, options, [testCase.previousQuery, testCase.query], {
+    followUp: true,
+    followSourceIds: previousSourceIds,
+  });
+  return { ...second, previousSourceIds, elapsedMs: second.elapsedMs };
+}
+
+async function runChatTurn(
+  testCase: EvalCase,
+  options: CliOptions,
+  questions: string[],
+  extraBody: Record<string, unknown>,
 ): Promise<ChatResult> {
   const workspaceUserId = testCase.profileDepartments?.length
     ? await evalUserFor(testCase.profileDepartments, options)
@@ -464,14 +506,12 @@ async function runChat(
             "application/json",
         },
         body: JSON.stringify({
-          messages: [
-            {
-              role: "user",
-              content:
-                testCase.query,
-            },
-          ],
+          messages: questions.map((content) => ({
+            role: "user",
+            content,
+          })),
           ...(workspaceUserId ? { workspaceUserId } : {}),
+          ...extraBody,
         }),
       },
       options.timeoutMs,
@@ -872,6 +912,28 @@ async function evaluateCase(
 
   if (testCase.expectListing && !(chat.done as { listing?: boolean } | undefined)?.listing) {
     failures.push("expected an order list (newest first), but Ask answered from page text");
+  }
+
+  const shownSourceIds = [...new Set(chat.sources.map((source) => source.sourceId))];
+  if (testCase.expectOnlyPreviousSources && chat.previousSourceIds) {
+    const allowed = new Set(chat.previousSourceIds);
+    const outside = shownSourceIds.filter((id) => !allowed.has(id));
+    if (outside.length) {
+      failures.push(`follow-up left the cited orders: ${outside.slice(0, 3).join(", ")}`);
+    }
+  }
+  if (
+    testCase.expectedChatSourceIdsAny?.length &&
+    !noEvidence &&
+    !testCase.expectedChatSourceIdsAny.some((id) => shownSourceIds.includes(id))
+  ) {
+    failures.push(`answer shows none of the expected orders: ${testCase.expectedChatSourceIdsAny.join(", ")}`);
+  }
+  const forbidden = shownSourceIds.filter((id) =>
+    (testCase.forbiddenSourcePrefixes ?? []).some((prefix) => id.startsWith(prefix)),
+  );
+  if (forbidden.length) {
+    failures.push(`answer used sources it should not: ${forbidden.slice(0, 3).join(", ")}`);
   }
 
   if (testCase.expectScopeFallback && !chat.done?.scopeFallback) {

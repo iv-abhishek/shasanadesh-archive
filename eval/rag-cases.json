@@ -495,5 +495,214 @@
       "एग्रीस्‍टैक"
     ],
     "notes": "English words, Hindi subject: needs embed:subjects (meaning-based match)."
+  },
+  {
+    "id": "seniority-medical-officers-education-profile",
+    "query": "What are the seniority rules for medical officers?",
+    "language": "en",
+    "category": "scope",
+    "profileDepartments": [
+      "Secondary Education",
+      "Agriculture",
+      "लोक निर्माण विभाग"
+    ],
+    "expectedChatSourceIdsAny": [
+      "25#201#2#2020"
+    ],
+    "forbiddenSourcePrefixes": [
+      "core-rules-uttar-pradesh-registration-manual"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "2 Oct: answered from Handbook fees + Registration Manual because rulebook pages pass every department filter (ADR-073). 'medical officers' must scope to Medical and Health."
+  },
+  {
+    "id": "seniority-medical-officers-hindi",
+    "query": "चिकित्साधिकारियों की ज्येष्ठता के नियम क्या हैं?",
+    "language": "hi",
+    "category": "scope",
+    "profileDepartments": [
+      "Secondary Education",
+      "Agriculture",
+      "लोक निर्माण विभाग"
+    ],
+    "expectedChatSourceIdsAny": [
+      "25#201#2#2020"
+    ],
+    "forbiddenSourcePrefixes": [
+      "core-rules-uttar-pradesh-registration-manual"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "Hindi cadre word (चिकित्साधिकारियों) → Medical and Health (ADR-073)."
+  },
+  {
+    "id": "followup-solar-competent-authority",
+    "previousQuery": "सोलर पंप लगवाने हेतु क्या प्रक्रिया है?",
+    "query": "इस आदेश में सक्षम प्राधिकारी कौन है?",
+    "language": "hi",
+    "category": "follow-up",
+    "expectOnlyPreviousSources": true,
+    "forbiddenSourcePrefixes": [
+      "core-rules-up-vitta-path"
+    ],
+    "requireCitation": false,
+    "allowFallback": false,
+    "notes": "2 Oct: a clicked suggestion answered from Vitta Path pay fixation. Must cite only the PM-KUSUM order(s) or say they do not answer it."
+  },
+  {
+    "id": "followup-solar-portal",
+    "previousQuery": "सोलर पंप लगवाने हेतु क्या प्रक्रिया है?",
+    "query": "सोलर पंप के लिए आवेदन करने के लिए कौन सा पोर्टल उपलब्ध है?",
+    "language": "hi",
+    "category": "follow-up",
+    "expectOnlyPreviousSources": true,
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectedTextIncludesAny": [
+      "पोर्टल"
+    ],
+    "notes": "Suggested follow-up answerable from the cited PM-KUSUM order."
+  },
+  {
+    "id": "followup-medical-promotion-character",
+    "previousQuery": "What are the seniority rules for medical officers?",
+    "query": "What is the procedure for verifying the character and suitability of candidates for promotion?",
+    "language": "en",
+    "category": "follow-up",
+    "profileDepartments": [
+      "Secondary Education",
+      "Agriculture",
+      "लोक निर्माण विभाग"
+    ],
+    "expectOnlyPreviousSources": true,
+    "forbiddenSourcePrefixes": [
+      "core-rules-uttar-pradesh-registration-manual"
+    ],
+    "requireCitation": false,
+    "allowFallback": false,
+    "notes": "2 Oct: answered from the Registration Manual (another department). Must stay on the Medical Officer service rules."
+  },
+  {
+    "id": "followup-later-amendment",
+    "previousQuery": "सोलर पंप लगवाने हेतु क्या प्रक्रिया है?",
+    "query": "क्या इस आदेश में बाद में कोई संशोधन हुआ है?",
+    "language": "hi",
+    "category": "follow-up",
+    "expectOnlyPreviousSources": true,
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "'इस आदेश' + amendment: answered from the order links (ADR-071), about the cited order only."
+  },
+  {
+    "id": "fhb-fr56-superannuation",
+    "query": "What is the age of superannuation under Fundamental Rule 56?",
+    "language": "en",
+    "category": "rulebook",
+    "expectedChatSourceIdsAny": [
+      "up-fhb-vol2"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectedTextIncludesAny": [
+      "60",
+      "sixty"
+    ],
+    "notes": "FR 56 is in Financial Handbook Vol. II (Parts II–IV). Citation must link to the official budget.up.nic.in page."
+  },
+  {
+    "id": "fhb-csr-qualifying-service",
+    "query": "Civil Service Regulations के अनुसार पेंशन के लिए अर्हकारी सेवा क्या है?",
+    "language": "hi",
+    "category": "rulebook",
+    "expectedChatSourceIdsAny": [
+      "up-fhb-csr"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectedTextIncludesAny": [
+      "अर्हकारी",
+      "qualifying"
+    ],
+    "notes": "Civil Service Regulations volume of the Handbook."
+  },
+  {
+    "id": "vittapath-leave-hindi",
+    "query": "वित्त पथ के अनुसार अर्जित अवकाश के नियम क्या हैं?",
+    "language": "hi",
+    "category": "rulebook",
+    "expectedChatSourceIdsAny": [
+      "core-rules-up-vitta-path-09-leave-rules",
+      "up-fhb-vol2"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectedTextIncludesAny": [
+      "अर्जित अवकाश",
+      "अवकाश"
+    ],
+    "notes": "Vitta Path chapters were Kruti Dev PDFs (ADR-070); the answer must be readable Unicode Hindi."
+  },
+  {
+    "id": "go-number-content-pm-kusum",
+    "query": "शासनादेश संख्या 61/2023/1100/12-5-2023/12-5099/24/2022 में क्या निर्देश हैं?",
+    "language": "hi",
+    "category": "order-find",
+    "expectedChatSourceIdsAny": [
+      "61#37#5#2023"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "A GO number + 'what does it say' is answered from that order's own pages (ADR-071), not listed as a search."
+  },
+  {
+    "id": "list-revenue-latest",
+    "query": "latest orders of revenue department",
+    "language": "en",
+    "category": "order-list",
+    "expectListing": true,
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectedTextIncludesAny": [
+      "राजस्व"
+    ],
+    "notes": "Revenue was missing from the department registry before 2 Oct."
+  },
+  {
+    "id": "list-state-tax-hindi",
+    "query": "राज्य कर विभाग के नवीनतम शासनादेश",
+    "language": "hi",
+    "category": "order-list",
+    "expectListing": true,
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectedTextIncludesAny": [
+      "राज्य कर",
+      "संस्थागत वित्त"
+    ],
+    "notes": "State Tax; older portal name 'संस्थागत वित्त कर एवं निबन्धन विभाग' is an alias."
+  },
+  {
+    "id": "it-e-office-order",
+    "query": "What does the e-office implementation order of IT and Electronics department say?",
+    "language": "en",
+    "category": "general-instruction",
+    "expectedChatSourceIdsAny": [
+      "core-rules-up-e-office-go-2023",
+      "core-rules-up-e-office-implementation-go-2024"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "IT and Electronics spellings (आई.टी. एवं इलेक्ट्रॉनिक्स / आईटी एवं …) merged in the registry."
+  },
+  {
+    "id": "not-found-delhi-driving-licence",
+    "query": "What is the procedure to get a driving licence in Delhi?",
+    "language": "en",
+    "category": "not-found",
+    "requireCitation": false,
+    "allowFallback": false,
+    "expectNoEvidence": true,
+    "notes": "Outside scope (Delhi, not UP or central orders)."
   }
 ]
