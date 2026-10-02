@@ -289,6 +289,12 @@ function DepartmentChecklist({
   );
 }
 
+function initials(name: string): string {
+  const words = name.trim().split(/\s+/).filter(Boolean);
+  const letters = words.length > 1 ? [words[0], words[words.length - 1]] : words;
+  return letters.map((word) => Array.from(word)[0] ?? "").join("").toUpperCase() || "?";
+}
+
 function scopeHelp(
   primaryDepartment: string,
   otherDepartments: string[],
@@ -621,6 +627,7 @@ function Onboarding({
   onCreated,
   onCancel,
   currentName,
+  currentId,
 }: {
   departments: string[];
   profiles:
@@ -628,6 +635,7 @@ function Onboarding({
   /** Switching profiles: go back to the profile in use without changing anything. */
   onCancel?: () => void;
   currentName?: string;
+  currentId?: string;
   onLogin:
     (
       profile:
@@ -697,6 +705,9 @@ function Onboarding({
     useState<string | null>(
       null,
     );
+
+  // The profile list first; the form only when asked for (or no profiles yet).
+  const [creating, setCreating] = useState(false);
 
   const loginExisting =
     async (
@@ -804,302 +815,280 @@ function Onboarding({
       }
     };
 
-  // Escape also cancels a profile switch.
+  // Escape steps back: from the new-profile form to the list, from the list
+  // to the profile in use. Not while typing (Escape clears a search box).
   useEffect(() => {
-    if (!onCancel) return;
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onCancel();
+      if (event.key !== "Escape") return;
+      const target = event.target as HTMLElement | null;
+      if (target && /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName)) return;
+      if (creating && profiles.length) setCreating(false);
+      else onCancel?.();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [onCancel]);
+  }, [creating, onCancel, profiles.length]);
+
+  const showForm = creating || profiles.length === 0;
+  const departmentText = (name: string) => departmentLabels[name]?.en ?? name;
+  const others = departments.length;
 
   return (
     <main className="onboarding-shell">
-      <div className="onboarding-card">
-        {onCancel ? (
-          <button type="button" className="onboarding-back" onClick={onCancel}>
-            ← Back{currentName ? ` to ${currentName}` : ""}
-          </button>
-        ) : null}
+      <div className="onboarding-card switcher-card">
+        <header className="switcher-head">
+          {onCancel ? (
+            <button type="button" className="onboarding-back" onClick={onCancel}>
+              ← Back{currentName ? ` to ${currentName}` : ""}
+            </button>
+          ) : null}
+          <div className="eyebrow">Shasanadesh workspace</div>
+          <h1>
+            {showForm
+              ? profiles.length ? "New profile" : "Create your profile"
+              : onCancel ? "Switch profile" : "Choose your profile"}
+          </h1>
+          <p className="onboarding-copy">
+            {showForm
+              ? "Your departments decide which orders are searched first. You can change all of this later from your profile."
+              : "Pick a profile to continue with its departments and chat history, or set up a new one."}
+          </p>
+        </header>
 
-        <div className="eyebrow">
-          Shasanadesh workspace
-        </div>
-
-        <h1>
-          {onCancel ? "Switch profile" : "Continue your workspace."}
-        </h1>
-
-        <p className="onboarding-copy">
-          Development profiles now
-          use an HttpOnly session
-          cookie. Your profile,
-          departments and chat
-          history remain in
-          PostgreSQL.
-        </p>
-
-        {profiles.length >
-        0 ? (
-          <div className="dev-profile-section">
-            <div className="section-label">
-              Existing development
-              profiles
-            </div>
-
-            <div className="dev-profile-list">
-              {profiles.map(
-                (profile) => (
+        {!showForm ? (
+          <section className="profile-picker" aria-label="Profiles">
+            <div className="profile-grid">
+              {profiles.map((item) => {
+                const current = item.id === currentId;
+                const shown = item.departments.slice(0, 2);
+                const more = item.departments.length - shown.length;
+                return (
                   <button
                     type="button"
-                    className="dev-profile-button"
-                    key={
-                      profile.id
-                    }
-                    disabled={
-                      busy
-                    }
-                    onClick={() =>
-                      void loginExisting(
-                        profile,
-                      )
-                    }
+                    key={item.id}
+                    className={current ? "profile-tile current" : "profile-tile"}
+                    aria-current={current ? "true" : undefined}
+                    disabled={busy}
+                    onClick={() => {
+                      if (current && onCancel) onCancel();
+                      else void loginExisting(item);
+                    }}
                   >
-                    <strong>
-                      {
-                        profile.displayName
-                      }
-                    </strong>
-
-                    <span>
-                      {profile.designation ??
-                        "Government officer"}
+                    <span className="profile-avatar" aria-hidden="true">
+                      {initials(item.displayName)}
                     </span>
-
-                    <small>
-                      {profile.departments.length === 0
-                        ? "No department"
-                        : profile.departments.length === 1
-                          ? profile.departments[0]
-                          : `${profile.departments[0]} +${profile.departments.length - 1} more`}
-                    </small>
+                    <span className="profile-tile-body">
+                      <span className="profile-tile-name">
+                        {item.displayName}
+                        {current ? <em className="profile-current-badge">Current</em> : null}
+                      </span>
+                      <span className="profile-tile-role">
+                        {item.designation ?? "Government officer"}
+                        {item.district ? ` · ${item.district}` : ""}
+                      </span>
+                      <span className="profile-tile-depts">
+                        {shown.length === 0 ? (
+                          <span className="dept-chip muted">All departments</span>
+                        ) : (
+                          shown.map((name) => (
+                            <span className="dept-chip" key={name} title={name}>
+                              {departmentText(name)}
+                            </span>
+                          ))
+                        )}
+                        {more > 0 ? <span className="dept-chip muted">+{more}</span> : null}
+                      </span>
+                    </span>
+                    <span className="profile-tile-action" aria-hidden="true">
+                      {current ? "Continue" : "Use"} →
+                    </span>
                   </button>
-                ),
-              )}
-            </div>
-
-            <div className="onboarding-divider">
-              or create another
-              development profile
-            </div>
-          </div>
-        ) : null}
-
-        <form
-          className="onboarding-form"
-          onSubmit={submit}
-        >
-          <label>
-            Name
-            <input
-              value={
-                displayName
-              }
-              onChange={(
-                event,
-              ) =>
-                setDisplayName(
-                  event.target
-                    .value,
-                )
-              }
-              placeholder="Your name"
-              required
-            />
-          </label>
-
-          <label>
-            Designation
-            <input
-              value={
-                designation
-              }
-              onChange={(
-                event,
-              ) =>
-                setDesignation(
-                  event.target
-                    .value,
-                )
-              }
-              placeholder="e.g. Principal Secretary"
-            />
-          </label>
-
-          <div className="onboarding-grid">
-            <label>
-              State or Union Territory
-              <select
-                value={stateName}
-                onChange={(event) => setStateName(event.target.value)}
-              >
-                <option value="">Not specified</option>
-                {INDIA_STATES_AND_UTS.map((state) => (
-                  <option key={state} value={state}>{state}</option>
-                ))}
-              </select>
-            </label>
-            <label>
-              District
-              <input
-                value={district}
-                onChange={(event) => setDistrict(event.target.value)}
-                placeholder="Optional"
-              />
-            </label>
-          </div>
-
-          <label>
-            Contact number <span className="field-optional">Optional</span>
-            <input
-              type="tel"
-              value={contactNumber}
-              onChange={(event) => setContactNumber(event.target.value)}
-              placeholder="For this workspace profile"
-            />
-            <span className="field-help">
-              This is profile information only; it is not used to sign in.
-            </span>
-          </label>
-
-          <label>
-            Substantive (primary) department
-            <select
-              value={
-                primaryDepartment
-              }
-              onChange={(
-                event,
-              ) => {
-                const next = event.target.value;
-                setPrimaryDepartment(next);
-                setAdditionalDepartments((current) =>
-                  current.filter((department) => department !== next),
                 );
-                setAdditionalCharge((current) =>
-                  current.filter((department) => department !== next),
-                );
-              }}
-            >
-              <option value="">None</option>
-              {departments.map(
-                (department) => (
-                  <option
-                    key={
-                      department
-                    }
-                    value={
-                      department
-                    }
-                  >
-                    {departmentOptionText(department, departmentLabels)}
-                  </option>
-                ),
-              )}
-            </select>
-          </label>
-
-          <div className="profile-field-block">
-            <div className="profile-field-label">Other departments</div>
-            <span className="field-help">
-              Select departments you work with, and mark{" "}
-              <strong>Addl. charge</strong> for any held as additional charge.
-              Leave everything empty to search all departments.
-            </span>
-            <DepartmentChecklist
-              departments={departments}
-              primaryDepartment={primaryDepartment}
-              selected={additionalDepartments}
-              onChange={setAdditionalDepartments}
-              charged={additionalCharge}
-              onChargedChange={setAdditionalCharge}
-            />
-          </div>
-
-          <div className="onboarding-grid">
-            <label>
-              Preferred language
-              <select
-                value={
-                  preferredLanguage
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setPreferredLanguage(
-                    event.target
-                      .value as
-                      | "en"
-                      | "hi",
-                  )
-                }
+              })}
+              <button
+                type="button"
+                className="profile-tile profile-tile-new"
+                disabled={busy}
+                onClick={() => {
+                  setError(null);
+                  setCreating(true);
+                }}
               >
-                <option value="en">
-                  English
-                </option>
-                <option value="hi">
-                  Hindi
-                </option>
-              </select>
-            </label>
-
-            <label>
-              Default scope
-              <select
-                value={
-                  defaultScope
-                }
-                onChange={(
-                  event,
-                ) =>
-                  setDefaultScope(
-                    event.target
-                      .value as
-                      | "my_departments"
-                      | "all_departments",
-                  )
-                }
-              >
-                <option value="my_departments">
-                  My departments
-                </option>
-                <option value="all_departments">
-                  All departments
-                </option>
-              </select>
-            </label>
-          </div>
-
-          {error ? (
-            <div className="error-box">
-              {error}
+                <span className="profile-avatar new" aria-hidden="true">+</span>
+                <span className="profile-tile-body">
+                  <span className="profile-tile-name">New profile</span>
+                  <span className="profile-tile-role">Name, departments and language</span>
+                </span>
+              </button>
             </div>
-          ) : null}
+            {error ? <div className="error-box">{error}</div> : null}
+          </section>
+        ) : (
+          <form className="onboarding-form profile-create" onSubmit={submit}>
+            <fieldset className="form-section">
+              <legend><span className="form-step">1</span> About you</legend>
+              <div className="onboarding-grid">
+                <label>
+                  Name
+                  <input
+                    value={displayName}
+                    onChange={(event) => setDisplayName(event.target.value)}
+                    placeholder="Your name"
+                    autoFocus
+                    required
+                  />
+                </label>
+                <label>
+                  Designation
+                  <input
+                    value={designation}
+                    onChange={(event) => setDesignation(event.target.value)}
+                    placeholder="e.g. Principal Secretary"
+                  />
+                </label>
+                <label>
+                  State or Union Territory
+                  <select value={stateName} onChange={(event) => setStateName(event.target.value)}>
+                    <option value="">Not specified</option>
+                    {INDIA_STATES_AND_UTS.map((state) => (
+                      <option key={state} value={state}>{state}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span className="label-row">District <span className="field-optional">optional</span></span>
+                  <input
+                    value={district}
+                    onChange={(event) => setDistrict(event.target.value)}
+                    placeholder="e.g. Lucknow"
+                  />
+                </label>
+                <label className="span-2">
+                  <span className="label-row">Contact number <span className="field-optional">optional</span></span>
+                  <input
+                    type="tel"
+                    value={contactNumber}
+                    onChange={(event) => setContactNumber(event.target.value)}
+                    placeholder="For this workspace profile"
+                  />
+                  <span className="field-help">Profile information only; it is not used to sign in.</span>
+                </label>
+              </div>
+            </fieldset>
 
-          <button
-            className="onboarding-submit"
-            type="submit"
-            disabled={
-              busy ||
-              !displayName.trim()
-            }
-          >
-            {busy
-              ? "Working…"
-              : "Create workspace"}
-          </button>
-        </form>
+            <fieldset className="form-section">
+              <legend><span className="form-step">2</span> Departments</legend>
+              <label>
+                Substantive (primary) department
+                <select
+                  value={primaryDepartment}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    setPrimaryDepartment(next);
+                    setAdditionalDepartments((current) =>
+                      current.filter((department) => department !== next),
+                    );
+                    setAdditionalCharge((current) =>
+                      current.filter((department) => department !== next),
+                    );
+                  }}
+                >
+                  <option value="">None</option>
+                  {departments.map((department) => (
+                    <option key={department} value={department}>
+                      {departmentOptionText(department, departmentLabels)}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <div className="profile-field-block">
+                <div className="profile-field-label">Other departments</div>
+                <span className="field-help">
+                  Tick the departments you work with ({others} available) and mark{" "}
+                  <strong>Addl. charge</strong> for any held as additional charge.
+                  Leave everything empty to search all departments.
+                </span>
+                <DepartmentChecklist
+                  departments={departments}
+                  primaryDepartment={primaryDepartment}
+                  selected={additionalDepartments}
+                  onChange={setAdditionalDepartments}
+                  charged={additionalCharge}
+                  onChargedChange={setAdditionalCharge}
+                />
+              </div>
+            </fieldset>
+
+            <fieldset className="form-section">
+              <legend><span className="form-step">3</span> Answers</legend>
+              <div className="onboarding-grid">
+                <div className="profile-field-block">
+                  <div className="profile-field-label">Answer language</div>
+                  <div className="segmented" role="radiogroup" aria-label="Answer language">
+                    {([["en", "English"], ["hi", "हिन्दी"]] as const).map(([value, label]) => (
+                      <label key={value} className={preferredLanguage === value ? "active" : ""}>
+                        <input
+                          type="radio"
+                          name="preferred-language"
+                          value={value}
+                          checked={preferredLanguage === value}
+                          onChange={() => setPreferredLanguage(value)}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div className="profile-field-block">
+                  <div className="profile-field-label">Search by default in</div>
+                  <div className="segmented" role="radiogroup" aria-label="Default search scope">
+                    {([["my_departments", "My departments"], ["all_departments", "All departments"]] as const).map(([value, label]) => (
+                      <label key={value} className={defaultScope === value ? "active" : ""}>
+                        <input
+                          type="radio"
+                          name="default-scope"
+                          value={value}
+                          checked={defaultScope === value}
+                          onChange={() => setDefaultScope(value)}
+                        />
+                        {label}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+
+            {error ? <div className="error-box">{error}</div> : null}
+
+            <div className="form-actions">
+              {profiles.length ? (
+                <button
+                  type="button"
+                  className="button-secondary"
+                  onClick={() => {
+                    setError(null);
+                    setCreating(false);
+                  }}
+                >
+                  Cancel
+                </button>
+              ) : null}
+              <button
+                className="onboarding-submit"
+                type="submit"
+                disabled={busy || !displayName.trim()}
+              >
+                {busy ? "Working…" : "Create profile and continue"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        <p className="onboarding-footnote">
+          Development profiles: sign-in uses an HttpOnly session cookie; profiles,
+          departments and chat history are stored in PostgreSQL.
+        </p>
       </div>
     </main>
   );
@@ -1952,6 +1941,7 @@ export function WorkspaceApp() {
         }
         onCancel={profile && switchingProfile ? () => setSwitchingProfile(false) : undefined}
         currentName={profile?.displayName}
+        currentId={profile?.id}
         onLogin={(
           active,
         ) => {

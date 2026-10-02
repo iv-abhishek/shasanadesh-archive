@@ -4063,3 +4063,324 @@ h1 {
 .department-no-match {
   grid-column: 1 / -1;
 }
+
+/* Profile switcher: profile tiles, then a sectioned new-profile form */
+.onboarding-card.switcher-card {
+  width: min(100%, 880px);
+  padding: 28px 30px 22px;
+}
+
+.switcher-head {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid var(--border);
+}
+
+.switcher-head .onboarding-copy {
+  margin: 0;
+  max-width: 60ch;
+}
+
+.profile-picker {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 12px;
+}
+
+.profile-tile {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  column-gap: 12px;
+  row-gap: 10px;
+  min-height: 132px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface-soft);
+  color: var(--text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+}
+
+.profile-tile:hover:not(:disabled),
+.profile-tile:focus-visible {
+  border-color: var(--accent);
+  background: var(--surface);
+  transform: translateY(-1px);
+}
+
+.profile-tile:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.profile-tile.current {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.profile-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--action);
+  color: var(--action-text);
+  font-size: 0.95rem;
+  font-weight: 760;
+  letter-spacing: 0.02em;
+}
+
+.profile-avatar.new {
+  background: transparent;
+  border: 1.5px dashed var(--border-strong);
+  color: var(--accent);
+  font-size: 1.4rem;
+  font-weight: 500;
+}
+
+.profile-tile-body {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+}
+
+.profile-tile-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 1rem;
+  font-weight: 720;
+  line-height: 1.25;
+}
+
+.profile-current-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--action);
+  color: var(--action-text);
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.profile-tile-role {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.profile-tile.current .profile-tile-name {
+  padding-right: 64px;
+}
+
+.profile-tile-depts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.dept-chip {
+  max-width: 100%;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--badge-background);
+  color: var(--badge-text);
+  font-size: 0.72rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dept-chip.muted {
+  background: transparent;
+  border: 1px solid var(--border);
+}
+
+.profile-tile-action {
+  grid-column: 2;
+  justify-self: end;
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 720;
+}
+
+.profile-tile-new {
+  min-height: 0;
+  grid-template-rows: auto;
+  align-items: center;
+  border-style: dashed;
+  background: transparent;
+}
+
+.profile-create {
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.form-section {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 16px 18px 18px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.form-section legend {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 740;
+}
+
+.form-step {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 0.74rem;
+  font-weight: 760;
+}
+
+.form-section .field-help {
+  font-weight: 500;
+}
+
+.form-section .field-optional {
+  font-weight: 500;
+}
+
+.onboarding-grid > .span-2 {
+  grid-column: 1 / -1;
+}
+
+.segmented {
+  display: inline-flex;
+  width: 100%;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-soft);
+}
+
+.onboarding-form .segmented label {
+  flex: 1 1 0;
+  display: block;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 650;
+  text-align: center;
+  cursor: pointer;
+}
+
+.onboarding-form .segmented label.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.onboarding-form .segmented input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.onboarding-form .segmented label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.form-actions {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 0 -30px;
+  padding: 12px 30px;
+  border-top: 1px solid var(--border);
+  background: var(--glass);
+  backdrop-filter: blur(6px);
+}
+
+.button-secondary {
+  padding: 11px 16px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.button-secondary:hover {
+  background: var(--hover-surface);
+}
+
+.onboarding-footnote {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+@media (max-width: 560px) {
+  .onboarding-card.switcher-card {
+    padding: 20px 16px 16px;
+  }
+
+  .form-section {
+    padding: 14px 12px;
+  }
+
+  .form-actions {
+    margin: 0 -16px;
+    padding: 12px 16px;
+  }
+
+  .form-actions > * {
+    flex: 1 1 auto;
+  }
+}
+
+.label-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
