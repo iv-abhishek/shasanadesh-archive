@@ -1103,3 +1103,25 @@ government systems use:
 Not yet: using the district in retrieval (district-specific orders, "orders for my
 district") and block/tehsil levels; the codes are stored so that can be added without
 asking officers again.
+
+## ADR-073 - Profile scope widens when only rulebook pages match (2 Oct 2026)
+
+"What are the seniority rules for medical officers?" from a profile scoped to Secondary
+Education, Agriculture and Public Works answered from a Financial Handbook page on fees and
+a Registration Manual page. Rulebook pages (core-rules, and since ADR-071 the Handbook) pass
+every department filter, so the scoped search "found" pages that mention medical officers in
+passing; the existing widening (ADR-062: search all departments when nothing relevant is
+found) never ran.
+
+- When everything kept from the profile-scoped search is rulebook or central material and
+  none of it comes from the officer's own departments (any spelling, via the registry), the
+  question is searched once more across all departments; the search with the better best
+  relevance is used and the answer says it searched all departments
+  (`hasEvidenceFromDepartments`, src/rag/relevance.ts). Cost: one extra retrieval for such
+  questions only.
+- Cadre words name their department: "medical officer(s)", "चिकित्सा अधिकारी",
+  "चिकित्साधिकारी/-यों", "doctors", "प्रान्तीय चिकित्सा सेवा" are aliases of Medical and Health,
+  so such questions are scoped there directly.
+
+Content gap noted: the general Uttar Pradesh Government Servants Seniority Rules, 1991 are not
+in the core-rules collection yet.

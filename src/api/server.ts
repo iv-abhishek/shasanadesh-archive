@@ -64,7 +64,7 @@ import {
   findExplicitDepartment,
   requestsGlobalScope,
 } from "../rag/intent-routing.js";
-import { assessRelevance, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
+import { assessRelevance, hasEvidenceFromDepartments, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
 import { asksWhatOrderSays, detectListingRequest, jurisdictionsInQuery, listOrders, type SubjectSearch } from "../rag/order-listing.js";
@@ -1554,6 +1554,40 @@ server.post(
           retrieval.evidence,
           RAG_MIN_RELEVANCE,
         );
+    }
+
+    // Something was found, but only rulebook / central pages (they pass every
+    // department filter), nothing from the officer's own departments: the
+    // question is probably about another department ("seniority of medical
+    // officers" asked from Education). Search all departments once and keep
+    // whichever search matches the question better.
+    if (
+      retrievalScope === "workspace_departments" &&
+      relevance.kept.length > 0 &&
+      !hasEvidenceFromDepartments(relevance.kept, workspaceProfile?.departments ?? [])
+    ) {
+      sendStatus(
+        "searching",
+        describeScope("global", undefined, responseLanguage),
+      );
+      const wide = await retrieve(
+        conversationPlan.retrievalQuery,
+        RAG_TOP_K,
+        undefined,
+        {
+          expandNeighbors: true,
+          neighborRadius: RAG_NEIGHBOR_RADIUS,
+          signal: stop.signal,
+          maxEvidencePages: Math.max(RAG_TOP_K, RAG_MAX_EVIDENCE_PAGES),
+        },
+      );
+      const wideRelevance = assessRelevance(wide.evidence, RAG_MIN_RELEVANCE);
+      if (wideRelevance.kept.length > 0 && wideRelevance.best >= relevance.best) {
+        retrieval = wide;
+        relevance = wideRelevance;
+        retrievalScope = "global";
+        scopeFallback = true;
+      }
     }
 
     retrieval = {

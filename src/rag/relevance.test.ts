@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { hasEvidenceFromDepartments } from "./relevance.js";
 import { assessRelevance, isNoAnswer, noEvidenceMessage, toRelevance } from "./relevance.js";
 import type { RetrievalEvidence } from "./types.js";
 
@@ -43,5 +44,16 @@ assert.ok(isNoAnswer("  NO_ANSWER_IN_EVIDENCE.\n"));
 assert.ok(!isNoAnswer("The rule says X [S1 p.2]. ".repeat(10) + "NO_ANSWER_IN_EVIDENCE"));
 assert.match(noEvidenceMessage("hi", true), /सभी विभागों/);
 assert.match(noEvidenceMessage("en", false), /could not find/);
+
+// Own-department evidence: any spelling of the officer's departments counts;
+// rulebook pages (no department, or Finance for the Handbook) do not.
+{
+  const page = (department: string | null) => ({ department } as unknown as Parameters<typeof hasEvidenceFromDepartments>[0][number]);
+  const profile = ["शिक्षा विभाग", "कृषि विभाग", "लोक निर्माण विभाग"];
+  assert.equal(hasEvidenceFromDepartments([page("वित्त विभाग"), page(null)], profile), false);
+  assert.equal(hasEvidenceFromDepartments([page("Agriculture")], profile), true);
+  assert.equal(hasEvidenceFromDepartments([page("लोक\u200d निर्माण विभाग")], profile), true);
+  assert.equal(hasEvidenceFromDepartments([page("माध्यमिक शिक्षा विभाग")], profile), true);
+}
 
 console.log("relevance gate tests passed");

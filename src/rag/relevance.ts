@@ -15,6 +15,7 @@
  */
 
 import type { RetrievalEvidence } from "./types.js";
+import { findDepartmentEntry } from "../departments/registry.js";
 
 const sigmoid = (value: number) => 1 / (1 + Math.exp(-value));
 
@@ -59,6 +60,27 @@ export function assessRelevance(
   });
 
   return { kept, dropped: evidence.length - kept.length, best };
+}
+
+/**
+ * True when any kept page comes from one of the officer's own departments
+ * (any spelling). Rulebook and central pages pass every department filter, so
+ * a scoped search can "find" a Handbook page that mentions medical officers in
+ * passing while the officer's departments had nothing (2 Oct 2026); the caller
+ * then also searches all departments.
+ */
+export function hasEvidenceFromDepartments(evidence: RetrievalEvidence[], departments: string[]): boolean {
+  const clean = (text: string) => text.replace(/[\u200c\u200d]/g, "").replace(/\s+/g, " ").trim().toLowerCase();
+  const names = new Set(departments.map(clean));
+  const ids = new Set(
+    departments.map((name) => findDepartmentEntry(name)?.id).filter((id): id is number => id !== undefined),
+  );
+  return evidence.some((item) => {
+    if (!item.department) return false;
+    if (names.has(clean(item.department))) return true;
+    const id = findDepartmentEntry(item.department)?.id;
+    return id !== undefined && ids.has(id);
+  });
 }
 
 /** The model's agreed reply when none of the evidence answers the question. */
