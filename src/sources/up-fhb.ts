@@ -24,6 +24,7 @@
  */
 
 import { decodeEntities } from "./html.js";
+import { krutiDevToUnicode } from "../lib/krutidev.js";
 
 export const FHB_HOST = "budget.up.nic.in";
 export const FHB_COLLECTION = "up-fhb";
@@ -205,12 +206,46 @@ export function parseHandbookIndex(html: string, indexUrl: string): IndexReading
 
 const BLOCK = /<\/?(p|br|div|tr|table|h[1-6]|li|ul|ol|blockquote|pre|center|hr)\b[^>]*>/gi;
 
+/** Legacy Hindi fonts whose text is stored as Latin codes (Kruti Dev 010/020/040, DevLys, Chanakya). */
+const LEGACY_FONT = /kruti|devlys|chanakya|walkman/i;
+
+/**
+ * Some Handbook pages (government orders printed in Vol. III and V) set Hindi
+ * in a Kruti Dev font: `<FONT FACE="Kruti Dev 020">foRr ¼lkekU;½</FONT>`. The
+ * text inside such a font is converted to Unicode (ADR-070); the digits and
+ * English around it, set in other fonts, are left alone. Word-generated HTML
+ * nests fonts properly, so a stack of open <font> tags is enough.
+ */
+export function convertLegacyFontText(html: string): string {
+  if (!LEGACY_FONT.test(html)) return html;
+  const open: boolean[] = [];
+  let out = "";
+  for (const [token] of html.matchAll(/<[^>]*>|[^<]+/g)) {
+    if (token.startsWith("<")) {
+      if (/^<font\b/i.test(token)) {
+        const face = token.match(/\bface\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/i);
+        open.push(LEGACY_FONT.test(face?.[1] ?? face?.[2] ?? face?.[3] ?? ""));
+      } else if (/^<\/font\b/i.test(token)) {
+        open.pop();
+      }
+      out += token;
+      continue;
+    }
+    // The innermost font with a face decides; a font without a face inherits.
+    const legacy = open.includes(true) && !/^\s*$/.test(token);
+    out += legacy
+      ? krutiDevToUnicode(decodeHtmlText(token)).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      : token;
+  }
+  return out;
+}
+
 /**
  * A chapter page as text: one line per paragraph or table row, cells joined
  * with " | ", and the first short line as the heading for the citation label.
  */
 export function handbookPageText(html: string): { heading: string | null; text: string } {
-  const body = html.match(/<body\b[^>]*>([\s\S]*)<\/body>/i)?.[1] ?? html;
+  const body = convertLegacyFontText(html.match(/<body\b[^>]*>([\s\S]*)<\/body>/i)?.[1] ?? html);
   // Source newlines are only line wraps inside a paragraph; paragraphs come
   // from the block tags.
   const cleaned = body
@@ -219,6 +254,9 @@ export function handbookPageText(html: string): { heading: string | null; text: 
     .replace(/\s+/g, " ")
     .replace(/<\/t[dh]>\s*<t[dh]\b[^>]*>/gi, " | ")
     .replace(BLOCK, "\n")
+    // Inline formatting tags join their neighbours, as a browser shows them
+    // ("<font>अनुभाग-</font><font>4</font>" is "अनुभाग-4").
+    .replace(/<\/?(?:font|span|b|i|u|a|strong|em|sup|sub|small|big)\b[^>]*>/gi, "")
     .replace(/<[^>]+>/g, " ");
   const lines = decodeHtmlText(cleaned)
     .split("\n")

@@ -12,6 +12,8 @@
  *     npm run ingest:handbook -- --volume vol5-part1
  *     npm run ingest:handbook -- --force           (read again even if recent)
  *     npm run ingest:handbook -- --refresh-days 7
+ *     npm run ingest:handbook -- --reparse         (re-read the saved pages after a
+ *                                                   reader change; no network)
  *
  * Output (data/documents/<sourceId>/):
  *   metadata.json   provider "up-fhb"; pageUrls[i] = official URL of page i+1;
@@ -92,28 +94,51 @@ async function readJson(file: string): Promise<Record<string, any> | null> {
   }
 }
 
-async function ingestVolume(volume: HandbookVolume, force: boolean, refreshDays: number, b2: boolean): Promise<"read" | "unchanged" | "recent" | "failed"> {
+async function ingestVolume(volume: HandbookVolume, force: boolean, refreshDays: number, b2: boolean, reparse: boolean): Promise<"read" | "unchanged" | "recent" | "failed"> {
   const dir = path.join(documentsRoot, volume.sourceId);
   const metadataPath = path.join(dir, "metadata.json");
   const previous = await readJson(metadataPath);
   const lastRead = Date.parse(previous?.html?.checkedAt ?? "");
-  if (!force && Number.isFinite(lastRead) && Date.now() - lastRead < refreshDays * 86_400_000) {
+  if (!force && !reparse && Number.isFinite(lastRead) && Date.now() - lastRead < refreshDays * 86_400_000) {
     console.log(`SKIP ${volume.id}: read ${previous!.html.checkedAt.slice(0, 10)} (within ${refreshDays} days; --force to read again)`);
     return "recent";
   }
 
-  console.log(`\n${volume.id}: ${volume.title}`);
-  const index = await fetchHtml(volume.indexUrl);
-  const { entries, skipped } = parseHandbookIndex(index.html, volume.indexUrl);
+  console.log(`\n${volume.id}: ${volume.title}${reparse ? " (re-reading the saved pages)" : ""}`);
+  // --reparse turns the saved HTML into text again (after a reader change)
+  // without fetching anything; the B2 capture stays the same.
+  const saved = reparse ? await readJson(path.join(dir, "raw.html.json")) : null;
+  if (reparse && (!saved?.index || !Array.isArray(saved.pages))) {
+    console.error(`FAILED ${volume.id}: no saved pages to re-read; run without --reparse first.`);
+    return "failed";
+  }
+  const indexHtml: string = saved ? String(saved.index) : (await fetchHtml(volume.indexUrl)).html;
+  const { entries, skipped } = parseHandbookIndex(indexHtml, volume.indexUrl);
   if (!entries.length) {
     console.error(`FAILED ${volume.id}: the index lists no chapter pages (did the site change?)`);
     return "failed";
   }
   console.log(`  ${entries.length} chapter pages${skipped.length ? `; not readable here: ${skipped.map((item) => item.url.split("/").pop()).join(", ")}` : ""}`);
 
+  const savedPages = new Map<string, { sha256: string; html: string }>(
+    (saved?.pages ?? []).map((page: { url: string; sha256: string; html: string }) => [page.url, page]),
+  );
   const chapters: ChapterRead[] = [];
   const failures: string[] = [];
   for (const [position, entry] of entries.entries()) {
+    if (saved) {
+      const page = savedPages.get(entry.url);
+      const missing = (previous?.html?.skippedLinks ?? []).find((item: { url: string }) => item.url === entry.url);
+      if (page) {
+        const { heading, text } = handbookPageText(page.html);
+        chapters.push({ url: entry.url, label: entry.label, heading, text, rawSha256: page.sha256, html: page.html });
+      } else if (missing) {
+        if (!skipped.some((item) => item.url === entry.url)) skipped.push(missing);
+      } else {
+        failures.push(`${entry.url}: not in the saved capture`);
+      }
+      continue;
+    }
     try {
       const page = await fetchHtml(entry.url);
       const { heading, text } = handbookPageText(page.html);
@@ -155,13 +180,15 @@ async function ingestVolume(volume: HandbookVolume, force: boolean, refreshDays:
   for (const [index, part] of parts.entries()) {
     await writeFile(path.join(staging, "html-pages", `page-${String(index + 1).padStart(3, "0")}.txt`), part.text + "\n", "utf8");
   }
-  const rawBundle = Buffer.from(
+  const rawBundle = saved
+    ? await readFile(path.join(dir, "raw.html.json"))
+    : Buffer.from(
     JSON.stringify(
       {
         volume: volume.sourceId,
         indexUrl: volume.indexUrl,
         fetchedAt: checkedAt,
-        index: index.html,
+        index: indexHtml,
         pages: chapters.map((chapter) => ({ url: chapter.url, sha256: chapter.rawSha256, html: chapter.html })),
       },
       null,
@@ -198,7 +225,7 @@ async function ingestVolume(volume: HandbookVolume, force: boolean, refreshDays:
       contentSha256,
       checkedAt,
     },
-    capture: {
+    capture: saved && previous?.capture ? previous.capture : {
       method: "html-crawl",
       status: 200,
       contentType: "text/html (one JSON bundle of the chapter pages)",
@@ -210,7 +237,11 @@ async function ingestVolume(volume: HandbookVolume, force: boolean, refreshDays:
     text: { bytes: textBytes, hasNativeText: true },
   };
 
-  if (b2) {
+  if (saved && previous?.storage) {
+    // Same raw pages: keep the existing B2 capture; its manifest is refreshed
+    // when build:pages saves the metadata.
+    metadata.storage = previous.storage;
+  } else if (b2) {
     const capture = metadata.capture as Record<string, string>;
     const storage: B2CaptureStorage = await storeCaptureInB2({
       collection: FHB_COLLECTION,
@@ -238,6 +269,7 @@ async function main(): Promise<void> {
   const refreshDays = Number(option("--refresh-days") ?? 30);
   if (!Number.isFinite(refreshDays) || refreshDays < 0) throw new Error("--refresh-days must be a number of days.");
   const force = process.argv.includes("--force");
+  const reparse = process.argv.includes("--reparse");
   const volumes = only ? [handbookVolume(only)] : [...HANDBOOK_VOLUMES];
   const b2 = isB2Enabled();
   await mkdir(documentsRoot, { recursive: true });
@@ -245,7 +277,7 @@ async function main(): Promise<void> {
   const totals: Record<string, number> = { read: 0, unchanged: 0, recent: 0, failed: 0 };
   for (const volume of volumes) {
     try {
-      totals[await ingestVolume(volume, force, refreshDays, b2)]++;
+      totals[await ingestVolume(volume, force, refreshDays, b2, reparse)]++;
     } catch (error) {
       totals.failed++;
       console.error(`FAILED ${volume.id}: ${error instanceof Error ? error.message : String(error)}`);

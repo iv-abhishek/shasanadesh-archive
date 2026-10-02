@@ -1066,3 +1066,11 @@ Abhishek's first questions after the Handbook load showed four routing faults:
    them (and zero-width joiners); when the question asks what the order says, the order
    is found by number and Ask answers from that order's own pages. An order whose text is
    not indexed (routine) still gets its card with the official link.
+
+Addendum (2 Oct 2026): 28 Handbook pages (government orders printed in Vol. III and Vol. V,
+mostly Vol. V Part II) set their Hindi in Kruti Dev 010/020/040 fonts inside the HTML
+(`<FONT FACE="Kruti Dev 020">`). The reader converts text inside such font tags
+(`convertLegacyFontText`, up-fhb.ts) and leaves digits and English in other fonts alone;
+inline font tags no longer insert spaces. `npm run ingest:handbook -- --reparse` re-reads
+the saved pages without fetching and keeps the B2 capture.
+

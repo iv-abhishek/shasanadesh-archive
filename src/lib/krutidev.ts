@@ -179,6 +179,8 @@ function convertSegment(raw: string): string {
     .replace(/([\u093E-\u094C])\u094D\u0930/g, "\u094D\u0930$1")
     // ा + ॅ is the ॉ of English loanwords (माॅडल → मॉडल).
     .replace(/\u093E\u0945/g, "\u0949")
+    // "fnukWd" (candra over ा) is how typists wrote दिनांक in these fonts.
+    .replace(/दिनॉक/g, "दिनांक")
     // A sign typed twice (संंविधान) is one sign.
     .replace(/([\u0901-\u0903\u093E-\u094C])\1+/g, "$1");
 }

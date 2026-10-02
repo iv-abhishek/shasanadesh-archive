@@ -103,4 +103,12 @@ const fixture = (name: string) => decodeHandbookHtml(readFileSync(path.join(__di
   assert.deepEqual(entries.map((entry) => [entry.firstPage, entry.lastPage]), [[1, 1], [2, parts.length]]);
 }
 
+// Government orders printed in Kruti Dev fonts are converted; the digits and
+// English in other fonts stay; inline font tags do not split words.
+{
+  const html = `<BODY><FONT SIZE=6><P ALIGN="CENTER">APPENDIX XI</P></FONT><P>[</FONT><FONT FACE="Kruti Dev 020">foRr ¼lkekU;½ vuqHkkx&amp;</FONT><FONT SIZE=5>4</FONT><FONT FACE="Kruti Dev 020"> ds dk;kZy; Kki fnukWd</FONT><FONT> 9 </FONT><FONT FACE="Kruti Dev 020">vDrwcj] </FONT><FONT>1974</FONT></P><P>An English note.</P></BODY>`;
+  const { text } = handbookPageText(html);
+  assert.equal(text, "APPENDIX XI\n[वित्त (सामान्य) अनुभाग-4 के कार्यालय ज्ञाप दिनांक 9 अक्तूबर, 1974\nAn English note.");
+}
+
 console.log("up-fhb tests passed");
