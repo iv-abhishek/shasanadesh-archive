@@ -6,6 +6,12 @@ This file tracks the current route per workstream.
 The roadmap and the current route for each workstream. When a route changes,
 edit it here and say why (with the date) under "Route changes".
 
+**Product name (decided 2 Oct 2026, Abhishek): Sandarbh (संदर्भ), domain sandarbh.ai.**
+Indian backup sandarbh.co.in; avoid "sandarbhai" (reads "sandar bhai"); write "Sandarbh AI" with
+"AI" visually apart. Not to be named like a government app (no Saathi/Mitra/Setu/gov). The
+interface is renamed from "Shasanadesh Assistant" once the domain is bought; code and folders keep
+their names.
+
 ## 0. The to-do list (set 27 Sept 2026, Abhishek; keep this current)
 
 **Goal:** an LLM for government functionaries and systems: fluent in government language
