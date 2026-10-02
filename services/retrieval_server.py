@@ -219,7 +219,9 @@ INVISIBLE_JOINERS = "\u200c\u200d"
 
 # Curated core rules (GFR, procurement manuals, GeM terms, UP Budget Manual …,
 # ADR-062) apply to every department, so department filters never hide them.
-CORE_RULES_SQL = "d.provider = 'core-rules'"
+# Rulebooks apply to every department: the curated core rules and the UP
+# Financial Handbook (ADR-069). A department scope always includes them.
+CORE_RULES_SQL = "d.provider IN ('core-rules', 'up-fhb')"
 
 
 def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:

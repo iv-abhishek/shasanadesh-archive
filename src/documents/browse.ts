@@ -183,9 +183,9 @@ export function buildBrowseWhere(filters: BrowseFilters): { sql: string; params:
     clauses.push(`d.go_number ILIKE ${param(`%${filters.goNumber.trim()}%`)}`);
   }
   if (filters.goNumberPrefix?.trim()) {
-    // Spaces are not significant in GO numbers ("51 / 2026").
-    const prefix = likeEscape(filters.goNumberPrefix.replace(/\s+/g, ""));
-    clauses.push(`replace(d.go_number, ' ', '') ILIKE ${param(`${prefix}%`)}`);
+    // Spaces and zero-width joiners are not significant in GO numbers ("51 / 2026").
+    const prefix = likeEscape(filters.goNumberPrefix.replace(/[\s\u200c\u200d]+/g, ""));
+    clauses.push(`translate(replace(d.go_number, ' ', ''), ${param(JOINERS)}, '') ILIKE ${param(`${prefix}%`)}`);
   }
   if (filters.sectionLike?.trim()) {
     clauses.push(`translate(COALESCE(${SECTION_SQL}, ''), ${param(JOINERS)}, '') ~* ${param(sectionRegex(filters.sectionLike))}`);

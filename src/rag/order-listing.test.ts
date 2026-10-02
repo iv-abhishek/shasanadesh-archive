@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { buildListingAnswer, detectListingRequest, jurisdictionsInQuery, parseDateRange, type ListingOutcome } from "./order-listing.js";
+import { asksWhatOrderSays, buildListingAnswer, detectListingRequest, jurisdictionsInQuery, parseDateRange, type ListingOutcome } from "./order-listing.js";
 import { findDepartmentMention } from "../departments/registry.js";
 
 const TODAY = "2026-09-27"; // a Sunday
@@ -213,3 +213,19 @@ console.log("order finder tests passed");
   assert.deepEqual(jurisdictionsInQuery("look up the order").codes, []); // "up" in lowercase is a word
 }
 console.log("jurisdiction/topic filter tests passed");
+
+// --- Questions that are not order searches; GO-number content questions ----
+{
+  // A "?" typed after a question is punctuation, not a wildcard (2 Oct 2026).
+  assert.equal(list('राजपत्रित अधिकारी के अधिकृत होने के लिए कौन सा प्रमाणपत्र आवश्यक है?",?'), null);
+  assert.deepEqual(list("क?षि विभाग के आदेश")?.patterns, ["क?षि"]);
+  // A GO number with a content question: found by number, words not used as subject.
+  const byNumber = list("शासनादेश संख्या 3/2024/बी-4-590/दस-2024-10(4)/2006 दिनांक 30.09.2024 में क्या निर्देश है?");
+  assert.equal(byNumber?.goNumber, "3/2024/बी-4-590/दस-2024-10(4)/2006");
+  assert.equal(byNumber?.dateFrom, "2024-09-30");
+  assert.ok(!byNumber?.words.includes("दिनांक"));
+  assert.equal(asksWhatOrderSays("शासनादेश संख्या 3/2024/बी-4 दिनांक 30.09.2024 में क्या निर्देश है?"), true);
+  assert.equal(asksWhatOrderSays("What does GO 12/2025/KA-2 say?"), true);
+  assert.equal(asksWhatOrderSays("शासनादेश संख्या 12/2025 दिखाइए"), false);
+  console.log("GO-number and punctuation routing tests passed");
+}

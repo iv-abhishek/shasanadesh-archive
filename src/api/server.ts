@@ -67,7 +67,8 @@ import {
 import { assessRelevance, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
-import { detectListingRequest, jurisdictionsInQuery, listOrders, type SubjectSearch } from "../rag/order-listing.js";
+import { asksWhatOrderSays, detectListingRequest, jurisdictionsInQuery, listOrders, type SubjectSearch } from "../rag/order-listing.js";
+import { asksAboutLaterChanges, buildLaterChangesAnswer, refersToEarlierDocument } from "../rag/document-followup.js";
 import { departmentLabel, departmentNameIn, findDepartmentMention } from "../departments/registry.js";
 import { createPool } from "../db/client.js";
 import { officialOnly, stripNonGovernmentLinks } from "../lib/public-links.js";
@@ -261,6 +262,65 @@ const searchSubjects: SubjectSearch = (query, options) =>
 // Read-only pool for order links (ADR-054) and order lists (ADR-057).
 let relationsPool: Pool | undefined;
 const getRelationsPool = () => (relationsPool ??= createPool());
+
+interface DocumentCard {
+  sourceId: string;
+  title: string | null;
+  department: string | null;
+  goNumber: string | null;
+  goDate: string | null;
+  sourceUrl: string;
+  jurisdictionCode: string | null;
+  status: string | null;
+}
+
+/** Title, number and link of archived documents, in the order asked. */
+async function documentCards(sourceIds: string[]): Promise<DocumentCard[]> {
+  if (!sourceIds.length) return [];
+  const result = await getRelationsPool().query<DocumentCard>(
+    `SELECT source_id AS "sourceId",
+            COALESCE(NULLIF(metadata->>'title', ''), NULLIF(metadata->'portal'->>'subject', '')) AS title,
+            department, go_number AS "goNumber", go_date::text AS "goDate", source_url AS "sourceUrl",
+            jurisdiction_code AS "jurisdictionCode", status
+       FROM documents WHERE source_id = ANY($1)`,
+    [sourceIds],
+  );
+  const byId = new Map(result.rows.map((row) => [row.sourceId, row]));
+  return sourceIds.map((id) => byId.get(id)).filter((row): row is DocumentCard => Boolean(row));
+}
+
+/** Whether a document's text is in the search index (routine orders are not). */
+async function hasIndexedPages(sourceId: string): Promise<boolean> {
+  const result = await getRelationsPool().query("SELECT 1 FROM pages WHERE source_id = $1 LIMIT 1", [sourceId]);
+  return (result.rowCount ?? 0) > 0;
+}
+
+/** A source card for an answer that is not built from retrieved pages. */
+function cardSource(card: DocumentCard, label: string, laterChanges: LaterChange[] = []) {
+  return {
+    label,
+    sourceId: card.sourceId,
+    documentTitle: card.title,
+    pageNumber: 1,
+    department: card.department,
+    goNumber: card.goNumber,
+    goDate: card.goDate,
+    // Rulebook §1: government URLs only; never our archive.
+    sourceUrl: officialOnly(card.sourceUrl),
+    pageUrl: officialOnly(card.sourceUrl) ? `${card.sourceUrl}#page=1` : null,
+    numericConflict: false,
+    numericVerificationStatus: "unverified",
+    selectedVariant: "native",
+    selectedCanonical: true,
+    rerankScoreRaw: 0,
+    retrievalRole: "direct",
+    anchorPageNumber: null,
+    kind: "listing",
+    laterChanges,
+    jurisdictionCode: card.jurisdictionCode,
+    status: card.status,
+  };
+}
 
 
 const ConversationStateSchema = z.object({
@@ -1018,10 +1078,76 @@ server.post(
         ? await listDepartments()
         : [];
 
-    const explicitSourceId =
+    let explicitSourceId =
       extractExplicitSourceId(
         query,
       );
+
+    // "क्या इस आदेश में बाद में कोई संशोधन हुआ है?": the question is about the
+    // document the conversation is on, not a new search for orders.
+    const followedSourceId =
+      !explicitSourceId &&
+      conversationPlan.contextualized &&
+      refersToEarlierDocument(query)
+        ? conversationState?.activeSourceId
+        : undefined;
+
+    if (followedSourceId && asksAboutLaterChanges(query)) {
+      const startedAt = performance.now();
+      const answered = await (async () => {
+        const [card] = await documentCards([followedSourceId]);
+        if (!card) return null;
+        const changes =
+          (
+            await findLaterChanges(getRelationsPool(), [
+              { label: "S1", source_id: card.sourceId, go_number: card.goNumber, go_date: card.goDate },
+            ] as never)
+          ).get(card.sourceId) ?? [];
+        const changingCards = await documentCards(changes.map((change) => change.bySourceId));
+        const titles = new Map(changingCards.map((item) => [item.sourceId, item.title]));
+        const text = buildLaterChangesAnswer(
+          { sourceId: card.sourceId, title: card.title, goNumber: card.goNumber, goDate: card.goDate },
+          changes.map((change) => ({ change, title: titles.get(change.bySourceId) ?? null })),
+          responseLanguage,
+        );
+        const sources = [
+          cardSource(card, "S1", changes),
+          ...changes
+            .map((change) => changingCards.find((item) => item.sourceId === change.bySourceId))
+            .filter((item): item is DocumentCard => Boolean(item))
+            .map((item, index) => cardSource(item, `S${index + 2}`)),
+        ];
+        return { text, sources };
+      })().catch((error) => {
+        request.log.warn({ error }, "later-changes lookup failed; answering with Ask");
+        return null;
+      });
+
+      if (answered) {
+        reply.hijack();
+        reply.raw.statusCode = 200;
+        reply.raw.setHeader("content-type", "text/event-stream; charset=utf-8");
+        reply.raw.setHeader("cache-control", "no-cache, no-transform");
+        reply.raw.setHeader("connection", "keep-alive");
+        reply.raw.setHeader("x-accel-buffering", "no");
+        reply.raw.write(`event: sources\ndata: ${JSON.stringify(answered.sources)}\n\n`);
+        reply.raw.write(`event: token\ndata: ${JSON.stringify({ text: stripNonGovernmentLinks(answered.text) })}\n\n`);
+        reply.raw.write(
+          `event: done\ndata: ${JSON.stringify({
+            ok: true,
+            laterChanges: true,
+            validated: true,
+            responseLanguage,
+            retrievalScope: "active_source",
+            citations: answered.sources.map((source) => `${source.label}:1`),
+            timings: { totalMs: Math.round(performance.now() - startedAt) },
+          })}\n\n`,
+        );
+        reply.raw.end();
+        request.log.info({ query, sourceId: followedSourceId }, "answered later changes from order links");
+        return;
+      }
+    }
 
     const explicitDepartment =
       findExplicitDepartment(
@@ -1040,8 +1166,24 @@ server.post(
       explicitDepartment ? null : findDepartmentMention(query);
 
     // "Recent / latest / dated … orders": answer from the order list.
-    const listingRequest =
-      explicitSourceId ? null : detectListingRequest(query);
+    let listingRequest =
+      explicitSourceId || followedSourceId ? null : detectListingRequest(query);
+
+    // "शासनादेश संख्या 3/2024/… में क्या निर्देश है?": find the order by its
+    // number, then answer from its own text (Ask, that order only). An order
+    // whose text is not indexed (routine) gets its card and official link.
+    if (listingRequest?.goNumber && asksWhatOrderSays(query)) {
+      const found = await listOrders(getRelationsPool(), listingRequest, [], responseLanguage).catch(() => null);
+      const orders = found?.outcome.orders ?? [];
+      const target =
+        orders.find((order) => listingRequest?.dateFrom && order.goDate === listingRequest.dateFrom) ??
+        (orders.length === 1 ? orders[0] : undefined);
+      if (target && (await hasIndexedPages(target.sourceId).catch(() => false))) {
+        explicitSourceId = target.sourceId;
+        listingRequest = null;
+      }
+    }
+
     if (listingRequest) {
       const startedAt = performance.now();
       const listed = await listOrders(

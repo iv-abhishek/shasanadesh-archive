@@ -263,6 +263,15 @@ const RECENT_WORD = /\b(?:recent|recently|latest|newest|new|fresh|last\s+\d+|rel
 const CONTENT_QUESTION =
   /\b(?:what does|what do|says?|provisions?|rules? for|eligibility|procedure|process|how to|how do|how much|how many|explain|summar(?:y|ise|ize)|conditions?|limit|entitle|amount of|what (?:is|are) the (?!latest|recent|newest|new|last|orders?\b|gos?\b))\b|क्या\s+(?:प्रावधान|नियम|कहता|कहते|शर्त)|प्रावधान|प्रक्रिया|पात्रता|शर्तें|कैसे|कितना|कितनी|कितने|किस प्रकार/;
 
+// Asking what a particular order says ("… में क्या निर्देश है?", "what does GO 12/2025 say").
+const ORDER_CONTENT_QUESTION =
+  /\b(?:what does|what do|what is in|what are the (?:instructions|directions|provisions)|says?|instructions?|directions?|provisions?|summar(?:y|ise|ize)|explain|contents?|details)\b|क्या\s+(?:निर्देश|प्रावधान|कहता|कहते|कहा|लिखा|आदेश|व्यवस्था|है\s+इसमें)|निर्देश\s+(?:क्या|दिए|दिये)|सारांश|सार\s|विषय-?वस्तु|प्रावधान|व्यवस्था\s+(?:क्या|की)/i;
+
+/** True when a question about a GO number asks for its content, not just to find it. */
+export function asksWhatOrderSays(query: string): boolean {
+  return ORDER_CONTENT_QUESTION.test(query.replace(/[\u200c\u200d]/g, ""));
+}
+
 const FILLER = new Set([
   "recent", "recently", "latest", "newest", "new", "fresh", "released", "issued", "published", "came", "out", "list", "dated",
   "orders", "order", "gos", "go", "g", "o", "government", "govt", "circulars", "circular", "notifications", "notification", "shasanadesh",
@@ -272,6 +281,7 @@ const FILLER = new Set([
   "शासनादेश", "शासनादेशों", "आदेश", "आदेशों", "परिपत्र", "अधिसूचना", "विभाग", "विभागों", "हाल", "हालिया", "में", "के", "की", "का", "से", "द्वारा", "हेतु",
   "नवीनतम", "नए", "नये", "नवीन", "ताज़ा", "ताजा", "जारी", "निर्गत", "सूची", "किए", "किये", "गए", "गये", "हुए", "हैं", "है", "कौन", "कौनसे", "क्या", "बताइए",
   "बताएं", "बताओ", "दिखाइए", "दिखाएं", "सभी", "कोई", "उत्तर", "प्रदेश", "शासन", "दिनांकित", "तक", "बाद", "ही",
+  "दिनांक", "date", "dt",
 ]);
 
 const FIND_VERB =
@@ -342,9 +352,10 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
     break;
   }
 
-  // Wildcard terms: "solar*", "*पंप*", "क?षि". A trailing "?" is punctuation.
+  // Wildcard terms: "solar*", "*पंप*", "क?षि". A "?" counts only between
+  // letters; "है?" or "है?\",?" (a typo after a question) is punctuation.
   const patterns: string[] = [];
-  rest = rest.replace(/\S*\*\S*|\S+\?\S+/g, (token) => {
+  rest = rest.replace(/\S*\*\S*|\S*[\p{L}\p{M}]\?[\p{L}\p{M}]\S*/gu, (token) => {
     const pattern = token.replace(/^[(\["']+|[)\]"'.,;:!]+$/g, "");
     if (pattern.replace(/[*?]/g, "").length >= 2) patterns.push(pattern);
     return " ";
@@ -679,7 +690,9 @@ export async function listOrders(
     return { total: perDay.reduce((sum, day) => sum + day.total, 0), page: 1, pageSize: PAGE, rows };
   };
 
-  const text = request.words.join(" ") || undefined;
+  // A GO number identifies the order; the other words are the question
+  // ("… में क्या निर्देश है?"), not part of its subject.
+  const text = request.goNumber ? undefined : request.words.join(" ") || undefined;
   let result = await browse({ ...filters, text });
   let widened = false;
   if (!result.total && scope.kind === "profile") {

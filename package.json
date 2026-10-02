@@ -69,7 +69,7 @@
     "eval:baseline": "npm run eval:rag:search && npm run eval:filters",
     "test:rag-conversation": "tsx src/rag/conversation.test.ts",
     "test:workspace-model": "tsx src/workspace/model.test.ts",
-    "test:rag-routing": "tsx src/rag/intent-routing.test.ts",
+    "test:rag-routing": "tsx src/rag/intent-routing.test.ts && tsx src/rag/document-followup.test.ts",
     "test:session-cookie": "tsx src/workspace/session-cookie.test.ts",
     "test:neighbor-expansion": "python3 services/neighbor_expansion_test.py",
     "ingest:doe-gfr": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts doe-gfr",

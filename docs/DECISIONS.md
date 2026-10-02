@@ -1044,3 +1044,25 @@ flag (they look for broken Devanagari) and which search and the model cannot use
   for the font, so it is preferred to OCR; OCR remains the fallback for scans.
 - `ingest:source` now copies corrected catalogue details (title, type, topics) onto
   documents already stored, so fixing a catalogue entry does not need a re-download.
+
+## ADR-071 - Ask routing fixes from the first Handbook test (2 Oct 2026)
+
+Abhishek's first questions after the Handbook load showed four routing faults:
+
+1. **Rulebooks under a department scope.** A profile scope ("my departments") kept the
+   core rules but dropped the Financial Handbook (provider `up-fhb`), so a Handbook
+   question was answered from Vitta Path only. The retrieval scope now always includes
+   both rulebook providers.
+2. **"?" after a question.** "…आवश्यक है?\",?" was read as a wildcard pattern (an order
+   search). A "?" is a wildcard only between letters ("क?षि").
+3. **"इस आदेश" follow-ups.** "क्या इस आदेश में बाद में कोई संशोधन हुआ है?" was listed as a new
+   search for orders containing "संशोधन". A question that names the document under
+   discussion ("इस/उक्त आदेश", "this/the above order") skips the order finder; when it asks
+   whether the document was amended, superseded or cancelled, the answer comes from the
+   order links (`src/rag/document-followup.ts`, ADR-054 data), never from the model, and
+   says the check covers the archive only.
+4. **"संख्या … में क्या निर्देश है?"** A GO-number lookup also required the question's other
+   words ("दिनांक", "निर्देश") in the subject and found nothing. A GO number now ignores
+   them (and zero-width joiners); when the question asks what the order says, the order
+   is found by number and Ask answers from that order's own pages. An order whose text is
+   not indexed (routine) still gets its card with the official link.

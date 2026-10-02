@@ -58,7 +58,7 @@ console.log("browse filter tests passed");
   assert.ok(params.includes("%solar%%"));
   assert.ok(params.includes("%क_षि%"));
   assert.ok(params.includes("51/2026%"));
-  assert.match(sql, /replace\(d\.go_number, ' ', ''\) ILIKE/);
+  assert.match(sql, /translate\(replace\(d\.go_number, ' ', ''\), \$\d+, ''\) ILIKE/);
   assert.match(sql, /~\*/);
   assert.equal(wildcardToLike("100%_*"), "100\\%\\_%");
   // Section numbers: spacing and dash style do not matter, the number does.

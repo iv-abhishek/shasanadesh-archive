@@ -2,6 +2,15 @@
 
 Newest first. One entry per working session or milestone. Append, don't rewrite.
 
+## 2 Oct 2026, 11:00 am IST (Claude)
+
+- Sync of 1 Oct finished (≈12 h): Handbook 6 volumes / 1,566 pages, Vol. VI 34 PDFs OCR'd,
+  23 Vitta Path chapters converted from Kruti Dev; 59,853 chunks embedded.
+- First test (Abhishek) → ADR-071: Handbook kept under department scope; "?" punctuation
+  not a wildcard; "इस आदेश … संशोधन" answered from order links; GO-number content
+  questions answered from that order. Tests: order-listing, browse, document-followup,
+  conversation, later-changes, suggestions; project typechecks.
+
 ## 1 Oct 2026, 7:30 am IST (Claude)
 
 - Portal: 157,989 orders listed (all-departments pass, 1,777/1,777 pages, 28 Sept); about
