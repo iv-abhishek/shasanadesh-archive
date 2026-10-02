@@ -6,6 +6,8 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useId,
+  useRef,
   useState,
 } from "react";
 
@@ -230,6 +232,183 @@ function departmentMatches(department: string, labels: DepartmentLabels, query: 
   const label = labels[department];
   return [department, label?.hi ?? "", label?.en ?? "", ...(label?.aliases ?? [])].some((name) =>
     searchKey(name).includes(key),
+  );
+}
+
+/**
+ * Searchable single choice of department (our own control, not the portal's
+ * dropdown). Type Hindi, English or a transliteration ("krishi", "pwd"); the
+ * list is the merged one (one entry per portal department), so any spelling
+ * finds it. Arrow keys move, Enter picks, Escape closes.
+ */
+function DepartmentCombobox({
+  departments,
+  value,
+  onChange,
+  label,
+  noneLabel = "None",
+}: {
+  departments: string[];
+  value: string;
+  onChange: (next: string) => void;
+  label: string;
+  noneLabel?: string;
+}) {
+  const names = useDepartmentNames();
+  const id = useId();
+  const rootRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const [active, setActive] = useState(0);
+
+  const matches = names
+    .sort(departments)
+    .filter((department) => departmentMatches(department, names.labels, query));
+  // "" = no primary department; offered only while not searching.
+  const options = query.trim() ? matches : ["", ...matches];
+
+  const close = () => {
+    setOpen(false);
+    setQuery("");
+  };
+  const pick = (next: string) => {
+    onChange(next);
+    close();
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: MouseEvent) => {
+      if (rootRef.current && !rootRef.current.contains(event.target as Node)) close();
+    };
+    document.addEventListener("mousedown", onDown);
+    inputRef.current?.focus();
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open]);
+
+  useEffect(() => {
+    listRef.current
+      ?.querySelector(`[data-index="${active}"]`)
+      ?.scrollIntoView({ block: "nearest" });
+  }, [active, open]);
+
+  const openList = () => {
+    const index = options.indexOf(value);
+    setActive(index >= 0 ? index : 0);
+    setOpen(true);
+  };
+
+  const selectedSub = value ? names.sub(value) : null;
+
+  return (
+    <div className="dept-combo" ref={rootRef}>
+      <div className="profile-field-label" id={`${id}-label`}>{label}</div>
+      <button
+        type="button"
+        className={open ? "dept-combo-button open" : "dept-combo-button"}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-labelledby={`${id}-label`}
+        onClick={() => (open ? close() : openList())}
+        onKeyDown={(event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+            openList();
+          }
+        }}
+      >
+        {value ? (
+          <span className="dept-combo-value">
+            <strong>{names.main(value)}</strong>
+            {selectedSub ? <small>{selectedSub}</small> : null}
+          </span>
+        ) : (
+          <span className="dept-combo-value placeholder">{noneLabel}</span>
+        )}
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+      </button>
+
+      {open ? (
+        <div className="dept-combo-pop">
+          <input
+            ref={inputRef}
+            type="search"
+            className="department-search"
+            placeholder="Search in Hindi or English (e.g. कृषि, revenue, pwd)"
+            role="combobox"
+            aria-expanded="true"
+            aria-controls={`${id}-list`}
+            aria-activedescendant={options.length ? `${id}-opt-${active}` : undefined}
+            aria-label={`Search ${label}`}
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setActive(0);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown") {
+                event.preventDefault();
+                setActive((current) => Math.min(current + 1, options.length - 1));
+              } else if (event.key === "ArrowUp") {
+                event.preventDefault();
+                setActive((current) => Math.max(current - 1, 0));
+              } else if (event.key === "Enter") {
+                event.preventDefault();
+                if (options.length) pick(options[Math.min(active, options.length - 1)]);
+              } else if (event.key === "Escape") {
+                event.preventDefault();
+                event.stopPropagation();
+                close();
+              } else if (event.key === "Tab") {
+                close();
+              }
+            }}
+          />
+          <ul className="dept-combo-list" role="listbox" id={`${id}-list`} ref={listRef}>
+            {options.length === 0 ? (
+              <li className="dept-combo-empty">No department matches “{query.trim()}”.</li>
+            ) : (
+              options.map((department, index) => {
+                const sub = department ? names.sub(department) : null;
+                return (
+                  <li
+                    key={department || "(none)"}
+                    id={`${id}-opt-${index}`}
+                    data-index={index}
+                    role="option"
+                    aria-selected={department === value}
+                    className={[
+                      "dept-combo-option",
+                      index === active ? "active" : "",
+                      department === value ? "selected" : "",
+                    ].join(" ")}
+                    onMouseEnter={() => setActive(index)}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => pick(department)}
+                  >
+                    {department ? (
+                      <span className="department-name">
+                        {names.main(department)}
+                        {sub ? <small>{sub}</small> : null}
+                      </span>
+                    ) : (
+                      <span className="department-name none">{noneLabel}</span>
+                    )}
+                    {department === value ? <span className="dept-combo-check" aria-hidden="true">✓</span> : null}
+                  </li>
+                );
+              })
+            )}
+          </ul>
+          <div className="dept-combo-foot">
+            <span>{matches.length} of {departments.length} departments</span>
+            <DepartmentNameToggle />
+          </div>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -633,29 +812,21 @@ function ProfileEditor({
             An officer may have a substantive posting, additional charge of
             other departments, both, or no department at all.
           </p>
-          <label>
-            Substantive (primary) department
-            <select
-              value={primaryDepartment}
-              onChange={(event) => {
-                const next = event.target.value;
-                setPrimaryDepartment(next);
-                setAdditionalDepartments((current) =>
-                  current.filter((department) => department !== next),
-                );
-                setAdditionalCharge((current) =>
-                  current.filter((department) => department !== next),
-                );
-              }}
-            >
-              <option value="">None</option>
-              {departmentNames.sort(departments).map((department) => (
-                <option key={department} value={department}>
-                  {departmentNames.option(department)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <DepartmentCombobox
+            label="Substantive (primary) department"
+            noneLabel="None — no substantive posting"
+            departments={departments}
+            value={primaryDepartment}
+            onChange={(next) => {
+              setPrimaryDepartment(next);
+              setAdditionalDepartments((current) =>
+                current.filter((department) => department !== next),
+              );
+              setAdditionalCharge((current) =>
+                current.filter((department) => department !== next),
+              );
+            }}
+          />
           <div className="profile-field-block">
             <div className="profile-field-label">Other departments</div>
             <p className="field-help">
@@ -1056,29 +1227,21 @@ function Onboarding({
 
             <fieldset className="form-section">
               <legend><span className="form-step">2</span> Departments</legend>
-              <label>
-                Substantive (primary) department
-                <select
-                  value={primaryDepartment}
-                  onChange={(event) => {
-                    const next = event.target.value;
-                    setPrimaryDepartment(next);
-                    setAdditionalDepartments((current) =>
-                      current.filter((department) => department !== next),
-                    );
-                    setAdditionalCharge((current) =>
-                      current.filter((department) => department !== next),
-                    );
-                  }}
-                >
-                  <option value="">None</option>
-                  {departmentNames.sort(departments).map((department) => (
-                    <option key={department} value={department}>
-                      {departmentNames.option(department)}
-                    </option>
-                  ))}
-                </select>
-              </label>
+              <DepartmentCombobox
+                label="Substantive (primary) department"
+                noneLabel="None — no substantive posting"
+                departments={departments}
+                value={primaryDepartment}
+                onChange={(next) => {
+                  setPrimaryDepartment(next);
+                  setAdditionalDepartments((current) =>
+                    current.filter((department) => department !== next),
+                  );
+                  setAdditionalCharge((current) =>
+                    current.filter((department) => department !== next),
+                  );
+                }}
+              />
               <div className="profile-field-block">
                 <div className="profile-field-label">Other departments</div>
                 <span className="field-help">
