@@ -3990,3 +3990,23 @@ h1 {
   font-weight: 600;
   color: var(--muted);
 }
+
+/* "Back" on the profile switcher: returns to the current profile unchanged. */
+.onboarding-back {
+  align-self: flex-start;
+  margin: 0 0 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--line, #d8dfda);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.onboarding-back:hover,
+.onboarding-back:focus-visible {
+  background: var(--surface-muted, rgba(0, 0, 0, 0.04));
+}
+

@@ -549,10 +549,15 @@ function Onboarding({
   profiles,
   onLogin,
   onCreated,
+  onCancel,
+  currentName,
 }: {
   departments: string[];
   profiles:
     WorkspaceProfile[];
+  /** Switching profiles: go back to the profile in use without changing anything. */
+  onCancel?: () => void;
+  currentName?: string;
   onLogin:
     (
       profile:
@@ -728,15 +733,31 @@ function Onboarding({
       }
     };
 
+  // Escape also cancels a profile switch.
+  useEffect(() => {
+    if (!onCancel) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+
   return (
     <main className="onboarding-shell">
       <div className="onboarding-card">
+        {onCancel ? (
+          <button type="button" className="onboarding-back" onClick={onCancel}>
+            ← Back{currentName ? ` to ${currentName}` : ""}
+          </button>
+        ) : null}
+
         <div className="eyebrow">
           Shasanadesh workspace
         </div>
 
         <h1>
-          Continue your workspace.
+          {onCancel ? "Switch profile" : "Continue your workspace."}
         </h1>
 
         <p className="onboarding-copy">
@@ -1398,50 +1419,29 @@ export function WorkspaceApp() {
     setMode("ask");
   };
 
+  // Switching shows the profile list over the current workspace. Nothing is
+  // signed out or cleared until another profile is chosen, so "Back" returns
+  // to exactly where the person was.
+  const [switchingProfile, setSwitchingProfile] = useState(false);
+
   const switchProfile =
     async () => {
-      try {
-        await jsonRequest<{
-          ok: boolean;
-        }>(
-          "/api/session/logout",
-          {
-            method: "POST",
-          },
-        );
-      } catch {
-        // Even if server logout fails, do not invent a new local identity.
-      }
-
-      setProfile(
-        null,
-      );
+      setError(null);
       setProfileEditing(false);
-
-      setConversations(
-        [],
-      );
-      setArchivedConversations([]);
-      setHistoryView("recent");
-
-      setSelectedConversationId(
-        null,
-      );
-      const url = new URL(window.location.href);
-      url.searchParams.delete("conversation");
-      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
-
-      setChatSessionKey(
-        (current) =>
-          current + 1,
-      );
-
-      setMode(
-        "ask",
-      );
-
+      setSwitchingProfile(true);
       await loadDevProfiles();
     };
+
+  const finishSwitch = async (next: WorkspaceProfile) => {
+    setSwitchingProfile(false);
+    setArchivedConversations([]);
+    setHistoryView("recent");
+    const url = new URL(window.location.href);
+    url.searchParams.delete("conversation");
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    setMode("ask");
+    await activateProfile(next);
+  };
 
   const saveProfile = async (input: {
     displayName: string;
@@ -1866,7 +1866,7 @@ export function WorkspaceApp() {
     );
   }
 
-  if (!profile) {
+  if (!profile || switchingProfile) {
     return (
       <Onboarding
         departments={
@@ -1875,17 +1875,19 @@ export function WorkspaceApp() {
         profiles={
           devProfiles
         }
+        onCancel={profile && switchingProfile ? () => setSwitchingProfile(false) : undefined}
+        currentName={profile?.displayName}
         onLogin={(
           active,
         ) => {
-          void activateProfile(
+          void finishSwitch(
             active,
           );
         }}
         onCreated={(
           created,
         ) => {
-          void activateProfile(
+          void finishSwitch(
             created,
           );
 
