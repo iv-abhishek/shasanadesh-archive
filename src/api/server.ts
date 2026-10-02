@@ -74,6 +74,7 @@ import { createPool } from "../db/client.js";
 import { officialOnly, stripNonGovernmentLinks } from "../lib/public-links.js";
 import type { Pool } from "pg";
 import { createDraftStreamer, stripThinking } from "../rag/draft-preview.js";
+import { clientFor, readLlmTargets, shouldFallBack, type LlmTarget } from "../rag/llm-targets.js";
 import {
   buildSuggestionMessages,
   fallbackSuggestions,
@@ -90,36 +91,16 @@ const RETRIEVAL_BASE_URL =
   process.env.RETRIEVAL_BASE_URL ??
   "http://127.0.0.1:8788";
 
-const LLM_BASE_URL =
-  process.env.LLM_BASE_URL;
-
-const LLM_API_KEY =
-  process.env.LLM_API_KEY;
+// Answer-writing model servers: a primary and an optional fallback
+// (src/rag/llm-targets.ts, ADR-075). LLM_PROVIDER=openrouter writes on
+// OpenRouter with the local MLX Qwen as fallback.
+const LLM_TARGETS = readLlmTargets();
+const LLM_PRIMARY = LLM_TARGETS[0] ?? null;
+const LLM_BASE_URL = LLM_PRIMARY?.baseURL;
 
 // Generation only needs to share the Apple GPU with retrieval when the model
-// runs on this machine. A hosted OpenAI-compatible endpoint (e.g. DeepInfra)
-// runs in parallel with local retrieval.
-const LLM_IS_LOCAL = (() => {
-  try {
-    const host = new URL(LLM_BASE_URL ?? "http://127.0.0.1").hostname;
-    return ["127.0.0.1", "localhost", "::1", "0.0.0.0"].includes(host);
-  } catch {
-    return true;
-  }
-})();
-
-// Extra JSON merged into every chat-completion request, for provider options
-// such as {"chat_template_kwargs":{"enable_thinking":false}} (hosted Qwen3
-// models otherwise write a <think> block first). Invalid JSON is ignored.
-const LLM_EXTRA_BODY: Record<string, unknown> = (() => {
-  try {
-    const raw = process.env.LLM_EXTRA_BODY?.trim();
-    return raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
-  } catch {
-    console.warn("Ignoring LLM_EXTRA_BODY: not valid JSON.");
-    return {};
-  }
-})();
+// runs on this machine. A hosted endpoint runs in parallel with retrieval.
+const LLM_IS_LOCAL = LLM_PRIMARY?.local ?? true;
 
 // Stream the first draft to the browser as a clearly marked, unchecked preview
 // while it is written; the validated answer replaces it (RAG_STREAM_DRAFT=0 to
@@ -128,7 +109,7 @@ const RAG_STREAM_DRAFT =
   (process.env.RAG_STREAM_DRAFT ?? "1") !== "0";
 
 const LLM_MODEL =
-  process.env.LLM_MODEL;
+  LLM_PRIMARY?.model;
 
 const RAG_TOP_K = Number.parseInt(
   process.env.RAG_TOP_K ?? "5",
@@ -664,22 +645,23 @@ async function retrieve(
 }
 
 async function generateCompletion(
-  openai: OpenAI,
+  timeoutMs: number,
   messages: GeneratorMessage[],
   temperature: number,
   maxTokens = LLM_MAX_TOKENS,
   onDelta?: (text: string) => void,
   signal?: AbortSignal,
-): Promise<{ text: string; truncated: boolean }> {
-  const run = async () => {
+): Promise<{ text: string; truncated: boolean; model: string; fellBack: boolean }> {
+  const runOn = async (target: LlmTarget, onWritten: () => void) => {
       // Stopped while waiting for the GPU: give the slot to the next question.
       signal?.throwIfAborted();
+      const openai = clientFor(target, timeoutMs);
       let upstream;
 
       try {
         upstream =
           await openai.chat.completions.create({
-            model: LLM_MODEL!,
+            model: target.model,
             messages:
               messages as Parameters<
                 typeof openai.chat.completions.create
@@ -687,18 +669,20 @@ async function generateCompletion(
             temperature,
             max_tokens: maxTokens,
             stream: true,
-            ...LLM_EXTRA_BODY,
+            ...target.extraBody,
           } as Parameters<typeof openai.chat.completions.create>[0],
           // Aborting closes the model stream, so the model stops writing.
           { signal }) as unknown as AsyncIterable<{
             choices: Array<{ delta?: { content?: string | null }; finish_reason?: string | null }>;
           }>;
       } catch (error) {
-        if (error instanceof OpenAI.APIConnectionError) {
-          throw new Error(
-            `Language model server is not reachable at ${LLM_BASE_URL}. ` +
+        if (error instanceof OpenAI.APIConnectionError && target.local) {
+          const wrapped = new Error(
+            `Language model server is not reachable at ${target.baseURL}. ` +
               "Start it with npm run generator:serve.",
           );
+          (wrapped as Error & { cause?: unknown }).cause = error;
+          throw Object.assign(wrapped, { fallbackWorthy: true });
         }
 
         throw error;
@@ -712,6 +696,7 @@ async function generateCompletion(
         const token = choice?.delta?.content;
 
         if (token) {
+          if (!answer) onWritten();
           answer += token;
           onDelta?.(token);
         }
@@ -735,9 +720,25 @@ async function generateCompletion(
       return { text: answer.trim(), truncated: false };
   };
 
-  return LLM_IS_LOCAL
-    ? runLocalGpuExclusive("generation", run)
-    : run();
+  if (!LLM_TARGETS.length) throw new Error("No language model is configured (LLM_PROVIDER or LLM_BASE_URL/LLM_MODEL).");
+  let lastError: unknown;
+  for (const [index, target] of LLM_TARGETS.entries()) {
+    let written = false;
+    try {
+      const run = () => runOn(target, () => { written = true; });
+      const result = target.local ? await runLocalGpuExclusive("generation", run) : await run();
+      return { ...result, model: target.label, fellBack: index > 0 };
+    } catch (error) {
+      lastError = error;
+      const worthy = shouldFallBack(error) || (error as { fallbackWorthy?: boolean }).fallbackWorthy === true;
+      // Never stitch an answer from two models, and never retry a stop.
+      if (signal?.aborted || written || !worthy || index === LLM_TARGETS.length - 1) throw error;
+      console.warn(
+        `Answer model ${target.label} failed (${error instanceof Error ? error.message : String(error)}); using ${LLM_TARGETS[index + 1].label}.`,
+      );
+    }
+  }
+  throw lastError;
 }
 
 function streamValidatedText(
@@ -808,6 +809,8 @@ server.get(
         LLM_BASE_URL ?? null,
       llmModel:
         LLM_MODEL ?? null,
+      llmFallback:
+        LLM_TARGETS[1]?.label ?? null,
       answerValidation:
         "citation-and-numeric-safety-v1",
       localGpuQueue:
@@ -894,13 +897,8 @@ server.post(
     });
 
     try {
-      const openai = new OpenAI({
-        baseURL: LLM_BASE_URL,
-        apiKey: LLM_API_KEY || "local-openai-compatible-endpoint",
-        timeout: 20_000,
-      });
       const { text } = await generateCompletion(
-        openai,
+        20_000,
         buildSuggestionMessages(body) as GeneratorMessage[],
         0.4,
         160,
@@ -1762,16 +1760,6 @@ server.post(
         },
       ];
 
-    const openai =
-      new OpenAI({
-        baseURL:
-          LLM_BASE_URL,
-        apiKey:
-          LLM_API_KEY ||
-          "local-openai-compatible-endpoint",
-        timeout:
-          LLM_REQUEST_TIMEOUT_MS,
-      });
 
     sendEvent(
       "sources",
@@ -1875,7 +1863,7 @@ server.post(
 
     const firstCompletion =
         await generateCompletion(
-          openai,
+          LLM_REQUEST_TIMEOUT_MS,
           generatorMessages,
           parsed.data.regenerate
             ? REGENERATE_TEMPERATURE
@@ -1983,7 +1971,7 @@ server.post(
 
       const repairCompletion =
           await generateCompletion(
-            openai,
+            LLM_REQUEST_TIMEOUT_MS,
             repairMessages,
             0,
             LLM_REPAIR_MAX_TOKENS ?? tokenBudget,
@@ -2118,6 +2106,8 @@ server.post(
         repaired,
         usedQualitativeSalvage,
         usedFallback,
+        model: firstCompletion.model,
+        modelFellBack: firstCompletion.fellBack,
         timings:
           ragTimings,
       },
@@ -2129,6 +2119,9 @@ server.post(
         {
         timings:
           ragTimings,
+          // Which model wrote it (OpenRouter or the local fallback, ADR-075).
+          model: firstCompletion.model,
+          modelFellBack: firstCompletion.fellBack,
           ok: true,
           validated: true,
           repaired,

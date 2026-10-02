@@ -1154,3 +1154,19 @@ A 15-question test (conversation ce8e4950…) showed the finder failing on ordin
 Not changed: an explicitly named department still lets central guidelines rank first
 ("solar pump subsidy - agriculture department" answered from the PM-KUSUM national
 guidelines); worth revisiting with the quality pack.
+
+## ADR-075 - Hosted answer-writing on OpenRouter, local Qwen as fallback (2 Oct 2026)
+
+On the 16 GB Mac, answers took 30 s to 5 min (swap; one Hindi answer 309 s of generation).
+Answer-writing moves to an OpenRouter Qwen model (HOSTING.md pilot plan); retrieval stays local.
+
+- `LLM_PROVIDER=openrouter` + `OPENROUTER_API_KEY` (+ `OPENROUTER_MODEL`, default
+  `qwen/qwen3.6-35b-a3b`, about $0.15 in / $1 out per million tokens: ~₹0.25 an answer).
+  `reasoning.enabled=false` keeps Qwen from thinking first.
+- Fallback: the local MLX Qwen (or `LLM_FALLBACK_*`) when the primary fails before writing
+  anything — unreachable, 401/402/403/404/408/429, 5xx. Never mid-answer, so an answer is
+  never stitched from two models. `src/rag/llm-targets.ts`; the `done` event carries `model`.
+- Checked on 2 Oct: the key is valid; the paid model answers 402 until credits are bought;
+  the `:free` Qwen 3.8-27B was rate-limited upstream, so free models are not a dependable
+  primary.
+- The model is a setting: the eval (`npm run eval:ask`) compares candidates.

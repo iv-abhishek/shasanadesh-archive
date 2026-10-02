@@ -131,6 +131,21 @@ that excludes either the `raw/` or `processed/` path.
 If an answer still reaches its budget, it is cut back to the last complete sentence or
 bullet (`src/rag/truncation.ts`) and badged "Shortened" rather than ending mid-word.
 
+### Hosted answer-writing (OpenRouter) with local fallback (ADR-075)
+
+| Variable | Purpose |
+|---|---|
+| `LLM_PROVIDER` | `openrouter` writes answers on OpenRouter; unset = `LLM_BASE_URL`/`LLM_MODEL` |
+| `OPENROUTER_API_KEY` | OpenRouter key (needs credits for paid models) |
+| `OPENROUTER_MODEL` | default `qwen/qwen3.6-35b-a3b`; e.g. `qwen/qwen3.8-27b`, `qwen/qwen3-32b` |
+| `LLM_FALLBACK_BASE_URL` / `LLM_FALLBACK_MODEL` / `LLM_FALLBACK_API_KEY` | optional fallback; with `LLM_PROVIDER=openrouter` the local MLX server from `LLM_BASE_URL`/`LLM_MODEL` is the fallback by default |
+
+`npm run dev:all` + `LLM_PROVIDER=openrouter`: OpenRouter writes, the local Qwen takes over
+when OpenRouter is unreachable, out of credit (402), rate-limited (429) or failing (5xx),
+before any text was written. `npm run dev:all -- --no-generator`: OpenRouter only, the
+local model is not started (frees ~5 GB on the Mac). Qwen's thinking is turned off with
+`reasoning.enabled=false`. The answer's `done` event and the API log name the model used.
+
 Local development uses Qwen3-8B (MLX) at `http://127.0.0.1:8791/v1`. To try a hosted model,
 point `LLM_BASE_URL`, `LLM_API_KEY` and `LLM_MODEL` at any OpenAI-compatible provider; when
 the host is not local, generation no longer waits for the local GPU queue
