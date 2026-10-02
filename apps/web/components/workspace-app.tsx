@@ -144,7 +144,28 @@ const INDIA_STATES_AND_UTS = [
 
 // English names and common spellings of the stored (Hindi) department names,
 // from datasets/departments.json via /api/workspace/departments.
-type DepartmentLabels = Record<string, { en: string; aliases: string[] }>;
+// `choice` is the picker entry a name belongs to: "Agriculture" (from another
+// source) and "कृषि विभाग" (the portal) are one department.
+type DepartmentLabels = Record<string, { hi?: string; en: string; aliases: string[]; choice?: string }>;
+
+function departmentDisplay(
+  name: string,
+  labels: DepartmentLabels,
+  language: "hi" | "en",
+): { main: string; sub: string | null } {
+  const label = labels[name];
+  if (!label) return { main: name, sub: null };
+  const hi = label.hi ?? name;
+  return language === "en" ? { main: label.en, sub: hi } : { main: hi, sub: label.en };
+}
+
+/** The picker entry for a stored name, and a list with duplicates folded together. */
+function departmentChoice(name: string, labels: DepartmentLabels): string {
+  return labels[name]?.choice ?? name;
+}
+function departmentChoiceList(names: string[], labels: DepartmentLabels): string[] {
+  return [...new Set(names.map((name) => departmentChoice(name, labels)))];
+}
 const DepartmentLabelsContext = createContext<DepartmentLabels>({});
 
 // Which name comes first wherever departments are listed: the portal's Hindi
@@ -160,15 +181,10 @@ const DepartmentNameLanguageContext = createContext<{
 function useDepartmentNames() {
   const labels = useContext(DepartmentLabelsContext);
   const { language, setLanguage } = useContext(DepartmentNameLanguageContext);
-  const english = (name: string) => labels[name]?.en;
   /** The name shown first. */
-  const main = (name: string) => (language === "en" ? english(name) ?? name : name);
-  /** The other language, shown smaller (null when there is no English name). */
-  const sub = (name: string) => {
-    const en = english(name);
-    if (!en) return null;
-    return language === "en" ? name : en;
-  };
+  const main = (name: string) => departmentDisplay(name, labels, language).main;
+  /** The other language, shown smaller (null when the registry has no entry). */
+  const sub = (name: string) => departmentDisplay(name, labels, language).sub;
   const option = (name: string) => {
     const other = sub(name);
     return other ? `${main(name)} — ${other}` : main(name);
@@ -178,7 +194,9 @@ function useDepartmentNames() {
     language === "en"
       ? [...names].sort((a, b) => main(a).localeCompare(main(b), "en"))
       : names;
-  return { labels, language, setLanguage, main, sub, option, sort };
+  const choice = (name: string) => departmentChoice(name, labels);
+  const choiceList = (names: string[]) => departmentChoiceList(names, labels);
+  return { labels, language, setLanguage, main, sub, option, sort, choice, choiceList };
 }
 
 /** हिन्दी / English switch for department names; sits beside each department list. */
@@ -210,7 +228,7 @@ function departmentMatches(department: string, labels: DepartmentLabels, query: 
   const key = searchKey(query);
   if (!key) return true;
   const label = labels[department];
-  return [department, label?.en ?? "", ...(label?.aliases ?? [])].some((name) =>
+  return [department, label?.hi ?? "", label?.en ?? "", ...(label?.aliases ?? [])].some((name) =>
     searchKey(name).includes(key),
   );
 }
@@ -455,16 +473,19 @@ function ProfileEditor({
   const [stateName, setStateName] = useState(profile.stateName ?? "");
   const [district, setDistrict] = useState(profile.district ?? "");
   const [contactNumber, setContactNumber] = useState(profile.contactNumber ?? "");
-  const [primaryDepartment, setPrimaryDepartment] = useState(
-    profile.primaryDepartment ?? "",
-  );
+  // Saved names map to the picker's entries (a profile saved with
+  // "Agriculture" shows as कृषि विभाग, ticked once).
+  const savedPrimary = profile.primaryDepartment
+    ? departmentNames.choice(profile.primaryDepartment)
+    : "";
+  const [primaryDepartment, setPrimaryDepartment] = useState(savedPrimary);
   const [additionalCharge, setAdditionalCharge] = useState<string[]>(
-    profile.additionalChargeDepartments ?? [],
+    departmentNames.choiceList(profile.additionalChargeDepartments ?? []),
   );
   const [additionalDepartments, setAdditionalDepartments] = useState(
-    profile.departments.filter(
-      (department) => department !== profile.primaryDepartment,
-    ),
+    departmentNames
+      .choiceList(profile.departments)
+      .filter((department) => department !== savedPrimary),
   );
   const [preferredLanguage, setPreferredLanguage] = useState<"en" | "hi">(
     profile.preferredLanguage,
@@ -916,8 +937,9 @@ function Onboarding({
             <div className="profile-grid">
               {profiles.map((item) => {
                 const current = item.id === currentId;
-                const shown = item.departments.slice(0, 2);
-                const more = item.departments.length - shown.length;
+                const folded = departmentNames.choiceList(item.departments);
+                const shown = folded.slice(0, 2);
+                const more = folded.length - shown.length;
                 return (
                   <button
                     type="button"
@@ -2103,16 +2125,19 @@ export function WorkspaceApp() {
               No department set · searching all departments
             </span>
           ) : (
-            profile.departments.map((department) => {
-              const charge = (profile.additionalChargeDepartments ?? []).includes(department);
-              const primary = department === profile.primaryDepartment;
+            departmentChoiceList(profile.departments, departmentLabels).map((department) => {
+              const charge = departmentChoiceList(profile.additionalChargeDepartments ?? [], departmentLabels).includes(department);
+              const primary =
+                !!profile.primaryDepartment &&
+                department === departmentChoice(profile.primaryDepartment, departmentLabels);
+              const shown = departmentDisplay(department, departmentLabels, departmentNameLanguage);
               return (
                 <span
                   key={department}
                   className={primary ? "scope-department scope-primary" : "scope-department"}
-                  title={departmentLabels[department]?.en ? `${department} — ${departmentLabels[department].en}` : undefined}
+                  title={shown.sub ?? undefined}
                 >
-                  {departmentNameLanguage === "en" ? departmentLabels[department]?.en ?? department : department}
+                  {shown.main}
                   {charge ? <em className="scope-tag">Addl. charge</em> : null}
                 </span>
               );

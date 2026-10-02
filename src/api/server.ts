@@ -69,7 +69,7 @@ import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
 import { asksWhatOrderSays, detectListingRequest, jurisdictionsInQuery, listOrders, type SubjectSearch } from "../rag/order-listing.js";
 import { asksAboutLaterChanges, buildLaterChangesAnswer, refersToEarlierDocument } from "../rag/document-followup.js";
-import { departmentLabel, departmentNameIn, findDepartmentMention } from "../departments/registry.js";
+import { departmentLabel, departmentNameIn, departmentSpellings, findDepartmentMention } from "../departments/registry.js";
 import { createPool } from "../db/client.js";
 import { officialOnly, stripNonGovernmentLinks } from "../lib/public-links.js";
 import type { Pool } from "pg";
@@ -578,8 +578,12 @@ async function retrieve(
             filters: {
               department:
                 filters?.department,
+              // Every spelling of the chosen departments ("कृषि विभाग" also
+              // matches documents filed under "Agriculture").
               departments:
-                filters?.departments,
+                filters?.departments
+                  ? departmentSpellings(filters.departments)
+                  : undefined,
               department_ids:
                 filters?.departmentIds,
               jurisdiction_codes:

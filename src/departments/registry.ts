@@ -121,6 +121,57 @@ export function findDepartmentEntry(name: string, departments = loadDepartments(
   );
 }
 
+/**
+ * Every way documents may name the departments in `names`: each name plus its
+ * registry entry's Hindi name (with and without "विभाग"), English name and
+ * aliases. Scope filters match document names exactly, so a profile that chose
+ * "कृषि विभाग" must also match documents filed under "Agriculture".
+ */
+export function departmentSpellings(names: string[], departments = loadDepartments()): string[] {
+  const out = new Set<string>();
+  for (const name of names) {
+    const clean = name.replace(/[\u200c\u200d]/g, "").replace(/\s+/g, " ").trim();
+    if (!clean) continue;
+    out.add(clean);
+    const entry = findDepartmentEntry(clean, departments);
+    if (!entry) continue;
+    for (const spelling of [entry.hi, entry.hi.replace(/\s*विभाग$/, ""), entry.en, ...entry.aliases]) {
+      if (spelling.trim()) out.add(spelling.trim());
+    }
+  }
+  return [...out];
+}
+
+/**
+ * One choice per department for the profile picker. Names that resolve to the
+ * same registry entry ("कृषि विभाग", "Agriculture") collapse to one: the
+ * portal's Hindi name when it is among them, else the first. Returns the
+ * choices and, for every name, the choice it belongs to.
+ */
+export function departmentChoices(
+  names: string[],
+  departments = loadDepartments(),
+): { choices: string[]; choiceOf: Map<string, string>; entryOf: Map<string, DepartmentEntry> } {
+  const groups = new Map<string, string[]>();
+  const entryOf = new Map<string, DepartmentEntry>();
+  for (const name of names) {
+    const entry = findDepartmentEntry(name, departments);
+    if (entry) entryOf.set(name, entry);
+    const key = entry ? `id:${entry.id}` : `name:${normalizeName(name)}`;
+    groups.set(key, [...(groups.get(key) ?? []), name]);
+  }
+  const choices: string[] = [];
+  const choiceOf = new Map<string, string>();
+  for (const group of groups.values()) {
+    const entry = entryOf.get(group[0]);
+    const hiKey = entry ? normalizeName(entry.hi) : null;
+    const choice = group.find((name) => hiKey !== null && normalizeName(name) === hiKey) ?? group[0];
+    choices.push(choice);
+    for (const name of group) choiceOf.set(name, choice);
+  }
+  return { choices, choiceOf, entryOf };
+}
+
 /** A stored department name ("Agriculture", "लोक निर्माण विभाग") in one language. */
 export function departmentNameIn(name: string, language: "hi" | "en", departments = loadDepartments()): string {
   const entry = findDepartmentEntry(name, departments);

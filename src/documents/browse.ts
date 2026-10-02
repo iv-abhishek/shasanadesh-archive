@@ -17,6 +17,7 @@
  *     before its text is indexed; `indexed` tells the two apart
  */
 
+import { departmentSpellings } from "../departments/registry.js";
 import type { Pool } from "pg";
 
 /** Zero-width non-joiner and joiner, stripped before comparing names. */
@@ -161,7 +162,8 @@ export function buildBrowseWhere(filters: BrowseFilters): { sql: string; params:
     clauses.push(`(${parts.join(" OR ")})`);
   }
 
-  const scope = (filters.scopeDepartments ?? []).map(clean).filter(Boolean);
+  // Every spelling of the profile's departments ("कृषि विभाग" and "Agriculture").
+  const scope = departmentSpellings((filters.scopeDepartments ?? []).map(clean).filter(Boolean));
   if (scope.length) {
     const joiners = param(JOINERS);
     const list = param(scope);

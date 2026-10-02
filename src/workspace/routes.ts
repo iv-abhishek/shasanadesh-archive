@@ -6,7 +6,7 @@
  * still open because there is no production identity provider yet.
  */
 
-import { findDepartmentEntry } from "../departments/registry.js";
+import { departmentChoices } from "../departments/registry.js";
 import type {
   FastifyInstance,
   FastifyReply,
@@ -266,15 +266,19 @@ export function registerWorkspaceRoutes(
       reply,
     ) => {
       try {
-        const departments = await listDepartments();
-        // English names and common spellings, so the profile form can show
-        // "कृषि विभाग — Agriculture" and find it when someone types "krishi".
-        const labels: Record<string, { en: string; aliases: string[] }> = {};
-        for (const name of departments) {
-          const entry = findDepartmentEntry(name);
-          if (entry) labels[name] = { en: entry.en, aliases: entry.aliases };
+        const names = await listDepartments();
+        // One choice per department: documents from other sources name the
+        // same department in English ("Agriculture") as the portal does in
+        // Hindi ("कृषि विभाग"). Labels give every name its Hindi and English
+        // form, aliases for search ("krishi") and the choice it belongs to, so
+        // a profile saved with another spelling shows as that choice.
+        const { choices, choiceOf, entryOf } = departmentChoices(names);
+        const labels: Record<string, { hi: string; en: string; aliases: string[]; choice: string }> = {};
+        for (const name of names) {
+          const entry = entryOf.get(name);
+          if (entry) labels[name] = { hi: entry.hi, en: entry.en, aliases: entry.aliases, choice: choiceOf.get(name) ?? name };
         }
-        return { departments, labels };
+        return { departments: choices, labels };
       } catch (error) {
         return sendError(
           reply,
