@@ -90,6 +90,13 @@ export function isNoAnswer(draft: string): boolean {
   return draft.includes(NO_ANSWER_TOKEN) && draft.replace(NO_ANSWER_TOKEN, "").trim().length < 160;
 }
 
+/** A suggested follow-up the cited orders do not answer (they are the only ones searched). */
+export function followUpNotCoveredMessage(language: "en" | "hi"): string {
+  return language === "hi"
+    ? "पिछले उत्तर में उद्धृत आदेशों में इस प्रश्न का उत्तर नहीं है। सभी आदेशों में खोजने के लिए प्रश्न को विषय सहित स्वयं लिखकर पूछें।"
+    : "The orders cited in the previous answer do not answer this. To search all orders, type the question yourself with its subject.";
+}
+
 export function noEvidenceMessage(language: "en" | "hi", searchedAllDepartments: boolean): string {
   if (language === "hi") {
     return [

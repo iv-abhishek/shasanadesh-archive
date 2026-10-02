@@ -1926,6 +1926,14 @@ function TurnView({
 // Follow-up questions (ADR-065): asked once per answer, after it is shown.
 const suggestionCache = new Map<number, string[]>();
 
+/** The orders an answer cited (all listed orders for an order list). */
+function citedSourceIds(turn: ChatTurn): string[] {
+  const cited = turn.done?.listing
+    ? turn.sources
+    : turn.sources.filter((source) => (turn.done?.citations ?? []).some((c) => /S\d+/.exec(c)?.[0] === source.label));
+  return [...new Set((cited.length ? cited : turn.sources).map((source) => source.sourceId))].slice(0, 8);
+}
+
 function wantsSuggestions(turn: ChatTurn): boolean {
   const done = turn.done;
   return Boolean(
@@ -1940,7 +1948,8 @@ function SuggestedQuestions({
 }: {
   turn: ChatTurn;
   disabled: boolean;
-  onAsk: (question: string) => void;
+  /** sourceIds: the orders this answer cited; the follow-up is answered from them only. */
+  onAsk: (question: string, sourceIds: string[]) => void;
 }) {
   const language = speechLanguageFor(turn.answer) === "hi-IN" || speechLanguageFor(turn.question) === "hi-IN" ? "hi" : "en";
   const [items, setItems] = useState<string[] | null>(suggestionCache.get(turn.id) ?? null);
@@ -2005,7 +2014,7 @@ function SuggestedQuestions({
           type="button"
           className="suggestion-chip"
           disabled={disabled}
-          onClick={() => onAsk(item)}
+          onClick={() => onAsk(item, citedSourceIds(turn))}
         >
           <span aria-hidden="true">↳</span> {item}
         </button>
@@ -2557,7 +2566,7 @@ export function ChatApp({
       question: string,
       priorTurns: ChatTurn[],
       // followUp: a suggested question clicked under the last answer.
-      options: { regenerateOf?: ChatTurn; followUp?: boolean } = {},
+      options: { regenerateOf?: ChatTurn; followUp?: boolean; followSourceIds?: string[] } = {},
     ) => {
       setBusy(true);
       const controller = new AbortController();
@@ -2668,6 +2677,7 @@ export function ChatApp({
                 regenerate:
                   Boolean(options.regenerateOf),
                 followUp: Boolean(options.followUp),
+                followSourceIds: options.followSourceIds?.length ? options.followSourceIds : undefined,
               }),
               signal: controller.signal,
             },
@@ -3119,10 +3129,10 @@ export function ChatApp({
                     <SuggestedQuestions
                       turn={turn}
                       disabled={busy}
-                      onAsk={(question) => {
+                      onAsk={(question, sourceIds) => {
                         if (busy || archived) return;
                         setQuery("");
-                        void ask(question, turns, { followUp: true });
+                        void ask(question, turns, { followUp: true, followSourceIds: sourceIds });
                       }}
                     />
                   ) : null

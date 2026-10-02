@@ -31,7 +31,7 @@ const MAX = 3;
 export const SUGGESTION_SYSTEM_PROMPT = `
 You suggest follow-up questions for an assistant that answers from Uttar Pradesh and Government of India orders, rules and guidelines.
 Given the user's question, the answer and the orders it cited, write exactly three short follow-up questions the same official is likely to ask next.
-- Each must be answerable from government orders like the ones cited (procedure, eligibility, competent authority, limits, documents required, time limits, later amendments, related orders).
+- Each must be answerable from the cited orders themselves (their procedure, eligibility, competent authority, limits, documents required, time limits, amendments): a clicked suggestion is answered from those orders only.
 - Each question must make sense on its own: name the subject (the cadre, scheme, service rules or order topic, e.g. "Medical Officers", "PM-KUSUM solar pumps") instead of "this", "the candidate" or "the scheme".
 - Write in the requested language only. At most 18 words each. No numbering, no URLs, no invented GO numbers, dates or amounts.
 - Do not repeat the original question.
@@ -124,7 +124,7 @@ export function listingSuggestions(request: SuggestionRequest): string[] {
 /** When the model is not available: questions that fit almost any order. */
 export function fallbackSuggestions(request: Pick<SuggestionRequest, "language" | "question">): string[] {
   const items = request.language === "hi"
-    ? ["इसकी प्रक्रिया क्या है?", "सक्षम प्राधिकारी कौन है?", "क्या इस आदेश में बाद में कोई संशोधन हुआ है?"]
-    : ["What is the procedure under this order?", "Who is the competent authority?", "Has this order been amended later?"];
+    ? ["इस आदेश के अनुसार प्रक्रिया क्या है?", "इस आदेश में सक्षम प्राधिकारी कौन है?", "क्या इस आदेश में बाद में कोई संशोधन हुआ है?"]
+    : ["What is the procedure under this order?", "Who is the competent authority under this order?", "Has this order been amended later?"];
   return clean(items, request);
 }

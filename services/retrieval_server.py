@@ -61,6 +61,9 @@ class SearchFilters(BaseModel):
     topics: list[str] | None = Field(default=None, max_length=10)
     go_number: str | None = Field(default=None, max_length=200)
     source_id: str | None = Field(default=None, max_length=200)
+    # Several orders (a suggested follow-up is answered from the orders the
+    # previous answer cited, and only from them).
+    source_ids: list[str] | None = Field(default=None, max_length=8)
     # Source collections (documents.provider), e.g. ["shasanadesh-up", "upgov"].
     providers: list[str] | None = None
     date_from: str | None = Field(default=None, max_length=10)
@@ -281,7 +284,7 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
     # Rulebook §2: documents from non-government sources are flagged and never used.
     clauses.append("d.provenance_ok")
 
-    if not filters.include_routine and not filters.source_id:
+    if not filters.include_routine and not filters.source_id and not filters.source_ids:
         clauses.append(
             "(d.tier IS DISTINCT FROM 'C' "
             "OR COALESCE(d.classification->>'confidence', 'low') <> 'high')"
@@ -294,6 +297,12 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
     if filters.source_id:
         clauses.append("d.source_id = %s")
         params.append(filters.source_id.strip())
+
+    if filters.source_ids:
+        ids = [item.strip() for item in filters.source_ids if item.strip()]
+        if ids:
+            clauses.append("d.source_id = ANY(%s)")
+            params.append(ids)
 
     if filters.providers:
         providers = [item.strip() for item in filters.providers if item.strip()]

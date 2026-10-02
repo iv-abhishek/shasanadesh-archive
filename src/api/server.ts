@@ -64,7 +64,7 @@ import {
   findExplicitDepartment,
   requestsGlobalScope,
 } from "../rag/intent-routing.js";
-import { assessRelevance, hasEvidenceFromDepartments, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
+import { assessRelevance, followUpNotCoveredMessage, hasEvidenceFromDepartments, isNoAnswer, noEvidenceMessage } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
 import { asksWhatOrderSays, detectListingRequest, jurisdictionsInQuery, listOrders, type SubjectSearch } from "../rag/order-listing.js";
@@ -365,6 +365,12 @@ const ChatBodySchema = z.object({
   followUp:
     z.boolean()
       .optional(),
+  // The orders the previous answer cited: a suggested follow-up is answered
+  // from these only, never from other departments or orders.
+  followSourceIds:
+    z.array(z.string().trim().min(1).max(200))
+      .max(8)
+      .optional(),
 });
 
 const SearchFiltersSchema = z.object({
@@ -402,6 +408,12 @@ const SearchFiltersSchema = z.object({
     .trim()
     .min(1)
     .max(200)
+    .optional(),
+  // Several orders: a suggested follow-up searches only the cited orders.
+  sourceIds: z
+    .array(z.string().trim().min(1).max(200))
+    .min(1)
+    .max(8)
     .optional(),
   // Source collections (documents.provider), e.g. "shasanadesh-up", "upgov".
   providers: z
@@ -521,6 +533,10 @@ function describeScope(
     return hi ? "इस आदेश" : "this order";
   }
 
+  if (filters?.sourceIds?.length) {
+    return hi ? "पिछले उत्तर में उद्धृत आदेशों" : "the orders cited in the previous answer";
+  }
+
   const one = filters?.departmentLabel ?? filters?.department ?? (filters?.departments?.length === 1 ? filters.departments[0] : null);
   if (one) {
     const name = filters?.departmentLabel ? one : departmentNameIn(one, language);
@@ -599,6 +615,8 @@ async function retrieve(
                 filters?.goNumber,
               source_id:
                 filters?.sourceId,
+              source_ids:
+                filters?.sourceIds,
               providers:
                 filters?.providers,
               date_from:
@@ -1176,8 +1194,14 @@ server.post(
       explicitDepartment ? null : findDepartmentMention(query);
 
     // "Recent / latest / dated … orders": answer from the order list.
+    // A clicked suggestion: only the orders the previous answer cited.
+    const followSourceIds =
+      parsed.data.followUp && parsed.data.followSourceIds?.length
+        ? [...new Set(parsed.data.followSourceIds)]
+        : null;
+
     let listingRequest =
-      explicitSourceId || followedSourceId ? null : detectListingRequest(query);
+      explicitSourceId || followedSourceId || followSourceIds ? null : detectListingRequest(query);
 
     // "शासनादेश संख्या 3/2024/… में क्या निर्देश है?": find the order by its
     // number, then answer from its own text (Ask, that order only). An order
@@ -1304,7 +1328,14 @@ server.post(
     let retrievalFilters:
       SearchFilters | undefined;
 
-    if (explicitSourceId) {
+    if (followSourceIds) {
+      retrievalScope =
+        "explicit_source";
+
+      retrievalFilters = {
+        sourceIds: followSourceIds,
+      };
+    } else if (explicitSourceId) {
       retrievalScope =
         "explicit_source";
 
@@ -1522,11 +1553,19 @@ server.post(
     // Relevance gate (src/rag/relevance.ts): drop pages that are not about the
     // question. The officer's departments are a preference, not a wall: when
     // nothing close is found there, search all departments once.
-    let relevance =
-      assessRelevance(
-        retrieval.evidence,
-        RAG_MIN_RELEVANCE,
-      );
+    // A suggested follow-up keeps every page found in the cited orders: the
+    // question is about those orders, and the model says when they do not
+    // answer it (no widening to other orders).
+    let relevance = followSourceIds
+      ? {
+          kept: retrieval.evidence,
+          dropped: 0,
+          best: assessRelevance(retrieval.evidence, RAG_MIN_RELEVANCE).best,
+        }
+      : assessRelevance(
+          retrieval.evidence,
+          RAG_MIN_RELEVANCE,
+        );
     let scopeFallback = false;
 
     if (
@@ -1614,11 +1653,12 @@ server.post(
       reason: "no_relevant_pages" | "model_found_no_answer",
       generationMs = 0,
     ) => {
-      const text =
-        noEvidenceMessage(
-          responseLanguage,
-          searchedAllDepartments,
-        );
+      const text = followSourceIds
+        ? followUpNotCoveredMessage(responseLanguage)
+        : noEvidenceMessage(
+            responseLanguage,
+            searchedAllDepartments,
+          );
       if (reason === "no_relevant_pages") {
         sendEvent("sources", []);
       }
