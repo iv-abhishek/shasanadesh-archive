@@ -503,8 +503,8 @@
     "category": "scope",
     "profileDepartments": [
       "Secondary Education",
-      "Agriculture",
-      "लोक निर्माण विभाग"
+      "लोक निर्माण विभाग",
+      "Agriculture"
     ],
     "expectedChatSourceIdsAny": [
       "25#201#2#2020"
@@ -523,8 +523,8 @@
     "category": "scope",
     "profileDepartments": [
       "Secondary Education",
-      "Agriculture",
-      "लोक निर्माण विभाग"
+      "लोक निर्माण विभाग",
+      "Agriculture"
     ],
     "expectedChatSourceIdsAny": [
       "25#201#2#2020"
@@ -572,8 +572,8 @@
     "category": "follow-up",
     "profileDepartments": [
       "Secondary Education",
-      "Agriculture",
-      "लोक निर्माण विभाग"
+      "लोक निर्माण विभाग",
+      "Agriculture"
     ],
     "expectOnlyPreviousSources": true,
     "forbiddenSourcePrefixes": [
