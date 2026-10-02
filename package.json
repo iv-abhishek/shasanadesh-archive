@@ -38,6 +38,7 @@
     "db:load": "node --env-file-if-exists=.env --import tsx src/db/load-corpus.ts",
     "db:audit": "node --env-file-if-exists=.env --import tsx src/db/audit.ts",
     "db:check": "node --env-file-if-exists=.env --import tsx src/db/check.ts",
+    "workspace:prune": "node --env-file-if-exists=.env --import tsx src/workspace/prune-profiles.ts",
     "db:setup:local": "./scripts/setup-local-postgres.sh",
     "embed:setup": "./scripts/setup-embedding-env.sh",
     "embed:chunks": "node --env-file-if-exists=.env scripts/with-env.mjs .venv-embeddings/bin/python scripts/embed-chunks.py",
