@@ -229,3 +229,29 @@ console.log("jurisdiction/topic filter tests passed");
   assert.equal(asksWhatOrderSays("शासनादेश संख्या 12/2025 दिखाइए"), false);
   console.log("GO-number and punctuation routing tests passed");
 }
+
+// 2 Oct 2026 conversation (ADR-074).
+{
+  const list = (query: string) => detectListingRequest(query, "2026-10-02");
+  // A person as issuer: not a search word, not a section.
+  const person = list("there is another order release by ravi ranjan");
+  assert.equal(person?.personIssuer, "ravi ranjan");
+  assert.deepEqual(person?.words, []);
+  assert.equal(person?.section, undefined);
+  assert.match(buildListingAnswer(person!, { orders: [], total: 0, scope: { kind: "all" }, topicDropped: false, widened: false }, "en"), /does not record which officer/);
+  // "उत्तर प्रदेश शासन द्वारा जारी": the government, and the subject stays.
+  const government = list("सोलर पंप के लिए उत्तर प्रदेश शासन द्वारा जारी किए गए शासनादेश");
+  assert.equal(government?.section, undefined);
+  assert.deepEqual(government?.words, ["सोलर", "पंप"]);
+  // English words also mean their Hindi spellings for meaning search.
+  assert.match(list("Solar pump up GO")?.semanticText ?? "", /सोलर/);
+  // Department + date alone lists that day's orders.
+  const day = list("Agriculture, 15.09.2023");
+  assert.equal(day?.department?.en, "Agriculture");
+  assert.equal(day?.dateFrom, "2023-09-15");
+  // English department name in a section → the Hindi section name.
+  assert.equal(list("Agriculture अनुभाग 5 शासनादेश,")?.section, "कृषि अनुभाग 5");
+  // A starred phrase with a space is one pattern.
+  assert.deepEqual(list("*Solar पम्प*")?.patterns, ["*solar पम्प*"]);
+  console.log("2 Oct conversation finder tests passed");
+}

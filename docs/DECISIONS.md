@@ -1125,3 +1125,32 @@ found) never ran.
 
 Content gap noted: the general Uttar Pradesh Government Servants Seniority Rules, 1991 are not
 in the core-rules collection yet.
+
+## ADR-074 - Order finder fixes from the 2 Oct test conversation
+
+A 15-question test (conversation ce8e4950…) showed the finder failing on ordinary phrasing:
+
+1. **English words vs Hindi subjects.** "Solar pump up GO" found nothing word for word and
+   listed canal-top solar PV plants; subjects say "सोलर पम्प" / "कुसुम". A small curated
+   glossary (`src/lib/finder-glossary.ts`, ~45 groups) lets each finder word and wildcard
+   match its Hindi spellings ("solar" = सोलर/सौर, "pump" = पम्प/पंप), and adds those
+   spellings to the meaning-based subject search.
+2. **"<subject> के लिए उत्तर प्रदेश शासन द्वारा जारी …"** was read as section "सोलर पंप के लिए
+   शासन". The issuer is now only the words after "के लिए / हेतु / के संबंध में …", and
+   "शासन / उत्तर प्रदेश शासन / सरकार" means the government (no filter).
+3. **"released by Ravi Ranjan".** "release by" was not recognised and the name became search
+   words. The archive does not record who signed an order; a person as issuer is now
+   reported as not searchable (with how to search instead), and any other criteria still run.
+4. **"Agriculture, 15.09.2023"** (department + date, nothing else) lists that day's orders
+   instead of going to Ask.
+5. **"Agriculture अनुभाग 5"**: an English department name inside a section is replaced by its
+   Hindi name ("कृषि अनुभाग 5"), since sections are named in Hindi.
+6. **"*Solar पम्प*"**: a starred phrase containing a space is one pattern, not two.
+7. Ask prompt: when the evidence does not state the asked fact, say so in one sentence and
+   stop — no attributing it to another rule, no "as specified in the government orders"
+   padding, no repeated points (the "time limit for documents" answer had linked the
+   Seniority Rules).
+
+Not changed: an explicitly named department still lets central guidelines rank first
+("solar pump subsidy - agriculture department" answered from the PM-KUSUM national
+guidelines); worth revisiting with the quality pack.

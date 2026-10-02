@@ -17,6 +17,7 @@
  *     before its text is indexed; `indexed` tells the two apart
  */
 
+import { patternVariants, termVariants } from "../lib/finder-glossary.js";
 import { departmentSpellings } from "../departments/registry.js";
 import type { Pool } from "pg";
 
@@ -200,26 +201,34 @@ export function buildBrowseWhere(filters: BrowseFilters): { sql: string; params:
   const sourceIds = (filters.sourceIds ?? []).filter(Boolean).slice(0, 200);
   if (filters.sourceIds) clauses.push(`d.source_id = ANY(${param(sourceIds)})`);
 
-  // Finder terms: phrases and wildcard patterns over subject, section, category, number.
-  const finderTerms = [
-    ...(filters.phrases ?? []).map((phrase) => `%${likeEscape(clean(phrase))}%`),
-    ...(filters.patterns ?? []).map((pattern) => `%${wildcardToLike(clean(pattern))}%`),
-  ].filter((term) => term.replace(/%/g, "").length > 0).slice(0, 8);
+  // Finder terms: phrases and wildcard patterns over subject, section, category,
+  // number. Latin words in a pattern also match their Hindi spellings
+  // ("*solar पम्प*" → "*सोलर पम्प*"), ADR-074.
+  const finderTerms: string[][] = [
+    ...(filters.phrases ?? []).map((phrase) => [`%${likeEscape(clean(phrase))}%`]),
+    ...(filters.patterns ?? []).map((pattern) =>
+      patternVariants(clean(pattern)).map((variant) => `%${wildcardToLike(variant)}%`),
+    ),
+  ]
+    .map((group) => group.filter((term) => term.replace(/%/g, "").length > 0))
+    .filter((group) => group.length > 0)
+    .slice(0, 8);
   if (finderTerms.length) {
     const joiners = param(JOINERS);
-    for (const term of finderTerms) {
-      clauses.push(`translate(${SEARCHABLE_SQL}, ${joiners}, '') ILIKE ${param(term)}`);
+    for (const group of finderTerms) {
+      clauses.push(`(${group.map((term) => `translate(${SEARCHABLE_SQL}, ${joiners}, '') ILIKE ${param(term)}`).join(" OR ")})`);
     }
   }
 
-  // Every word must appear somewhere in the subject/title, section, category or GO number.
+  // Every word must appear somewhere in the subject/title, section, category or
+  // GO number, in any spelling the finder glossary knows ("solar" = "सोलर"/"सौर").
   const words = clean(filters.text ?? "").split(" ").filter(Boolean).slice(0, 8);
   if (words.length) {
     const joiners = param(JOINERS);
     for (const word of words) {
-      const escaped = word.replace(/[\\%_]/g, (character) => `\\${character}`);
+      const variants = termVariants(word).map((variant) => `%${likeEscape(variant)}%`);
       clauses.push(
-        `translate(${SEARCHABLE_SQL}, ${joiners}, '') ILIKE ${param(`%${escaped}%`)}`,
+        `(${variants.map((variant) => `translate(${SEARCHABLE_SQL}, ${joiners}, '') ILIKE ${param(variant)}`).join(" OR ")})`,
       );
     }
   }

@@ -20,6 +20,7 @@ import {
 import { browseDocuments, type BrowseRequest } from "../documents/browse.js";
 import { TOPIC_NAMES, topicsInQuery } from "../classify/topics.js";
 import { normalizeDigits, parseReferenceDate } from "../relations/extract.js";
+import { termVariants } from "../lib/finder-glossary.js";
 
 export interface ListingRequest {
   /** "recent": list by date only. "find": look for particular orders (ADR-058). */
@@ -41,6 +42,12 @@ export interface ListingRequest {
   patterns: string[];
   /** Issuing section (अनुभाग) or office named with "released/issued by". */
   section?: string;
+  /**
+   * "released by Ravi Ranjan": a person, not a department or section. The
+   * archive does not record who signed an order, so this cannot be searched
+   * (ADR-074); the rest of the question still is.
+   */
+  personIssuer?: string;
   /** Other subject words, all required for a word match. */
   words: string[];
   /** ADR-064: jurisdictions ("IN", "UP") and topic codes the question names. */
@@ -277,7 +284,8 @@ const FILLER = new Set([
   "orders", "order", "gos", "go", "g", "o", "government", "govt", "circulars", "circular", "notifications", "notification", "shasanadesh",
   "department", "departments", "dept", "of", "in", "the", "by", "for", "from", "on", "and", "show", "me", "all", "any", "please", "give",
   "which", "what", "were", "was", "are", "is", "there", "have", "has", "been", "a", "an", "release", "to", "up", "uttar", "pradesh", "state",
-  "or", "also", "our", "my", "tell", "about", "कृपया", "अथवा", "या", "तथा", "एवं", "और",
+  "or", "also", "our", "my", "tell", "about", "it", "its", "another", "other", "suggest", "kindly",
+  "कृपया", "अथवा", "या", "तथा", "एवं", "और", "अन्य", "दूसरा",
   "शासनादेश", "शासनादेशों", "आदेश", "आदेशों", "परिपत्र", "अधिसूचना", "विभाग", "विभागों", "हाल", "हालिया", "में", "के", "की", "का", "से", "द्वारा", "हेतु",
   "नवीनतम", "नए", "नये", "नवीन", "ताज़ा", "ताजा", "जारी", "निर्गत", "सूची", "किए", "किये", "गए", "गये", "हुए", "हैं", "है", "कौन", "कौनसे", "क्या", "बताइए",
   "बताएं", "बताओ", "दिखाइए", "दिखाएं", "सभी", "कोई", "उत्तर", "प्रदेश", "शासन", "दिनांकित", "तक", "बाद", "ही",
@@ -290,8 +298,13 @@ const ABOUT_CUE =
   /\b(?:about|regarding|related\s+to|relating\s+to|concerning|pertaining\s+to|on\s+the\s+subject\s+of|with\s+subject|subject)\b|के\s+(?:संबंध|सम्बन्ध|बारे|विषय)\s+में|विषयक|संबंधी|सम्बन्धी|से\s+(?:संबंधित|सम्बन्धित)/g;
 // "released by <office>" / "<office> द्वारा जारी"
 const RELEASED_BY_EN =
-  /\b(?:released|issued|signed|sent)\s+by\s+(?:the\s+)?(.+?)(?=\s+(?:on|in|dated|between|since|from|during|about|regarding|for|with)\b|[,.?!]|\s*$)/;
+  /\b(?:released?|issued?|signed|sent)\s+by\s+(?:the\s+)?(.+?)(?=\s+(?:on|in|dated|between|since|from|during|about|regarding|for|with)\b|[,.?!]|\s*$)/;
 const RELEASED_BY_HI = /(?:^|\s)((?:[\p{L}\p{M}0-9-]+\s+){1,5}?)द्वारा\s+(?:जारी|निर्गत)/u;
+// The issuer is the words right before "द्वारा"; a subject before it ends at
+// "के लिए / हेतु / के संबंध में …" ("सोलर पंप के लिए … शासन द्वारा जारी").
+const ISSUER_BOUNDARY_HI = /\s(?:के\s+लिए|के\s+लिये|हेतु|के\s+(?:संबंध|सम्बन्ध|बारे)\s+में|विषयक|संबंधी|सम्बन्धी|पर)\s/u;
+// "शासन", "उत्तर प्रदेश शासन", "सरकार": the government itself, not a section.
+const GOVERNMENT_ISSUER = /^(?:(?:उ0\s*प्र0|उ\.\s*प्र\.|उत्तर\s+प्रदेश|प्रदेश|राज्य)\s+)?(?:शासन|सरकार)$|^(?:up|state|uttar pradesh)?\s*(?:government|govt)$/u;
 // A section named on its own: "कृषि अनुभाग-5", "लोक निर्माण अनुभाग 1"
 const SECTION_MENTION = /(?:^|\s)((?:[\p{L}\p{M}]+\s+){1,4}अनुभाग(?:\s*[-–]?\s*\d+)?)(?=\s|$)/u;
 const QUOTED = /["“”«»]([^"“”«»]{2,80})["“”«»]/g;
@@ -355,6 +368,14 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
   // Wildcard terms: "solar*", "*पंप*", "क?षि". A "?" counts only between
   // letters; "है?" or "है?\",?" (a typo after a question) is punctuation.
   const patterns: string[] = [];
+  // "*solar पम्प*": a starred phrase is one pattern, spaces included.
+  rest = rest.replace(/\*([^*\n]{2,60}?)\*/gu, (whole, inner: string) => {
+    if (/\s/.test(inner.trim()) && inner.trim().replace(/[*?\s]/g, "").length >= 3) {
+      patterns.push(`*${inner.trim()}*`);
+      return " ";
+    }
+    return whole;
+  });
   rest = rest.replace(/\S*\*\S*|\S*[\p{L}\p{M}]\?[\p{L}\p{M}]\S*/gu, (token) => {
     const pattern = token.replace(/^[(\["']+|[)\]"'.,;:!]+$/g, "");
     if (pattern.replace(/[*?]/g, "").length >= 2) patterns.push(pattern);
@@ -375,7 +396,20 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
   if (CONTENT_QUESTION.test(lower) && !explicit) return null;
   // "GeM guidelines", "central procurement rules": documents by topic, even without "order".
   const asksForDocuments = narrowed && /\b(?:guidelines?|rules|manuals?|policy|policies|circulars?|instructions)\b|दिशा-?निर्देश|नियमावली|नियम|नीति/i.test(lower);
-  if (!hasOrderWord && !explicit && !asksForDocuments) return null;
+  // "Agriculture, 15.09.2023": a department and a date and nothing else is a
+  // request for that department's orders of that day.
+  const bareDepartmentDate = (() => {
+    if (hasOrderWord || explicit) return false;
+    const range = parseDateRange(query, today);
+    const named = findDepartmentMention(lower);
+    if (!range || !named) return false;
+    let leftover = ` ${normalizeName(lower)} `.replace(normalizeName(range.matched), " ");
+    for (const phrase of departmentPhrases(named.department)) leftover = leftover.split(` ${phrase} `).join(" ");
+    return leftover
+      .split(/\s+/)
+      .filter((word) => word.length >= 2 && !isFiller(word) && !/^\d+$/.test(word) && !MONTH_ALT_RE.test(word)).length === 0;
+  })();
+  if (!hasOrderWord && !explicit && !asksForDocuments && !bareDepartmentDate) return null;
 
   // Dates first, so neither the issuer ("released by X this week") nor a
   // subject word ("Sepetember") swallows them.
@@ -388,21 +422,46 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
   // Who issued it: a department, a section (अनुभाग), or both
   // ("released by कृषि अनुभाग-5" = Agriculture, section "कृषि अनुभाग-5").
   let section: string | undefined;
+  let personIssuer: string | undefined;
   let department: DepartmentEntry | null = null;
   const by = RELEASED_BY_EN.exec(rest) ?? RELEASED_BY_HI.exec(rest);
   if (by) {
-    const who = by[1].trim();
+    let who = by[1].trim();
+    // Hindi: only the words after the subject ("सोलर पंप के लिए | शासन") issue
+    // it; the subject words stay in the question.
+    let keep = "";
+    const boundary = [...` ${who} `.matchAll(new RegExp(ISSUER_BOUNDARY_HI.source, "gu"))].pop();
+    if (boundary && boundary.index !== undefined) {
+      const padded = ` ${who} `;
+      keep = padded.slice(0, boundary.index + boundary[0].length);
+      who = padded.slice(boundary.index + boundary[0].length).trim();
+    }
     const named = findDepartmentMention(who);
     if (named) department = named.department;
     const englishNumber = /\bsection\s*[-–]?\s*(\d+)\b/.exec(who);
-    if (englishNumber) section = `अनुभाग-${englishNumber[1]}`; // "Public Works section 1"
-    else if (/अनुभाग/.test(who) || (!named && who.replace(/\s/g, "").length >= 3)) section = who;
-    rest = rest.replace(by[0], " ");
+    if (GOVERNMENT_ISSUER.test(who.trim()) || !who.trim()) {
+      // "उत्तर प्रदेश शासन द्वारा जारी": issued by the government, no filter.
+    } else if (englishNumber) {
+      section = `अनुभाग-${englishNumber[1]}`; // "Public Works section 1"
+    } else if (/अनुभाग/.test(who)) {
+      section = who;
+    } else if (!named && who.replace(/\s/g, "").length >= 3) {
+      // Not a department or section: a person ("released by Ravi Ranjan").
+      personIssuer = who;
+    }
+    rest = rest.replace(by[0], ` ${keep} `);
   }
   const sectionMention = SECTION_MENTION.exec(rest);
   if (sectionMention) {
     section = sectionMention[1].trim();
-    department ??= findDepartmentMention(section)?.department ?? null;
+    const sectionDepartment = findDepartmentMention(section);
+    department ??= sectionDepartment?.department ?? null;
+    // "Agriculture अनुभाग 5" → "कृषि अनुभाग 5": sections are named in Hindi.
+    if (sectionDepartment && /[a-z]/i.test(sectionDepartment.matched)) {
+      section = ` ${normalizeName(section)} `
+        .replace(` ${sectionDepartment.matched} `, ` ${sectionDepartment.department.hi.replace(/\s*विभाग$/u, "")} `)
+        .trim();
+    }
     rest = rest.replace(sectionMention[1], " ");
   }
   // English "section 1" means अनुभाग-1 (of the named department).
@@ -446,14 +505,17 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
     .slice(0, 8);
 
   const mode: ListingRequest["mode"] =
-    words.length || goNumber || phrases.length || patterns.length || section || narrowed ? "find" : "recent";
+    words.length || goNumber || phrases.length || patterns.length || section || narrowed || personIssuer ? "find" : "recent";
   // Naming the issuing office is a clear search, too.
   const explicitSearch = explicit || Boolean(by || section);
   if (mode === "recent" && !range && !RECENT_WORD.test(lower) && !department && !findVerb) return null;
 
   // Wildcard stems count for meaning too: "*solar*" should still find "सोलर" subjects.
   const patternStems = patterns.map((pattern) => pattern.replace(/[*?]+/g, " ").trim()).filter((stem) => stem.length >= 3);
-  const semanticParts = [...phrases, ...patternStems, ...words];
+  // Hindi spellings of English words too: subjects are Hindi ("solar pump" →
+  // "सोलर पम्प"), so meaning-based matching sees the words the subjects use.
+  const glossaryWords = words.flatMap((word) => termVariants(word).filter((variant) => variant !== word && /[\u0900-\u097f]/.test(variant)).slice(0, 2));
+  const semanticParts = [...phrases, ...patternStems, ...words, ...glossaryWords];
   return {
     mode,
     explicit: explicitSearch,
@@ -466,6 +528,7 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
     phrases,
     patterns,
     section,
+    personIssuer,
     jurisdictions: jurisdiction.codes,
     topics: topicHits.topics,
     words,
@@ -540,7 +603,19 @@ function describeCriteria(request: ListingRequest, hi: boolean): string {
   return parts.join(hi ? ", " : ", ");
 }
 
+/** "released by <person>": what the archive can and cannot search (ADR-074). */
+export function personIssuerNote(person: string, language: "hi" | "en"): string {
+  return language === "hi"
+    ? `संग्रह में यह दर्ज नहीं है कि शासनादेश किस अधिकारी ने हस्ताक्षरित/जारी किया, इसलिए “${person}” के नाम से खोज नहीं हो सकती। विभाग, अनुभाग, शासनादेश संख्या, दिनांक या विषय से खोजें — जैसे “कृषि विभाग के सोलर पम्प से संबंधित शासनादेश”।`
+    : `The archive does not record which officer signed or issued an order, so orders cannot be searched by “${person}”. Search by department, section, GO number, date or subject instead — e.g. “Agriculture department orders on solar pumps”.`;
+}
+
 export function buildListingAnswer(request: ListingRequest, outcome: ListingOutcome, language: "hi" | "en"): string {
+  const text = buildListingText(request, outcome, language);
+  return request.personIssuer ? `${personIssuerNote(request.personIssuer, language)}\n\n${text}` : text;
+}
+
+function buildListingText(request: ListingRequest, outcome: ListingOutcome, language: "hi" | "en"): string {
   const hi = language === "hi";
   const where =
     outcome.scope.kind === "department"
@@ -648,6 +723,24 @@ export async function listOrders(
   language: "hi" | "en",
   subjectSearch?: SubjectSearch,
 ): Promise<{ text: string; outcome: ListingOutcome } | null> {
+  // Only a person was named ("released by Ravi Ranjan"): nothing searchable.
+  if (
+    request.personIssuer &&
+    !request.words.length &&
+    !request.phrases.length &&
+    !request.patterns.length &&
+    !request.goNumber &&
+    !request.section &&
+    !request.department &&
+    !request.dateFrom &&
+    !request.topics.length
+  ) {
+    return {
+      text: personIssuerNote(request.personIssuer, language),
+      outcome: { orders: [], total: 0, scope: { kind: "all" }, topicDropped: false, widened: false },
+    };
+  }
+
   const base: BrowseRequest = {
     dateFrom: request.dateFrom,
     dateTo: request.dateTo,
