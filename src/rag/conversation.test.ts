@@ -212,3 +212,19 @@ assert.equal(
   ),
   "hi",
 );
+
+// A clicked suggested question is a follow-up even without "this/इस"
+// (2 Oct 2026: it was searched as a new question and answered from another
+// department's manual).
+{
+  const messages = [
+    { role: "user" as const, content: "What are the seniority rules for medical officers?" },
+    { role: "user" as const, content: "What is the procedure for verifying the character and suitability of candidates for promotion?" },
+  ];
+  assert.equal(buildConversationQueryPlan(messages, 1).contextualized, false);
+  const plan = buildConversationQueryPlan(messages, 1, { followUp: true });
+  assert.equal(plan.contextualized, true);
+  assert.match(plan.retrievalQuery, /medical officers/);
+  // Nothing to follow: stays a plain question.
+  assert.equal(buildConversationQueryPlan([messages[1]], 0, { followUp: true }).contextualized, false);
+}

@@ -108,6 +108,10 @@ export function isLikelyFollowUp(
 export function buildConversationQueryPlan(
   messages: ChatMessage[],
   lastUserIndex: number,
+  // A suggested follow-up the user clicked under an answer: always about the
+  // same orders, even without "this/इस" ("…procedure for verifying character
+  // for promotion?" after a Medical Officer service-rules answer).
+  options: { followUp?: boolean } = {},
 ): ConversationQueryPlan {
   if (
     lastUserIndex < 0 ||
@@ -161,9 +165,10 @@ export function buildConversationQueryPlan(
   const contextualized =
     priorUserQuestions.length >
       0 &&
-    isLikelyFollowUp(
-      currentQuery,
-    );
+    (options.followUp === true ||
+      isLikelyFollowUp(
+        currentQuery,
+      ));
 
   if (!contextualized) {
     return {

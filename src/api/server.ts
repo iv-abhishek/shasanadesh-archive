@@ -360,6 +360,11 @@ const ChatBodySchema = z.object({
   regenerate:
     z.boolean()
       .optional(),
+  // A suggested question clicked under the previous answer: a follow-up on
+  // the same orders (conversation context + the cited order first).
+  followUp:
+    z.boolean()
+      .optional(),
 });
 
 const SearchFiltersSchema = z.object({
@@ -935,6 +940,7 @@ server.post(
       buildConversationQueryPlan(
         messages,
         lastUserIndex,
+        { followUp: parsed.data.followUp },
       );
 
     const query =
@@ -1465,10 +1471,11 @@ server.post(
         },
       );
 
+    // The conversation's order (or department) first; when none of its pages
+    // is about the question, search the usual scope instead.
     if (
       sourceStickinessApplied &&
-      retrieval.evidence.length ===
-        0
+      assessRelevance(retrieval.evidence, RAG_MIN_RELEVANCE).kept.length === 0
     ) {
       const fallbackFilters:
         SearchFilters | undefined =

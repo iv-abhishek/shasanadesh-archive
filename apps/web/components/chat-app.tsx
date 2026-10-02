@@ -2556,7 +2556,8 @@ export function ChatApp({
     async (
       question: string,
       priorTurns: ChatTurn[],
-      options: { regenerateOf?: ChatTurn } = {},
+      // followUp: a suggested question clicked under the last answer.
+      options: { regenerateOf?: ChatTurn; followUp?: boolean } = {},
     ) => {
       setBusy(true);
       const controller = new AbortController();
@@ -2666,6 +2667,7 @@ export function ChatApp({
                 workspaceUserId,
                 regenerate:
                   Boolean(options.regenerateOf),
+                followUp: Boolean(options.followUp),
               }),
               signal: controller.signal,
             },
@@ -3120,7 +3122,7 @@ export function ChatApp({
                       onAsk={(question) => {
                         if (busy || archived) return;
                         setQuery("");
-                        void ask(question, turns);
+                        void ask(question, turns, { followUp: true });
                       }}
                     />
                   ) : null
