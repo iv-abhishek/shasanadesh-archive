@@ -6,6 +6,7 @@
  * still open because there is no production identity provider yet.
  */
 
+import { findDepartmentEntry } from "../departments/registry.js";
 import type {
   FastifyInstance,
   FastifyReply,
@@ -265,10 +266,15 @@ export function registerWorkspaceRoutes(
       reply,
     ) => {
       try {
-        return {
-          departments:
-            await listDepartments(),
-        };
+        const departments = await listDepartments();
+        // English names and common spellings, so the profile form can show
+        // "कृषि विभाग — Agriculture" and find it when someone types "krishi".
+        const labels: Record<string, { en: string; aliases: string[] }> = {};
+        for (const name of departments) {
+          const entry = findDepartmentEntry(name);
+          if (entry) labels[name] = { en: entry.en, aliases: entry.aliases };
+        }
+        return { departments, labels };
       } catch (error) {
         return sendError(
           reply,

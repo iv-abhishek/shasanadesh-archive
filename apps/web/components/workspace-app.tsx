@@ -2,7 +2,9 @@
 
 import {
   FormEvent,
+  createContext,
   useCallback,
+  useContext,
   useEffect,
   useState,
 } from "react";
@@ -140,6 +142,29 @@ const INDIA_STATES_AND_UTS = [
   "Central Government / Other",
 ];
 
+// English names and common spellings of the stored (Hindi) department names,
+// from datasets/departments.json via /api/workspace/departments.
+type DepartmentLabels = Record<string, { en: string; aliases: string[] }>;
+const DepartmentLabelsContext = createContext<DepartmentLabels>({});
+
+function departmentOptionText(department: string, labels: DepartmentLabels): string {
+  const en = labels[department]?.en;
+  return en ? `${department} — ${en}` : department;
+}
+
+function searchKey(text: string): string {
+  return text.replace(/[\u200c\u200d]/g, "").toLowerCase().replace(/\s+/g, " ").trim();
+}
+
+function departmentMatches(department: string, labels: DepartmentLabels, query: string): boolean {
+  const key = searchKey(query);
+  if (!key) return true;
+  const label = labels[department];
+  return [department, label?.en ?? "", ...(label?.aliases ?? [])].some((name) =>
+    searchKey(name).includes(key),
+  );
+}
+
 // Officers may hold several departments at once: a substantive posting,
 // additional charge of others, both, or none. Each selected department can be
 // flagged as "additional charge"; all selected departments are searched.
@@ -158,8 +183,16 @@ function DepartmentChecklist({
   charged: string[];
   onChargedChange: (next: string[]) => void;
 }) {
+  const labels = useContext(DepartmentLabelsContext);
+  const [query, setQuery] = useState("");
   const selectable = departments.filter(
     (department) => department !== primaryDepartment,
+  );
+  // Ticked departments stay in view while searching, so they can be unticked.
+  const shown = selectable.filter(
+    (department) =>
+      selected.includes(department) ||
+      departmentMatches(department, labels, query),
   );
 
   if (selectable.length === 0) {
@@ -188,8 +221,38 @@ function DepartmentChecklist({
   };
 
   return (
+    <div className="department-picker">
+    <div className="department-search-row">
+      <input
+        type="search"
+        className="department-search"
+        placeholder="Search department (Hindi or English)"
+        aria-label="Search departments"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            // Enter ticks the only match instead of submitting the form.
+            event.preventDefault();
+            const matches = shown.filter((department) => !selected.includes(department));
+            if (matches.length === 1 && selected.length < 12) {
+              toggle(matches[0]);
+              setQuery("");
+            }
+          }
+        }}
+      />
+      <span className="department-count">
+        {selected.length} selected{selected.length >= 12 ? " (max 12)" : ""}
+      </span>
+    </div>
     <div className="department-checklist" aria-label="Other departments">
-      {selectable.map((department) => {
+      {shown.length === selected.length && query.trim() ? (
+        <div className="field-help department-no-match">
+          No department matches “{query.trim()}”.
+        </div>
+      ) : null}
+      {shown.map((department) => {
         const isSelected = selected.includes(department);
         const isCharged = isSelected && charged.includes(department);
 
@@ -202,7 +265,10 @@ function DepartmentChecklist({
                 disabled={!isSelected && selected.length >= 12}
                 onChange={() => toggle(department)}
               />
-              <span>{department}</span>
+              <span className="department-name">
+                {department}
+                {labels[department]?.en ? <small>{labels[department].en}</small> : null}
+              </span>
             </label>
             {isSelected ? (
               <button
@@ -218,6 +284,7 @@ function DepartmentChecklist({
           </div>
         );
       })}
+    </div>
     </div>
   );
 }
@@ -324,6 +391,7 @@ function ProfileEditor({
     additionalChargeDepartments: string[];
   }) => Promise<void>;
 }) {
+  const departmentLabels = useContext(DepartmentLabelsContext);
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [designation, setDesignation] = useState(profile.designation ?? "");
   const [stateName, setStateName] = useState(profile.stateName ?? "");
@@ -471,7 +539,9 @@ function ProfileEditor({
             >
               <option value="">None</option>
               {departments.map((department) => (
-                <option key={department} value={department}>{department}</option>
+                <option key={department} value={department}>
+                  {departmentOptionText(department, departmentLabels)}
+                </option>
               ))}
             </select>
           </label>
@@ -569,6 +639,7 @@ function Onboarding({
         WorkspaceProfile,
     ) => void;
 }) {
+  const departmentLabels = useContext(DepartmentLabelsContext);
   const [
     displayName,
     setDisplayName,
@@ -932,7 +1003,7 @@ function Onboarding({
                       department
                     }
                   >
-                    {department}
+                    {departmentOptionText(department, departmentLabels)}
                   </option>
                 ),
               )}
@@ -1049,6 +1120,7 @@ export function WorkspaceApp() {
     setDepartments,
   ] =
     useState<string[]>([]);
+  const [departmentLabels, setDepartmentLabels] = useState<DepartmentLabels>({});
 
   const [
     devProfiles,
@@ -1269,6 +1341,7 @@ export function WorkspaceApp() {
               await jsonRequest<{
                 departments:
                   string[];
+                labels?: DepartmentLabels;
               }>(
                 "/api/workspace/departments",
               );
@@ -1281,6 +1354,7 @@ export function WorkspaceApp() {
               departmentData
                 .departments,
             );
+            setDepartmentLabels(departmentData.labels ?? {});
 
             const sessionResponse =
               await fetch(
@@ -1868,6 +1942,7 @@ export function WorkspaceApp() {
 
   if (!profile || switchingProfile) {
     return (
+      <DepartmentLabelsContext.Provider value={departmentLabels}>
       <Onboarding
         departments={
           departments
@@ -1894,10 +1969,12 @@ export function WorkspaceApp() {
           void loadDevProfiles();
         }}
       />
+      </DepartmentLabelsContext.Provider>
     );
   }
 
   return (
+    <DepartmentLabelsContext.Provider value={departmentLabels}>
     <div className={sidebarHidden ? "workspace-layout sidebar-hidden" : "workspace-layout"}>
       <aside className="history-sidebar" id="workspace-history-sidebar">
         <div className="history-search">
@@ -2230,5 +2307,6 @@ export function WorkspaceApp() {
         </svg>
       </button>
     </div>
+    </DepartmentLabelsContext.Provider>
   );
 }

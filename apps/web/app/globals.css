@@ -4010,3 +4010,56 @@ h1 {
   background: var(--surface-muted, rgba(0, 0, 0, 0.04));
 }
 
+
+/* Department picker: search box, English names under the Hindi ones */
+.department-picker {
+  display: grid;
+  gap: 8px;
+}
+
+.department-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.department-search {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.department-search:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.department-count {
+  flex: 0 0 auto;
+  color: var(--muted);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.department-name {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.department-name small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.department-no-match {
+  grid-column: 1 / -1;
+}

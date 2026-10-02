@@ -17,7 +17,8 @@
    "en": "Civil Aviation",
    "enSource": "archive",
    "aliases": [
-    "aviation"
+    "aviation",
+    "नागरिक उड्ड़यन विभाग"
    ]
   },
   {
@@ -208,7 +209,9 @@
    "hi": "संस्कृति विभाग",
    "en": "Culture",
    "enSource": "translation",
-   "aliases": []
+   "aliases": [
+    "सांस्कृति विभाग"
+   ]
   },
   {
    "id": 79,
@@ -273,7 +276,8 @@
     "women and child development",
     "women welfare",
     "icds",
-    "महिला कल्याण"
+    "महिला कल्याण",
+    "महिला एवं बाल विकास विभाग"
    ]
   },
   {
@@ -284,7 +288,8 @@
    "aliases": [
     "disability",
     "persons with disabilities",
-    "divyang"
+    "divyang",
+    "विकलांग कल्याण विभाग"
    ]
   },
   {
@@ -312,7 +317,8 @@
    "enSource": "translation",
    "aliases": [
     "handloom",
-    "textiles"
+    "textiles",
+    "वस्त्रोद्योग विभाग"
    ]
   },
   {
@@ -385,7 +391,8 @@
    "aliases": [
     "renewable energy",
     "non-conventional energy",
-    "अतिरिक्त ऊर्जा स्रोत"
+    "अतिरिक्त ऊर्जा स्रोत",
+    "अतिरिक्त ऊर्जा श्रोत विभाग-1"
    ]
   },
   {
@@ -395,7 +402,8 @@
    "enSource": "archive",
    "aliases": [
     "skill development",
-    "vocational education"
+    "vocational education",
+    "व्यवसायिक शिक्षा एवं कौशल विकास विभाग"
    ]
   },
   {
@@ -464,7 +472,8 @@
    "aliases": [
     "commercial tax",
     "gst department",
-    "वाणिज्य कर"
+    "वाणिज्य कर",
+    "संस्थागत वित्त कर एवं निबन्धन विभाग"
    ]
   },
   {
@@ -547,7 +556,9 @@
    "enSource": "archive",
    "aliases": [
     "madhyamik shiksha",
-    "माध्यमिक शिक्षा"
+    "माध्यमिक शिक्षा",
+    "माध्यामिक शिक्षा विभाग",
+    "शिक्षा विभाग"
    ]
   },
   {
@@ -556,7 +567,372 @@
    "en": "AYUSH",
    "enSource": "translation",
    "aliases": [
-    "ayush department"
+    "ayush department",
+    "आयुष विभाग (12-01-2023 से पूर्व चिकित्सा- शिक्षा विभाग)"
+   ]
+  },
+  {
+   "id": 171,
+   "hi": "राज्य सम्पत्ति विभाग",
+   "en": "State Property",
+   "enSource": "translation",
+   "aliases": [
+    "estate department",
+    "rajya sampatti",
+    "राज्य सम्पत्ति",
+    "राज्य संपत्ति"
+   ]
+  },
+  {
+   "id": 175,
+   "hi": "राजस्व विभाग",
+   "en": "Revenue",
+   "enSource": "translation",
+   "aliases": [
+    "revenue department",
+    "rajasv",
+    "rajasva"
+   ]
+  },
+  {
+   "id": 74,
+   "hi": "उद्यान विभाग",
+   "en": "Horticulture",
+   "enSource": "translation",
+   "aliases": [
+    "horticulture and food processing",
+    "udyan",
+    "उद्यान एवं खाद्य प्रसंस्करण"
+   ]
+  },
+  {
+   "id": 170,
+   "hi": "नगर विकास विभाग",
+   "en": "Urban Development",
+   "enSource": "translation",
+   "aliases": [
+    "nagar vikas",
+    "urban development department"
+   ]
+  },
+  {
+   "id": 47,
+   "hi": "ग्रामीण अभियन्त्रण विभाग",
+   "en": "Rural Engineering",
+   "enSource": "translation",
+   "aliases": [
+    "rural engineering services",
+    "ग्रामीण अभियंत्रण"
+   ]
+  },
+  {
+   "id": 80,
+   "hi": "पंचायतीराज विभाग",
+   "en": "Panchayati Raj",
+   "enSource": "translation",
+   "aliases": [
+    "panchayat raj",
+    "पंचायती राज"
+   ]
+  },
+  {
+   "id": 213,
+   "hi": "उपभोक्ता संरक्षण एवं बाट माप विभाग",
+   "en": "Consumer Protection and Weights and Measures",
+   "enSource": "translation",
+   "aliases": [
+    "legal metrology",
+    "weights and measures",
+    "consumer protection"
+   ]
+  },
+  {
+   "id": 36,
+   "hi": "सचिवालय प्रशासन विभाग",
+   "en": "Secretariat Administration",
+   "enSource": "translation",
+   "aliases": [
+    "sachivalaya prashasan"
+   ]
+  },
+  {
+   "id": 166,
+   "hi": "सूक्ष्म,लघु एवं मध्यम उद्यम विभाग",
+   "en": "Micro, Small and Medium Enterprises",
+   "enSource": "translation",
+   "aliases": [
+    "msme",
+    "सूक्ष्म लघु एवं मध्यम उद्यम",
+    "एमएसएमई"
+   ]
+  },
+  {
+   "id": 110,
+   "hi": "लघु सिंचाई विभाग",
+   "en": "Minor Irrigation",
+   "enSource": "translation",
+   "aliases": [
+    "laghu sinchai"
+   ]
+  },
+  {
+   "id": 9,
+   "hi": "चीनी उद्योग एवं गन्ना विकास विभाग",
+   "en": "Sugar Industry and Cane Development",
+   "enSource": "translation",
+   "aliases": [
+    "cane development",
+    "sugarcane",
+    "ganna vikas",
+    "गन्ना विकास"
+   ]
+  },
+  {
+   "id": 63,
+   "hi": "भाषा विभाग",
+   "en": "Language",
+   "enSource": "translation",
+   "aliases": [
+    "bhasha",
+    "language department"
+   ]
+  },
+  {
+   "id": 61,
+   "hi": "प्रशासनिक सुधार विभाग",
+   "en": "Administrative Reforms",
+   "enSource": "translation",
+   "aliases": [
+    "administrative reform"
+   ]
+  },
+  {
+   "id": 209,
+   "hi": "सैनिक कल्याण विभाग",
+   "en": "Sainik Welfare",
+   "enSource": "translation",
+   "aliases": [
+    "soldier welfare",
+    "ex-servicemen welfare",
+    "sainik kalyan"
+   ]
+  },
+  {
+   "id": 214,
+   "hi": "भूतत्व एवं खनिकर्म विभाग",
+   "en": "Geology and Mining",
+   "enSource": "translation",
+   "aliases": [
+    "mining",
+    "mines",
+    "geology"
+   ]
+  },
+  {
+   "id": 16,
+   "hi": "सहकारिता विभाग",
+   "en": "Cooperative",
+   "enSource": "translation",
+   "aliases": [
+    "cooperation",
+    "co-operative",
+    "sahkarita"
+   ]
+  },
+  {
+   "id": 198,
+   "hi": "राजनैतिक पेंशन विभाग",
+   "en": "Political Pension",
+   "enSource": "translation",
+   "aliases": [
+    "political pension department"
+   ]
+  },
+  {
+   "id": 183,
+   "hi": "प्रोटोकाल विभाग",
+   "en": "Protocol",
+   "enSource": "translation",
+   "aliases": [
+    "प्रोटोकॉल"
+   ]
+  },
+  {
+   "id": 218,
+   "hi": "एन.आर.आई विभाग",
+   "en": "NRI",
+   "enSource": "translation",
+   "aliases": [
+    "non resident indians",
+    "nri department",
+    "एनआरआई"
+   ]
+  },
+  {
+   "id": 207,
+   "hi": "राष्ट्रीय एकीकरण विभाग",
+   "en": "National Integration",
+   "enSource": "translation",
+   "aliases": []
+  },
+  {
+   "id": 2,
+   "hi": "राज्य योजना आयोग विभाग",
+   "en": "State Planning Commission",
+   "enSource": "translation",
+   "aliases": [
+    "राज्य योजना आयोग"
+   ]
+  },
+  {
+   "id": 185,
+   "hi": "संसदीय विभाग",
+   "en": "Parliamentary Affairs",
+   "enSource": "translation",
+   "aliases": [
+    "संसदीय कार्य",
+    "parliamentary affairs department"
+   ]
+  },
+  {
+   "id": 192,
+   "hi": "निर्वाचन विभाग",
+   "en": "Election",
+   "enSource": "translation",
+   "aliases": [
+    "election department",
+    "nirvachan"
+   ]
+  },
+  {
+   "id": 157,
+   "hi": "पर्यावरण विभाग",
+   "en": "Environment",
+   "enSource": "translation",
+   "aliases": []
+  },
+  {
+   "id": 184,
+   "hi": "समन्वय विभाग",
+   "en": "Coordination",
+   "enSource": "translation",
+   "aliases": [
+    "samanvay"
+   ]
+  },
+  {
+   "id": 147,
+   "hi": "परती भूमि विकास विभाग",
+   "en": "Wasteland Development",
+   "enSource": "translation",
+   "aliases": [
+    "wasteland"
+   ]
+  },
+  {
+   "id": 191,
+   "hi": "कार्यक्रम कार्यान्वयन विभाग",
+   "en": "Programme Implementation",
+   "enSource": "translation",
+   "aliases": [
+    "program implementation"
+   ]
+  },
+  {
+   "id": 150,
+   "hi": "सतर्कता विभाग",
+   "en": "Vigilance",
+   "enSource": "translation",
+   "aliases": [
+    "vigilance department",
+    "satarkta"
+   ]
+  },
+  {
+   "id": 120,
+   "hi": "वाहय साहायतिक परियोजना",
+   "en": "Externally Aided Projects",
+   "enSource": "translation",
+   "aliases": [
+    "externally aided project",
+    "बाह्य सहायतित परियोजना"
+   ]
+  },
+  {
+   "id": 217,
+   "hi": "मुख्यमंत्री कार्यालय लोक शिकायत विभाग",
+   "en": "Chief Minister's Office Public Grievances",
+   "enSource": "translation",
+   "aliases": [
+    "public grievances",
+    "cm office public grievances",
+    "लोक शिकायत"
+   ]
+  },
+  {
+   "id": 203,
+   "hi": "उत्तर प्रदेश पुनर्गठन समन्वय विभाग",
+   "en": "UP Reorganisation Coordination",
+   "enSource": "translation",
+   "aliases": [
+    "reorganisation coordination"
+   ]
+  },
+  {
+   "id": 215,
+   "hi": "गोपन विभाग",
+   "en": "Confidential",
+   "enSource": "translation",
+   "aliases": [
+    "gopan",
+    "confidential department"
+   ]
+  },
+  {
+   "id": 111,
+   "hi": "युवा कल्याण विभाग",
+   "en": "Youth Welfare",
+   "enSource": "translation",
+   "aliases": [
+    "yuva kalyan"
+   ]
+  },
+  {
+   "id": 189,
+   "hi": "विधायी विभाग",
+   "en": "Legislative",
+   "enSource": "translation",
+   "aliases": [
+    "legislative department",
+    "vidhayi"
+   ]
+  },
+  {
+   "id": 210,
+   "hi": "समग्र ग्राम्य विकास विभाग",
+   "en": "Integrated Rural Development",
+   "enSource": "translation",
+   "aliases": [
+    "samagra gramya vikas"
+   ]
+  },
+  {
+   "id": 206,
+   "hi": "स्वतन्त्रता संग्राम सेनानी कल्याण परिषद विभाग",
+   "en": "Freedom Fighters Welfare Council",
+   "enSource": "translation",
+   "aliases": [
+    "freedom fighters welfare",
+    "स्वतंत्रता संग्राम सेनानी"
+   ]
+  },
+  {
+   "id": 204,
+   "hi": "लोक सेवा प्रबंधन विभाग",
+   "en": "Public Service Management",
+   "enSource": "translation",
+   "aliases": [
+    "lok seva prabandhan"
    ]
   }
  ]
