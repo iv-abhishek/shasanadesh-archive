@@ -3419,6 +3419,14 @@ h1 {
   color: inherit;
 }
 
+/* Kruti Dev originals: the text shown was converted (ADR-070). */
+.source-font-note {
+  margin: 8px 0 0;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--muted, #5f6b66);
+}
+
 /* Uncited retrieved orders sit behind a toggle under the cited ones. */
 .sources-others-toggle {
   margin-top: 10px;

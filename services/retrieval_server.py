@@ -95,6 +95,8 @@ class Evidence(BaseModel):
     go_date: str | None
     source_url: str
     page_url: str
+    # The official page/PDF sets this text in a Kruti Dev font (converted here, ADR-070).
+    legacy_font: bool = False
     # ADR-064: IN (Government of India) / UP / later other states; current / superseded / draft.
     jurisdiction_code: str | None = None
     status: str | None = None
@@ -666,8 +668,11 @@ def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
     # HTML sources (UP Financial Handbook) keep one official URL per page in
     # documents.metadata.pageUrls; PDFs link to the page with #page=N.
     page_link = conn.execute(
-        "SELECT metadata->'pageUrls'->>%s AS url FROM documents WHERE source_id=%s",
-        (hit.page_number - 1, hit.source_id),
+        "SELECT metadata->'pageUrls'->>%s AS url, "
+        "COALESCE(metadata->'html'->'legacyFontPages', '[]'::jsonb) @> to_jsonb(%s::int) "
+        "OR COALESCE((metadata->'pageCorpus'->>'krutiDevPages')::int, 0) > 0 AS legacy_font "
+        "FROM documents WHERE source_id=%s",
+        (hit.page_number - 1, hit.page_number, hit.source_id),
     ).fetchone()
     page_url = (
         page_link["url"]
@@ -685,6 +690,7 @@ def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
         go_date=hit.go_date,
         source_url=hit.source_url,
         page_url=page_url,
+        legacy_font=bool(page_link and page_link["legacy_font"]),
         jurisdiction_code=hit.jurisdiction_code,
         status=hit.status,
         retrieval_role=hit.retrieval_role,

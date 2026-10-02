@@ -74,6 +74,8 @@ interface Source {
   /** ADR-064: "IN" (Government of India), "UP", …; and current / superseded / draft. */
   jurisdictionCode?: string | null;
   status?: string | null;
+  /** The official copy is in a Kruti Dev font; the text shown was converted (ADR-070). */
+  legacyFont?: boolean;
 }
 
 interface RagTimings {
@@ -644,6 +646,7 @@ function normalizePersistedSource(
     kind: raw.kind === "listing" ? "listing" : undefined,
     jurisdictionCode: typeof raw.jurisdictionCode === "string" ? raw.jurisdictionCode : null,
     status: typeof raw.status === "string" ? raw.status : null,
+    legacyFont: raw.legacyFont === true,
   };
 }
 
@@ -1355,6 +1358,14 @@ function SourceGroupCard({
             );
           })}
         </ul>
+      ) : null}
+
+      {group.pages.some((page) => page.legacyFont) ? (
+        <p className="source-font-note">
+          {language === "hi"
+            ? "मूल प्रति कृति देव फ़ॉन्ट में है; यहाँ उसका पाठ यूनिकोड हिंदी में बदला गया है। यह फ़ॉन्ट न होने पर आधिकारिक प्रति अस्पष्ट दिख सकती है।"
+            : "The original is typed in the Kruti Dev font; its text here was converted to Unicode Hindi. Without that font, the official copy may look garbled."}
+        </p>
       ) : null}
 
       <div className="page-chips">

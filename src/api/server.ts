@@ -1712,6 +1712,8 @@ server.post(
             officialOnly(item.source_url),
           pageUrl:
             officialOnly(item.page_url),
+          legacyFont:
+            Boolean(item.legacy_font),
           numericConflict:
             item.numeric_conflict,
           numericVerificationStatus:

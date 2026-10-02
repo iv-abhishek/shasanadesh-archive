@@ -23,6 +23,8 @@ export interface RetrievalEvidence {
   go_date: string | null;
   source_url: string;
   page_url: string;
+  /** The official copy sets this page in a Kruti Dev font (text converted, ADR-070). */
+  legacy_font?: boolean;
   /** ADR-064: "IN" (Government of India), "UP", later other states. */
   jurisdiction_code?: string | null;
   /** "current" | "superseded" | "draft" | "historical". */

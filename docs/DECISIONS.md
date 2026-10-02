@@ -1073,4 +1073,7 @@ mostly Vol. V Part II) set their Hindi in Kruti Dev 010/020/040 fonts inside the
 (`convertLegacyFontText`, up-fhb.ts) and leaves digits and English in other fonts alone;
 inline font tags no longer insert spaces. `npm run ingest:handbook -- --reparse` re-reads
 the saved pages without fetching and keeps the B2 capture.
-
+Source cards now say so when a cited page's official copy is in a Kruti Dev font
+(`metadata.html.legacyFontPages` for Handbook pages, `pageCorpus.krutiDevPages` for PDFs;
+`legacy_font` on retrieval evidence): "the text here was converted; without that font the
+official copy may look garbled".
