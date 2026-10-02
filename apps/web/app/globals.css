@@ -4577,3 +4577,88 @@ h1 {
   color: var(--muted);
   font-size: 0.74rem;
 }
+
+/* Merged department list: selected chips, Main / Addl. charge per row */
+.department-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.department-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 3px 4px 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-weight: 620;
+}
+
+.department-chip.main {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.department-chip em {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--action);
+  color: var(--action-text);
+  font-size: 0.62rem;
+  font-style: normal;
+  font-weight: 750;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.department-chip em.charge {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.department-chip button {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.department-chip button:hover {
+  background: var(--hover-surface);
+  color: var(--text);
+}
+
+.department-none {
+  padding: 6px 0;
+}
+
+.department-row-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 5px;
+}
+
+.department-option-row.selected {
+  border-radius: 8px;
+  background: var(--hover-surface);
+}
+
+.charge-toggle.main.active {
+  border-style: solid;
+  border-color: var(--action);
+  background: var(--action);
+  color: var(--action-text);
+}

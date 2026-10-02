@@ -235,305 +235,195 @@ function departmentMatches(department: string, labels: DepartmentLabels, query: 
   );
 }
 
-/**
- * Searchable single choice of department (our own control, not the portal's
- * dropdown). Type Hindi, English or a transliteration ("krishi", "pwd"); the
- * list is the merged one (one entry per portal department), so any spelling
- * finds it. Arrow keys move, Enter picks, Escape closes.
- */
-function DepartmentCombobox({
-  departments,
-  value,
-  onChange,
-  label,
-  noneLabel = "None",
-}: {
-  departments: string[];
-  value: string;
-  onChange: (next: string) => void;
-  label: string;
-  noneLabel?: string;
-}) {
-  const names = useDepartmentNames();
-  const id = useId();
-  const rootRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [active, setActive] = useState(0);
+// One list for all of an officer's departments. Every ticked department is
+// searched (nothing else depends on which one is "main"); none ticked =
+// search all departments. The main (substantive) posting is derived: the
+// first ticked department not held as additional charge, unless the officer
+// marks another as Main. It only orders and highlights the profile.
+const MAX_DEPARTMENTS = 12;
 
-  const matches = names
-    .sort(departments)
-    .filter((department) => departmentMatches(department, names.labels, query));
-  // "" = no primary department; offered only while not searching.
-  const options = query.trim() ? matches : ["", ...matches];
-
-  const close = () => {
-    setOpen(false);
-    setQuery("");
-  };
-  const pick = (next: string) => {
-    onChange(next);
-    close();
-  };
-
-  useEffect(() => {
-    if (!open) return;
-    const onDown = (event: MouseEvent) => {
-      if (rootRef.current && !rootRef.current.contains(event.target as Node)) close();
-    };
-    document.addEventListener("mousedown", onDown);
-    inputRef.current?.focus();
-    return () => document.removeEventListener("mousedown", onDown);
-  }, [open]);
-
-  useEffect(() => {
-    listRef.current
-      ?.querySelector(`[data-index="${active}"]`)
-      ?.scrollIntoView({ block: "nearest" });
-  }, [active, open]);
-
-  const openList = () => {
-    const index = options.indexOf(value);
-    setActive(index >= 0 ? index : 0);
-    setOpen(true);
-  };
-
-  const selectedSub = value ? names.sub(value) : null;
-
-  return (
-    <div className="dept-combo" ref={rootRef}>
-      <div className="profile-field-label" id={`${id}-label`}>{label}</div>
-      <button
-        type="button"
-        className={open ? "dept-combo-button open" : "dept-combo-button"}
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-labelledby={`${id}-label`}
-        onClick={() => (open ? close() : openList())}
-        onKeyDown={(event) => {
-          if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-            event.preventDefault();
-            openList();
-          }
-        }}
-      >
-        {value ? (
-          <span className="dept-combo-value">
-            <strong>{names.main(value)}</strong>
-            {selectedSub ? <small>{selectedSub}</small> : null}
-          </span>
-        ) : (
-          <span className="dept-combo-value placeholder">{noneLabel}</span>
-        )}
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
-      </button>
-
-      {open ? (
-        <div className="dept-combo-pop">
-          <input
-            ref={inputRef}
-            type="search"
-            className="department-search"
-            placeholder="Search in Hindi or English (e.g. कृषि, revenue, pwd)"
-            role="combobox"
-            aria-expanded="true"
-            aria-controls={`${id}-list`}
-            aria-activedescendant={options.length ? `${id}-opt-${active}` : undefined}
-            aria-label={`Search ${label}`}
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setActive(0);
-            }}
-            onKeyDown={(event) => {
-              if (event.key === "ArrowDown") {
-                event.preventDefault();
-                setActive((current) => Math.min(current + 1, options.length - 1));
-              } else if (event.key === "ArrowUp") {
-                event.preventDefault();
-                setActive((current) => Math.max(current - 1, 0));
-              } else if (event.key === "Enter") {
-                event.preventDefault();
-                if (options.length) pick(options[Math.min(active, options.length - 1)]);
-              } else if (event.key === "Escape") {
-                event.preventDefault();
-                event.stopPropagation();
-                close();
-              } else if (event.key === "Tab") {
-                close();
-              }
-            }}
-          />
-          <ul className="dept-combo-list" role="listbox" id={`${id}-list`} ref={listRef}>
-            {options.length === 0 ? (
-              <li className="dept-combo-empty">No department matches “{query.trim()}”.</li>
-            ) : (
-              options.map((department, index) => {
-                const sub = department ? names.sub(department) : null;
-                return (
-                  <li
-                    key={department || "(none)"}
-                    id={`${id}-opt-${index}`}
-                    data-index={index}
-                    role="option"
-                    aria-selected={department === value}
-                    className={[
-                      "dept-combo-option",
-                      index === active ? "active" : "",
-                      department === value ? "selected" : "",
-                    ].join(" ")}
-                    onMouseEnter={() => setActive(index)}
-                    onMouseDown={(event) => event.preventDefault()}
-                    onClick={() => pick(department)}
-                  >
-                    {department ? (
-                      <span className="department-name">
-                        {names.main(department)}
-                        {sub ? <small>{sub}</small> : null}
-                      </span>
-                    ) : (
-                      <span className="department-name none">{noneLabel}</span>
-                    )}
-                    {department === value ? <span className="dept-combo-check" aria-hidden="true">✓</span> : null}
-                  </li>
-                );
-              })
-            )}
-          </ul>
-          <div className="dept-combo-foot">
-            <span>{matches.length} of {departments.length} departments</span>
-            <DepartmentNameToggle />
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
+function nextMain(selected: string[], charged: string[], except?: string): string {
+  return selected.find((item) => item !== except && !charged.includes(item)) ?? "";
 }
 
-// Officers may hold several departments at once: a substantive posting,
-// additional charge of others, both, or none. Each selected department can be
-// flagged as "additional charge"; all selected departments are searched.
 function DepartmentChecklist({
   departments,
-  primaryDepartment,
   selected,
   onChange,
   charged,
   onChargedChange,
+  primary,
+  onPrimaryChange,
 }: {
   departments: string[];
-  primaryDepartment: string;
   selected: string[];
   onChange: (next: string[]) => void;
   charged: string[];
   onChargedChange: (next: string[]) => void;
+  primary: string;
+  onPrimaryChange: (next: string) => void;
 }) {
   const names = useDepartmentNames();
   const labels = names.labels;
   const [query, setQuery] = useState("");
-  const selectable = names.sort(departments).filter(
-    (department) => department !== primaryDepartment,
-  );
+  const all = names.sort(departments);
   // Ticked departments stay in view while searching, so they can be unticked.
-  const shown = selectable.filter(
+  const shown = all.filter(
     (department) =>
       selected.includes(department) ||
       departmentMatches(department, labels, query),
   );
 
-  if (selectable.length === 0) {
+  if (all.length === 0) {
     return (
       <div className="field-help">
-        No other departments are available yet.
+        No departments are available yet.
       </div>
     );
   }
 
-  const toggle = (department: string) => {
-    if (selected.includes(department)) {
-      onChange(selected.filter((item) => item !== department));
-      onChargedChange(charged.filter((item) => item !== department));
-    } else {
-      onChange([...selected, department]);
-    }
+  const add = (department: string) => {
+    if (selected.includes(department) || selected.length >= MAX_DEPARTMENTS) return;
+    onChange([...selected, department]);
+    if (!primary) onPrimaryChange(department);
   };
 
-  const toggleCharge = (department: string) => {
-    onChargedChange(
-      charged.includes(department)
-        ? charged.filter((item) => item !== department)
-        : [...charged, department],
-    );
+  const remove = (department: string) => {
+    const rest = selected.filter((item) => item !== department);
+    const restCharged = charged.filter((item) => item !== department);
+    onChange(rest);
+    onChargedChange(restCharged);
+    if (department === primary) onPrimaryChange(nextMain(rest, restCharged));
   };
+
+  const toggle = (department: string) =>
+    selected.includes(department) ? remove(department) : add(department);
+
+  const toggleCharge = (department: string) => {
+    if (charged.includes(department)) {
+      const next = charged.filter((item) => item !== department);
+      onChargedChange(next);
+      if (!primary) onPrimaryChange(department);
+      return;
+    }
+    const next = [...charged, department];
+    onChargedChange(next);
+    // The substantive posting is never additional charge.
+    if (department === primary) onPrimaryChange(nextMain(selected, next, department));
+  };
+
+  const makeMain = (department: string) => {
+    onPrimaryChange(department);
+    onChargedChange(charged.filter((item) => item !== department));
+  };
+
+  // Main first, then in the order they were ticked.
+  const chips = [...selected].sort((a, b) => Number(b === primary) - Number(a === primary));
 
   return (
     <div className="department-picker">
-    <div className="department-search-row">
-      <input
-        type="search"
-        className="department-search"
-        placeholder="Search department (Hindi or English)"
-        aria-label="Search departments"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Enter") {
-            // Enter ticks the only match instead of submitting the form.
-            event.preventDefault();
-            const matches = shown.filter((department) => !selected.includes(department));
-            if (matches.length === 1 && selected.length < 12) {
-              toggle(matches[0]);
-              setQuery("");
-            }
-          }
-        }}
-      />
-      <DepartmentNameToggle />
-      <span className="department-count">
-        {selected.length} selected{selected.length >= 12 ? " (max 12)" : ""}
-      </span>
-    </div>
-    <div className="department-checklist" aria-label="Other departments">
-      {shown.length === selected.length && query.trim() ? (
-        <div className="field-help department-no-match">
-          No department matches “{query.trim()}”.
-        </div>
-      ) : null}
-      {shown.map((department) => {
-        const isSelected = selected.includes(department);
-        const isCharged = isSelected && charged.includes(department);
-
-        return (
-          <div className="department-option-row" key={department}>
-            <label className="department-option">
-              <input
-                type="checkbox"
-                checked={isSelected}
-                disabled={!isSelected && selected.length >= 12}
-                onChange={() => toggle(department)}
-              />
-              <span className="department-name">
-                {names.main(department)}
-                {names.sub(department) ? <small>{names.sub(department)}</small> : null}
-              </span>
-            </label>
-            {isSelected ? (
+      {chips.length ? (
+        <div className="department-chips" aria-label="Selected departments">
+          {chips.map((department) => (
+            <span
+              key={department}
+              className={department === primary ? "department-chip main" : "department-chip"}
+              title={names.sub(department) ?? undefined}
+            >
+              {department === primary ? <em>Main</em> : null}
+              {charged.includes(department) ? <em className="charge">Addl.</em> : null}
+              {names.main(department)}
               <button
                 type="button"
-                className={isCharged ? "charge-toggle active" : "charge-toggle"}
-                aria-pressed={isCharged}
-                title="Mark if you hold this department as additional charge"
-                onClick={() => toggleCharge(department)}
+                aria-label={`Remove ${names.main(department)}`}
+                onClick={() => remove(department)}
               >
-                Addl. charge
+                ×
               </button>
-            ) : null}
+            </span>
+          ))}
+        </div>
+      ) : (
+        <div className="field-help department-none">
+          No department ticked: questions search all departments.
+        </div>
+      )}
+      <div className="department-search-row">
+        <input
+          type="search"
+          className="department-search"
+          placeholder="Search department (Hindi or English, e.g. कृषि, revenue, pwd)"
+          aria-label="Search departments"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              // Enter ticks the only match instead of submitting the form.
+              event.preventDefault();
+              const matches = shown.filter((department) => !selected.includes(department));
+              if (matches.length === 1) {
+                add(matches[0]);
+                setQuery("");
+              }
+            }
+          }}
+        />
+        <DepartmentNameToggle />
+        <span className="department-count">
+          {selected.length}/{MAX_DEPARTMENTS} selected
+        </span>
+      </div>
+      <div className="department-checklist" aria-label="Departments">
+        {shown.length === selected.length && query.trim() ? (
+          <div className="field-help department-no-match">
+            No department matches “{query.trim()}”.
           </div>
-        );
-      })}
-    </div>
+        ) : null}
+        {shown.map((department) => {
+          const isSelected = selected.includes(department);
+          const isCharged = isSelected && charged.includes(department);
+          const isMain = isSelected && department === primary;
+
+          return (
+            <div className={isSelected ? "department-option-row selected" : "department-option-row"} key={department}>
+              <label className="department-option">
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  disabled={!isSelected && selected.length >= MAX_DEPARTMENTS}
+                  onChange={() => toggle(department)}
+                />
+                <span className="department-name">
+                  {names.main(department)}
+                  {names.sub(department) ? <small>{names.sub(department)}</small> : null}
+                </span>
+              </label>
+              {isSelected ? (
+                <span className="department-row-actions">
+                  <button
+                    type="button"
+                    className={isMain ? "charge-toggle main active" : "charge-toggle main"}
+                    aria-pressed={isMain}
+                    title="Your substantive posting (shown first in your profile)"
+                    onClick={() => makeMain(department)}
+                  >
+                    Main
+                  </button>
+                  <button
+                    type="button"
+                    className={isCharged ? "charge-toggle active" : "charge-toggle"}
+                    aria-pressed={isCharged}
+                    title="Mark if you hold this department as additional charge"
+                    onClick={() => toggleCharge(department)}
+                  >
+                    Addl. charge
+                  </button>
+                </span>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -654,17 +544,21 @@ function ProfileEditor({
   const [contactNumber, setContactNumber] = useState(profile.contactNumber ?? "");
   // Saved names map to the picker's entries (a profile saved with
   // "Agriculture" shows as कृषि विभाग, ticked once).
+  // No main posting saved: the first ticked department not held as
+  // additional charge becomes the main one.
   const savedPrimary = profile.primaryDepartment
     ? departmentNames.choice(profile.primaryDepartment)
-    : "";
+    : nextMain(
+        departmentNames.choiceList(profile.departments),
+        departmentNames.choiceList(profile.additionalChargeDepartments ?? []),
+      );
   const [primaryDepartment, setPrimaryDepartment] = useState(savedPrimary);
   const [additionalCharge, setAdditionalCharge] = useState<string[]>(
     departmentNames.choiceList(profile.additionalChargeDepartments ?? []),
   );
-  const [additionalDepartments, setAdditionalDepartments] = useState(
-    departmentNames
-      .choiceList(profile.departments)
-      .filter((department) => department !== savedPrimary),
+  // All ticked departments, the main posting included.
+  const [selectedDepartments, setSelectedDepartments] = useState(
+    departmentNames.choiceList(profile.departments),
   );
   const [preferredLanguage, setPreferredLanguage] = useState<"en" | "hi">(
     profile.preferredLanguage,
@@ -676,7 +570,7 @@ function ProfileEditor({
   const submit = (event: FormEvent) => {
     event.preventDefault();
     if (busy || !displayName.trim()) return;
-    const others = additionalDepartments.filter(
+    const others = selectedDepartments.filter(
       (department) => department !== primaryDepartment,
     );
     void onSave({
@@ -807,46 +701,29 @@ function ProfileEditor({
         </section>
 
         <section className="profile-editor-section">
-          <div className="section-label">Department scope</div>
-          <p className="field-help">
-            An officer may have a substantive posting, additional charge of
-            other departments, both, or no department at all.
-          </p>
-          <DepartmentCombobox
-            label="Substantive (primary) department"
-            noneLabel="None — no substantive posting"
-            departments={departments}
-            value={primaryDepartment}
-            onChange={(next) => {
-              setPrimaryDepartment(next);
-              setAdditionalDepartments((current) =>
-                current.filter((department) => department !== next),
-              );
-              setAdditionalCharge((current) =>
-                current.filter((department) => department !== next),
-              );
-            }}
-          />
+          <div className="section-label">My departments</div>
           <div className="profile-field-block">
-            <div className="profile-field-label">Other departments</div>
             <p className="field-help">
-              Select up to 12 departments you work with. Mark{" "}
-              <strong>Addl. charge</strong> for departments you hold as
-              additional charge.
+              Tick up to 12 departments you work with; questions search all of
+              them. The first one is your <strong>Main</strong> posting (change it
+              on any ticked row) and <strong>Addl. charge</strong> marks a
+              department held as additional charge. Tick none to search every
+              department.
             </p>
             <DepartmentChecklist
               departments={departments}
-              primaryDepartment={primaryDepartment}
-              selected={additionalDepartments}
-              onChange={setAdditionalDepartments}
+              selected={selectedDepartments}
+              onChange={setSelectedDepartments}
               charged={additionalCharge}
               onChargedChange={setAdditionalCharge}
+              primary={primaryDepartment}
+              onPrimaryChange={setPrimaryDepartment}
             />
           </div>
           <p className="field-help">
             {scopeHelp(
               primaryDepartment,
-              additionalDepartments.filter(
+              selectedDepartments.filter(
                 (department) => department !== primaryDepartment,
               ),
             )}
@@ -918,10 +795,8 @@ function Onboarding({
   ] =
     useState("");
 
-  const [
-    additionalDepartments,
-    setAdditionalDepartments,
-  ] =
+  // All ticked departments, the main posting included.
+  const [selectedDepartments, setSelectedDepartments] =
     useState<string[]>([]);
 
   const [additionalCharge, setAdditionalCharge] =
@@ -1002,7 +877,7 @@ function Onboarding({
         return;
       }
 
-      const others = additionalDepartments.filter(
+      const others = selectedDepartments.filter(
         (department) => department !== primaryDepartment,
       );
 
@@ -1227,35 +1102,22 @@ function Onboarding({
 
             <fieldset className="form-section">
               <legend><span className="form-step">2</span> Departments</legend>
-              <DepartmentCombobox
-                label="Substantive (primary) department"
-                noneLabel="None — no substantive posting"
-                departments={departments}
-                value={primaryDepartment}
-                onChange={(next) => {
-                  setPrimaryDepartment(next);
-                  setAdditionalDepartments((current) =>
-                    current.filter((department) => department !== next),
-                  );
-                  setAdditionalCharge((current) =>
-                    current.filter((department) => department !== next),
-                  );
-                }}
-              />
               <div className="profile-field-block">
-                <div className="profile-field-label">Other departments</div>
                 <span className="field-help">
-                  Tick the departments you work with ({others} available) and mark{" "}
-                  <strong>Addl. charge</strong> for any held as additional charge.
-                  Leave everything empty to search all departments.
+                  Tick up to 12 of the {others} departments you work with;
+                  questions search all of them. The first is your{" "}
+                  <strong>Main</strong> posting (change it on any ticked row);
+                  mark <strong>Addl. charge</strong> where it applies. Tick none
+                  to search every department.
                 </span>
                 <DepartmentChecklist
                   departments={departments}
-                  primaryDepartment={primaryDepartment}
-                  selected={additionalDepartments}
-                  onChange={setAdditionalDepartments}
+                  selected={selectedDepartments}
+                  onChange={setSelectedDepartments}
                   charged={additionalCharge}
                   onChargedChange={setAdditionalCharge}
+                  primary={primaryDepartment}
+                  onPrimaryChange={setPrimaryDepartment}
                 />
               </div>
             </fieldset>
