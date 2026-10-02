@@ -19,6 +19,7 @@ import {
   createPool,
 } from "../db/client.js";
 import {
+  MAX_WORKSPACE_PROFILES,
   normalizeDepartmentNames,
   type WorkspaceProfileInput,
 } from "./model.js";
@@ -294,6 +295,16 @@ async function saveWorkspaceProfile(
     );
 
     if (creating) {
+      // Profile cap: serialise creations, then count (no race past the limit).
+      await client.query("SELECT pg_advisory_xact_lock(hashtext('workspace_users:create'))");
+      const existing = await client.query<{ n: number }>("SELECT COUNT(*)::int AS n FROM workspace_users");
+      if ((existing.rows[0]?.n ?? 0) >= MAX_WORKSPACE_PROFILES) {
+        const error = new Error(
+          `All ${MAX_WORKSPACE_PROFILES} profile slots are in use. Use an existing profile instead.`,
+        ) as Error & { statusCode?: number };
+        error.statusCode = 409;
+        throw error;
+      }
       await client.query(
         `
           INSERT INTO workspace_users (

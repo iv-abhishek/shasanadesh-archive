@@ -4667,3 +4667,44 @@ h1 {
   cursor: not-allowed;
   opacity: 0.65;
 }
+
+/* Profile slots: unused ones are blank, with a faint watermark */
+.profile-tile-empty {
+  place-items: center;
+  grid-template-columns: 1fr;
+  border: 1.5px dashed var(--border);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 10px,
+      color-mix(in srgb, var(--border) 35%, transparent) 10px 11px
+    );
+  cursor: default;
+}
+
+.profile-tile.profile-tile-empty:hover:not(:disabled) {
+  border-color: var(--border);
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      transparent 0 10px,
+      color-mix(in srgb, var(--border) 35%, transparent) 10px 11px
+    );
+  transform: none;
+}
+
+.profile-slot-mark {
+  color: var(--border-strong);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0.7;
+  user-select: none;
+}
+
+.profile-slot-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+}

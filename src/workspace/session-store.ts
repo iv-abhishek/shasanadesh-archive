@@ -241,9 +241,10 @@ export async function listDevelopmentProfiles():
       `
         SELECT id
         FROM workspace_users
+        -- Oldest first: each profile keeps its slot on the switch page.
         ORDER BY
-          updated_at DESC,
-          created_at DESC
+          created_at ASC,
+          id
         LIMIT 50
       `,
     );

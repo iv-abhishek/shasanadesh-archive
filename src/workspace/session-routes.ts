@@ -1,6 +1,7 @@
 import type {
   FastifyInstance,
 } from "fastify";
+import { MAX_WORKSPACE_PROFILES } from "./model.js";
 import {
   z,
 } from "zod";
@@ -98,6 +99,7 @@ export function registerSessionRoutes(
             contactNumber: null,
           }),
         ),
+        maxProfiles: MAX_WORKSPACE_PROFILES,
       };
     },
   );

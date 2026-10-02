@@ -126,3 +126,9 @@ export function defaultConversationTitle(
         )
         .trimEnd()}…`;
 }
+
+/**
+ * At most this many workspace profiles (development sign-in has no accounts,
+ * so the cap is per installation). Creating a sixth is refused with 409.
+ */
+export const MAX_WORKSPACE_PROFILES = 5;

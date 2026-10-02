@@ -1042,8 +1042,11 @@ function Onboarding({
   onCancel,
   currentName,
   currentId,
+  maxProfiles = 5,
 }: {
   departments: string[];
+  /** Profile slots (the server refuses more). */
+  maxProfiles?: number;
   profiles:
     WorkspaceProfile[];
   /** Switching profiles: go back to the profile in use without changing anything. */
@@ -1241,7 +1244,8 @@ function Onboarding({
     return () => window.removeEventListener("keydown", onKey);
   }, [creating, onCancel, profiles.length]);
 
-  const showForm = creating || profiles.length === 0;
+  const freeSlots = Math.max(0, maxProfiles - profiles.length);
+  const showForm = (creating && freeSlots > 0) || profiles.length === 0;
   const departmentText = departmentNames.main;
   const others = departments.length;
 
@@ -1263,7 +1267,9 @@ function Onboarding({
           <p className="onboarding-copy">
             {showForm
               ? "Your departments decide which orders are searched first. You can change all of this later from your profile."
-              : "Pick a profile to continue with its departments and chat history, or set up a new one."}
+              : freeSlots
+                ? "Pick a profile to continue with its departments and chat history, or set up a new one."
+                : "Pick a profile to continue with its departments and chat history."}
           </p>
         </header>
 
@@ -1318,22 +1324,37 @@ function Onboarding({
                   </button>
                 );
               })}
-              <button
-                type="button"
-                className="profile-tile profile-tile-new"
-                disabled={busy}
-                onClick={() => {
-                  setError(null);
-                  setCreating(true);
-                }}
-              >
-                <span className="profile-avatar new" aria-hidden="true">+</span>
-                <span className="profile-tile-body">
-                  <span className="profile-tile-name">New profile</span>
-                  <span className="profile-tile-role">Name, departments and language</span>
-                </span>
-              </button>
+              {/* Fixed slots: the first free one creates a profile, the rest are blank. */}
+              {Array.from({ length: freeSlots }, (_, index) =>
+                index === 0 ? (
+                  <button
+                    type="button"
+                    key="new"
+                    className="profile-tile profile-tile-new"
+                    disabled={busy}
+                    onClick={() => {
+                      setError(null);
+                      setCreating(true);
+                    }}
+                  >
+                    <span className="profile-avatar new" aria-hidden="true">+</span>
+                    <span className="profile-tile-body">
+                      <span className="profile-tile-name">New profile</span>
+                      <span className="profile-tile-role">Name, departments and language</span>
+                    </span>
+                  </button>
+                ) : (
+                  <div key={`empty-${index}`} className="profile-tile profile-tile-empty" aria-hidden="true">
+                    <span className="profile-slot-mark">Slot {profiles.length + index + 1}</span>
+                  </div>
+                ),
+              )}
             </div>
+            <p className="profile-slot-note">
+              {freeSlots === 0
+                ? `All ${maxProfiles} profile slots are in use.`
+                : `${profiles.length} of ${maxProfiles} profile slots used.`}
+            </p>
             {error ? <div className="error-box">{error}</div> : null}
           </section>
         ) : (
@@ -1492,6 +1513,7 @@ export function WorkspaceApp() {
     useState<string[]>([]);
   const [departmentLabels, setDepartmentLabels] = useState<DepartmentLabels>({});
   const [places, setPlaces] = useState<PlaceState[]>([]);
+  const [maxProfiles, setMaxProfiles] = useState(5);
   const [departmentNameLanguage, setDepartmentNameLanguageState] =
     useState<DepartmentNameLanguage>("en");
   useEffect(() => {
@@ -1679,6 +1701,7 @@ export function WorkspaceApp() {
           await jsonRequest<{
             profiles:
               WorkspaceProfile[];
+            maxProfiles?: number;
           }>(
             "/api/session/dev-users",
           );
@@ -1686,6 +1709,7 @@ export function WorkspaceApp() {
         setDevProfiles(
           data.profiles,
         );
+        if (data.maxProfiles) setMaxProfiles(data.maxProfiles);
       },
       [],
     );
@@ -2351,6 +2375,7 @@ export function WorkspaceApp() {
         profiles={
           devProfiles
         }
+        maxProfiles={maxProfiles}
         onCancel={profile && switchingProfile ? () => setSwitchingProfile(false) : undefined}
         currentName={profile?.displayName}
         currentId={profile?.id}
