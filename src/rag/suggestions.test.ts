@@ -15,6 +15,20 @@ assert.deepEqual(parseSuggestions("1. क्रय समिति कौन ग
   "प्रत्यक्ष क्रय की सीमा क्या है?",
 ]); // English line dropped for a Hindi answer
 
+// A malformed JSON array (2 Oct 2026: `"…?",?` showed under an answer).
+assert.deepEqual(
+  parseSuggestions('["कृषक के बोरिंग पर विद्युत कनेक्शन की जाँच कौन करता है?",? "सोलर पंप के लिए आवेदन करने के लिए कौन सा पोर्टल उपलब्ध है?", "सोलर पंप स्थापना के लिए आवश्यक दस्तावेज कौन से हैं?"', hi),
+  [
+    "कृषक के बोरिंग पर विद्युत कनेक्शन की जाँच कौन करता है?",
+    "सोलर पंप के लिए आवेदन करने के लिए कौन सा पोर्टल उपलब्ध है?",
+    "सोलर पंप स्थापना के लिए आवश्यक दस्तावेज कौन से हैं?",
+  ],
+);
+assert.deepEqual(parseSuggestions('"इसकी समय-सीमा क्या है?",\n"सक्षम प्राधिकारी कौन है?"]', hi), [
+  "इसकी समय-सीमा क्या है?",
+  "सक्षम प्राधिकारी कौन है?",
+]);
+
 // Order lists.
 assert.deepEqual(
   listingSuggestions({ ...hi, answer: "", listing: true, sources: [{ goNumber: "51/2026", goDate: "2026-09-21" }, { goNumber: null }, { goNumber: "50/2026" }] }).slice(0, 2),

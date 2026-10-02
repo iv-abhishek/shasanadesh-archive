@@ -68,7 +68,12 @@ export function parseSuggestions(reply: string, request: Pick<SuggestionRequest,
       items = [];
     }
   }
-  if (!items.length) items = text.split("\n").map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, ""));
+  // A JSON array the model did not close or got slightly wrong
+  // (["…?", "…?",? …): take the quoted strings, else the lines.
+  if (!items.length) {
+    const quoted = [...text.matchAll(/"((?:[^"\\\n]|\\.){8,})"/g)].map((match) => match[1].replace(/\\"/g, '"'));
+    items = quoted.length ? quoted : text.split("\n").map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, ""));
+  }
   return clean(items.filter((item): item is string => typeof item === "string"), request);
 }
 
@@ -76,7 +81,11 @@ function clean(items: string[], request: Pick<SuggestionRequest, "question" | "l
   const seen = new Set([normalise(request.question)]);
   const out: string[] = [];
   for (const raw of items) {
-    let item = stripNonGovernmentLinks(raw).replace(/^["'“”\s]+|["'“”\s]+$/g, "").replace(/\s+/g, " ").trim();
+    // Leftover JSON punctuation from a malformed array (`"…?",` / `["…`).
+    let item = stripNonGovernmentLinks(raw)
+      .replace(/^[\s\["'“”,]+|[\s\]"'“”,]+$/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
     if (!item || /https?:|www\./i.test(item)) continue;
     if (item.length < 8 || item.length > 140) continue;
     const hindi = /[ऀ-ॿ]/.test(item);

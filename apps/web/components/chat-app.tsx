@@ -1017,11 +1017,28 @@ type AnswerBlock =
   | { kind: "paragraph"; lines: string[] }
   | { kind: "heading"; text: string }
   | { kind: "bullets"; items: string[] }
-  | { kind: "numbers"; items: string[] };
+  | { kind: "numbers"; items: string[]; start: number };
 
 const BULLET_RE = /^\s*[-*•–]\s+(.*)$/u;
-const NUMBER_RE = /^\s*\d{1,2}[.)]\s+(.*)$/u;
+const NUMBER_RE = /^\s*(\d{1,2})[.)]\s+(.*)$/u;
 const HEADING_RE = /^\s*#{1,4}\s+(.*)$/u;
+
+/**
+ * Where a numbered list resumes. Steps separated by their own bullet points
+ * ("1. Heading" / bullets / "2. Heading") become separate lists; each keeps
+ * its written number, and a model that writes "1." every time continues the
+ * previous list's count when only bullets or blank lines came between.
+ */
+function listStart(blocks: AnswerBlock[], written: number): number {
+  if (written !== 1) return written;
+  for (let index = blocks.length - 1; index >= 0; index--) {
+    const block = blocks[index];
+    if (block.kind === "numbers") return block.start + block.items.length;
+    if (block.kind === "bullets" || (block.kind === "paragraph" && block.lines.length === 0)) continue;
+    break;
+  }
+  return 1;
+}
 
 function parseAnswerBlocks(text: string): AnswerBlock[] {
   const blocks: AnswerBlock[] = [];
@@ -1045,8 +1062,8 @@ function parseAnswerBlocks(text: string): AnswerBlock[] {
       if (last?.kind === "bullets") last.items.push(bullet[1]);
       else blocks.push({ kind: "bullets", items: [bullet[1]] });
     } else if (numbered) {
-      if (last?.kind === "numbers") last.items.push(numbered[1]);
-      else blocks.push({ kind: "numbers", items: [numbered[1]] });
+      if (last?.kind === "numbers") last.items.push(numbered[2]);
+      else blocks.push({ kind: "numbers", items: [numbered[2]], start: listStart(blocks, Number(numbered[1])) });
     } else if (last?.kind === "paragraph") {
       last.lines.push(line.trim());
     } else {
@@ -1124,7 +1141,7 @@ function FormattedAnswer({
             );
           case "numbers":
             return (
-              <ol key={index}>
+              <ol key={index} start={block.start}>
                 {block.items.map((item, itemIndex) => (
                   <li key={itemIndex}>{inline(item)}</li>
                 ))}
