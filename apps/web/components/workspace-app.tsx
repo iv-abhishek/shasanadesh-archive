@@ -518,6 +518,38 @@ function ProfileEditor({
 
       <form className="profile-editor" onSubmit={submit}>
         <section className="profile-editor-section">
+          <div className="section-label">Answers and search</div>
+          <div className="profile-form-grid">
+            <label>
+              Preferred language
+              <select
+                value={preferredLanguage}
+                onChange={(event) =>
+                  setPreferredLanguage(event.target.value as "en" | "hi")
+                }
+              >
+                <option value="en">English</option>
+                <option value="hi">Hindi</option>
+              </select>
+            </label>
+            <label>
+              Default document scope
+              <select
+                value={defaultScope}
+                onChange={(event) =>
+                  setDefaultScope(
+                    event.target.value as "my_departments" | "all_departments",
+                  )
+                }
+              >
+                <option value="my_departments">My departments</option>
+                <option value="all_departments">All departments</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
+        <section className="profile-editor-section">
           <div className="section-label">Professional details</div>
           <div className="profile-form-grid">
             <label>
@@ -618,34 +650,6 @@ function ProfileEditor({
               charged={additionalCharge}
               onChargedChange={setAdditionalCharge}
             />
-          </div>
-          <div className="profile-form-grid">
-            <label>
-              Preferred language
-              <select
-                value={preferredLanguage}
-                onChange={(event) =>
-                  setPreferredLanguage(event.target.value as "en" | "hi")
-                }
-              >
-                <option value="en">English</option>
-                <option value="hi">Hindi</option>
-              </select>
-            </label>
-            <label>
-              Default document scope
-              <select
-                value={defaultScope}
-                onChange={(event) =>
-                  setDefaultScope(
-                    event.target.value as "my_departments" | "all_departments",
-                  )
-                }
-              >
-                <option value="my_departments">My departments</option>
-                <option value="all_departments">All departments</option>
-              </select>
-            </label>
           </div>
           <p className="field-help">
             {scopeHelp(
