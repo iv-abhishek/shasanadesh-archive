@@ -25,7 +25,7 @@ import {
   type LaterChange,
 } from "../lib/sources";
 import { formatGoReference } from "../lib/go-reference";
-import { StartPanel } from "./start-panel";
+import { SearchGuide, StartPanel } from "./start-panel";
 import { isGovernmentUrl } from "../lib/government-hosts";
 import {
   convertFinishedWord,
@@ -2267,10 +2267,12 @@ export function ChatApp({
     input.setSelectionRange(position, position);
   }, [query]);
 
-  // Examples fill the input (to edit before sending).
+  // Examples and guide entries fill the input (to edit before sending).
   const composerInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
   const pickExample = (text: string) => {
     setQuery(text);
+    setGuideOpen(false);
     window.requestAnimationFrame(() => {
       const input = composerInputRef.current;
       if (!input) return;
@@ -2279,7 +2281,28 @@ export function ChatApp({
     });
   };
 
-  // Esc stops the answer too, unless a dialog is open.
+  // The guide popover closes on Esc or a click outside it.
+  useEffect(() => {
+    if (!guideOpen) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setGuideOpen(false);
+      }
+    };
+    const onPointer = (event: PointerEvent) => {
+      const target = event.target as Element | null;
+      if (!target?.closest(".search-guide-popover, .composer-guide-button")) setGuideOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pointerdown", onPointer);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pointerdown", onPointer);
+    };
+  }, [guideOpen]);
+
+  // Esc stops the answer too, unless a dialog (e.g. the search guide) is open.
   useEffect(() => {
     if (!busy) return;
     const onKey = (event: KeyboardEvent) => {
@@ -3307,7 +3330,23 @@ export function ChatApp({
           }}
         />
 
+        {guideOpen ? (
+          <div className="search-guide-popover" role="dialog" aria-label="Search guide">
+            <SearchGuide onPick={pickExample} compact />
+          </div>
+        ) : null}
+
         <div className="composer-actions">
+          <button
+            type="button"
+            className="composer-guide-button"
+            aria-label="Search guide"
+            aria-expanded={guideOpen}
+            title="Search guide: phrases, wildcards, GO numbers, dates"
+            onClick={() => setGuideOpen((open) => !open)}
+          >
+            ?
+          </button>
           <div className="speech-language-toggle" role="group" aria-label="Input language (voice and typing)">
             <button
               type="button"

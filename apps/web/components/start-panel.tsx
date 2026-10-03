@@ -1,13 +1,15 @@
 "use client";
 
 /**
- * Start page of Ask (ADR-060).
+ * Start page of Ask and the search guide (ADR-060).
  *
  * Ask does three things (ADR-057/058): answer questions from the order text,
  * find particular orders, and list the latest or dated orders. The start page
- * shows one card per job with ready examples. Examples fill the input box so
- * they can be edited before sending. (The search-syntax guide was removed on
- * 3 Oct 2026; the syntax itself still works.)
+ * shows one card per job with ready examples; the guide explains the search
+ * syntax (quotes, wildcards, GO numbers, sections, dates, departments) and
+ * opens from the "?" button beside the input (no longer shown on the start
+ * page, 3 Oct 2026).
+ * Examples fill the input box so they can be edited before sending.
  */
 
 import type { ReactNode } from "react";
@@ -64,6 +66,67 @@ const TASKS: Task[] = [
     ),
   },
 ];
+
+interface GuideRow {
+  syntax: string[];
+  meaning: string;
+  example: string;
+}
+
+const GUIDE: GuideRow[] = [
+  { syntax: ['"…"'], meaning: "Exact phrase: these words, in this order", example: '"फार्मर रजिस्ट्री"' },
+  { syntax: ["*"], meaning: "Any letters (wildcard), anywhere in a word", example: "solar* orders of agriculture" },
+  { syntax: ["?"], meaning: "Exactly one letter inside a word", example: "क?षि" },
+  { syntax: ["GO 51/2026"], meaning: "A GO number, or just its beginning", example: "find GO 51/2026" },
+  {
+    syntax: ["released by …", "… द्वारा जारी", "… अनुभाग-1"],
+    meaning: "The issuing section (अनुभाग) or department",
+    example: "released by लोक निर्माण अनुभाग-1",
+  },
+  {
+    syntax: ["today", "this week", "last month", "August 2026", "10.09.2026", "10 or 15 September", "पिछले सप्ताह"],
+    meaning: "A day, several days, a period or a month",
+    example: "orders issued this week",
+  },
+  {
+    syntax: ["PWD", "basic education", "बेसिक शिक्षा"],
+    meaning: "Departments in English or Hindi, short names included",
+    example: "recent orders of basic education",
+  },
+];
+
+export function SearchGuide({ onPick, compact = false }: { onPick: Pick; compact?: boolean }) {
+  return (
+    <section className={compact ? "search-guide search-guide-compact" : "search-guide"} aria-labelledby="search-guide-title">
+      <div className="search-guide-head">
+        <h3 id="search-guide-title">Search guide</h3>
+        <span lang="hi">खोज के संकेत</span>
+      </div>
+      <dl className="search-guide-rows">
+        {GUIDE.map((row) => (
+          <div className="search-guide-row" key={row.meaning}>
+            <dt>
+              {row.syntax.map((syntax) => (
+                <code key={syntax}>{syntax}</code>
+              ))}
+            </dt>
+            <dd>
+              <span>{row.meaning}</span>
+              <button type="button" className="search-guide-example" onClick={() => onPick(row.example)} title="Put this example in the box">
+                {row.example}
+              </button>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <p className="search-guide-note">
+        Combine them freely, e.g. <code>solar* orders of agriculture in September 2026</code>. Questions about what an
+        order says (what, how, procedure, eligibility) get a written answer with citations; everything else returns a
+        list of matching orders, newest first.
+      </p>
+    </section>
+  );
+}
 
 export function StartPanel({ onPick }: { onPick: Pick }) {
   return (
