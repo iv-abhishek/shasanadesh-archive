@@ -1340,9 +1340,10 @@ answer from general knowledge, clearly labelled (Rulebook §4).
 - Triggered where "not found" was sent: no relevant page, the model's NO_ANSWER, or a
   prose non-answer (first draft or after repair). Not for cited-order follow-ups (the web
   app re-asks those over all orders) or an explicitly named order; not with a local model.
-- Prompt (`src/rag/general-knowledge.ts`): answer first, ≤ 6 bullets, name the rule /
-  manual / act behind each point, no invented GO numbers, dates or figures ("check the
-  current order" where they may have changed), say so when unknown. The titles of the
+- Prompt (`src/rag/general-knowledge.ts`): answer first, ≤ 6 bullets, name the document
+  behind each point but give **no rule / section / GO numbers and no figures** — tried on
+  the GFR question, the first prompt (which allowed "Rule 173"-style references) produced
+  five confident, wrong GFR rule numbers. Say so when unknown. The titles of the
   closest retrieved documents are given as hints and listed under the answer.
 - `done.generalKnowledge = true`, `validated = false`; the web app shows the note above the
   answer and a "General knowledge" badge, and offers no suggestions.
