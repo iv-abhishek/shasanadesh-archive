@@ -68,14 +68,56 @@ Document types: ${MODEL_DOC_TYPES.join(", ")}.
 
 Reply with ONLY a JSON object: {"tier":"A|B|C","docType":"<one type>","reason":"<max 15 words>"}`;
 
+// The model often names a type in its own words ("rule", "rule amendment",
+// "office memorandum"); 69% of replies were discarded for that on 3 Oct.
+const DOC_TYPE_ALIASES: Record<string, DocType> = {
+  rule: "rules",
+  "rule-amendment": "rules",
+  "rules-amendment": "rules",
+  amendment: "rules",
+  "amendment-order": "rules",
+  regulation: "rules",
+  regulations: "rules",
+  act: "rules",
+  ordinance: "rules",
+  "policy-amendment": "policy",
+  guidelines: "guideline",
+  "scheme-guidelines": "scheme-guideline",
+  "general-instructions": "general-instruction",
+  instruction: "general-instruction",
+  instructions: "general-instruction",
+  circular: "general-instruction",
+  "office-memorandum": "general-instruction",
+  order: "general-instruction",
+  "government-order": "general-instruction",
+  clarifications: "clarification",
+  notifications: "notification",
+  corrigenda: "corrigendum",
+  "shuddhi-patra": "corrigendum",
+  sanctions: "sanction",
+  "financial-sanction": "sanction",
+  "fund-release": "sanction",
+  "case": "case-specific",
+  individual: "case-specific",
+  "individual-order": "case-specific",
+  reminders: "reminder",
+};
+
+/** A known document type for what the model wrote, or "other" (the tier still counts). */
+export function normalizeDocType(raw: unknown): DocType {
+  const key = String(raw ?? "").trim().toLowerCase().replace(/[\s_/]+/g, "-");
+  if ((MODEL_DOC_TYPES as string[]).includes(key)) return key as DocType;
+  return DOC_TYPE_ALIASES[key] ?? "other";
+}
+
 export function parseModelReply(reply: string): { tier: Tier; docType: DocType; reason: string } | null {
   const match = reply.replace(/<think>[\s\S]*?<\/think>/g, "").match(/\{[\s\S]*\}/);
   if (!match) return null;
   try {
     const value = JSON.parse(match[0]) as { tier?: unknown; docType?: unknown; reason?: unknown };
     const tier = String(value.tier ?? "").trim().toUpperCase();
-    const docType = String(value.docType ?? "").trim() as DocType;
-    if (!["A", "B", "C"].includes(tier) || !MODEL_DOC_TYPES.includes(docType)) return null;
+    const docType = normalizeDocType(value.docType);
+    if (!["A", "B", "C"].includes(tier)) return null;
     return { tier: tier as Tier, docType, reason: String(value.reason ?? "").slice(0, 200) };
   } catch {
     return null;
@@ -161,8 +203,13 @@ async function main(): Promise<void> {
       } as Parameters<typeof openai.chat.completions.create>[0]) as OpenAI.Chat.Completions.ChatCompletion;
       inputTokens += response.usage?.prompt_tokens ?? 0;
       outputTokens += response.usage?.completion_tokens ?? 0;
-      const parsed = parseModelReply(response.choices[0]?.message?.content ?? "");
-      if (!parsed) throw new Error("unusable reply");
+      const reply = response.choices[0]?.message?.content ?? "";
+      const parsed = parseModelReply(reply);
+      if (!parsed) {
+        throw new Error(
+          `unusable reply (${response.choices[0]?.finish_reason ?? "?"}): ${reply.replace(/\s+/g, " ").slice(0, 160) || "(empty)"}`,
+        );
+      }
       const record: ModelClassification = {
         sourceId: item.sourceId,
         ...parsed,

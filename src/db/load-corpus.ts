@@ -108,6 +108,19 @@ function sameStringSet(a: string[], b: string[]): boolean {
 // ISO or the portal's day-first DD/MM/YYYY; anything else stays null.
 const toDateOrNull = toIsoGoDate;
 
+/**
+ * PostgreSQL text and jsonb cannot hold NUL (U+0000); some extracted PDFs
+ * contain it ("invalid byte sequence for encoding UTF8: 0x00", 3 Oct).
+ */
+export function withoutNul(text: string): string {
+  return text.includes("\u0000") ? text.replace(/\u0000/g, "") : text;
+}
+
+/** JSON for a jsonb column, without NUL escapes. */
+function jsonForDb(value: unknown): string {
+  return JSON.stringify(value).replace(/\\u0000/g, "");
+}
+
 async function loadDocuments(client: PoolClient): Promise<number> {
   const entries = await readdir(documentsRoot, {
     withFileTypes: true,
@@ -203,7 +216,7 @@ async function loadDocuments(client: PoolClient): Promise<number> {
         metadata.capture?.bytes ?? null,
         metadata.capture?.rawSha256 ?? null,
         metadata.pdf?.pages ?? metadata.html?.pages ?? null,
-        JSON.stringify(metadata),
+        jsonForDb(metadata),
       ],
     );
 
@@ -317,7 +330,7 @@ async function loadPagesAndVariants(
           variant.pageNumber,
           variant.variant,
           variant.canonical,
-          variant.text,
+          withoutNul(variant.text),
           variant.chars,
           variant.numericTokens,
           JSON.stringify({
@@ -390,7 +403,7 @@ async function loadChunks(
         chunk.variant,
         chunk.canonical,
         chunk.chunkIndex,
-        chunk.text,
+        withoutNul(chunk.text),
         chunk.chars,
         chunk.sha256,
       ],
@@ -487,7 +500,7 @@ async function loadClassification(client: PoolClient): Promise<number> {
     topics.push(JSON.stringify(record.topics ?? []));
     types.push(record.docType);
     tiers.push(record.tier);
-    details.push(JSON.stringify({
+    details.push(jsonForDb({
       confidence: record.confidence,
       reasons: record.reasons,
       rulesVersion: record.rulesVersion,
