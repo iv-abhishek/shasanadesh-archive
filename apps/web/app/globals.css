@@ -4709,6 +4709,21 @@ h1 {
   font-size: 0.76rem;
 }
 
+/* Corrected question (ADR-086) */
+.corrected-question {
+  justify-self: end;
+  max-width: 80%;
+  margin: -2px 0 8px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-align: right;
+}
+
+.corrected-question span {
+  color: var(--text);
+  font-style: italic;
+}
+
 /* General-knowledge answers (ADR-083) */
 .general-knowledge-note {
   margin: 0 0 12px;

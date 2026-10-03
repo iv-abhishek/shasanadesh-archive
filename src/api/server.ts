@@ -1511,16 +1511,19 @@ server.post(
 
     // The question in official wording (ADR-082), for normal questions only:
     // a cited-order follow-up or an explicit order is searched as asked.
-    const expansions =
+    // It also fixes typos and grammar in the question (ADR-086); the corrected
+    // question is what is searched, reranked against and answered.
+    const searchPlan =
       followSourceIds || explicitSourceId
-        ? []
+        ? { corrected: null, expansions: [] as string[] }
         : await expandSearchQuery(conversationPlan.retrievalQuery, stop.signal);
+    const expansions = searchPlan.expansions;
+    const searchQuestion = searchPlan.corrected ?? conversationPlan.retrievalQuery;
     const expansionMs = performance.now() - retrievalStartedAt;
 
     let retrieval =
       await retrieve(
-        conversationPlan
-          .retrievalQuery,
+        searchQuestion,
         RAG_TOP_K,
         retrievalFilters,
         {
@@ -1560,8 +1563,7 @@ server.post(
 
       retrieval =
         await retrieve(
-          conversationPlan
-            .retrievalQuery,
+          searchQuestion,
           RAG_TOP_K,
           fallbackFilters,
           {
@@ -1615,8 +1617,7 @@ server.post(
       );
       retrieval =
         await retrieve(
-          conversationPlan
-            .retrievalQuery,
+          searchQuestion,
           RAG_TOP_K,
           undefined,
           {
@@ -1655,7 +1656,7 @@ server.post(
         describeScope("global", undefined, responseLanguage),
       );
       const wide = await retrieve(
-        conversationPlan.retrievalQuery,
+        searchQuestion,
         RAG_TOP_K,
         undefined,
         {
@@ -1711,6 +1712,7 @@ server.post(
         validated: true,
         noEvidence: true,
         noEvidenceReason: reason,
+        correctedQuestion: searchPlan.corrected,
         scopeFallback,
         retrievalScope,
         bestRelevance:
@@ -1749,7 +1751,7 @@ server.post(
       try {
         const completion = await generateCompletion(
           LLM_REQUEST_TIMEOUT_MS,
-          buildGeneralKnowledgeMessages(conversationPlan.retrievalQuery, responseLanguage, closest),
+          buildGeneralKnowledgeMessages(searchQuestion, responseLanguage, closest),
           LLM_TEMPERATURE,
           answerTokenBudget(responseLanguage),
           undefined,
@@ -1763,6 +1765,7 @@ server.post(
           ok: true,
           validated: false,
           generalKnowledge: true,
+          correctedQuestion: searchPlan.corrected,
           noEvidenceReason: reason,
           scopeFallback,
           retrievalScope,
@@ -1852,7 +1855,9 @@ server.post(
               : "English",
             "",
             "CURRENT USER QUESTION:",
-            query,
+            searchPlan.corrected
+              ? `${query}\n(The same question with typos and grammar fixed: ${searchPlan.corrected})`
+              : query,
             "",
             "RETRIEVED EVIDENCE:",
             evidenceContext,
@@ -2258,6 +2263,7 @@ server.post(
           // Which model wrote it (OpenRouter or the local fallback, ADR-075).
           model: firstCompletion.model,
           modelFellBack: firstCompletion.fellBack,
+          correctedQuestion: searchPlan.corrected,
           ok: true,
           validated: true,
           repaired,

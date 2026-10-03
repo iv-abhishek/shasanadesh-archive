@@ -22,9 +22,49 @@ Rewrite the user's question as two short search queries that use the exact words
 Service matters of Uttar Pradesh government servants (leave, pay, pension, allowances) are in the Financial Handbook (वित्तीय नियम संग्रह / वित्तीय हस्तपुस्तिका) and later government orders; procurement is in GFR 2017 and the Manuals for Procurement of Goods, Works, Consultancy and Non-Consultancy Services.
 One query in English, one in Hindi (Devanagari). At most 20 words each. Correct obvious misspellings.
 Also write "passage": two or three sentences in English worded the way the rule book or order itself would state the provision (an approximate draft is fine; it is only used to find the real page and is never shown).
-Reply with ONLY a JSON object: {"en":"...","hi":"...","passage":"..."}`;
+Also write "corrected": the user's question with spelling, typing and grammar mistakes fixed, as one clear sentence in the SAME language and script, with the same meaning. Keep every name, number, date and GO number exactly; do not add facts. If the question is already correct, repeat it unchanged.
+Reply with ONLY a JSON object: {"corrected":"...","en":"...","hi":"...","passage":"..."}`;
 
-const cache = new Map<string, string[]>();
+export interface SearchPlan {
+  /** The question with typos and grammar fixed; null when unchanged or unsafe. */
+  corrected: string | null;
+  /** Extra search wordings (English, Hindi, rule-style passage). */
+  expansions: string[];
+}
+
+const NO_PLAN: SearchPlan = { corrected: null, expansions: [] };
+const cache = new Map<string, SearchPlan>();
+
+function digitsOf(text: string): string[] {
+  return (text.replace(/[०-९]/g, (d) => String("०१२३४५६७८९".indexOf(d))).match(/\d+/g) ?? []).sort();
+}
+
+/**
+ * The corrected question, if it is a real correction and still the same
+ * question: same numbers, similar length, and actually different.
+ */
+export function acceptCorrection(question: string, raw: unknown): string | null {
+  if (typeof raw !== "string") return null;
+  const corrected = raw.replace(/\s+/g, " ").trim();
+  const original = question.replace(/\s+/g, " ").trim();
+  if (!corrected || corrected.toLowerCase() === original.toLowerCase()) return null;
+  if (corrected.length > original.length * 1.8 + 20 || corrected.length < original.length * 0.5) return null;
+  if (digitsOf(corrected).join(",") !== digitsOf(original).join(",")) return null;
+  const hindi = (text: string) => /[\u0900-\u097F]/.test(text);
+  if (hindi(original) !== hindi(corrected)) return null;
+  return corrected;
+}
+
+export function parsePlan(reply: string, question: string): SearchPlan {
+  const match = reply.replace(/<think>[\s\S]*?<\/think>/g, "").match(/\{[\s\S]*\}/);
+  if (!match) return NO_PLAN;
+  try {
+    const value = JSON.parse(match[0]) as { corrected?: unknown };
+    return { corrected: acceptCorrection(question, value.corrected), expansions: parseExpansions(reply, question) };
+  } catch {
+    return NO_PLAN;
+  }
+}
 
 export function parseExpansions(reply: string, question: string): string[] {
   const match = reply.replace(/<think>[\s\S]*?<\/think>/g, "").match(/\{[\s\S]*\}/);
@@ -47,13 +87,13 @@ export function parseExpansions(reply: string, question: string): string[] {
   }
 }
 
-export async function expandSearchQuery(question: string, signal?: AbortSignal): Promise<string[]> {
-  if (!ENABLED) return [];
+export async function expandSearchQuery(question: string, signal?: AbortSignal): Promise<SearchPlan> {
+  if (!ENABLED) return NO_PLAN;
   const key = question.trim().toLowerCase();
   const cached = cache.get(key);
   if (cached) return cached;
   const target = readLlmTargets()[0];
-  if (!target || target.local) return [];
+  if (!target || target.local) return NO_PLAN;
   try {
     const response = (await clientFor(target, TIMEOUT_MS).chat.completions.create(
       {
@@ -63,16 +103,16 @@ export async function expandSearchQuery(question: string, signal?: AbortSignal):
           { role: "user", content: question.slice(0, 1000) },
         ],
         temperature: 0,
-        max_tokens: 320,
+        max_tokens: 420,
         ...target.extraBody,
       } as never,
       { signal },
     )) as { choices: Array<{ message?: { content?: string | null } }> };
-    const expansions = parseExpansions(response.choices[0]?.message?.content ?? "", question);
+    const plan = parsePlan(response.choices[0]?.message?.content ?? "", question);
     if (cache.size > 500) cache.delete(cache.keys().next().value as string);
-    cache.set(key, expansions);
-    return expansions;
+    cache.set(key, plan);
+    return plan;
   } catch {
-    return [];
+    return NO_PLAN;
   }
 }

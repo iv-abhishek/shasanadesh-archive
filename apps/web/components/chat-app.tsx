@@ -111,6 +111,8 @@ interface DoneEvent {
   noEvidenceReason?: "no_relevant_pages" | "model_found_no_answer" | "model_prose_non_answer";
   /** No archived page answered; this answer is from general knowledge (ADR-083). */
   generalKnowledge?: boolean;
+  /** The question with typos and grammar fixed, as searched (ADR-086). */
+  correctedQuestion?: string | null;
   /** Nothing close in the officer's departments, so all departments were searched. */
   scopeFallback?: boolean;
   /** The answer hit the length limit and was cut back to its last full sentence. */
@@ -1753,6 +1755,12 @@ function TurnView({
       <time className="turn-time" dateTime={askedAt.iso} title={askedAt.full}>
         {askedAt.short}
       </time>
+      {turn.done?.correctedQuestion ? (
+        <p className="corrected-question" title="Spelling and grammar were corrected before searching.">
+          {/[\u0900-\u097F]/.test(turn.question) ? "इस रूप में खोजा गया: " : "Searched as: "}
+          <span>{turn.done.correctedQuestion}</span>
+        </p>
+      ) : null}
 
       <div className="answer-panel">
         <div className="answer-heading">

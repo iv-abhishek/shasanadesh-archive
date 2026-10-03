@@ -1387,3 +1387,19 @@ firms, 40% to government agencies/PSUs) was unreadable to search and to the mode
 - The question's rule-style search passage (ADR-082 follow-up) now reads like the rule
   ("interest-bearing mobilisation advance … bank guarantee"), which matches the Works
   Manual 2025 §5.3.1 (10% of contract price, interest-bearing, against an unconditional BG).
+
+## ADR-086 - Questions are corrected before they are searched and answered (3 Oct 2026)
+
+Abhishek: "the system should also correct typos, grammar and sentences."
+
+- The search-wording call (ADR-082) also returns `corrected`: the question with spelling,
+  typing and grammar fixed, same language and meaning ("medicl oficer senority wen
+  probation complet" → "What is the seniority of a Medical Officer upon completion of
+  probation?"; "प्रसुति अवकास … हटया" → "प्रसूति अवकाश … हटाया").
+- Accepted only if it is still the same question: identical numbers (GO numbers, dates),
+  same script, similar length, actually different (`acceptCorrection`). Otherwise the
+  question is used as typed.
+- The corrected question is what is searched and reranked against, what the general-
+  knowledge answer answers, and is given to the answer model next to the original.
+  The officer's own words stay in history; the chat shows "Searched as: …" under the
+  question when a correction was made.
