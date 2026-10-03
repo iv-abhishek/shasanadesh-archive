@@ -38,3 +38,15 @@ Abhishek's explicit decision and an ADR. Code that enforces a rule points back h
 
 - Now: **Central Government and Uttar Pradesh**. Later: other states, each as its own
   jurisdiction, from their own government sites (§2 applies unchanged).
+
+## §4 An answer not taken from an archived page is always labelled
+
+- When no archived order or rule page answers a question, Ask may answer from the
+  model's general knowledge (decided by Abhishek, 3 Oct 2026, ADR-083) — never silently.
+- Such an answer is shown with a visible note ("Not found in the archived orders … check
+  it against the current order"), a "General knowledge" badge, no citations, no
+  "Validated" badge and no follow-up suggestions, and it lists the closest archived
+  documents to check.
+- Enforcement: `answerFromGeneralKnowledge` in `src/api/server.ts`
+  (`done.generalKnowledge`), the note in `apps/web/components/chat-app.tsx`.
+  `RAG_GENERAL_KNOWLEDGE=0` turns it off; it is never used with a local model.

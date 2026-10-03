@@ -108,7 +108,9 @@ interface DoneEvent {
   timings?: RagTimings;
   /** No archived order answers the question; sources are not shown. */
   noEvidence?: boolean;
-  noEvidenceReason?: "no_relevant_pages" | "model_found_no_answer";
+  noEvidenceReason?: "no_relevant_pages" | "model_found_no_answer" | "model_prose_non_answer";
+  /** No archived page answered; this answer is from general knowledge (ADR-083). */
+  generalKnowledge?: boolean;
   /** Nothing close in the officer's departments, so all departments were searched. */
   scopeFallback?: boolean;
   /** The answer hit the length limit and was cut back to its last full sentence. */
@@ -1786,6 +1788,13 @@ function TurnView({
           </div>
         ) : (
           <div className="answer-text">
+            {turn.answer && turn.done?.generalKnowledge ? (
+              <div className="general-knowledge-note" role="note">
+                {/[\u0900-\u097F]/.test(turn.answer)
+                  ? "यह उत्तर संग्रहित शासनादेशों से नहीं, सामान्य जानकारी से है। उपयोग से पहले वर्तमान आदेश से मिला लें।"
+                  : "Not found in the archived orders. This answer is from general knowledge; check it against the current order before relying on it."}
+              </div>
+            ) : null}
             {turn.answer ? (
               <FormattedAnswer
                 text={turn.answer}
@@ -1809,7 +1818,11 @@ function TurnView({
         {turn.done ? (
           <div className="answer-status">
             {/* A safe fallback is a fixed message, so "Validated" would mislead. */}
-            {turn.done.noEvidence || turn.done.usedFallback ? null : turn.done.listing ? (
+            {turn.done.noEvidence || turn.done.usedFallback ? null : turn.done.generalKnowledge ? (
+              <span className="badge badge-warning" title="No archived order or rule page answered this question; the answer is from general knowledge.">
+                General knowledge
+              </span>
+            ) : turn.done.listing ? (
               <span
                 className="badge badge-safe"
                 title="Listed from the recorded order dates, numbers, sections and subjects; no text was generated."
@@ -1945,7 +1958,7 @@ function citedSourceIds(turn: ChatTurn): string[] {
 function wantsSuggestions(turn: ChatTurn): boolean {
   const done = turn.done;
   return Boolean(
-    done && turn.answer && !turn.error && !done.noEvidence && !done.usedFallback && !done.conversational,
+    done && turn.answer && !turn.error && !done.noEvidence && !done.usedFallback && !done.conversational && !done.generalKnowledge,
   );
 }
 

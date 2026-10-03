@@ -88,6 +88,7 @@ interface DoneEvent {
   noEvidence?: boolean;
   /** no_relevant_pages | model_found_no_answer | model_prose_non_answer */
   noEvidenceReason?: string;
+  generalKnowledge?: boolean;
   shortened?: boolean;
   scopeFallback?: boolean;
   bestRelevance?: number;
@@ -138,6 +139,7 @@ interface CaseResult {
   expectGeneralSource?: boolean;
   noEvidence?: boolean | null;
   noEvidenceReason?: string;
+  generalKnowledge?: boolean;
   shortened?: boolean | null;
   scopeFallback?: boolean | null;
   bestRelevance?: number | null;
@@ -898,7 +900,11 @@ async function evaluateCase(
     );
   }
 
-  const noEvidence = chat.done?.noEvidence ?? false;
+  // A general-knowledge answer (ADR-083) is the app saying "not in the
+  // archive" while still helping: right for out-of-archive questions, a miss
+  // for questions the archive answers.
+  const generalKnowledge = (chat.done as { generalKnowledge?: boolean } | null)?.generalKnowledge ?? false;
+  const noEvidence = (chat.done?.noEvidence ?? false) || generalKnowledge;
   const answerWords =
     (chat.answer.replace(CITATION_RE, "").match(/[\p{L}\p{M}]+/gu) ?? []).length;
   CITATION_RE.lastIndex = 0;
@@ -910,7 +916,11 @@ async function evaluateCase(
     }
   } else {
     if (noEvidence) {
-      failures.push("answered 'no matching order' although the archive has the order");
+      failures.push(
+        generalKnowledge
+          ? "answered from general knowledge although the archive has the order"
+          : "answered 'no matching order' although the archive has the order",
+      );
     }
     if (answerWords < 5) {
       failures.push(`answer has almost no text (${answerWords} words besides citations)`);
@@ -1096,6 +1106,7 @@ async function evaluateCase(
     expectGeneralSource: testCase.expectGeneralSource ?? false,
     noEvidence,
     noEvidenceReason: chat.done?.noEvidenceReason,
+    generalKnowledge: (chat.done as { generalKnowledge?: boolean } | null)?.generalKnowledge ?? false,
     shortened: chat.done?.shortened ?? false,
     scopeFallback: chat.done?.scopeFallback ?? false,
     bestRelevance: chat.done?.bestRelevance ?? null,

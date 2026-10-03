@@ -4709,6 +4709,18 @@ h1 {
   font-size: 0.76rem;
 }
 
+/* General-knowledge answers (ADR-083) */
+.general-knowledge-note {
+  margin: 0 0 12px;
+  padding: 10px 12px;
+  border-left: 3px solid var(--warning);
+  border-radius: 8px;
+  background: var(--warning-soft);
+  color: var(--text);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
 /* Profile delete (ADR-079) */
 .profile-slot-row {
   display: flex;

@@ -77,6 +77,7 @@
     "test:neighbor-expansion": "python3 services/neighbor_expansion_test.py",
     "test:authority": "python3 services/authority_test.py",
     "test:query-expansion": "tsx src/rag/query-expansion.test.ts",
+    "test:general-knowledge": "tsx src/rag/general-knowledge.test.ts",
     "ingest:doe-gfr": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts doe-gfr",
     "ingest:source": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts",
     "ingest:sources": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts --all",

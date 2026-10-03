@@ -1329,3 +1329,23 @@ officer's words ("experience clause", "GFR") are not the manual's words.
   orders, the web app asks it again as a new question over all orders instead of telling
   the officer to retype it (nothing is saved for the first attempt). No suggestions are
   offered after a "not found".
+
+## ADR-083 - General-knowledge answers instead of "not found", clearly labelled (3 Oct 2026)
+
+Abhishek: "if 2–3 searches do not give results nobody will use it further". Ask answered
+only from retrieved pages, so every retrieval miss became "not found", while ChatGPT
+answers from what the model knows. Decision (Abhishek): when no archived page answers,
+answer from general knowledge, clearly labelled (Rulebook §4).
+
+- Triggered where "not found" was sent: no relevant page, the model's NO_ANSWER, or a
+  prose non-answer (first draft or after repair). Not for cited-order follow-ups (the web
+  app re-asks those over all orders) or an explicitly named order; not with a local model.
+- Prompt (`src/rag/general-knowledge.ts`): answer first, ≤ 6 bullets, name the rule /
+  manual / act behind each point, no invented GO numbers, dates or figures ("check the
+  current order" where they may have changed), say so when unknown. The titles of the
+  closest retrieved documents are given as hints and listed under the answer.
+- `done.generalKnowledge = true`, `validated = false`; the web app shows the note above the
+  answer and a "General knowledge" badge, and offers no suggestions.
+- Eval: for not-found cases a labelled general-knowledge answer counts as correct; for
+  answerable cases it is a miss ("answered from general knowledge although the archive
+  has the order"), so retrieval gaps stay visible.

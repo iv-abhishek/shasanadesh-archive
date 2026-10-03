@@ -68,6 +68,13 @@ import {
   requestsGlobalScope,
 } from "../rag/intent-routing.js";
 import { expandSearchQuery } from "../rag/query-expansion.js";
+import {
+  buildGeneralKnowledgeMessages,
+  cleanGeneralKnowledgeAnswer,
+  closestDocuments,
+  closestDocumentsFooter,
+  GENERAL_KNOWLEDGE_ENABLED,
+} from "../rag/general-knowledge.js";
 import { assessRelevance, followUpNotCoveredMessage, hasEvidenceFromDepartments, isNoAnswer, isProseNonAnswer, noEvidenceMessage, withoutNoAnswerToken } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
@@ -1669,6 +1676,9 @@ server.post(
       }
     }
 
+    // Kept for the general-knowledge answer's "closest documents" (ADR-083).
+    const retrievedBeforeGate = retrieval.evidence;
+
     retrieval = {
       ...retrieval,
       evidence: relevance.kept,
@@ -1724,7 +1734,60 @@ server.post(
       );
     };
 
+    // No archived page answers: answer from general knowledge, clearly
+    // marked, instead of a dead end (ADR-083). Not for a cited-order
+    // follow-up (the web app re-asks it over all orders) or an explicit order.
+    const answerFromGeneralKnowledge = async (
+      reason: "no_relevant_pages" | "model_found_no_answer" | "model_prose_non_answer",
+    ): Promise<boolean> => {
+      if (!GENERAL_KNOWLEDGE_ENABLED || followSourceIds || explicitSourceId) return false;
+      const primary = readLlmTargets()[0];
+      if (!primary || primary.local) return false;
+      const startedAt = performance.now();
+      sendStatus("writing");
+      const closest = closestDocuments(retrievedBeforeGate);
+      try {
+        const completion = await generateCompletion(
+          LLM_REQUEST_TIMEOUT_MS,
+          buildGeneralKnowledgeMessages(conversationPlan.retrievalQuery, responseLanguage, closest),
+          LLM_TEMPERATURE,
+          answerTokenBudget(responseLanguage),
+          undefined,
+          stop.signal,
+        );
+        const body = cleanGeneralKnowledgeAnswer(completion.text);
+        if (!body) return false;
+        if (reason === "no_relevant_pages") sendEvent("sources", []);
+        streamValidatedText(sendEvent, body + closestDocumentsFooter(closest, responseLanguage));
+        sendEvent("done", {
+          ok: true,
+          validated: false,
+          generalKnowledge: true,
+          noEvidenceReason: reason,
+          scopeFallback,
+          retrievalScope,
+          bestRelevance: Number(relevance.best.toFixed(3)),
+          citations: [],
+          model: completion.model,
+          modelFellBack: completion.fellBack,
+          timings: {
+            expansionMs: Math.round(expansionMs),
+            retrievalMs: Math.round(retrievalMs),
+            generationMs: Math.round(performance.now() - startedAt),
+            totalMs: Math.round(performance.now() - retrievalStartedAt),
+          },
+        });
+        request.log.info({ query, reason, closest: closest.length }, "RAG chat: general-knowledge answer");
+        return true;
+      } catch (error) {
+        if (stop.signal.aborted) throw error;
+        request.log.warn({ err: error }, "general-knowledge answer failed; sending not found");
+        return false;
+      }
+    };
+
     if (retrieval.evidence.length === 0) {
+      if (await answerFromGeneralKnowledge("no_relevant_pages")) return;
       sendNoEvidence("no_relevant_pages");
       return;
     }
@@ -1937,7 +2000,9 @@ server.post(
         },
         "answer turned into not found",
       );
-      sendNoEvidence(isNoAnswer(firstDraft) ? "model_found_no_answer" : "model_prose_non_answer", generationMs);
+      const reason = isNoAnswer(firstDraft) ? "model_found_no_answer" : "model_prose_non_answer";
+      if (await answerFromGeneralKnowledge(reason)) return;
+      sendNoEvidence(reason, generationMs);
       return;
     }
 
@@ -2082,6 +2147,7 @@ server.post(
 
       // A repair that ends in "the pages do not say" is a "not found" too.
       if (repaired && isProseNonAnswer(finalAnswer)) {
+        if (await answerFromGeneralKnowledge("model_prose_non_answer")) return;
         sendNoEvidence(
           "model_prose_non_answer",
           performance.now() - generationStartedAt,
