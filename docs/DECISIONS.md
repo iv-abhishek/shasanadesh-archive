@@ -1417,3 +1417,18 @@ the index when tonight's `sync:daily` runs `db:load` and `embed:chunks`.)
   Services manuals can all appear. The Search page is unchanged.
 - Prompt: name the document behind each point — the rule book first, then what the manual
   adds — and give each procurement type in one line when the pages cover several.
+
+## ADR-088 - Rule-book questions search all departments at once; searches are counted (3 Oct 2026)
+
+A GFR question took 79 s in retrieval (while `sync:daily` was OCR-ing on the same Mac).
+Besides the load, a rule-book question did two full searches: first the officer's
+departments, then — since only rule-book pages matched — all departments again; each
+search now runs the question and its rewordings.
+
+- `asksAboutRulebook` (GFR, procurement manuals, Financial Handbook / वित्तीय नियम संग्रह,
+  FR, CCS, conduct / leave / pension rules, GeM, DFPR, budget manual, Make in India …):
+  such questions search all departments from the start (one pass).
+- The latency panel shows the number of searches when more than one was needed, and for a
+  general-knowledge answer why it was given (no relevant page / the model said the pages
+  do not answer / the draft said so); the general-knowledge answer also reports the
+  embedding, search and rerank times.

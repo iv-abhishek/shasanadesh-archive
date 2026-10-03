@@ -83,6 +83,8 @@ interface RagTimings {
   embeddingMs?: number | null;
   /** Rewording the question into official search terms (ADR-082). */
   expansionMs?: number | null;
+  /** How many archive searches the answer needed (ADR-088). */
+  searchPasses?: number | null;
   hybridSearchMs?: number | null;
   rerankMs?: number | null;
   hydrationMs?: number | null;
@@ -1917,7 +1919,24 @@ function TurnView({
                 </>
               ) : null}
               <span>Retrieval</span>
-              <strong>{formatStageMs(turn.done.timings.retrievalMs)}</strong>
+              <strong>
+                {formatStageMs(turn.done.timings.retrievalMs)}
+                {typeof turn.done.timings.searchPasses === "number" && turn.done.timings.searchPasses > 1
+                  ? ` (${turn.done.timings.searchPasses} searches)`
+                  : ""}
+              </strong>
+              {turn.done.generalKnowledge ? (
+                <>
+                  <span>General knowledge because</span>
+                  <strong>
+                    {turn.done.noEvidenceReason === "no_relevant_pages"
+                      ? "no relevant page found"
+                      : turn.done.noEvidenceReason === "model_prose_non_answer"
+                        ? "draft said the pages do not answer"
+                        : "model: pages do not answer"}
+                  </strong>
+                </>
+              ) : null}
               <span>Embedding</span>
               <strong>{formatStageMs(turn.done.timings.embeddingMs)}</strong>
               <span>Hybrid search</span>

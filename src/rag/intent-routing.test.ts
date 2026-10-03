@@ -104,3 +104,14 @@ assert.match(
 console.log(
   "intent-routing tests passed",
 );
+
+// Rule-book questions search everything at once (ADR-088).
+{
+  for (const q of ["bidder's turnover condition according to GFR", "What is the criteria for mobilisation advance in GFR?", "वित्तीय हस्तपुस्तिका के अनुसार अर्जित अवकाश", "GeM procurement limits"]) {
+    if (!requestsGlobalScope(q)) throw new Error(`should search all departments: ${q}`);
+  }
+  for (const q of ["medical officer seniority", "सोलर पंप अनुदान"]) {
+    if (requestsGlobalScope(q)) throw new Error(`should keep the profile scope: ${q}`);
+  }
+  console.log("rule-book scope tests passed");
+}

@@ -1519,10 +1519,16 @@ server.post(
         : await expandSearchQuery(conversationPlan.retrievalQuery, stop.signal);
     const expansions = searchPlan.expansions;
     const searchQuestion = searchPlan.corrected ?? conversationPlan.retrievalQuery;
+    // Each pass costs several seconds on the Mac; shown in the latency panel.
+    let searchPasses = 0;
+    const searchChat: typeof retrieve = (...args) => {
+      searchPasses++;
+      return retrieve(...args);
+    };
     const expansionMs = performance.now() - retrievalStartedAt;
 
     let retrieval =
-      await retrieve(
+      await searchChat(
         searchQuestion,
         RAG_TOP_K,
         retrievalFilters,
@@ -1562,7 +1568,7 @@ server.post(
           : undefined;
 
       retrieval =
-        await retrieve(
+        await searchChat(
           searchQuestion,
           RAG_TOP_K,
           fallbackFilters,
@@ -1616,7 +1622,7 @@ server.post(
         describeScope("global", undefined, responseLanguage),
       );
       retrieval =
-        await retrieve(
+        await searchChat(
           searchQuestion,
           RAG_TOP_K,
           undefined,
@@ -1655,7 +1661,7 @@ server.post(
         "searching",
         describeScope("global", undefined, responseLanguage),
       );
-      const wide = await retrieve(
+      const wide = await searchChat(
         searchQuestion,
         RAG_TOP_K,
         undefined,
@@ -1720,6 +1726,7 @@ server.post(
         citations: [],
         timings: {
           retrievalMs: Math.round(retrievalMs),
+          searchPasses,
           expansionMs: Math.round(expansionMs),
 
           embeddingMs: retrieval.timings?.embedding_ms ?? null,
@@ -1776,6 +1783,11 @@ server.post(
           timings: {
             expansionMs: Math.round(expansionMs),
             retrievalMs: Math.round(retrievalMs),
+            searchPasses,
+            embeddingMs: retrieval.timings?.embedding_ms ?? null,
+            hybridSearchMs: retrieval.timings?.hybrid_search_ms ?? null,
+            rerankMs: retrieval.timings?.rerank_ms ?? null,
+            hydrationMs: retrieval.timings?.hydration_ms ?? null,
             generationMs: Math.round(performance.now() - startedAt),
             totalMs: Math.round(performance.now() - retrievalStartedAt),
           },
@@ -2200,6 +2212,7 @@ server.post(
     const ragTimings = {
       retrievalMs:
         Math.round(retrievalMs),
+      searchPasses,
       expansionMs: Math.round(expansionMs),
 
       embeddingMs:

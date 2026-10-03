@@ -201,6 +201,19 @@ export function findExplicitDepartment(
     null;
 }
 
+/**
+ * A question about a rule book that applies to every department (GFR, the
+ * procurement manuals, Financial Handbook, CCS / service rules, GeM): the
+ * officer's own departments add nothing, so search everything at once
+ * instead of a department pass followed by a second, global pass (ADR-088).
+ */
+const RULEBOOK_QUESTION =
+  /\b(?:gfr|general financial rules?|procurement manual|manual for procurement|financial handbook|fhb|fundamental rules?|ccs\b|cca rules|conduct rules|leave rules|pension rules|gem\b|government e-?marketplace|dfpr|delegation of financial powers|budget manual|treasury rules|civil service regulations|csr\b|make in india order|public procurement)\b|वित्तीय\s+(?:नियम\s+संग्रह|हस्तपुस्तिका)|वित्त\s+पथ|मूल\s+नियम|सेवा\s+नियमावली|आचरण\s+नियमावली|जेम\s+पोर्टल|अधिप्राप्ति/iu;
+
+export function asksAboutRulebook(query: string): boolean {
+  return RULEBOOK_QUESTION.test(query);
+}
+
 export function requestsGlobalScope(
   query: string,
 ): boolean {
@@ -208,6 +221,7 @@ export function requestsGlobalScope(
     /\b(all departments|across departments|all government departments|global search|statewide)\b/iu.test(
       query,
     ) ||
+    asksAboutRulebook(query) ||
     /(\u0938\u092d\u0940 \u0935\u093f\u092d\u093e\u0917|\u0938\u093e\u0930\u0947 \u0935\u093f\u092d\u093e\u0917|\u0938\u092e\u0938\u094d\u0924 \u0935\u093f\u092d\u093e\u0917|\u0938\u092d\u0940 \u0938\u0930\u0915\u093e\u0930\u0940 \u0935\u093f\u092d\u093e\u0917)/u.test(
       query,
     )
