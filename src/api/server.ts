@@ -72,6 +72,14 @@ import { expandSearchQuery } from "../rag/query-expansion.js";
 import { matchPlaybook, type PlaybookMatch, type PlaybookPage } from "../rag/playbooks.js";
 import { mergeNamedPages, missingNamedSources, namedSources } from "../rag/named-sources.js";
 import {
+  amendmentPrompt,
+  amendmentsFor,
+  appendEvidence,
+  cardAmendments,
+  missingPages,
+  type CardAmendment,
+} from "../rag/amendments.js";
+import {
   PROCUREMENT_PROMPT,
   PROCUREMENT_RULEBOOKS_ENABLED,
   PROCUREMENT_SOURCE_IDS,
@@ -809,6 +817,7 @@ async function generateCompletion(
 function sourceCard(
   item: RetrievalEvidence,
   laterChanges: Map<string, LaterChange[]>,
+  ruleAmendments?: Map<string, CardAmendment[]>,
 ) {
   return ({
           label:
@@ -851,6 +860,7 @@ function sourceCard(
             null,
           laterChanges:
             laterChanges.get(item.source_id) ?? [],
+          ruleAmendments: ruleAmendments?.get(item.source_id),
           jurisdictionCode:
             item.jurisdiction_code ?? null,
           status:
@@ -1653,9 +1663,9 @@ server.post(
       !usingPlaybook &&
       (retrievalScope === "global" || retrievalScope === "workspace_departments") &&
       isProcurementQuestion(`${query} ${searchQuestion}`);
-    let retrieval: RetrievalResponse | null = null;
+    let procurementRetrieval: RetrievalResponse | null = null;
     if (procurementSearch) {
-      retrieval = await searchChat(
+      procurementRetrieval = await searchChat(
         searchQuestion,
         RAG_TOP_K + 3,
         { sourceIds: PROCUREMENT_SOURCE_IDS },
@@ -1668,18 +1678,18 @@ server.post(
           maxEvidencePages: Math.max(RAG_TOP_K, RAG_MAX_EVIDENCE_PAGES) + 3,
         },
       );
-      if (assessRelevance(retrieval.evidence, RAG_MIN_RELEVANCE).kept.length === 0) {
+      if (assessRelevance(procurementRetrieval.evidence, RAG_MIN_RELEVANCE).kept.length === 0) {
         // Nothing in the rule books: search everything as usual.
         procurementSearch = false;
-        retrieval = null;
+        procurementRetrieval = null;
       } else {
         retrievalScope = "procurement_rulebooks";
         sourceStickinessApplied = false;
       }
     }
 
-    retrieval =
-      retrieval ??
+    let retrieval: RetrievalResponse =
+      procurementRetrieval ??
       (usingPlaybook && playbookPages
         ? playbookPages
         : await searchChat(
@@ -2099,6 +2109,26 @@ server.post(
       return;
     }
 
+    // A rule whose printed text was changed by a GO (ADR-094): bring in the
+    // other side (printed rule, current position, archived amending GO) so the
+    // answer shows both, each cited. A failure only loses the extra pages.
+    let amendmentEntries = amendmentsFor(retrieval.evidence);
+    if (amendmentEntries.length) {
+      const extra = missingPages(amendmentEntries, retrieval.evidence);
+      if (extra.length) {
+        try {
+          const added = await fetchPlaybookPages(searchQuestion, extra, stop.signal);
+          retrieval = { ...retrieval, evidence: appendEvidence(retrieval.evidence, added.evidence) };
+        } catch (error) {
+          if (stop.signal.aborted) throw error;
+          request.log.warn({ err: error }, "amendment pages unavailable");
+        }
+      }
+      amendmentEntries = amendmentsFor(retrieval.evidence);
+    }
+    const ruleAmendments = cardAmendments(amendmentEntries, responseLanguage);
+    const amendmentBlock = amendmentPrompt(amendmentEntries, retrieval.evidence, responseLanguage);
+
     sendStatus(
       "reading",
       describeEvidence(
@@ -2172,6 +2202,7 @@ server.post(
                   "",
                 ]
               : []),
+            ...(amendmentBlock ? [amendmentBlock, ""] : []),
             "RETRIEVED EVIDENCE:",
             evidenceContext,
           ].join("\n"),
@@ -2181,7 +2212,7 @@ server.post(
 
     sendEvent(
       "sources",
-      retrieval.evidence.map((item) => sourceCard(item, laterChanges)),
+      retrieval.evidence.map((item) => sourceCard(item, laterChanges, ruleAmendments)),
     );
 
       const generationStartedAt =
@@ -2530,6 +2561,9 @@ server.post(
           correctedQuestion: searchPlan.corrected,
           namedSourcesAdded: namedSourcesAdded.length ? namedSourcesAdded : undefined,
           procurementRulebooks: procurementSearch || undefined,
+          amendments: amendmentEntries.length
+            ? amendmentEntries.map((entry) => ({ id: entry.id, rule: entry.rule, reviewed: entry.reviewed }))
+            : undefined,
           playbook: usingPlaybook && playbookMatch
             ? { id: playbookMatch.playbook.id, title: playbookMatch.playbook.title, reviewed: playbookMatch.playbook.reviewed }
             : undefined,

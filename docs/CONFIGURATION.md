@@ -18,6 +18,8 @@ Do not place real secrets in this document.
 | `PLAYBOOK_DIR` | folder of playbook files (default `datasets/playbooks`) |
 | `RAG_LEXICAL_TIMEOUT_MS` | time limit for the keyword half of search (default `4000`); past it the meaning (vector) half answers alone (ADR-092) |
 | `RAG_PROCUREMENT_RULEBOOKS` | `0` stops searching procurement questions inside the procurement rule books first (ADR-093) |
+| `RAG_AMENDMENTS` | `0` turns off the amendment register (ADR-094): printed rules are then not linked to the GOs that changed them |
+| `AMENDMENT_DIR` | folder of amendment register files (default `datasets/amendments`) |
 | `RAG_CHAT_INCLUDE_ROUTINE` | `0` leaves confident routine (tier C) orders out of chat again (ADR-081) |
 | `CORS_ORIGINS` | optional comma-separated origins allowed to call the API directly; empty by default because browsers use the same-origin Next.js proxy |
 

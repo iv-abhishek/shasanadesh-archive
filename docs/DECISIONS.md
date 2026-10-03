@@ -1559,3 +1559,34 @@ Consultancy, Works) › **UP Procurement Manual (Goods) 2016**. Use all of them,
 
 **Trade-off.** A department's own procurement order (e.g. a PWD e-tender GO) is not searched
 unless the question names the department or the order, or the rule books have nothing.
+
+## ADR-094 - Amendment register: the printed rule and the amending GO shown separately, both cited (3 Oct 2026)
+
+**Problem.** Old rulebooks are printed as compiled: Financial Handbook Vol II p.183 still
+says maternity leave is "three months" and may be granted three times; GOs since then (and
+the Vitta Path 2011 compilation) say 180 days and removed the three-times limit. Answers
+quoted the printed rule as current. Most amending GOs for these rules are old and not in
+the archive, so the order-to-order links of ADR-054 cannot cover them.
+
+**Decision (owner: "keep them separate while answering, give both links").**
+- `datasets/amendments/*.md`, one file per rule (format in the folder README and
+  `src/rag/amendments.ts`): where the rule is printed, pages that state the current
+  position, and each amending GO (number | date | archived page if any | what changed),
+  `reviewed` flag. Checked by people, like playbooks.
+- When an answer's pages include a registered rule page, current-position page or an
+  archived amending GO, the entry's other pages are added (up to 6, via `POST /pages`,
+  numbered after the others).
+- The prompt gets an "AMENDMENT REGISTER (… NOT evidence)" block naming which S-labels print
+  the rule, which state the current position, and each GO (with its page label, or "not in
+  the archive; name it, do not cite it"). The answer is in separate, cited parts: current
+  position, rule as printed, "Amended by" GOs. The printed text is never given as current.
+- Source cards: the rulebook's card lists "Amended by GO … dated … (not in the archive)"
+  (linked when archived); an archived GO's card says "Amends: <rule>". A compilation that
+  already states the current position is not marked.
+- `RAG_AMENDMENTS=0` turns it off; `npm run test:amendments` checks every file and page.
+
+**First entry:** FHB SR 153 (maternity leave), `reviewed: false`; the GO that raised the
+period to 180 days is still to be confirmed and added.
+
+**Next.** Proposed entries extracted automatically from "(संशोधन) नियमावली" GOs ("नियम-N के
+स्थान पर … रख दिया जायेगा") into the same register, for review.

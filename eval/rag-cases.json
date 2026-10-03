@@ -868,5 +868,35 @@
     "requireCitation": true,
     "allowFallback": false,
     "notes": "ADR-093: answered from the procurement rule books, not unrelated department orders."
+  },
+  {
+    "id": "amendment-maternity-leave",
+    "query": "maternity leave period for female government servants in UP",
+    "language": "en",
+    "category": "amendment",
+    "expectedChatSourceIdsAny": [
+      "core-rules-up-vitta-path-09-leave-rules"
+    ],
+    "expectedTextIncludesAny": [
+      "180"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "ADR-094: FHB SR 153 p.183 prints 'three months'; the current position (180 days, Vitta Path 2011 p.9) must lead, with the printed rule and amending GOs shown separately."
+  },
+  {
+    "id": "amendment-maternity-leave-hi",
+    "query": "महिला कर्मचारी को प्रसूति अवकाश कितने दिन का मिलता है",
+    "language": "hi",
+    "category": "amendment",
+    "expectedChatSourceIdsAny": [
+      "core-rules-up-vitta-path-09-leave-rules"
+    ],
+    "expectedTextIncludesAny": [
+      "180"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "ADR-094, Hindi."
   }
 ]

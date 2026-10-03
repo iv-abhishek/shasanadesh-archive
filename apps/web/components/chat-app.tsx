@@ -21,8 +21,11 @@ import {
   formatGoDate,
   officialShasanadeshUrl,
   readLaterChanges,
+  readRuleAmendments,
+  describeRuleAmendment,
   sourceCollectionLabel,
   type LaterChange,
+  type RuleAmendment,
 } from "../lib/sources";
 import { formatGoReference } from "../lib/go-reference";
 import { SearchGuide, StartPanel } from "./start-panel";
@@ -69,6 +72,8 @@ interface Source {
     number | null;
   /** Later orders that supersede / amend / cancel / correct this one (ADR-054). */
   laterChanges?: LaterChange[];
+  /** Rulebook rule ↔ amending GO links (ADR-094). */
+  ruleAmendments?: RuleAmendment[];
   /** "listing": an entry of an order list (ADR-057), not a retrieved page. */
   kind?: "listing";
   /** ADR-064: "IN" (Government of India), "UP", …; and current / superseded / draft. */
@@ -659,6 +664,7 @@ function normalizePersistedSource(
         ? raw.anchorPageNumber
         : null,
     laterChanges: readLaterChanges(raw.laterChanges),
+    ruleAmendments: readRuleAmendments(raw.ruleAmendments),
     kind: raw.kind === "listing" ? "listing" : undefined,
     jurisdictionCode: typeof raw.jurisdictionCode === "string" ? raw.jurisdictionCode : null,
     status: typeof raw.status === "string" ? raw.status : null,
@@ -1205,6 +1211,7 @@ interface SourceGroup {
   title: string;
   subtitle: string[];
   laterChanges: LaterChange[];
+  ruleAmendments: RuleAmendment[];
   pages: Array<Source & { cited: boolean }>;
   anyCited: boolean;
 }
@@ -1234,6 +1241,7 @@ function groupSources(sources: Source[], answer: string): SourceGroup[] {
           collection,
         subtitle,
         laterChanges: source.laterChanges ?? [],
+        ruleAmendments: source.ruleAmendments ?? [],
         pages: [],
         anyCited: false,
       };
@@ -1382,6 +1390,25 @@ function SourceGroupCard({
             return (
               <li key={change.bySourceId}>
                 <span aria-hidden="true">⚠</span>{" "}
+                {href ? (
+                  <a href={href} target="_blank" rel="noreferrer">{text} ↗</a>
+                ) : (
+                  text
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+
+      {group.ruleAmendments.length ? (
+        <ul className="source-later-changes source-rule-amendments" aria-label="Amendments">
+          {group.ruleAmendments.map((note) => {
+            const href = note.direction === "amended_by" && note.goSourceId ? officialShasanadeshUrl(note.goSourceId) : null;
+            const text = describeRuleAmendment(note, language);
+            return (
+              <li key={`${note.direction}:${note.goNumber}:${note.rule}`}>
+                <span aria-hidden="true">{note.direction === "amends" ? "↺" : "⚠"}</span>{" "}
                 {href ? (
                   <a href={href} target="_blank" rel="noreferrer">{text} ↗</a>
                 ) : (

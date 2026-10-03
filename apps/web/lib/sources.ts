@@ -141,3 +141,38 @@ export function readLaterChanges(value: unknown): LaterChange[] {
     }];
   });
 }
+
+/** A rulebook rule changed by a GO (ADR-094), as shown on either side's source card. */
+export interface RuleAmendment {
+  direction: "amended_by" | "amends";
+  rule: string;
+  goNumber: string;
+  goDate: string | null;
+  goSourceId: string | null;
+}
+
+export function readRuleAmendments(value: unknown): RuleAmendment[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((item) => {
+    const raw = item as Record<string, unknown>;
+    if (!raw || (raw.direction !== "amended_by" && raw.direction !== "amends") || typeof raw.rule !== "string" || typeof raw.goNumber !== "string") return [];
+    return [{
+      direction: raw.direction,
+      rule: raw.rule,
+      goNumber: raw.goNumber,
+      goDate: typeof raw.goDate === "string" ? raw.goDate : null,
+      goSourceId: typeof raw.goSourceId === "string" ? raw.goSourceId : null,
+    }];
+  });
+}
+
+/** "Amended by GO … dated …" on the rule's card; "Amends: <rule>" on the GO's card. */
+export function describeRuleAmendment(note: RuleAmendment, language: "hi" | "en"): string {
+  if (note.direction === "amends") return language === "hi" ? `संशोधन करता है: ${note.rule}` : `Amends: ${note.rule}`;
+  const date = formatGoDate(note.goDate);
+  const dated = date ? (language === "hi" ? `, दिनांक ${date}` : ` dated ${date}`) : "";
+  const missing = note.goSourceId ? "" : language === "hi" ? " (संग्रह में उपलब्ध नहीं)" : " (not in the archive)";
+  return language === "hi"
+    ? `संशोधित — शासनादेश संख्या ${note.goNumber}${dated}${missing}`
+    : `Amended by GO ${note.goNumber}${dated}${missing}`;
+}
