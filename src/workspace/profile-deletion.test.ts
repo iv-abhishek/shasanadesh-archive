@@ -122,6 +122,14 @@ async function main(): Promise<void> {
     assert.equal(await store.purgeDeletedProfiles(), 1);
     assert.equal((await db.query("SELECT COUNT(*)::int AS n FROM workspace_users")).rows[0].n, MAX_WORKSPACE_PROFILES - 2);
 
+    // The last active profile cannot be deleted.
+    const remaining = (await db.query<{ id: string }>("SELECT id FROM workspace_users WHERE deleted_at IS NULL ORDER BY created_at")).rows.map((row) => row.id);
+    for (const id of remaining.slice(1)) await store.softDeleteWorkspaceProfile(id);
+    const last = await server.inject({ method: "DELETE", url: `/api/session/dev-users/${remaining[0]}` });
+    assert.equal(last.statusCode, 409);
+    assert.match(last.json().message, /only profile/);
+    assert.equal((await db.query("SELECT COUNT(*)::int AS n FROM workspace_users WHERE deleted_at IS NULL")).rows[0].n, 1);
+
     // Bad IDs are rejected before touching the database.
     assert.equal((await server.inject({ method: "DELETE", url: "/api/session/dev-users/not-a-uuid" })).statusCode, 400);
     assert.equal((await server.inject({ method: "DELETE", url: `/api/session/dev-users/${randomUUID()}` })).statusCode, 404);

@@ -1232,6 +1232,9 @@ mistaken tap on a phone must be recoverable; a deletion must not be kept forever
   sessions and feedback go with it (all `ON DELETE CASCADE`). Feedback is deleted, not
   anonymised: deletion means deletion. The API purges due profiles at start-up and whenever
   "Recently deleted" loads; `npm run workspace:purge` (also a `sync:daily` step) covers the rest.
+- The last active profile cannot be deleted (409, and the switcher shows "Only profile"):
+  with none left the switcher could not reach "Recently deleted", and removing everything
+  is account deletion.
 - Confirmation: one dialog naming the profile and its conversation count, a red
   "Delete profile" button. No typed name — the 30-day restore is the safety net.
 - Until accounts exist these routes sit with the development sign-in

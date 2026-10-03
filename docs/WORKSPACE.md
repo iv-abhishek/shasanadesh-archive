@@ -58,7 +58,8 @@ generator.
 
 A deleted profile leaves the switcher at once, is signed out, and frees its slot. It stays
 under "Recently deleted" for 30 days (Restore, or Delete now) and is then purged with all
-its conversations, departments, sessions and feedback (ADR-079). Account deletion (7 days,
+its conversations, departments, sessions and feedback (ADR-079). The last remaining
+profile cannot be deleted. Account deletion (7 days,
 then purge) comes with real sign-in.
 
 Development endpoints (off in production):

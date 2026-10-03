@@ -1444,10 +1444,19 @@ function Onboarding({
                       managing ? "managing" : "",
                     ].filter(Boolean).join(" ")}
                     aria-current={current ? "true" : undefined}
-                    aria-label={managing ? `Delete profile ${item.displayName}` : undefined}
+                    aria-label={
+                      managing
+                        ? profiles.length === 1
+                          ? `${item.displayName}: the only profile, cannot be deleted`
+                          : `Delete profile ${item.displayName}`
+                        : undefined
+                    }
                     disabled={busy}
                     onClick={() => {
-                      if (managing) void askDelete(item);
+                      if (managing && profiles.length === 1) {
+                        setNotice(null);
+                        setError("This is the only profile. Create another profile before deleting this one.");
+                      } else if (managing) void askDelete(item);
                       else if (current && onCancel) onCancel();
                       else void loginExisting(item);
                     }}
@@ -1477,8 +1486,11 @@ function Onboarding({
                         {more > 0 ? <span className="dept-chip muted">+{more}</span> : null}
                       </span>
                     </span>
-                    <span className={managing ? "profile-tile-action danger" : "profile-tile-action"} aria-hidden="true">
-                      {managing ? "Delete" : `${current ? "Continue" : "Use"} →`}
+                    <span
+                      className={managing && profiles.length > 1 ? "profile-tile-action danger" : "profile-tile-action"}
+                      aria-hidden="true"
+                    >
+                      {managing ? (profiles.length === 1 ? "Only profile" : "Delete") : `${current ? "Continue" : "Use"} →`}
                     </span>
                   </button>
                 );
@@ -1514,7 +1526,7 @@ function Onboarding({
                 {freeSlots === 0
                   ? `All ${maxProfiles} profile slots are in use.`
                   : `${profiles.length} of ${maxProfiles} profile slots used.`}
-                {managing ? " Tap a profile to delete it." : ""}
+                {managing ? (profiles.length > 1 ? " Tap a profile to delete it." : " The only profile cannot be deleted.") : ""}
               </p>
               {profiles.length || deletedProfiles.length ? (
                 <button

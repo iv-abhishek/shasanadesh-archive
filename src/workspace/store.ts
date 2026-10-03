@@ -299,13 +299,29 @@ async function requireDeletionColumns(): Promise<void> {
 /**
  * Soft-delete a profile: hidden everywhere, signed out, slot freed; purged
  * after PROFILE_RESTORE_DAYS. Deleting an already deleted profile is a no-op
- * that returns its existing purge date.
+ * that returns its existing purge date. The last active profile cannot be
+ * deleted (409): with none left the switcher could not reach "Recently
+ * deleted", and removing everything is account deletion (ADR-079).
  */
 export async function softDeleteWorkspaceProfile(userId: string, days = PROFILE_RESTORE_DAYS): Promise<{ purgeAfter: string }> {
   await requireDeletionColumns();
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+    // Same lock as create/restore, so two deletes cannot both remove "the other one".
+    await client.query("SELECT pg_advisory_xact_lock(hashtext('workspace_users:create'))");
+    const others = await client.query<{ n: number }>(
+      "SELECT COUNT(*)::int AS n FROM workspace_users WHERE deleted_at IS NULL AND id <> $1",
+      [userId],
+    );
+    const target = await client.query<{ deleted: boolean }>(
+      "SELECT deleted_at IS NOT NULL AS deleted FROM workspace_users WHERE id = $1",
+      [userId],
+    );
+    if (!target.rows[0]) throw httpError("Profile not found.", 404);
+    if (!target.rows[0].deleted && (others.rows[0]?.n ?? 0) === 0) {
+      throw httpError("This is the only profile. Create another profile before deleting this one.", 409);
+    }
     const result = await client.query<{ purge_after: Date }>(
       `UPDATE workspace_users
           SET deleted_at = COALESCE(deleted_at, NOW()),
