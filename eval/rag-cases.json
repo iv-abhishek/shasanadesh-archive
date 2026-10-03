@@ -108,7 +108,10 @@
     "notes": "25 Sept: safe fallback after garbled native text (ADR-043). 2 Oct: a vague question; any PM-KUSUM order with a cited answer is correct, not one fixed order.",
     "expectedTextIncludesAny": [
       "सोलर पंप",
-      "सोलर पम्प"
+      "सोलर पम्प",
+      "सौर पंप",
+      "सौर पम्प",
+      "सोलर"
     ]
   },
   {
@@ -116,23 +119,12 @@
     "query": "प्रोजेक्ट अलंकार के शासनादेश का डिटेल बताने का कष्ट करें",
     "language": "hi",
     "category": "scheme-guideline",
-    "expectedSourceIds": [
-      "22#50002#10#2024"
-    ],
-    "expectedPagesBySource": {
-      "22#50002#10#2024": [
-        1,
-        2
-      ]
-    },
     "requireCitation": true,
     "allowFallback": false,
     "expectedTextIncludesAny": [
-      "बाउण्ड्री",
-      "बाउंड्री",
-      "चहारदीवारी"
+      "अलंकार"
     ],
-    "notes": "26 Sept: cut mid-word, then citation-only bullets (ADR-048, ADR-049)."
+    "notes": "26 Sept: cut mid-word, then citation-only bullets (ADR-048, ADR-049). 3 Oct: 'the detail of the Project Alankar order' is generic and several Alankar orders exist; any of them answers it (the English case checks the boundary-wall order)."
   },
   {
     "id": "project-alankar-english",

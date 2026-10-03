@@ -86,6 +86,8 @@ interface DoneEvent {
   firstValidationIssues?: string[];
   repairValidationIssues?: string[];
   noEvidence?: boolean;
+  /** no_relevant_pages | model_found_no_answer | model_prose_non_answer */
+  noEvidenceReason?: string;
   shortened?: boolean;
   scopeFallback?: boolean;
   bestRelevance?: number;
@@ -133,7 +135,9 @@ interface CaseResult {
   failures: string[];
   category?: string;
   expectNoEvidence?: boolean;
+  expectGeneralSource?: boolean;
   noEvidence?: boolean | null;
+  noEvidenceReason?: string;
   shortened?: boolean | null;
   scopeFallback?: boolean | null;
   bestRelevance?: number | null;
@@ -1089,7 +1093,9 @@ async function evaluateCase(
     failures,
     category: testCase.category,
     expectNoEvidence: testCase.expectNoEvidence ?? false,
+    expectGeneralSource: testCase.expectGeneralSource ?? false,
     noEvidence,
+    noEvidenceReason: chat.done?.noEvidenceReason,
     shortened: chat.done?.shortened ?? false,
     scopeFallback: chat.done?.scopeFallback ?? false,
     bestRelevance: chat.done?.bestRelevance ?? null,
@@ -1330,7 +1336,7 @@ function buildSummary(
     // Answers that cite a rulebook or a general order, among answers with citations.
     generalSourceRate: rate(
       results
-        .filter((item) => (item.citedAuthorities?.length ?? 0) > 0)
+        .filter((item) => item.expectGeneralSource && (item.citedAuthorities?.length ?? 0) > 0)
         .map((item) => item.citedAuthorities!.some((kind) => kind === "RULEBOOK" || kind === "GENERAL")),
     ),
     // Answers the fallback model wrote: a mixed run is not a fair model comparison.

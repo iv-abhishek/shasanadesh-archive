@@ -1659,7 +1659,7 @@ server.post(
 
     // "Not found" is an answer, not an error: no citations, no source cards.
     const sendNoEvidence = (
-      reason: "no_relevant_pages" | "model_found_no_answer",
+      reason: "no_relevant_pages" | "model_found_no_answer" | "model_prose_non_answer",
       generationMs = 0,
     ) => {
       const text = followSourceIds
@@ -1901,7 +1901,17 @@ server.post(
     // Models also say it in prose ("The provided evidence does not contain
     // …"), with a citation to the page that does not answer; same reply.
     if (isNoAnswer(firstDraft) || isProseNonAnswer(firstDraft)) {
-      sendNoEvidence("model_found_no_answer", generationMs);
+      // Logged so a wrong "not found" can be traced to the model or to the
+      // prose detector (toy policy, 3 Oct eval).
+      request.log.info(
+        {
+          noEvidenceReason: isNoAnswer(firstDraft) ? "model_found_no_answer" : "model_prose_non_answer",
+          draftStart: firstDraft.slice(0, 300),
+          evidence: retrieval.evidence.slice(0, 6).map((item) => `${item.source_id} p.${item.page_number}`),
+        },
+        "answer turned into not found",
+      );
+      sendNoEvidence(isNoAnswer(firstDraft) ? "model_found_no_answer" : "model_prose_non_answer", generationMs);
       return;
     }
 
@@ -2047,7 +2057,7 @@ server.post(
       // A repair that ends in "the pages do not say" is a "not found" too.
       if (repaired && isProseNonAnswer(finalAnswer)) {
         sendNoEvidence(
-          "model_found_no_answer",
+          "model_prose_non_answer",
           performance.now() - generationStartedAt,
         );
         return;

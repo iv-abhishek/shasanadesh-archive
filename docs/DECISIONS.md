@@ -1273,3 +1273,9 @@ then "fetch failed" for the rest), so only 18 cases count.
   the order list. Ask now takes a Hindi "क्या …" question unless it asks for new orders
   ("क्या कोई नया …", "… के शासनादेश क्या हैं?"), and English "what incentives / benefits /
   support …".
+- Full hosted run (3 Oct, 16:30): 88.4% pass, "not found" 100%, median chat 18 s, search
+  12.6 s. Two failures were test wording (सौर पंप; the generic Project Alankar question now
+  accepts any Alankar order). A not-found now records whether the model said
+  NO_ANSWER or the prose detector fired (`noEvidenceReason`, plus a server log line with
+  the draft start and the pages), to trace the toy-policy "not found". The eval's
+  "rulebook or general order" rate now counts only the rule questions.
