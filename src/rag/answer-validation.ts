@@ -491,6 +491,27 @@ export function buildQualitativeSalvage(
     .trim();
 }
 
+// A closing "(Note: … masked … verify against the original …)" paragraph:
+// internal plumbing the officer should not read (3 Oct eval). The source cards
+// already mark pages whose numbers need checking.
+const VERIFICATION_NOTE_START = /^[\s*_>]*(?:\(|\[)?\s*[*_]*\s*(?:note|nb|caution|disclaimer|नोट|टिप्पणी|ध्यान दें|सावधानी)\s*[:：-]/iu;
+const VERIFICATION_NOTE_TOPIC = /mask|ocr|verif|extraction|original (?:source|page)|सत्याप|संघर्ष|मूल (?:स्रोत|पृष्ठ)|ओसीआर|छिपा/iu;
+
+/**
+ * Drop trailing note paragraphs about masking/OCR/verification. Keeps the
+ * answer unchanged when that would leave no citation.
+ */
+export function stripVerificationNotes(answer: string): string {
+  const paragraphs = answer.trimEnd().split(/\n\s*\n/);
+  while (paragraphs.length > 1) {
+    const last = paragraphs[paragraphs.length - 1];
+    if (!VERIFICATION_NOTE_START.test(last) || !VERIFICATION_NOTE_TOPIC.test(last)) break;
+    paragraphs.pop();
+  }
+  const stripped = paragraphs.join("\n\n").trimEnd();
+  return /\[S\d+\s+p\.\d+\]/.test(stripped) ? stripped : answer;
+}
+
 export function buildConservativeFallback(
   evidence: RetrievalEvidence[],
   language: "en" | "hi" = "en",

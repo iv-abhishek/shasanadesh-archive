@@ -1254,3 +1254,19 @@ mistaken tap on a phone must be recoverable; a deletion must not be kept forever
 Application logs must not carry question text or contact numbers beyond their rotation
 period; database backups keep deleted rows until the backup expires, which the privacy
 notice must say (e.g. "removed from backups within 30 days").
+
+## ADR-080 - First hosted eval run: notes, routing (3 Oct 2026)
+
+OpenRouter `qwen/qwen3.6-35b-a3b`: median chat 21 s (was 85 s on local Qwen3-8B), no
+repairs, no fallbacks. The run stopped at case 19 when the API went away ("terminated",
+then "fetch failed" for the rest), so only 18 cases count.
+
+- The hosted model ended answers with "(Note: numbers are masked … verify against the
+  original source)" — internal plumbing. The prompt no longer asks it to label risky
+  numbers in prose, and `stripVerificationNotes` drops such trailing note paragraphs
+  (never the last citation). The eval no longer calls an answer cut off when it ends in
+  closing markdown.
+- "… को क्या प्रोत्साहन …", "… के संबंध में क्या आदेश है?", "What incentives …" went to
+  the order list. Ask now takes a Hindi "क्या …" question unless it asks for new orders
+  ("क्या कोई नया …", "… के शासनादेश क्या हैं?"), and English "what incentives / benefits /
+  support …".

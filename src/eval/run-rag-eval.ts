@@ -915,7 +915,8 @@ async function evaluateCase(
     if (
       !chat.done?.shortened &&
       answerWords >= 5 &&
-      !/[।॥.?!)\]:]\s*$/u.test(chat.answer.trim())
+      // Closing markdown (**bold**, *italic*) after the punctuation is fine.
+      !/[।॥.?!)\]:]\s*$/u.test(chat.answer.trim().replace(/[*_\s]+$/u, ""))
     ) {
       failures.push("answer seems cut off (no final punctuation)");
     }

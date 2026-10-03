@@ -41,6 +41,7 @@ import {
   buildAnswerRepairInstruction,
   buildQualitativeSalvage,
   buildConservativeFallback,
+  stripVerificationNotes,
   validateAnswer,
 } from "../rag/answer-validation.js";
 import {
@@ -2072,6 +2073,10 @@ server.post(
           "Answer safety validation failed after repair and fallback.",
         );
       }
+
+      // No "(Note: numbers masked / verify on the original)" endings (ADR-080).
+      finalAnswer =
+        stripVerificationNotes(finalAnswer);
 
       streamValidatedText(
         sendEvent,

@@ -272,3 +272,17 @@ console.log("jurisdiction/topic filter tests passed");
   assert.ok(!dated || dated.dateFrom === undefined || dated.dateFrom === "2023-05-15");
   console.log("baseline routing tests passed");
 }
+
+// Eval, 3 Oct 2026: "what incentives / क्या प्रोत्साहन / क्या आदेश है" ask what orders say.
+{
+  const list = (query: string) => detectListingRequest(query, "2026-10-03");
+  assert.equal(list("उत्तर प्रदेश स्टार्टअप नीति 2026 के अंतर्गत इन्क्यूबेटर्स को क्या प्रोत्साहन दिए जाते हैं?"), null);
+  assert.equal(list("उत्तर प्रदेश खिलौना विनिर्माण प्रोत्साहन नीति-2025 में क्या प्रोत्साहन हैं?"), null);
+  assert.equal(list("केजीएमयू के शिक्षकों की अधिवर्षता आयु के संबंध में क्या आदेश है?"), null);
+  assert.equal(list("What incentives does the toy manufacturing policy give?"), null);
+  // Still lists:
+  assert.ok(list("क्या कोई नया शासनादेश आया है?"));
+  assert.ok(list("कृषि विभाग के हाल के शासनादेश क्या हैं?"));
+  assert.ok(list("21.09.2026 के शासनादेश"));
+  console.log("3 Oct routing tests passed");
+}

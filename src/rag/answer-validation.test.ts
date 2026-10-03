@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import {
+import { stripVerificationNotes,
   buildQualitativeSalvage,
   validateAnswer,
 } from "./answer-validation.js";
@@ -271,3 +271,17 @@ assert.equal(
 console.log(
   "answer-validation tests passed",
 );
+
+// Trailing "(Note: … masked … verify …)" paragraphs are dropped (3 Oct eval).
+{
+  const en = "* Seniority is fixed on substantive appointment [S1 p.18].\n\n*(Note: The exact rule numbers are masked in the evidence and require verification against the original source.)*";
+  assert.equal(stripVerificationNotes(en), "* Seniority is fixed on substantive appointment [S1 p.18].");
+  const hi = "* सत्यापन जिला स्तर पर होगा [S3 p.7]।\n\n*(नोट: कुछ संख्यात्मक मानक OCR संघर्ष के कारण सत्यापित नहीं हैं और मूल स्रोत पृष्ठ से सत्यापित करने की आवश्यकता है [S3 p.7]।)*";
+  assert.equal(stripVerificationNotes(hi), "* सत्यापन जिला स्तर पर होगा [S3 p.7]।");
+  // A note about the subject itself stays; so does an answer that would lose its only citation.
+  const real = "* Leave is 180 days [S1 p.2].\n\nNote: the order applies to all women employees [S1 p.2].";
+  assert.equal(stripVerificationNotes(real), real);
+  const only = "Intro.\n\n(Note: numbers masked; verify on the original page [S1 p.1].)";
+  assert.equal(stripVerificationNotes(only), only);
+  console.log("verification-note tests passed");
+}

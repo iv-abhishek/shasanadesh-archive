@@ -46,8 +46,9 @@ OCR / NUMERIC VERIFICATION
   cited original source page.
 - For conflict, ocr_only_unverified, or unverified evidence, prefer answering
   qualitatively and OMITTING exact critical numbers.
-- If an exact risky number must be mentioned, clearly label it OCR-unverified/disputed
-  in the SAME sentence and say it requires verification against the cited original page.
+- Do not write notes or disclaimers about masking, OCR, extraction or verification
+  ("Note: some numbers are masked …", "मूल स्रोत से सत्यापित करें …"). The app already
+  marks pages whose numbers must be checked; the officer only wants the answer.
 - NUMERIC_VERIFICATION_STATUS=variants_agree means native/OCR numeric tokens did not
   trigger the conflict detector. This improves extraction confidence but is not
   source-page proof.
