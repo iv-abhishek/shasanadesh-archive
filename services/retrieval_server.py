@@ -442,6 +442,7 @@ def retrieve_hybrid(
     query_vector: str,
     candidate_count: int,
     filters: SearchFilters,
+    lexical: bool = True,
 ) -> list[Hit]:
     assert DATABASE_URL is not None
 
@@ -532,10 +533,17 @@ def retrieve_hybrid(
             candidate_count,
         ]
 
-        lexical_rows = conn.execute(
-            lexical_sql,
-            lexical_params,
-        ).fetchall()
+        # The lexical search scans every chunk (trigram similarity cannot use
+        # the index), seconds per query; the rewordings search by meaning only
+        # (ADR-090: 4 lexical scans took 54 s of a 60 s search on 3 Oct).
+        lexical_rows = (
+            conn.execute(
+                lexical_sql,
+                lexical_params,
+            ).fetchall()
+            if lexical
+            else []
+        )
 
     vector_hits = [make_hit(row) for row in vector_rows]
     lexical_hits = [make_hit(row, lexical=True) for row in lexical_rows]
@@ -782,7 +790,7 @@ def search(body: SearchRequest, request: Request):
         # Merge the candidate lists: a page found by several wordings rises.
         merged: dict[str, Hit] = {hit.chunk_id: hit for hit in fused_hits}
         for text, vector in zip(expansions, query_embeddings[1:]):
-            for hit in retrieve_hybrid(text, vector_literal(vector), body.candidate_count, body.filters):
+            for hit in retrieve_hybrid(text, vector_literal(vector), body.candidate_count, body.filters, lexical=False):
                 if hit.chunk_id in merged:
                     merged[hit.chunk_id].fused_score += hit.fused_score
                 else:

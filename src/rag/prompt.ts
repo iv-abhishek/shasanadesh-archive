@@ -118,6 +118,10 @@ ANSWER QUALITY
 - If NONE of the evidence is about the user's question (for example, the pages concern a
   different subject, scheme or department), reply with exactly NO_ANSWER_IN_EVIDENCE and
   nothing else. Do not describe the unrelated pages and do not cite them.
+- A question that names one rule book ("as per GFR") IS answered by pages on the same
+  subject from documents that apply it (the procurement manuals, GeM or state orders):
+  answer from them and name the document; do not reply NO_ANSWER_IN_EVIDENCE only because
+  the named rule book itself is not among the pages.
 - Distinguish a rule/provision from an example, appendix, form, or explanation.
 - When the question names a rule book (for example GFR) and the pages come from documents
   that apply it (the procurement manuals for goods, works, consultancy or non-consultancy

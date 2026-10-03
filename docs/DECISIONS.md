@@ -1450,3 +1450,20 @@ competition, fairness"), while the criteria themselves are on other pages (Goods
 - `npm run debug:search -- "question"` prints the corrected question, the search
   wordings and the ranked pages (relevance, tier, opening text) without writing an
   answer — for diagnosing misses on the Mac.
+
+## ADR-090 - Rewordings search by meaning only; "as per GFR" answered from the manuals (3 Oct 2026)
+
+`npm run debug:search -- "bidders past experience criteria as per GFR rules"` (while
+`sync:daily` was OCR-ing): search 60 s, of which hybrid search 54 s. The lexical branch
+(`… @@ plainto_tsquery … OR similarity(text, q) > 0.01`) cannot use an index and scans
+every chunk; with the question plus three rewordings it ran four times.
+
+- Rewordings (ADR-082) now use only the vector search; the question itself keeps vector +
+  lexical. Expected: about a quarter of the lexical cost.
+- The same run ranked the right page second (Works manual p. 98, "Particular Construction
+  Experience … completed similar works"), yet chat had answered from general knowledge:
+  the model refused because GFR itself was not among the pages. The prompt now says a
+  question naming one rule book is answered by pages on the same subject from the
+  documents that apply it, naming the document.
+- Next if lexical stays slow: `word_similarity` with the `<%` operator, which the
+  trigram index supports (needs a check on Hindi text first).
