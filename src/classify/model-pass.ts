@@ -18,6 +18,7 @@
  *   --all          every order, not only low confidence
  *   --tier B       only orders the rules put in that tier (B: the unsorted middle, ADR-078)
  *   --concurrency  parallel requests (default 6 for a hosted model, 1 for local)
+ *   --redo-since 2026-10-03T11   re-classify orders labelled on or after that UTC time
  *
  * The model is the answer model's primary (ADR-075): OpenRouter when
  * LLM_PROVIDER=openrouter, else LLM_BASE_URL / LLM_MODEL.
@@ -59,10 +60,12 @@ Tiers:
 - B: useful in context — notifications, corrigenda, time-bound campaigns, or a scheme detail that
   applies only in some situations. Do not use B as "unsure": an order that sets out how a scheme,
   programme or service works for everyone it covers is A; one about a single case is C.
-- An order that amends, supersedes or cancels a rule, policy or guideline is A (officials must see it).
+- An order that amends, supersedes or cancels a GENERALLY APPLICABLE rule, policy or guideline is A
+  (officials must see it). Judge what is amended, not the word "amendment": changing the posts,
+  pay or seats of ONE institution, college, hospital, project, company or person is C.
 - C: routine or individual — financial/administrative sanctions, release of funds, budget allocations,
   orders about one person (appointment, promotion, ACP, retirement dues, prison release), one company,
-  one court case, one building/road/project or one district's works.
+  one court case, one institution's posts, one building/road/project or one district's works.
 
 Document types: ${MODEL_DOC_TYPES.join(", ")}.
 
@@ -143,6 +146,13 @@ async function main(): Promise<void> {
   const limitIndex = process.argv.indexOf("--limit");
   const limit = limitIndex >= 0 ? Number(process.argv[limitIndex + 1]) : Infinity;
   const all = process.argv.includes("--all");
+  // Re-classify orders the model labelled on or after this date (e.g. after a
+  // prompt change). The newest line per order wins in classify:orders.
+  const redoIndex = process.argv.indexOf("--redo-since");
+  const redoSince = redoIndex >= 0 ? String(process.argv[redoIndex + 1] ?? "") : null;
+  if (redoSince !== null && !/^\d{4}-\d{2}-\d{2}(T\d{2}(:\d{2})?)?$/.test(redoSince)) {
+    throw new Error("--redo-since needs a UTC date or time: YYYY-MM-DD or YYYY-MM-DDTHH[:MM]");
+  }
   const tierIndex = process.argv.indexOf("--tier");
   const onlyTier = tierIndex >= 0 ? String(process.argv[tierIndex + 1] ?? "").toUpperCase() : null;
   const target = readLlmTargets()[0];
@@ -157,6 +167,7 @@ async function main(): Promise<void> {
   const done = new Set(
     (await readJsonl<ModelClassification>(outputPath))
       .filter((item) => item.rulesVersion === RULES_VERSION)
+      .filter((item) => !redoSince || item.classifiedAt < redoSince)
       .map((item) => item.sourceId),
   );
   const listing = new Map(
