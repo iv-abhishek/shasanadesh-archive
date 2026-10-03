@@ -1432,3 +1432,21 @@ search now runs the question and its rewordings.
   general-knowledge answer why it was given (no relevant page / the model said the pages
   do not answer / the draft said so); the general-knowledge answer also reports the
   embedding, search and rerank times.
+
+## ADR-089 - A second search before a general-knowledge answer; debug:search (3 Oct 2026)
+
+"bidders past experience criteria as per GFR rules" fell back to general knowledge: the
+pages found were generic ("tender documents should be self-contained", "transparency,
+competition, fairness"), while the criteria themselves are on other pages (Goods manual
+§ qualification criteria, Works manual, Non-Consultancy manual pp. 106–109).
+
+- Before a general-knowledge answer is sent, its draft — which is worded like the rule —
+  is used as one more search wording. If that search finds new pages (best relevance
+  ≥ 0.5) and the model answers from them with valid citations, the officer gets a normal
+  cited answer with a "Second search" badge; otherwise the general-knowledge answer.
+  Costs one search and one model call, only on misses.
+- With rewordings, 12 more candidates are reranked (`RAG_RERANK_COUNT` + 12).
+- Source cards are built by one function (`sourceCard`) for both paths.
+- `npm run debug:search -- "question"` prints the corrected question, the search
+  wordings and the ranked pages (relevance, tier, opening text) without writing an
+  answer — for diagnosing misses on the Mac.

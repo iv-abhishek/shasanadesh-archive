@@ -113,6 +113,8 @@ interface DoneEvent {
   noEvidenceReason?: "no_relevant_pages" | "model_found_no_answer" | "model_prose_non_answer";
   /** No archived page answered; this answer is from general knowledge (ADR-083). */
   generalKnowledge?: boolean;
+  /** Found by a second search worded like the rule (ADR-089). */
+  secondSearch?: boolean;
   /** The question with typos and grammar fixed, as searched (ADR-086). */
   correctedQuestion?: string | null;
   /** Nothing close in the officer's departments, so all departments were searched. */
@@ -1869,6 +1871,12 @@ function TurnView({
                 title="The answer reached the length limit and was cut back to its last complete sentence. Ask a follow-up (e.g. 'बाकी शर्तें बताएं') for the rest."
               >
                 Shortened
+              </span>
+            ) : null}
+
+            {turn.done.secondSearch ? (
+              <span className="badge" title="The first search did not find the answer; a second search, worded like the rule, did.">
+                Second search
               </span>
             ) : null}
 

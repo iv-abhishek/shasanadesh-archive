@@ -109,6 +109,7 @@
     "test:listing": "tsx src/rag/order-listing.test.ts",
     "test:suggestions": "tsx src/rag/suggestions.test.ts",
     "chats:archive": "node --env-file-if-exists=.env --import tsx src/archive-conversations.ts",
+    "debug:search": "node --env-file-if-exists=.env --import tsx src/debug-ask-search.ts",
     "workspace:purge": "node --env-file-if-exists=.env --import tsx src/workspace/purge-profiles.ts",
     "translit:lexicon": "tsx scripts/build-translit-lexicon.ts",
     "test:translit": "tsx apps/web/lib/transliterate.test.ts",

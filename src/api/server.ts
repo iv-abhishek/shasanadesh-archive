@@ -51,6 +51,7 @@ import {
 } from "../rag/prompt.js";
 import type {
   ChatMessage,
+  RetrievalEvidence,
   RetrievalResponse,
 } from "../rag/types.js";
 import {
@@ -595,7 +596,10 @@ async function retrieve(
             query,
             top_k: topK,
             candidate_count: 50,
-            rerank_count: RAG_RERANK_COUNT,
+            // More wordings bring more candidates; rerank a few more of them.
+            rerank_count: options?.expansions?.length
+              ? Math.min(100, RAG_RERANK_COUNT + 12)
+              : RAG_RERANK_COUNT,
             filters: {
               department:
                 filters?.department,
@@ -765,6 +769,62 @@ async function generateCompletion(
     }
   }
   throw lastError;
+}
+
+/** A source card for the chat (Rulebook §1: official URLs only). */
+function sourceCard(
+  item: RetrievalEvidence,
+  laterChanges: Map<string, LaterChange[]>,
+) {
+  return ({
+          label:
+            item.label,
+          sourceId:
+            item.source_id,
+          documentTitle:
+            item.document_title ??
+            null,
+          pageNumber:
+            item.page_number,
+          department:
+            item.department,
+          goNumber:
+            item.go_number,
+          goDate:
+            item.go_date,
+          // Rulebook §1: government URLs only; never our archive.
+          sourceUrl:
+            officialOnly(item.source_url),
+          pageUrl:
+            officialOnly(item.page_url),
+          legacyFont:
+            Boolean(item.legacy_font),
+          numericConflict:
+            item.numeric_conflict,
+          numericVerificationStatus:
+            item.numeric_verification_status,
+          selectedVariant:
+            item.selected_variant,
+          selectedCanonical:
+            item.selected_canonical,
+          rerankScoreRaw:
+            item.rerank_score_raw,
+          retrievalRole:
+            item.retrieval_role ??
+            "direct",
+          anchorPageNumber:
+            item.anchor_page_number ??
+            null,
+          laterChanges:
+            laterChanges.get(item.source_id) ?? [],
+          jurisdictionCode:
+            item.jurisdiction_code ?? null,
+          status:
+            item.status ?? null,
+          // RULEBOOK / GENERAL / CONTEXT / SPECIFIC (ADR-078).
+          authority:
+            authorityLabel(item),
+        });
 }
 
 function streamValidatedText(
@@ -1766,6 +1826,107 @@ server.post(
         );
         const body = cleanGeneralKnowledgeAnswer(completion.text);
         if (!body) return false;
+
+        // Second chance (ADR-089): the general-knowledge draft is worded like
+        // the rule, so search once more with it. If that finds pages the first
+        // search did not and they answer the question, give a normal cited
+        // answer from them instead of the general-knowledge one.
+        try {
+          sendStatus("searching", describeScope("global", undefined, responseLanguage));
+          const second = await searchChat(searchQuestion, RAG_TOP_K, undefined, {
+            expandNeighbors: true,
+            neighborRadius: RAG_NEIGHBOR_RADIUS,
+            signal: stop.signal,
+            preferAuthority: true,
+            expansions: [...expansions, body.slice(0, 600)],
+            maxEvidencePages: Math.max(RAG_TOP_K, RAG_MAX_EVIDENCE_PAGES),
+          });
+          const secondRelevance = assessRelevance(second.evidence, RAG_MIN_RELEVANCE);
+          const seenPages = new Set(retrievedBeforeGate.map((item) => `${item.source_id}#${item.page_number}`));
+          const freshPages = secondRelevance.kept.filter(
+            (item) => item.retrieval_role !== "neighbor" && !seenPages.has(`${item.source_id}#${item.page_number}`),
+          );
+          if (freshPages.length > 0 && secondRelevance.best >= 0.5) {
+            const evidence = secondRelevance.kept;
+            const changes: Map<string, LaterChange[]> = await findLaterChanges(getRelationsPool(), evidence).catch(
+              () => new Map(),
+            );
+            sendStatus("writing");
+            const cited = await generateCompletion(
+              LLM_REQUEST_TIMEOUT_MS,
+              [
+                { role: "system", content: RAG_SYSTEM_PROMPT },
+                {
+                  role: "user",
+                  content: [
+                    "RESPONSE LANGUAGE:",
+                    responseLanguage === "hi" ? "Hindi" : "English",
+                    "",
+                    "CURRENT USER QUESTION:",
+                    searchPlan.corrected ? `${query}\n(The same question with typos and grammar fixed: ${searchPlan.corrected})` : query,
+                    "",
+                    "RETRIEVED EVIDENCE:",
+                    buildEvidenceContext(evidence, changes),
+                  ].join("\n"),
+                },
+              ],
+              LLM_TEMPERATURE,
+              answerTokenBudget(responseLanguage),
+              undefined,
+              stop.signal,
+            );
+            const draft = cited.text;
+            if (!isNoAnswer(draft) && !isProseNonAnswer(draft)) {
+              const numbersContext = `${query} ${searchQuestion}`;
+              let answer = draft;
+              let check = validateAnswer(answer, evidence, numbersContext);
+              let salvaged = false;
+              if (!check.ok) {
+                const salvage = buildQualitativeSalvage(answer, evidence, numbersContext);
+                const salvageCheck = salvage ? validateAnswer(salvage, evidence, numbersContext) : null;
+                if (salvageCheck?.ok) {
+                  answer = salvage;
+                  check = salvageCheck;
+                  salvaged = true;
+                }
+              }
+              if (check.ok) {
+                sendEvent("sources", evidence.map((item) => sourceCard(item, changes)));
+                streamValidatedText(sendEvent, withoutNoAnswerToken(stripVerificationNotes(answer)));
+                sendEvent("done", {
+                  ok: true,
+                  validated: true,
+                  secondSearch: true,
+                  usedQualitativeSalvage: salvaged,
+                  correctedQuestion: searchPlan.corrected,
+                  scopeFallback: true,
+                  retrievalScope: "global",
+                  bestRelevance: Number(secondRelevance.best.toFixed(3)),
+                  citations: check.citations,
+                  model: cited.model,
+                  modelFellBack: cited.fellBack,
+                  timings: {
+                    expansionMs: Math.round(expansionMs),
+                    retrievalMs: Math.round(retrievalMs),
+                    searchPasses,
+                    embeddingMs: second.timings?.embedding_ms ?? null,
+                    hybridSearchMs: second.timings?.hybrid_search_ms ?? null,
+                    rerankMs: second.timings?.rerank_ms ?? null,
+                    hydrationMs: second.timings?.hydration_ms ?? null,
+                    generationMs: Math.round(performance.now() - startedAt),
+                    totalMs: Math.round(performance.now() - retrievalStartedAt),
+                  },
+                });
+                request.log.info({ query, reason, fresh: freshPages.length }, "RAG chat: answered after a second search");
+                return true;
+              }
+            }
+          }
+        } catch (error) {
+          if (stop.signal.aborted) throw error;
+          request.log.warn({ err: error }, "second search failed; using the general-knowledge answer");
+        }
+
         if (reason === "no_relevant_pages") sendEvent("sources", []);
         streamValidatedText(sendEvent, body + closestDocumentsFooter(closest, responseLanguage));
         sendEvent("done", {
@@ -1880,57 +2041,7 @@ server.post(
 
     sendEvent(
       "sources",
-      retrieval.evidence.map(
-        (item) => ({
-          label:
-            item.label,
-          sourceId:
-            item.source_id,
-          documentTitle:
-            item.document_title ??
-            null,
-          pageNumber:
-            item.page_number,
-          department:
-            item.department,
-          goNumber:
-            item.go_number,
-          goDate:
-            item.go_date,
-          // Rulebook §1: government URLs only; never our archive.
-          sourceUrl:
-            officialOnly(item.source_url),
-          pageUrl:
-            officialOnly(item.page_url),
-          legacyFont:
-            Boolean(item.legacy_font),
-          numericConflict:
-            item.numeric_conflict,
-          numericVerificationStatus:
-            item.numeric_verification_status,
-          selectedVariant:
-            item.selected_variant,
-          selectedCanonical:
-            item.selected_canonical,
-          rerankScoreRaw:
-            item.rerank_score_raw,
-          retrievalRole:
-            item.retrieval_role ??
-            "direct",
-          anchorPageNumber:
-            item.anchor_page_number ??
-            null,
-          laterChanges:
-            laterChanges.get(item.source_id) ?? [],
-          jurisdictionCode:
-            item.jurisdiction_code ?? null,
-          status:
-            item.status ?? null,
-          // RULEBOOK / GENERAL / CONTEXT / SPECIFIC (ADR-078).
-          authority:
-            authorityLabel(item),
-        }),
-      ),
+      retrieval.evidence.map((item) => sourceCard(item, laterChanges)),
     );
 
       const generationStartedAt =
