@@ -162,7 +162,7 @@ async function main(): Promise<void> {
   const concurrencyIndex = process.argv.indexOf("--concurrency");
   const concurrency = Math.max(1, Math.min(16, concurrencyIndex >= 0 ? Number(process.argv[concurrencyIndex + 1]) || 1 : target.local ? 1 : 6));
 
-  const rules = await readJsonl<{ sourceId: string; confidence: string; tier?: string; subject: string | null; department: string | null; override?: unknown }>(classificationPath);
+  const rules = await readJsonl<{ sourceId: string; confidence: string; decidedBy?: string; tier?: string; subject: string | null; department: string | null; override?: unknown }>(classificationPath);
   if (!rules.length) throw new Error("Run npm run classify:orders first.");
   const done = new Set(
     (await readJsonl<ModelClassification>(outputPath))
@@ -176,7 +176,9 @@ async function main(): Promise<void> {
   );
 
   const todo = rules
-    .filter((item) => !item.override && (all || item.confidence === "low") && !done.has(item.sourceId))
+    // classify:orders marks model-decided orders "high"; they were "low" for
+    // the rules, so they stay eligible (for --redo-since and --all).
+    .filter((item) => !item.override && (all || item.confidence === "low" || item.decidedBy === "model") && !done.has(item.sourceId))
     .filter((item) => !onlyTier || item.tier === onlyTier)
     .slice(0, limit);
 
