@@ -92,7 +92,7 @@ class SearchRequest(BaseModel):
     prefer_authority: bool = False
     # The question in official wording (ADR-082): extra candidate searches.
     # Pages are still reranked against the question itself.
-    expansions: list[str] = Field(default_factory=list, max_length=3)
+    expansions: list[str] = Field(default_factory=list, max_length=4)
 
 
 class Evidence(BaseModel):
@@ -756,7 +756,7 @@ def search(body: SearchRequest, request: Request):
     reranker: CrossEncoder = request.app.state.reranker
 
     embedding_started_at = time.perf_counter()
-    expansions = [text.strip()[:300] for text in body.expansions if text and text.strip()][:3]
+    expansions = [text.strip()[:700] for text in body.expansions if text and text.strip()][:4]
     query_embeddings = embedder.encode(
         [query, *expansions],
         prompt=QUERY_PROMPT,

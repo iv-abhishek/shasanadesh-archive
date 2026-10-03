@@ -9,4 +9,5 @@ assert.deepEqual(
 assert.deepEqual(parseExpansions('{"en":"Leave rules","hi":""}', "leave rules"), []);
 assert.deepEqual(parseExpansions("not json", "q"), []);
 assert.deepEqual(parseExpansions('<think>x</think>{"en":"a b c d","hi":"a b c d"}', "q"), ["a b c d"]);
+assert.equal(parseExpansions('{"en":"a b c d","hi":"क ख ग घ","passage":"Contracts may provide an interest-bearing advance."}', "q").length, 3);
 console.log("query expansion tests passed");

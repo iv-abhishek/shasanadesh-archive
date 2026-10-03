@@ -20,8 +20,9 @@ const TIMEOUT_MS = Number.parseInt(process.env.RAG_QUERY_EXPANSION_TIMEOUT_MS ??
 const SYSTEM_PROMPT = `You help search an archive of Uttar Pradesh government orders (शासनादेश) and Government of India rules and manuals (GFR, procurement manuals, Financial Handbook, service rules, GeM).
 Rewrite the user's question as two short search queries that use the exact words such documents use: the formal name of the rule, manual or scheme, and the technical terms of the provision (for example "leave encashment" rather than "money for unused leave").
 Service matters of Uttar Pradesh government servants (leave, pay, pension, allowances) are in the Financial Handbook (वित्तीय नियम संग्रह / वित्तीय हस्तपुस्तिका) and later government orders; procurement is in GFR 2017 and the Manuals for Procurement of Goods, Works, Consultancy and Non-Consultancy Services.
-One query in English, one in Hindi (Devanagari). At most 20 words each. Do not answer the question.
-Reply with ONLY a JSON object: {"en":"...","hi":"..."}`;
+One query in English, one in Hindi (Devanagari). At most 20 words each. Correct obvious misspellings.
+Also write "passage": two or three sentences in English worded the way the rule book or order itself would state the provision (an approximate draft is fine; it is only used to find the real page and is never shown).
+Reply with ONLY a JSON object: {"en":"...","hi":"...","passage":"..."}`;
 
 const cache = new Map<string, string[]>();
 
@@ -29,11 +30,13 @@ export function parseExpansions(reply: string, question: string): string[] {
   const match = reply.replace(/<think>[\s\S]*?<\/think>/g, "").match(/\{[\s\S]*\}/);
   if (!match) return [];
   try {
-    const value = JSON.parse(match[0]) as { en?: unknown; hi?: unknown };
+    const value = JSON.parse(match[0]) as { en?: unknown; hi?: unknown; passage?: unknown };
     const seen = new Set([question.trim().toLowerCase()]);
     const out: string[] = [];
-    for (const raw of [value.en, value.hi]) {
-      const text = typeof raw === "string" ? raw.replace(/\s+/g, " ").trim().slice(0, 200) : "";
+    // The passage finds pages by meaning (the rule's own wording, e.g.
+    // "interest-bearing mobilisation advance … against a bank guarantee").
+    for (const [raw, limit] of [[value.en, 200], [value.hi, 200], [value.passage, 600]] as const) {
+      const text = typeof raw === "string" ? raw.replace(/\s+/g, " ").trim().slice(0, limit) : "";
       if (text.length < 4 || seen.has(text.toLowerCase())) continue;
       seen.add(text.toLowerCase());
       out.push(text);
@@ -60,7 +63,7 @@ export async function expandSearchQuery(question: string, signal?: AbortSignal):
           { role: "user", content: question.slice(0, 1000) },
         ],
         temperature: 0,
-        max_tokens: 160,
+        max_tokens: 320,
         ...target.extraBody,
       } as never,
       { signal },

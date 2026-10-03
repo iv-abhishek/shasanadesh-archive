@@ -1790,7 +1790,7 @@ function TurnView({
           <div className="answer-text">
             {turn.answer && turn.done?.generalKnowledge ? (
               <div className="general-knowledge-note" role="note">
-                {/[\u0900-\u097F]/.test(turn.answer)
+                {/[\u0900-\u097F]/.test(turn.question)
                   ? "यह उत्तर संग्रहित शासनादेशों से नहीं, सामान्य जानकारी से है। उपयोग से पहले वर्तमान आदेश से मिला लें।"
                   : "Not found in the archived orders. This answer is from general knowledge; check it against the current order before relying on it."}
               </div>
