@@ -1932,6 +1932,7 @@ server.post(
         validateAnswer(
           answer,
           retrieval.evidence,
+          `${query} ${conversationPlan.retrievalQuery}`,
         );
 
       validationMs +=
@@ -2042,6 +2043,7 @@ server.post(
           buildQualitativeSalvage(
             firstDraft,
             retrieval.evidence,
+            `${query} ${conversationPlan.retrievalQuery}`,
           );
 
         if (preRepairSalvage) {
@@ -2126,6 +2128,7 @@ server.post(
           buildQualitativeSalvage(
             finalAnswer,
             retrieval.evidence,
+            `${query} ${conversationPlan.retrievalQuery}`,
           );
 
         if (qualitativeSalvage) {

@@ -1350,3 +1350,19 @@ answer from general knowledge, clearly labelled (Rulebook §4).
 - Eval: for not-found cases a labelled general-knowledge answer counts as correct; for
   answerable cases it is a miss ("answered from general knowledge although the archive
   has the order"), so retrieval gaps stay visible.
+
+## ADR-084 - Salvage no longer guts answers; describing pages is not answering (3 Oct 2026)
+
+"suggest GFR guidelines for a service bid" showed one fragment ("Central Government
+Context:** These rules apply …"); "eligibility criteria … Consultancy Services 2025"
+showed two sentences describing what the retrieved pages contain.
+
+- **Named numbers are not claims:** years and numbers in the cited documents' titles and
+  GO numbers, and numbers the officer typed, no longer make a sentence a "numeric claim"
+  (validator and salvage). "GFR 2017" and "Manual … 2025" in every line had made salvage
+  drop every line.
+- **Salvage floor:** a salvage that keeps fewer than 30% of the answer's sentences is not
+  used; the answer goes to repair, then the usual fallbacks.
+- A bold run cut in half by salvage ("Context:** …") loses its stray markers.
+- "The retrieved / provided / cited page(s) …" sentences count as non-answers, so such a
+  reply becomes the labelled general-knowledge answer (ADR-083).

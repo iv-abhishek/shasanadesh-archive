@@ -285,3 +285,22 @@ console.log(
   assert.equal(stripVerificationNotes(only), only);
   console.log("verification-note tests passed");
 }
+
+// 3 Oct: document names with years are not numeric claims; a salvage that
+// keeps a sliver of the answer is not used.
+{
+  const manual = { ...riskyEvidence[0], document_title: "Manual for Procurement of Consultancy Services, Second Edition 2025" };
+  const answer = "The Manual for Procurement of Consultancy Services 2025 asks for experience of similar assignments [S1 p.1]. GFR 2017 requires fair and transparent criteria [S1 p.1].";
+  assert.equal(validateAnswer(answer, [manual], "suggest GFR 2017 guidelines for a service bid").ok, true);
+  const draft = [
+    "**Central Government Context:** These rules apply to central entities [S1 p.1].",
+    "- Bidders need 3 similar works of 40% value [S1 p.1].",
+    "- Bidders need 2 similar works of 50% value [S1 p.1].",
+    "- Bidders need 1 similar work of 80% value [S1 p.1].",
+    "- Turnover must be 30% of the estimate [S1 p.1].",
+  ].join("\n");
+  assert.equal(buildQualitativeSalvage(draft, riskyEvidence), "");
+  // An odd "**" left by a cut bold run is removed.
+  assert.ok(!buildQualitativeSalvage("**Context:** The rules apply to central entities [S1 p.1].\n**Scope** They cover all services [S1 p.1].", riskyEvidence).includes("*"));
+  console.log("named-number and salvage-floor tests passed");
+}

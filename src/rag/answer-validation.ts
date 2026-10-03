@@ -59,6 +59,34 @@ function digitGroups(text: string): string[] {
   ).map((group) => group.replace(/^0+(?=\d)/, ""));
 }
 
+/**
+ * Numbers that name things rather than state facts: the years and numbers in
+ * the cited documents' titles and GO numbers ("GFR 2017", "Manual … 2025"),
+ * and the numbers the officer typed in the question. A sentence whose only
+ * digits are these is not a numeric claim (3 Oct: salvage dropped every line
+ * that mentioned "GFR 2017" and kept one stray fragment).
+ */
+function namedNumbers(evidence: RetrievalEvidence[], question = ""): Set<string> {
+  return new Set([
+    ...digitGroups(question),
+    ...evidence.flatMap((item) => [
+      ...digitGroups(item.document_title ?? ""),
+      ...digitGroups(item.go_number ?? ""),
+      ...digitGroups(item.go_date ?? ""),
+    ]),
+  ]);
+}
+
+function hasNumericClaim(text: string, named: Set<string>): boolean {
+  NUMERIC_TOKEN_RE.lastIndex = 0;
+  if (!NUMERIC_TOKEN_RE.test(text)) {
+    NUMERIC_TOKEN_RE.lastIndex = 0;
+    return false;
+  }
+  NUMERIC_TOKEN_RE.lastIndex = 0;
+  return digitGroups(text).some((group) => !named.has(group));
+}
+
 function numbersSupportedBy(
   unit: string,
   evidence: RetrievalEvidence[],
@@ -156,7 +184,9 @@ function claimUnits(text: string): string[] {
 export function validateAnswer(
   answer: string,
   evidence: RetrievalEvidence[],
+  question = "",
 ): AnswerValidationResult {
+  const named = namedNumbers(evidence, question);
   const issues: AnswerValidationIssue[] = [];
   const trimmed = answer.trim();
 
@@ -225,12 +255,9 @@ export function validateAnswer(
     const withoutCitations =
       stripCitations(unit);
 
-    if (!NUMERIC_TOKEN_RE.test(withoutCitations)) {
-      NUMERIC_TOKEN_RE.lastIndex = 0;
+    if (!hasNumericClaim(withoutCitations, named)) {
       continue;
     }
-
-    NUMERIC_TOKEN_RE.lastIndex = 0;
 
     const unitCitations =
       extractCitations(unit);
@@ -294,7 +321,7 @@ export function validateAnswer(
     if (
       safeCitedEvidence.length > 0 &&
       !numbersSupportedBy(
-        withoutCitations,
+        digitGroups(withoutCitations).filter((group) => !named.has(group)).join(" "),
         safeCitedEvidence,
       )
     ) {
@@ -394,18 +421,23 @@ const DEPENDENT_SALVAGE_START_RE =
 function cleanSalvageUnit(
   unit: string,
 ): string {
-  return unit
+  const cleaned = unit
     .replace(
       /^\s*(?:[-–—•*]+\s*)+/,
       "",
     )
     .trim();
+  // An odd number of "**" means a bold run was cut in half: drop the markers.
+  return (cleaned.match(/\*\*/g) ?? []).length % 2 === 1 ? cleaned.replace(/\*\*/g, "") : cleaned;
 }
 
 export function buildQualitativeSalvage(
   answer: string,
   evidence: RetrievalEvidence[],
+  question = "",
 ): string {
+  const named = namedNumbers(evidence, question);
+  let wordedUnits = 0;
   const allowedCitations =
     new Set(
       evidence.map((item) =>
@@ -428,14 +460,9 @@ export function buildQualitativeSalvage(
     const withoutCitations =
       stripCitations(unit);
 
-    const containsNumeric =
-      NUMERIC_TOKEN_RE.test(
-        withoutCitations,
-      );
+    if ((withoutCitations.match(/[\p{L}\p{M}]+/gu) ?? []).length >= 3) wordedUnits++;
 
-    NUMERIC_TOKEN_RE.lastIndex = 0;
-
-    if (containsNumeric) {
+    if (hasNumericClaim(withoutCitations, named)) {
       continue;
     }
 
@@ -478,8 +505,15 @@ export function buildQualitativeSalvage(
     kept.push(cleaned);
   }
 
-  if (kept.length <= 1) {
-    return kept[0] ?? "";
+  // A salvage that keeps a small fraction of the answer misleads more than it
+  // helps ("Central Government Context:** These rules apply …" as the whole
+  // answer, 3 Oct). Below 30% of the answer's sentences, give up; the caller
+  // then repairs or falls back.
+  if (kept.length === 0 || kept.length < Math.ceil(wordedUnits * 0.3)) {
+    return "";
+  }
+  if (kept.length === 1) {
+    return kept[0];
   }
 
   return kept

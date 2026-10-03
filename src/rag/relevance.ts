@@ -123,6 +123,8 @@ const NON_ANSWER_SENTENCE = new RegExp(
     // Describing the sources instead of answering: "स्रोत S1 में केवल ई-रिक्शा …",
     // "Sources S2 and S5 concern road safety …" (metro fare, 3 Oct eval).
     String.raw`(?:^|\s)(?:स्रोत|sources?)\s+S\d`,
+    // "The retrieved page from … contains only …" (3 Oct, consultancy manual).
+    String.raw`\bthe\s+(?:retrieved|provided|given|supplied|cited)\s+(?:page|pages|documents?|evidence|excerpts?|orders?|sources?)\b`,
     "प्रस्तुत\\s+(?:प्रमाण|साक्ष्य|स्रोत)",
   ].join("|"),
   "iu",

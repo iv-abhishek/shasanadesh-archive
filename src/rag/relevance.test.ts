@@ -74,3 +74,7 @@ assert.ok(isProseNonAnswer("उत्तर प्रदेश सरकार �
 // A cited answer that merely names a source label is still an answer.
 assert.equal(isProseNonAnswer("* Leave is 180 days [S1 p.2].\n* It may be taken twice [S1 p.2].\n* Source S1 is the 2026 order [S1 p.1]."), false);
 console.log("source-description tests passed");
+
+// Describing the retrieved pages (3 Oct, consultancy manual eligibility).
+assert.ok(isProseNonAnswer("* The retrieved page from the Manual for Procurement of Consultancy Services contains only model clauses regarding bidders from countries sharing a land border [S1 p.241].\n* The retrieved pages from the Manual for Procurement of Non-Consultancy Services outline eligibility criteria for that category, which is distinct from Consultancy Services [S2 p.63]."));
+console.log("retrieved-page description tests passed");
