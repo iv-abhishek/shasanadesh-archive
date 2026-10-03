@@ -54,6 +54,21 @@ Each conversation stores:
 This lets the product reopen a conversation without feeding the entire raw history to the
 generator.
 
+## Deleting a profile
+
+A deleted profile leaves the switcher at once, is signed out, and frees its slot. It stays
+under "Recently deleted" for 30 days (Restore, or Delete now) and is then purged with all
+its conversations, departments, sessions and feedback (ADR-079). Account deletion (7 days,
+then purge) comes with real sign-in.
+
+Development endpoints (off in production):
+
+- `DELETE /api/session/dev-users/:id` — soft delete; returns `purgeAfter`
+- `GET /api/session/dev-users/deleted` — the "Recently deleted" list
+- `POST /api/session/dev-users/:id/restore` — 409 when all slots are in use
+- `DELETE /api/session/dev-users/:id/permanent` — purge a deleted profile now
+- `npm run workspace:purge` — purge every profile whose 30 days are over
+
 ## Implemented retrieval precedence
 
 For substantive chat, the API currently applies:

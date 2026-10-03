@@ -31,6 +31,7 @@ import {
 import {
   getWorkspaceProfile,
   listDepartments,
+  purgeDeletedProfiles,
 } from "../workspace/store.js";
 import {
   getLocalGpuQueueStatus,
@@ -2198,6 +2199,13 @@ async function start():
   console.log(
     `Shasanadesh RAG API listening on http://127.0.0.1:${PORT}`,
   );
+
+  // Deleted profiles past their restore window (ADR-079); never blocks start-up.
+  purgeDeletedProfiles()
+    .then((purged) => {
+      if (purged) console.log(`Purged ${purged} deleted profile(s) past their restore window.`);
+    })
+    .catch((error) => console.warn("Profile purge skipped:", error instanceof Error ? error.message : error));
 }
 
 start().catch((error) => {

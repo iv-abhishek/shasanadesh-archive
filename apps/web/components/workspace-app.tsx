@@ -754,6 +754,20 @@ const LEGACY_STORAGE_KEY =
 const THEME_STORAGE_KEY =
   "shasanadesh.colorTheme";
 
+interface DeletedProfileSummary {
+  id: string;
+  displayName: string;
+  designation: string | null;
+  conversationCount: number;
+  deletedAt: string;
+  purgeAfter: string;
+}
+
+/** "2 Nov 2026" for purge dates. */
+function shortDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
 async function jsonRequest<T>(
   url: string,
   init?: RequestInit,
@@ -1043,8 +1057,14 @@ function Onboarding({
   currentName,
   currentId,
   maxProfiles = 5,
+  onProfilesChanged,
 }: {
   departments: string[];
+  /**
+   * A profile was deleted or restored: reload the list. signedOut is true when
+   * the deleted profile was the one in use (its session has ended).
+   */
+  onProfilesChanged?: (change: { signedOut: boolean }) => void;
   /** Profile slots (the server refuses more). */
   maxProfiles?: number;
   profiles:
@@ -1123,6 +1143,96 @@ function Onboarding({
 
   // The profile list first; the form only when asked for (or no profiles yet).
   const [creating, setCreating] = useState(false);
+
+  // Profile delete (ADR-079): "Manage" shows Delete on each tile and the
+  // "Recently deleted" list (Restore / Delete now).
+  const [managing, setManaging] = useState(false);
+  const [deletedProfiles, setDeletedProfiles] = useState<DeletedProfileSummary[]>([]);
+  const [restoreDays, setRestoreDays] = useState(30);
+  const [confirming, setConfirming] = useState<
+    | { kind: "delete"; id: string; name: string; conversations: number | null }
+    | { kind: "purge"; id: string; name: string; conversations: number }
+    | null
+  >(null);
+  const [notice, setNotice] = useState<string | null>(null);
+
+  const loadDeleted = useCallback(async () => {
+    try {
+      const data = await jsonRequest<{ profiles: DeletedProfileSummary[]; restoreDays?: number }>(
+        "/api/session/dev-users/deleted",
+      );
+      setDeletedProfiles(data.profiles);
+      if (data.restoreDays) setRestoreDays(data.restoreDays);
+    } catch {
+      setDeletedProfiles([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadDeleted();
+  }, [loadDeleted]);
+
+  const plainError = (caught: unknown) =>
+    (caught instanceof Error ? caught.message : String(caught)).replace(/^\d{3}: /, "");
+
+  const askDelete = async (item: WorkspaceProfile) => {
+    setError(null);
+    setNotice(null);
+    setConfirming({ kind: "delete", id: item.id, name: item.displayName, conversations: null });
+    try {
+      const summary = await jsonRequest<{ conversationCount: number }>(
+        `/api/session/dev-users/${item.id}/summary`,
+      );
+      setConfirming((open) =>
+        open && open.kind === "delete" && open.id === item.id ? { ...open, conversations: summary.conversationCount } : open,
+      );
+    } catch {
+      // The dialog still works without the count.
+    }
+  };
+
+  const runConfirmed = async () => {
+    if (!confirming || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (confirming.kind === "delete") {
+        const result = await jsonRequest<{ purgeAfter: string; signedOut: boolean }>(
+          `/api/session/dev-users/${confirming.id}`,
+          { method: "DELETE" },
+        );
+        setNotice(`“${confirming.name}” deleted. You can restore it until ${shortDate(result.purgeAfter)}.`);
+        onProfilesChanged?.({ signedOut: result.signedOut });
+      } else {
+        await jsonRequest(`/api/session/dev-users/${confirming.id}/permanent`, { method: "DELETE" });
+        setNotice(`“${confirming.name}” and its conversations are deleted permanently.`);
+      }
+      setConfirming(null);
+      await loadDeleted();
+    } catch (caught) {
+      setError(plainError(caught));
+      setConfirming(null);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const restore = async (item: DeletedProfileSummary) => {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await jsonRequest(`/api/session/dev-users/${item.id}/restore`, { method: "POST" });
+      setNotice(`“${item.displayName}” is back, with its conversations.`);
+      onProfilesChanged?.({ signedOut: false });
+      await loadDeleted();
+    } catch (caught) {
+      setError(plainError(caught));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const loginExisting =
     async (
@@ -1237,12 +1347,15 @@ function Onboarding({
       if (event.key !== "Escape") return;
       const target = event.target as HTMLElement | null;
       if (target && /^(INPUT|SELECT|TEXTAREA)$/.test(target.tagName)) return;
-      if (creating && profiles.length) setCreating(false);
+      if (confirming) {
+        if (!busy) setConfirming(null);
+      } else if (managing) setManaging(false);
+      else if (creating && profiles.length) setCreating(false);
       else onCancel?.();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [creating, onCancel, profiles.length]);
+  }, [busy, confirming, creating, managing, onCancel, profiles.length]);
 
   const freeSlots = Math.max(0, maxProfiles - profiles.length);
   const showForm = (creating && freeSlots > 0) || profiles.length === 0;
@@ -1251,6 +1364,43 @@ function Onboarding({
 
   return (
     <main className="onboarding-shell">
+      {confirming ? (
+        <div className="confirm-backdrop" onClick={() => !busy && setConfirming(null)}>
+          <div
+            className="confirm-dialog"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="confirm-title"
+            aria-describedby="confirm-text"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2 id="confirm-title">
+              {confirming.kind === "delete" ? `Delete “${confirming.name}”?` : `Delete “${confirming.name}” permanently?`}
+            </h2>
+            <p id="confirm-text">
+              {confirming.kind === "delete"
+                ? `${
+                    confirming.conversations === null
+                      ? "Its conversations"
+                      : confirming.conversations === 1
+                        ? "Its 1 conversation"
+                        : `Its ${confirming.conversations} conversations`
+                  } will be deleted with it. You can restore it from Recently deleted for ${restoreDays} days.${
+                    confirming.id === currentId ? " You are using this profile, so you will be signed out of it." : ""
+                  }`
+                : `Its ${confirming.conversations === 1 ? "1 conversation" : `${confirming.conversations} conversations`} will be deleted now. This cannot be undone.`}
+            </p>
+            <div className="confirm-actions">
+              <button type="button" className="button-secondary" disabled={busy} onClick={() => setConfirming(null)} autoFocus>
+                Cancel
+              </button>
+              <button type="button" className="danger-button" disabled={busy} onClick={() => void runConfirmed()}>
+                {busy ? "Deleting…" : confirming.kind === "delete" ? "Delete profile" : "Delete permanently"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
       <div className="onboarding-card switcher-card">
         <header className="switcher-head">
           {onCancel ? (
@@ -1275,6 +1425,9 @@ function Onboarding({
 
         {!showForm ? (
           <section className="profile-picker" aria-label="Profiles">
+            {/* Above the tiles, so it is seen on a phone without scrolling. */}
+            {notice ? <div className="notice-box" role="status">{notice}</div> : null}
+            {error ? <div className="error-box">{error}</div> : null}
             <div className="profile-grid">
               {profiles.map((item) => {
                 const current = item.id === currentId;
@@ -1285,11 +1438,17 @@ function Onboarding({
                   <button
                     type="button"
                     key={item.id}
-                    className={current ? "profile-tile current" : "profile-tile"}
+                    className={[
+                      "profile-tile",
+                      current ? "current" : "",
+                      managing ? "managing" : "",
+                    ].filter(Boolean).join(" ")}
                     aria-current={current ? "true" : undefined}
+                    aria-label={managing ? `Delete profile ${item.displayName}` : undefined}
                     disabled={busy}
                     onClick={() => {
-                      if (current && onCancel) onCancel();
+                      if (managing) void askDelete(item);
+                      else if (current && onCancel) onCancel();
                       else void loginExisting(item);
                     }}
                   >
@@ -1318,15 +1477,15 @@ function Onboarding({
                         {more > 0 ? <span className="dept-chip muted">+{more}</span> : null}
                       </span>
                     </span>
-                    <span className="profile-tile-action" aria-hidden="true">
-                      {current ? "Continue" : "Use"} →
+                    <span className={managing ? "profile-tile-action danger" : "profile-tile-action"} aria-hidden="true">
+                      {managing ? "Delete" : `${current ? "Continue" : "Use"} →`}
                     </span>
                   </button>
                 );
               })}
               {/* Fixed slots: the first free one creates a profile, the rest are blank. */}
               {Array.from({ length: freeSlots }, (_, index) =>
-                index === 0 ? (
+                index === 0 && !managing ? (
                   <button
                     type="button"
                     key="new"
@@ -1350,12 +1509,76 @@ function Onboarding({
                 ),
               )}
             </div>
-            <p className="profile-slot-note">
-              {freeSlots === 0
-                ? `All ${maxProfiles} profile slots are in use.`
-                : `${profiles.length} of ${maxProfiles} profile slots used.`}
-            </p>
-            {error ? <div className="error-box">{error}</div> : null}
+            <div className="profile-slot-row">
+              <p className="profile-slot-note">
+                {freeSlots === 0
+                  ? `All ${maxProfiles} profile slots are in use.`
+                  : `${profiles.length} of ${maxProfiles} profile slots used.`}
+                {managing ? " Tap a profile to delete it." : ""}
+              </p>
+              {profiles.length || deletedProfiles.length ? (
+                <button
+                  type="button"
+                  className="link-button"
+                  onClick={() => {
+                    setManaging((on) => !on);
+                    setNotice(null);
+                    setError(null);
+                  }}
+                >
+                  {managing ? "Done" : deletedProfiles.length ? `Manage profiles · ${deletedProfiles.length} deleted` : "Manage profiles"}
+                </button>
+              ) : null}
+            </div>
+            {managing && deletedProfiles.length ? (
+              <section className="deleted-profiles" aria-label="Recently deleted profiles">
+                <h2>Recently deleted</h2>
+                <p className="deleted-profiles-note">
+                  Kept for {restoreDays} days, then deleted permanently with their conversations.
+                </p>
+                <ul>
+                  {deletedProfiles.map((item) => (
+                    <li key={item.id}>
+                      <span className="profile-avatar muted" aria-hidden="true">{initials(item.displayName)}</span>
+                      <span className="deleted-profile-body">
+                        <span className="deleted-profile-name">{item.displayName}</span>
+                        <span className="deleted-profile-meta">
+                          {item.conversationCount === 1 ? "1 conversation" : `${item.conversationCount} conversations`}
+                          {" · deleted permanently on "}
+                          {shortDate(item.purgeAfter)}
+                        </span>
+                      </span>
+                      <span className="deleted-profile-actions">
+                        <button
+                          type="button"
+                          className="button-secondary"
+                          disabled={busy || freeSlots === 0}
+                          title={freeSlots === 0 ? "Delete another profile first: all slots are in use." : undefined}
+                          onClick={() => void restore(item)}
+                        >
+                          Restore
+                        </button>
+                        <button
+                          type="button"
+                          className="link-button danger"
+                          disabled={busy}
+                          onClick={() =>
+                            setConfirming({
+                              kind: "purge",
+                              id: item.id,
+                              name: item.displayName,
+                              conversations: item.conversationCount,
+                            })
+                          }
+                        >
+                          Delete now
+                        </button>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
           </section>
         ) : (
           <form className="onboarding-form profile-create" onSubmit={submit}>
@@ -2376,6 +2599,15 @@ export function WorkspaceApp() {
           devProfiles
         }
         maxProfiles={maxProfiles}
+        onProfilesChanged={({ signedOut }) => {
+          if (signedOut) {
+            // The profile in use was deleted: no profile until another is picked.
+            setProfile(null);
+            setSelectedConversationId(null);
+            setSwitchingProfile(false);
+          }
+          void loadDevProfiles();
+        }}
         onCancel={profile && switchingProfile ? () => setSwitchingProfile(false) : undefined}
         currentName={profile?.displayName}
         currentId={profile?.id}

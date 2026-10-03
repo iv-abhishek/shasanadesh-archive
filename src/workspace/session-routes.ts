@@ -16,6 +16,16 @@ import {
   resolveSessionFromCookie,
   revokeSessionFromCookie,
 } from "./session-store.js";
+import {
+  countProfileConversations,
+  listDeletedProfiles,
+  PROFILE_RESTORE_DAYS,
+  purgeDeletedProfiles,
+  restoreWorkspaceProfile,
+  softDeleteWorkspaceProfile,
+} from "./store.js";
+
+const ProfileIdParams = z.object({ id: z.string().uuid() });
 
 const DevLoginSchema =
   z.object({
@@ -164,6 +174,58 @@ export function registerSessionRoutes(
       };
     },
   );
+
+  // Profile delete (ADR-079). Development profiles have no owner yet, so these
+  // sit with dev-login and are off in production; with real accounts they move
+  // to /api/account/profiles and only touch the account's own profiles.
+  const developmentOnly = (reply: { code: (status: number) => { send: (body: unknown) => unknown } }) =>
+    process.env.NODE_ENV === "production" ? reply.code(404).send({ error: "Not found." }) : null;
+
+  server.get("/api/session/dev-users/deleted", async (_request, reply) => {
+    const blocked = developmentOnly(reply);
+    if (blocked) return blocked;
+    return { profiles: await listDeletedProfiles(), restoreDays: PROFILE_RESTORE_DAYS };
+  });
+
+  server.get("/api/session/dev-users/:id/summary", async (request, reply) => {
+    const blocked = developmentOnly(reply);
+    if (blocked) return blocked;
+    const params = ProfileIdParams.safeParse(request.params);
+    if (!params.success) return reply.code(400).send({ error: "Invalid profile ID." });
+    return { conversationCount: await countProfileConversations(params.data.id), restoreDays: PROFILE_RESTORE_DAYS };
+  });
+
+  server.delete("/api/session/dev-users/:id", async (request, reply) => {
+    const blocked = developmentOnly(reply);
+    if (blocked) return blocked;
+    const params = ProfileIdParams.safeParse(request.params);
+    if (!params.success) return reply.code(400).send({ error: "Invalid profile ID." });
+    const current = await resolveSessionFromCookie(request.headers.cookie);
+    const { purgeAfter } = await softDeleteWorkspaceProfile(params.data.id);
+    // Deleting the profile you are using signs you out of it.
+    const signedOut = current?.userId === params.data.id;
+    if (signedOut) reply.header("set-cookie", clearSessionCookie(secureCookie()));
+    return { ok: true, purgeAfter, signedOut };
+  });
+
+  server.post("/api/session/dev-users/:id/restore", async (request, reply) => {
+    const blocked = developmentOnly(reply);
+    if (blocked) return blocked;
+    const params = ProfileIdParams.safeParse(request.params);
+    if (!params.success) return reply.code(400).send({ error: "Invalid profile ID." });
+    await restoreWorkspaceProfile(params.data.id);
+    return { ok: true };
+  });
+
+  server.delete("/api/session/dev-users/:id/permanent", async (request, reply) => {
+    const blocked = developmentOnly(reply);
+    if (blocked) return blocked;
+    const params = ProfileIdParams.safeParse(request.params);
+    if (!params.success) return reply.code(400).send({ error: "Invalid profile ID." });
+    const purged = await purgeDeletedProfiles(params.data.id);
+    if (!purged) return reply.code(404).send({ error: "Only a deleted profile can be removed permanently." });
+    return { ok: true };
+  });
 
   server.post(
     "/api/session/logout",

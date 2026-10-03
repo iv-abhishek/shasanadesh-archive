@@ -1214,3 +1214,43 @@ equal. In the 2 Oct baseline, B orders pushed out the rule that answered the que
   orders are A.
 - **Eval:** cases can set `expectGeneralSource` (18 rule questions do); the report shows
   "Answers citing a rulebook or general order" and each case's cited authorities.
+
+## ADR-079 - Deleting profiles and accounts: soft delete first, then a real purge (3 Oct 2026)
+
+Two levels, one rule: a delete takes effect at once for the person (gone from every list,
+signed out), stays recoverable for a short window, and is then **really** deleted. A
+mistaken tap on a phone must be recoverable; a deletion must not be kept forever.
+
+**Profile delete (built now).**
+- `workspace_users.deleted_at` + `purge_after` (migration 014). Deleting sets both
+  (`purge_after` = +30 days) and revokes the profile's sessions. A deleted profile is left
+  out of the switcher, cannot sign in, and does not count toward the 5-profile limit.
+- "Recently deleted" on the switcher lists deleted profiles with the purge date and two
+  actions: **Restore** (only when a slot is free; same limit lock as create) and
+  **Delete now**.
+- Purge = `DELETE FROM workspace_users`: departments, conversations, messages, state,
+  sessions and feedback go with it (all `ON DELETE CASCADE`). Feedback is deleted, not
+  anonymised: deletion means deletion. The API purges due profiles at start-up and whenever
+  "Recently deleted" loads; `npm run workspace:purge` (also a `sync:daily` step) covers the rest.
+- Confirmation: one dialog naming the profile and its conversation count, a red
+  "Delete profile" button. No typed name — the 30-day restore is the safety net.
+- Until accounts exist these routes sit with the development sign-in
+  (`/api/session/dev-users/...`) and are off in production. With accounts they move to
+  `/api/account/profiles/...`, limited to the account's own profiles.
+
+**Account delete (built with real sign-in, before the pilot).**
+- `accounts.deleted_at` + `purge_after` (+7 days). Deleting signs the account out on every
+  device and soft-deletes all its profiles with the same purge date.
+- Signing in within 7 days shows "This account is scheduled for deletion on …" with
+  **Cancel deletion**; that restores the account and the profiles it deleted (not ones
+  deleted earlier on their own).
+- Purge removes the account row, the phone number / identity link, and its profiles
+  (cascade). Nothing about the person is kept; aggregate counters only.
+- Required in-app by Apple and Google for any app with sign-up, so it ships with the
+  mobile app at the latest. It also fits the DPDP Act 2023 right to erasure (to be checked
+  by counsel before launch).
+
+**What is outside the database.** Users add text only, so there are no user files in B2.
+Application logs must not carry question text or contact numbers beyond their rotation
+period; database backups keep deleted rows until the backup expires, which the privacy
+notice must say (e.g. "removed from backups within 30 days").

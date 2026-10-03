@@ -257,6 +257,170 @@ function hasLgdColumns(): Promise<boolean> {
   });
 }
 
+// Migration 014 adds profile deletion; until it has run, every profile is
+// active and the delete routes answer 503 instead of failing on SQL.
+let deletionColumns: Promise<boolean> | null = null;
+export function hasDeletionColumns(): Promise<boolean> {
+  deletionColumns ??= pool
+    .query(
+      `SELECT COUNT(*)::int AS n FROM information_schema.columns
+       WHERE table_name = 'workspace_users' AND column_name IN ('deleted_at', 'purge_after')`,
+    )
+    .then((result) => result.rows[0]?.n === 2)
+    .catch(() => false);
+  return deletionColumns.then((ok) => {
+    if (!ok) deletionColumns = null;
+    return ok;
+  });
+}
+
+/** Days a deleted profile can still be restored (ADR-079). */
+export const PROFILE_RESTORE_DAYS = 30;
+
+export interface DeletedProfile {
+  id: string;
+  displayName: string;
+  designation: string | null;
+  conversationCount: number;
+  deletedAt: string;
+  purgeAfter: string;
+}
+
+function httpError(message: string, statusCode: number): Error {
+  return Object.assign(new Error(message), { statusCode });
+}
+
+async function requireDeletionColumns(): Promise<void> {
+  if (!(await hasDeletionColumns())) {
+    throw httpError("Profile deletion needs the latest database update: run npm run db:migrate.", 503);
+  }
+}
+
+/**
+ * Soft-delete a profile: hidden everywhere, signed out, slot freed; purged
+ * after PROFILE_RESTORE_DAYS. Deleting an already deleted profile is a no-op
+ * that returns its existing purge date.
+ */
+export async function softDeleteWorkspaceProfile(userId: string, days = PROFILE_RESTORE_DAYS): Promise<{ purgeAfter: string }> {
+  await requireDeletionColumns();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    const result = await client.query<{ purge_after: Date }>(
+      `UPDATE workspace_users
+          SET deleted_at = COALESCE(deleted_at, NOW()),
+              purge_after = COALESCE(purge_after, NOW() + make_interval(days => $2::int)),
+              updated_at = NOW()
+        WHERE id = $1
+        RETURNING purge_after`,
+      [userId, days],
+    );
+    if (!result.rows[0]) throw httpError("Profile not found.", 404);
+    await client.query(
+      "UPDATE workspace_sessions SET revoked_at = NOW() WHERE user_id = $1 AND revoked_at IS NULL",
+      [userId],
+    );
+    await client.query("COMMIT");
+    return { purgeAfter: result.rows[0].purge_after.toISOString() };
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/** Bring a deleted profile back, if a slot is free (same lock as creating one). */
+export async function restoreWorkspaceProfile(userId: string): Promise<void> {
+  await requireDeletionColumns();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("SELECT pg_advisory_xact_lock(hashtext('workspace_users:create'))");
+    const row = await client.query<{ deleted: boolean }>(
+      "SELECT deleted_at IS NOT NULL AS deleted FROM workspace_users WHERE id = $1",
+      [userId],
+    );
+    if (!row.rows[0]) throw httpError("This profile has already been deleted permanently.", 404);
+    if (row.rows[0].deleted) {
+      const active = await client.query<{ n: number }>(
+        "SELECT COUNT(*)::int AS n FROM workspace_users WHERE deleted_at IS NULL",
+      );
+      if ((active.rows[0]?.n ?? 0) >= MAX_WORKSPACE_PROFILES) {
+        throw httpError(
+          `All ${MAX_WORKSPACE_PROFILES} profile slots are in use. Delete another profile first.`,
+          409,
+        );
+      }
+      await client.query(
+        "UPDATE workspace_users SET deleted_at = NULL, purge_after = NULL, updated_at = NOW() WHERE id = $1",
+        [userId],
+      );
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK").catch(() => undefined);
+    throw error;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * Really delete profiles: one already-deleted profile now (userId), or every
+ * profile whose restore window is over. Departments, conversations, messages,
+ * sessions and feedback go with them (ON DELETE CASCADE). Only soft-deleted
+ * profiles can be purged.
+ */
+export async function purgeDeletedProfiles(userId: string | null = null): Promise<number> {
+  if (!(await hasDeletionColumns())) return 0;
+  const result = await pool.query(
+    userId
+      ? "DELETE FROM workspace_users WHERE id = $1 AND deleted_at IS NOT NULL"
+      : "DELETE FROM workspace_users WHERE deleted_at IS NOT NULL AND purge_after <= NOW()",
+    userId ? [userId] : [],
+  );
+  return result.rowCount ?? 0;
+}
+
+/** The "Recently deleted" list (due profiles are purged first). */
+export async function listDeletedProfiles(): Promise<DeletedProfile[]> {
+  if (!(await hasDeletionColumns())) return [];
+  await purgeDeletedProfiles();
+  const result = await pool.query<{
+    id: string;
+    display_name: string;
+    designation: string | null;
+    conversations: number;
+    deleted_at: Date;
+    purge_after: Date;
+  }>(
+    `SELECT u.id, u.display_name, u.designation, u.deleted_at, u.purge_after,
+            (SELECT COUNT(*)::int FROM conversations c WHERE c.user_id = u.id) AS conversations
+       FROM workspace_users u
+      WHERE u.deleted_at IS NOT NULL
+      ORDER BY u.deleted_at DESC
+      LIMIT 50`,
+  );
+  return result.rows.map((row) => ({
+    id: row.id,
+    displayName: row.display_name,
+    designation: row.designation,
+    conversationCount: row.conversations,
+    deletedAt: row.deleted_at.toISOString(),
+    purgeAfter: row.purge_after.toISOString(),
+  }));
+}
+
+/** Conversation count shown in the delete confirmation. */
+export async function countProfileConversations(userId: string): Promise<number> {
+  const result = await pool.query<{ n: number }>(
+    "SELECT COUNT(*)::int AS n FROM conversations WHERE user_id = $1",
+    [userId],
+  );
+  return result.rows[0]?.n ?? 0;
+}
+
 async function saveWorkspaceProfile(
   userId: string,
   input: WorkspaceProfileInput,
@@ -297,7 +461,9 @@ async function saveWorkspaceProfile(
     if (creating) {
       // Profile cap: serialise creations, then count (no race past the limit).
       await client.query("SELECT pg_advisory_xact_lock(hashtext('workspace_users:create'))");
-      const existing = await client.query<{ n: number }>("SELECT COUNT(*)::int AS n FROM workspace_users");
+      const existing = await client.query<{ n: number }>(
+        `SELECT COUNT(*)::int AS n FROM workspace_users${(await hasDeletionColumns()) ? " WHERE deleted_at IS NULL" : ""}`,
+      );
       if ((existing.rows[0]?.n ?? 0) >= MAX_WORKSPACE_PROFILES) {
         const error = new Error(
           `All ${MAX_WORKSPACE_PROFILES} profile slots are in use. Use an existing profile instead.`,
@@ -500,6 +666,7 @@ export async function getWorkspaceProfile(
           default_scope
         FROM workspace_users
         WHERE id = $1
+        ${(await hasDeletionColumns()) ? "AND deleted_at IS NULL" : ""}
       `,
       [userId],
     );

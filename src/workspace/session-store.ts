@@ -20,6 +20,7 @@ import {
 } from "../db/client.js";
 import {
   getWorkspaceProfile,
+  hasDeletionColumns,
   type WorkspaceProfile,
 } from "./store.js";
 import {
@@ -188,15 +189,19 @@ export async function resolveSessionFromCookie(
     ],
   );
 
+  // A deleted profile has no session, even if a revoke was missed (ADR-079).
+  const profile = await getWorkspaceProfile(row.user_id).catch((error: Error & { statusCode?: number }) => {
+    if (error.statusCode === 404) return null;
+    throw error;
+  });
+  if (!profile) return null;
+
   return {
     sessionId:
       row.id,
     userId:
       row.user_id,
-    profile:
-      await getWorkspaceProfile(
-        row.user_id,
-      ),
+    profile,
     expiresAt:
       row.expires_at
         .toISOString(),
@@ -241,6 +246,7 @@ export async function listDevelopmentProfiles():
       `
         SELECT id
         FROM workspace_users
+        ${(await hasDeletionColumns()) ? "WHERE deleted_at IS NULL" : ""}
         -- Oldest first: each profile keeps its slot on the switch page.
         ORDER BY
           created_at ASC,
