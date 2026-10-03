@@ -754,6 +754,97 @@ def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
     )
 
 
+class PageRef(BaseModel):
+    source_id: str = Field(min_length=1, max_length=200)
+    page_number: int = Field(ge=1, le=10000)
+
+
+class PagesRequest(BaseModel):
+    # The question, to score each page (shown as "Best match"; never filters).
+    query: str = Field(min_length=1, max_length=4000)
+    pages: list[PageRef] = Field(min_length=1, max_length=12)
+
+
+@app.post("/pages", response_model=SearchResponse)
+def pages(body: PagesRequest, request: Request):
+    """
+    Exact pages named by a playbook (ADR-091), in the playbook's order, as
+    evidence S1..Sn. No search: the pages were chosen and checked by a person.
+    Pages that do not exist (renumbered, not loaded yet) are skipped.
+    """
+    started_at = time.perf_counter()
+    assert DATABASE_URL is not None
+    hits: list[Hit] = []
+    with psycopg.connect(DATABASE_URL, row_factory=dict_row) as conn:
+        for ref in body.pages:
+            row = conn.execute(
+                """
+                SELECT pv.variant_id, p.source_id, p.page_number, pv.variant_type, pv.canonical,
+                       pv.text_content, p.numeric_conflict, d.department, d.go_number, d.go_date,
+                       d.source_url, d.jurisdiction_code, d.status, d.tier, d.doc_type, d.provider,
+                       COALESCE(NULLIF(d.metadata->>'title', ''), NULLIF(d.metadata->'portal'->>'subject', '')) AS document_title
+                FROM pages p
+                JOIN documents d ON d.source_id = p.source_id
+                JOIN LATERAL (
+                  SELECT variant_id, variant_type, canonical, text_content
+                  FROM page_variants
+                  WHERE source_id = p.source_id AND page_number = p.page_number
+                  -- The longest readable text: a blank native page loses to its OCR.
+                  ORDER BY length(text_content) DESC, canonical DESC, variant_id
+                  LIMIT 1
+                ) pv ON TRUE
+                WHERE p.source_id = %s AND p.page_number = %s
+                """,
+                (ref.source_id, ref.page_number),
+            ).fetchone()
+            if row is None:
+                continue
+            hits.append(
+                Hit(
+                    chunk_id=f"playbook::{row['source_id']}::{row['page_number']}",
+                    variant_id=row["variant_id"],
+                    logical_page_id=f"{row['source_id']}#{row['page_number']}",
+                    source_id=row["source_id"],
+                    page_number=row["page_number"],
+                    variant_type=row["variant_type"],
+                    canonical=bool(row["canonical"]),
+                    text=row["text_content"],
+                    numeric_conflict=bool(row["numeric_conflict"]),
+                    department=row["department"],
+                    go_number=row["go_number"],
+                    go_date=str(row["go_date"]) if row["go_date"] is not None else None,
+                    source_url=row["source_url"],
+                    document_title=row["document_title"],
+                    jurisdiction_code=row.get("jurisdiction_code"),
+                    status=row.get("status"),
+                    tier=row.get("tier"),
+                    doc_type=row.get("doc_type"),
+                    provider=row.get("provider"),
+                )
+            )
+        rerank_started_at = time.perf_counter()
+        if hits:
+            reranker: CrossEncoder = request.app.state.reranker
+            scores = reranker.predict(
+                [(body.query, hit.text[:4000]) for hit in hits],
+                batch_size=RERANK_BATCH_SIZE,
+                show_progress_bar=False,
+                prompt_name="query",
+            )
+            for hit, score in zip(hits, scores, strict=True):
+                hit.rerank_score = float(score)
+        rerank_ms = (time.perf_counter() - rerank_started_at) * 1000.0
+        evidence = [hydrate(conn, hit, f"S{index}") for index, hit in enumerate(hits, start=1)]
+    return SearchResponse(
+        query=body.query,
+        embedding_model=EMBEDDING_MODEL,
+        reranker_model=RERANKER_MODEL,
+        scores_are_raw_logits=True,
+        evidence=evidence,
+        timings={"rerank_ms": rerank_ms, "total_ms": (time.perf_counter() - started_at) * 1000.0},
+    )
+
+
 @app.post("/search", response_model=SearchResponse)
 def search(body: SearchRequest, request: Request):
     query = body.query.strip()

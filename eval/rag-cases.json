@@ -737,5 +737,105 @@
     "allowFallback": false,
     "expectGeneralSource": true,
     "notes": "3 Oct: officer's words ('experience clause', 'GFR') vs the manual's ('experience of similar services', 40/50/80% of estimated cost, Non-Consultancy Manual 2025 pp.106-109). Answered 'not in evidence' + raw NO_ANSWER token (ADR-082)."
+  },
+  {
+    "id": "playbook-psu-emd-gem-gtc",
+    "query": "Are the PSU exempted from EMD as per GeM GTC",
+    "language": "en",
+    "category": "playbook",
+    "expectedChatSourceIdsAny": [
+      "core-rules-gem-gtc-4-0"
+    ],
+    "expectedTextIncludesAny": [
+      "PSU",
+      "exempt"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "3 Oct: cited only UP Procurement Manual 2016 p.107; GeM GTC 4.0 p.19 lists 'Central / State PSUs' as exempt (ADR-091)."
+  },
+  {
+    "id": "playbook-bidder-experience-gfr",
+    "query": "bidders past experience criteria as per GFR rules",
+    "language": "en",
+    "category": "playbook",
+    "expectedChatSourceIdsAny": [
+      "core-rules-manual-works-2025",
+      "core-rules-manual-non-consultancy-2025",
+      "core-rules-manual-goods-2024",
+      "core-rules-up-gem-go-2024-11-26"
+    ],
+    "expectedTextIncludesAny": [
+      "40",
+      "50",
+      "80"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "3 Oct: general-knowledge fallback; the 40/50/80% rule is in the manuals and UP GeM GO 26.11.2024 para 46 (ADR-091)."
+  },
+  {
+    "id": "playbook-mobilisation-advance",
+    "query": "mobilisation advance rules for works contract",
+    "language": "en",
+    "category": "playbook",
+    "expectedChatSourceIdsAny": [
+      "core-rules-manual-works-2025"
+    ],
+    "expectedTextIncludesAny": [
+      "10",
+      "interest"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "3 Oct: answered from general knowledge; Works manual 5.3.1 pp.132-133 (ADR-091)."
+  },
+  {
+    "id": "playbook-epbg-up-gem",
+    "query": "जेम पर परफॉरमेंस सिक्योरिटी कितनी ली जाएगी",
+    "language": "hi",
+    "category": "playbook",
+    "expectedChatSourceIdsAny": [
+      "core-rules-up-gem-go-2024-11-26",
+      "core-rules-gem-gtc-4-0",
+      "core-rules-up-mse-startup-performance-security-relaxation-2021"
+    ],
+    "expectedTextIncludesAny": [
+      "3",
+      "5"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "Hindi playbook trigger (ADR-091)."
+  },
+  {
+    "id": "playbook-single-bid",
+    "query": "only one bid received in GeM bid, can it be accepted",
+    "language": "en",
+    "category": "playbook",
+    "expectedChatSourceIdsAny": [
+      "core-rules-gfr-2017",
+      "core-rules-up-gem-go-2025-03-11"
+    ],
+    "expectedTextIncludesAny": [
+      "advertis",
+      "restrictive",
+      "reasonable"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "GFR 173(xx) and UP GO 11.03.2025 (ADR-091)."
+  },
+  {
+    "id": "named-gtc-warranty",
+    "query": "what does GeM GTC say about warranty",
+    "language": "en",
+    "category": "rulebook",
+    "expectedChatSourceIdsAny": [
+      "core-rules-gem-gtc-4-0"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "No playbook: the named-rulebook search must bring a GTC page (ADR-091)."
   }
 ]

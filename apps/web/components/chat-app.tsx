@@ -117,6 +117,10 @@ interface DoneEvent {
   secondSearch?: boolean;
   /** The question with typos and grammar fixed, as searched (ADR-086). */
   correctedQuestion?: string | null;
+  /** Answered from a playbook's pinned pages instead of a search (ADR-091). */
+  playbook?: { id: string; title: string; reviewed: boolean } | null;
+  /** Rulebooks named in the question and searched separately (ADR-091). */
+  namedSourcesAdded?: string[];
   /** Nothing close in the officer's departments, so all departments were searched. */
   scopeFallback?: boolean;
   /** The answer hit the length limit and was cut back to its last full sentence. */
@@ -1874,6 +1878,15 @@ function TurnView({
               </span>
             ) : null}
 
+            {turn.done.playbook ? (
+              <span
+                className="badge"
+                title={`Answered from the pages listed for "${turn.done.playbook.title}"${turn.done.playbook.reviewed ? "" : " (playbook awaiting review)"}.`}
+              >
+                Playbook
+              </span>
+            ) : null}
+
             {turn.done.secondSearch ? (
               <span className="badge" title="The first search did not find the answer; a second search, worded like the rule, did.">
                 Second search
@@ -1924,6 +1937,21 @@ function TurnView({
                 <>
                   <span>Search wording</span>
                   <strong>{formatStageMs(turn.done.timings.expansionMs)}</strong>
+                </>
+              ) : null}
+              {turn.done.playbook ? (
+                <>
+                  <span>Playbook</span>
+                  <strong>
+                    {turn.done.playbook.id}
+                    {turn.done.playbook.reviewed ? "" : " (not reviewed)"}
+                  </strong>
+                </>
+              ) : null}
+              {turn.done.namedSourcesAdded?.length ? (
+                <>
+                  <span>Also searched</span>
+                  <strong>{turn.done.namedSourcesAdded.join(", ")}</strong>
                 </>
               ) : null}
               <span>Retrieval</span>

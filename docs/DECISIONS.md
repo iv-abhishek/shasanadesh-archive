@@ -1467,3 +1467,39 @@ every chunk; with the question plus three rewordings it ran four times.
   documents that apply it, naming the document.
 - Next if lexical stays slow: `word_similarity` with the `<%` operator, which the
   trigram index supports (needs a check on Hindi text first).
+
+## ADR-091 - Topic playbooks and named-rulebook search (3 Oct 2026)
+
+**Problem.** The questions pilot officers ask most (EMD, performance security, bidder
+experience and turnover, mobilisation advance, GeM thresholds, single bid/tender) are
+answered by a handful of known pages, but the search found them only some of the time:
+"Are PSUs exempt from EMD as per GeM GTC" cited the UP Procurement Manual 2016 instead of
+GeM GTC 4.0 p.19, which lists "Central / State PSUs"; "bidders past experience criteria as
+per GFR" fell back to general knowledge. Each answer also waited 10-60 s for the search.
+
+**Decision.**
+1. *Playbooks* — one Markdown file per topic in `datasets/playbooks/` (format in
+   `src/rag/playbooks.ts` and the folder README): trigger phrases in English, Hindi and
+   Hinglish, optional context words, the pinned pages (`source-id p.N`, at most 12), a
+   `boost` for narrow topics, `reviewed`, and a "How to answer" body. A matching question
+   skips query expansion and search: the API asks the retrieval service for exactly those
+   pages (`POST /pages`, reranked against the question for order), keeps all of them past
+   the relevance gate, and adds the body to the prompt as "PLAYBOOK … NOT evidence". Every
+   point is still cited to a page and validated as usual. If the pages cannot be read, the
+   normal search runs. `RAG_PLAYBOOKS=0` turns playbooks off.
+2. *Named rulebooks* — when the question names a rulebook (GeM GTC, GFR, DFPR, one of the
+   procurement manuals, the UP Procurement Manual 2016) and the search brought none of its
+   pages, a narrow search inside that book adds its best two relevant pages first
+   (`src/rag/named-sources.ts`). The answer can then cite the book the officer named.
+3. The done event carries `playbook {id, title, reviewed}` and `namedSourcesAdded`; the UI
+   shows a "Playbook" badge and both in the latency panel.
+
+**Rules for playbooks.** A playbook only chooses pages and says how to arrange the answer;
+figures come from the pages. All 11 start `reviewed: false` and need a check by someone who
+knows the rules before the pilot. `npm run test:playbooks` checks every file parses, every
+page exists with text, and 22 sample questions (including non-procurement ones that must not
+match).
+
+**Trade-off.** A playbook answer does not see department-specific orders on the same topic;
+the guidance tells the model to say these are the general rules when a department or order
+is named. Topics that need an order-by-order view should not get a playbook.

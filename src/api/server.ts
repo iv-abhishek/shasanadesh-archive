@@ -69,6 +69,8 @@ import {
   requestsGlobalScope,
 } from "../rag/intent-routing.js";
 import { expandSearchQuery } from "../rag/query-expansion.js";
+import { matchPlaybook, type PlaybookMatch, type PlaybookPage } from "../rag/playbooks.js";
+import { mergeNamedPages, missingNamedSources, namedSources } from "../rag/named-sources.js";
 import {
   buildGeneralKnowledgeMessages,
   cleanGeneralKnowledgeAnswer,
@@ -672,6 +674,30 @@ async function retrieve(
       return enrichRetrievalResponse(raw);
     },
   );
+}
+
+/** The exact pages a playbook names (ADR-091), scored against the question. */
+async function fetchPlaybookPages(
+  question: string,
+  pages: PlaybookPage[],
+  signal?: AbortSignal,
+): Promise<RetrievalResponse> {
+  return runLocalGpuExclusive("retrieval", async () => {
+    signal?.throwIfAborted();
+    const response = await fetch(`${RETRIEVAL_BASE_URL}/pages`, {
+      method: "POST",
+      signal,
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        query: question,
+        pages: pages.map((page) => ({ source_id: page.sourceId, page_number: page.pageNumber })),
+      }),
+    });
+    if (!response.ok) {
+      throw new Error(`Retrieval service returned ${response.status} for playbook pages: ${await response.text()}`);
+    }
+    return enrichRetrievalResponse((await response.json()) as RetrievalResponse);
+  });
 }
 
 async function generateCompletion(
@@ -1406,6 +1432,7 @@ server.post(
       | "active_source"
       | "active_department"
       | "workspace_departments"
+      | "playbook"
       | "global" =
       "global";
 
@@ -1573,10 +1600,17 @@ server.post(
     // a cited-order follow-up or an explicit order is searched as asked.
     // It also fixes typos and grammar in the question (ADR-086); the corrected
     // question is what is searched, reranked against and answered.
+    // A topic playbook (ADR-091) answers from its own checked pages: no search,
+    // and no rewording call when the question already matches as typed.
+    const searchable = !followSourceIds && !explicitSourceId;
+    let playbookMatch: PlaybookMatch | null = searchable
+      ? matchPlaybook(conversationPlan.retrievalQuery) ?? matchPlaybook(query)
+      : null;
     const searchPlan =
-      followSourceIds || explicitSourceId
+      !searchable || playbookMatch
         ? { corrected: null, expansions: [] as string[] }
         : await expandSearchQuery(conversationPlan.retrievalQuery, stop.signal);
+    if (!playbookMatch && searchPlan.corrected) playbookMatch = matchPlaybook(searchPlan.corrected);
     const expansions = searchPlan.expansions;
     const searchQuestion = searchPlan.corrected ?? conversationPlan.retrievalQuery;
     // Each pass costs several seconds on the Mac; shown in the latency panel.
@@ -1587,23 +1621,39 @@ server.post(
     };
     const expansionMs = performance.now() - retrievalStartedAt;
 
+    // Playbook pages instead of a search (ADR-091). If they cannot be read
+    // (service older than the playbook endpoint, pages not loaded), search.
+    const playbookPages = playbookMatch
+      ? await fetchPlaybookPages(searchQuestion, playbookMatch.playbook.pages, stop.signal).catch((error) => {
+          request.log.warn({ err: error, playbook: playbookMatch?.playbook.id }, "playbook pages unavailable; searching");
+          return null;
+        })
+      : null;
+    const usingPlaybook = Boolean(playbookPages && playbookPages.evidence.length > 0);
+    if (usingPlaybook) {
+      retrievalScope = "playbook";
+      sourceStickinessApplied = false;
+    }
+
     let retrieval =
-      await searchChat(
-        searchQuestion,
-        RAG_TOP_K,
-        retrievalFilters,
-        {
-          expandNeighbors: true,
-          neighborRadius: RAG_NEIGHBOR_RADIUS,
-          signal: stop.signal,
-          preferAuthority: true,
-          expansions,
-          maxEvidencePages: Math.max(
+      usingPlaybook && playbookPages
+        ? playbookPages
+        : await searchChat(
+            searchQuestion,
             RAG_TOP_K,
-            RAG_MAX_EVIDENCE_PAGES,
-          ),
-        },
-      );
+            retrievalFilters,
+            {
+              expandNeighbors: true,
+              neighborRadius: RAG_NEIGHBOR_RADIUS,
+              signal: stop.signal,
+              preferAuthority: true,
+              expansions,
+              maxEvidencePages: Math.max(
+                RAG_TOP_K,
+                RAG_MAX_EVIDENCE_PAGES,
+              ),
+            },
+          );
 
     // The conversation's order (or department) first; when none of its pages
     // is about the question, search the usual scope instead.
@@ -1654,13 +1704,42 @@ server.post(
           : "global";
     }
 
+    // A rulebook named in the question ("as per GeM GTC") but absent from
+    // the pages found: search inside it and put its best pages first, so the
+    // answer can cite the book the officer asked about (ADR-091).
+    const namedSourcesAdded: string[] = [];
+    if (searchable && !usingPlaybook) {
+      const missing = missingNamedSources(namedSources(`${query} ${searchQuestion}`), retrieval.evidence);
+      for (const source of missing.slice(0, 2)) {
+        try {
+          const inBook = await searchChat(
+            searchQuestion,
+            4,
+            { sourceIds: source.sourceIds },
+            { expandNeighbors: false, signal: stop.signal, preferAuthority: true },
+          );
+          const best = inBook.evidence
+            .filter((item) => item.retrieval_role !== "neighbor")
+            .filter((item) => assessRelevance([item], RAG_MIN_RELEVANCE).kept.length > 0)
+            .slice(0, 2);
+          if (best.length) {
+            retrieval = mergeNamedPages(retrieval, best, Math.max(RAG_TOP_K, RAG_MAX_EVIDENCE_PAGES));
+            namedSourcesAdded.push(source.name);
+          }
+        } catch (error) {
+          if (stop.signal.aborted) throw error;
+          request.log.warn({ err: error, source: source.name }, "named rulebook search failed");
+        }
+      }
+    }
+
     // Relevance gate (src/rag/relevance.ts): drop pages that are not about the
     // question. The officer's departments are a preference, not a wall: when
     // nothing close is found there, search all departments once.
     // A suggested follow-up keeps every page found in the cited orders: the
     // question is about those orders, and the model says when they do not
     // answer it (no widening to other orders).
-    let relevance = followSourceIds
+    let relevance = followSourceIds || usingPlaybook
       ? {
           kept: retrieval.evidence,
           dropped: 0,
@@ -2032,6 +2111,14 @@ server.post(
               ? `${query}\n(The same question with typos and grammar fixed: ${searchPlan.corrected})`
               : query,
             "",
+            ...(usingPlaybook && playbookMatch
+              ? [
+                  "PLAYBOOK (how to answer this topic; checked notes, NOT evidence — cite only the pages below):",
+                  `Topic: ${playbookMatch.playbook.title}`,
+                  playbookMatch.playbook.guidance,
+                  "",
+                ]
+              : []),
             "RETRIEVED EVIDENCE:",
             evidenceContext,
           ].join("\n"),
@@ -2388,6 +2475,10 @@ server.post(
           model: firstCompletion.model,
           modelFellBack: firstCompletion.fellBack,
           correctedQuestion: searchPlan.corrected,
+          namedSourcesAdded: namedSourcesAdded.length ? namedSourcesAdded : undefined,
+          playbook: usingPlaybook && playbookMatch
+            ? { id: playbookMatch.playbook.id, title: playbookMatch.playbook.title, reviewed: playbookMatch.playbook.reviewed }
+            : undefined,
           ok: true,
           validated: true,
           repaired,

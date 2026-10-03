@@ -78,6 +78,7 @@
     "test:authority": "python3 services/authority_test.py",
     "test:query-expansion": "tsx src/rag/query-expansion.test.ts",
     "test:general-knowledge": "tsx src/rag/general-knowledge.test.ts",
+    "test:playbooks": "tsx src/rag/playbooks.test.ts && tsx src/rag/named-sources.test.ts",
     "test:columns": "tsx src/lib/columns.test.ts",
     "ingest:doe-gfr": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts doe-gfr",
     "ingest:source": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts",

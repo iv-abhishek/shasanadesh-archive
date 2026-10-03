@@ -14,6 +14,8 @@ Do not place real secrets in this document.
 | `RAG_MIN_RELEVANCE` | minimum reranker relevance (0–1, default `0.1`) for a retrieved page to be used as evidence; see ADR-047 and the "Best match" row in the answer's latency panel |
 | `RAG_QUERY_EXPANSION` | `0` turns off rewording the question into official search terms before retrieval (ADR-082; hosted answer model only) |
 | `RAG_QUERY_EXPANSION_TIMEOUT_MS` | time limit for that rewording (default `6000`); on timeout the question is searched as asked |
+| `RAG_PLAYBOOKS` | `0` turns off topic playbooks (ADR-091); questions are then always searched |
+| `PLAYBOOK_DIR` | folder of playbook files (default `datasets/playbooks`) |
 | `RAG_CHAT_INCLUDE_ROUTINE` | `0` leaves confident routine (tier C) orders out of chat again (ADR-081) |
 | `CORS_ORIGINS` | optional comma-separated origins allowed to call the API directly; empty by default because browsers use the same-origin Next.js proxy |
 
