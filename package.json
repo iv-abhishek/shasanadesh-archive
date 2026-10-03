@@ -73,7 +73,7 @@
     "test:lgd": "tsx src/places/lgd.test.ts",
     "test:rag-routing": "tsx src/rag/intent-routing.test.ts && tsx src/rag/document-followup.test.ts",
     "test:session-cookie": "tsx src/workspace/session-cookie.test.ts",
-    "test:profile-deletion": "node --env-file-if-exists=.env --import tsx src/workspace/profile-deletion.test.ts",
+    "test:profile-deletion": "bash scripts/test-profile-deletion.sh",
     "test:neighbor-expansion": "python3 services/neighbor_expansion_test.py",
     "test:authority": "python3 services/authority_test.py",
     "ingest:doe-gfr": "node --env-file-if-exists=.env --import tsx src/ingest-source.ts doe-gfr",

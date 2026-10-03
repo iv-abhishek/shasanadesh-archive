@@ -1,11 +1,10 @@
 /**
  * Profile delete, restore and purge (ADR-079) against a real PostgreSQL.
  *
- * Needs an EMPTY scratch database with the migrations applied; it creates and
- * deletes profiles freely. Skipped unless TEST_DATABASE_URL is set:
- *
- *   createdb shasanadesh_test && DATABASE_URL=postgresql://…/shasanadesh_test npm run db:migrate
- *   TEST_DATABASE_URL=postgresql://…/shasanadesh_test npm run test:profile-deletion
+ * Run it with `npm run test:profile-deletion`: that creates a throwaway
+ * database, migrates it, runs this file and drops it again
+ * (scripts/test-profile-deletion.sh). Run directly, it needs TEST_DATABASE_URL
+ * pointing to an EMPTY migrated scratch database and is skipped otherwise.
  */
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
