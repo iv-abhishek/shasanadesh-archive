@@ -49,6 +49,7 @@ HNSW_EF_SEARCH_MIN = 100
 HNSW_EF_SEARCH_MAX = 1000
 VECTOR_WEIGHT = 1.0
 LEXICAL_WEIGHT = 1.2
+PAGES_PER_SOURCE = int(os.getenv("RAG_PAGES_PER_SOURCE", "2"))
 
 
 
@@ -905,13 +906,25 @@ def search(body: SearchRequest, request: Request):
 
     selected: list[Hit] = []
     seen_pages: set[str] = set()
-    for hit in pool:
-        if hit.logical_page_id in seen_pages:
-            continue
-        seen_pages.add(hit.logical_page_id)
-        selected.append(hit)
-        if len(selected) >= body.top_k:
-            break
+    # Chat: at most PAGES_PER_SOURCE direct pages from one document in the
+    # first pass, so a general question ("bidder's turnover condition") sees
+    # the Goods, Works and Services manuals rather than three pages of one
+    # (ADR-087). Neighbour pages still extend the chosen pages; a second pass
+    # fills any free places.
+    per_source: dict[str, int] = defaultdict(int)
+    cap = PAGES_PER_SOURCE if body.prefer_authority else body.top_k
+    for second_pass in (False, True):
+        for hit in pool:
+            if len(selected) >= body.top_k:
+                break
+            if hit.logical_page_id in seen_pages:
+                continue
+            if not second_pass and per_source[hit.source_id] >= cap:
+                continue
+            seen_pages.add(hit.logical_page_id)
+            per_source[hit.source_id] += 1
+            selected.append(hit)
+    selected.sort(key=lambda hit: pool.index(hit))
 
     final_hits = selected
 

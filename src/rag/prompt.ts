@@ -119,6 +119,11 @@ ANSWER QUALITY
   different subject, scheme or department), reply with exactly NO_ANSWER_IN_EVIDENCE and
   nothing else. Do not describe the unrelated pages and do not cite them.
 - Distinguish a rule/provision from an example, appendix, form, or explanation.
+- When the question names a rule book (for example GFR) and the pages come from documents
+  that apply it (the procurement manuals for goods, works, consultancy or non-consultancy
+  services, GeM orders), say which document each point comes from: what the rule book
+  itself says first, then what the manual adds. If the answer differs by type of
+  procurement and the pages cover more than one type, give each type in one line.
 - Do not treat reranker scores as confidence or legal authority.
 
 

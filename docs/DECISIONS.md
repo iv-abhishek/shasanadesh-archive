@@ -1403,3 +1403,17 @@ Abhishek: "the system should also correct typos, grammar and sentences."
   knowledge answer answers, and is given to the answer model next to the original.
   The officer's own words stay in history; the chat shows "Searched as: …" under the
   question when a correction was made.
+
+## ADR-087 - Several documents per answer; rule book first, then the manual (3 Oct 2026)
+
+"bidder's turnover condition according to GFR" was answered from three pages of the
+Non-Consultancy Services manual. GFR 2017 itself only says that prior turnover and
+experience may be relaxed for startups (Rule 173 (i)); the turnover thresholds are in the
+manuals for goods, works and services. (GFR's rebuilt two-column text, ADR-085, reaches
+the index when tonight's `sync:daily` runs `db:load` and `embed:chunks`.)
+
+- Chat retrieval takes at most `RAG_PAGES_PER_SOURCE` (default 2) direct pages from one
+  document in a first pass, then fills free places in rank order, so the Goods, Works and
+  Services manuals can all appear. The Search page is unchanged.
+- Prompt: name the document behind each point — the rule book first, then what the manual
+  adds — and give each procurement type in one line when the pages cover several.
