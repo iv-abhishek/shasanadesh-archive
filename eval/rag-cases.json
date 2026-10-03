@@ -837,5 +837,36 @@
     "requireCitation": true,
     "allowFallback": false,
     "notes": "No playbook: the named-rulebook search must bring a GTC page (ADR-091)."
+  },
+  {
+    "id": "procurement-order-of-authority-turnover",
+    "query": "minimum turnover criteria for service providers on GeM",
+    "language": "en",
+    "category": "procurement",
+    "expectedChatSourceIdsAny": [
+      "core-rules-up-gem-go-2024-11-26"
+    ],
+    "expectedTextIncludesAny": [
+      "30"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "ADR-093: UP GeM GO 26.11.2024 para 45 leads (30% of estimated cost)."
+  },
+  {
+    "id": "procurement-quotation-limit",
+    "query": "purchase without quotation limit",
+    "language": "en",
+    "category": "procurement",
+    "expectedChatSourceIdsAny": [
+      "core-rules-gfr-2017",
+      "core-rules-manual-goods-2024",
+      "core-rules-up-procurement-manual-goods-2016",
+      "core-rules-up-gem-go-2024-11-26",
+      "core-rules-gem-gtc-4-0"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "ADR-093: answered from the procurement rule books, not unrelated department orders."
   }
 ]

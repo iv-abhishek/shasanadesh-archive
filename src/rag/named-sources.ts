@@ -13,6 +13,16 @@ export interface NamedSource {
 
 const NAMED: Array<NamedSource & { pattern: RegExp; unless?: RegExp }> = [
   {
+    name: "UP GeM orders",
+    pattern: /\b(up|u\.p\.|uttar pradesh)\s+gem\s+(go|gos|order|orders|shasanadesh)\b|\bgem\s+(go|gos|shasanadesh)\b|जेम.{0,25}शासनादेश/iu,
+    sourceIds: [
+      "core-rules-up-gem-go-2024-11-26",
+      "core-rules-up-gem-go-2025-03-11",
+      "core-rules-up-gem-go-2025-07-21",
+      "core-rules-up-mse-startup-performance-security-relaxation-2021",
+    ],
+  },
+  {
     name: "GeM GTC",
     pattern: /\bgtc\b|general terms (and|&) conditions (on|of|for) gem|जी\.?\s?टी\.?\s?सी|जीटीसी/iu,
     sourceIds: ["core-rules-gem-gtc-4-0"],

@@ -1531,3 +1531,31 @@ survives the parser intact, whether the plan uses the index, the time and the be
 
 **Next.** With keyword search fast, the English rewording could use it again (ADR-090 made
 rewordings vector-only); decide after an eval run.
+
+## ADR-093 - Procurement questions answered from the procurement rule books, in order of authority (3 Oct 2026)
+
+**Decision (owner's instruction).** For a procurement question, the books in force for a UP
+buyer are, highest first: **UP GeM orders** (consolidated GO 26.11.2024, amending GOs
+11.03.2025 and 21.07.2025, and the GeM performance-security GO) › **GeM GTC 4.0** › **GFR 2017**
+(with amendments) › **Ministry of Finance procurement manuals** (Goods, Non-Consultancy,
+Consultancy, Works) › **UP Procurement Manual (Goods) 2016**. Use all of them, as required.
+
+- `src/rag/procurement.ts` recognises procurement questions (tender, bid, EMD, GeM, L1,
+  quotation, supplier, निविदा, क्रय, जेम, …) and lists the books with their rank.
+- Such a question, when not about a named order or department or the order under
+  discussion, is searched inside these 12 documents only (the retrieval service's source
+  filter now takes up to 16 ids), with 3 more pages than usual so several books appear. If
+  nothing relevant is found there, the usual search over everything runs.
+- The UP GeM orders are short and their scanned Hindi ranks poorly against 300-page manuals,
+  so when the search brought none of their pages they get their own narrow search (as named
+  rulebooks do, ADR-091); GeM GTC too when the question is about GeM. Their pages still have
+  to pass the relevance gate.
+- Pages are put in order of authority (a document's pages together) and renumbered, and the
+  prompt gives the order: lead with the highest book that answers, add what the others add,
+  say where they differ; on GeM, the UP GeM orders and GTC prevail over the manuals and the
+  2016 manual. Playbook answers use the same order and instruction.
+- `RAG_PROCUREMENT_RULEBOOKS=0` turns this off. The done event carries
+  `procurementRulebooks: true`; the latency panel shows "Searched: Procurement rule books".
+
+**Trade-off.** A department's own procurement order (e.g. a PWD e-tender GO) is not searched
+unless the question names the department or the order, or the rule books have nothing.

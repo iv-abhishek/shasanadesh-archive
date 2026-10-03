@@ -11,6 +11,8 @@ assert.deepEqual(names("non-consultancy manual turnover"), ["Manual for Procurem
 assert.deepEqual(names("consultancy manual QCBS"), ["Manual for Procurement of Consultancy Services"]);
 assert.deepEqual(names("UP procurement manual EMD exemption"), ["UP Procurement Manual (Goods) 2016"]);
 assert.deepEqual(names("goods manual LTE"), ["Manual for Procurement of Goods"]);
+assert.deepEqual(names("as per UP GeM GO what is EMD"), ["UP GeM orders"]);
+assert.deepEqual(names("जेम संबंधी शासनादेश में ईपीबीजी"), ["UP GeM orders"]);
 assert.deepEqual(names("maternity leave for teachers"), []);
 assert.deepEqual(names("gift to officers"), [], "no false match on 'gift'");
 

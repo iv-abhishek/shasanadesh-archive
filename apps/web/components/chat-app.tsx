@@ -121,6 +121,8 @@ interface DoneEvent {
   playbook?: { id: string; title: string; reviewed: boolean } | null;
   /** Rulebooks named in the question and searched separately (ADR-091). */
   namedSourcesAdded?: string[];
+  /** Searched the procurement rule books in order of authority (ADR-093). */
+  procurementRulebooks?: boolean;
   /** Nothing close in the officer's departments, so all departments were searched. */
   scopeFallback?: boolean;
   /** The answer hit the length limit and was cut back to its last full sentence. */
@@ -1946,6 +1948,12 @@ function TurnView({
                     {turn.done.playbook.id}
                     {turn.done.playbook.reviewed ? "" : " (not reviewed)"}
                   </strong>
+                </>
+              ) : null}
+              {turn.done.procurementRulebooks ? (
+                <>
+                  <span>Searched</span>
+                  <strong>Procurement rule books (UP GeM GO › GTC › GFR › manuals › UP manual 2016)</strong>
                 </>
               ) : null}
               {turn.done.namedSourcesAdded?.length ? (

@@ -72,6 +72,14 @@ import { expandSearchQuery } from "../rag/query-expansion.js";
 import { matchPlaybook, type PlaybookMatch, type PlaybookPage } from "../rag/playbooks.js";
 import { mergeNamedPages, missingNamedSources, namedSources } from "../rag/named-sources.js";
 import {
+  PROCUREMENT_PROMPT,
+  PROCUREMENT_RULEBOOKS_ENABLED,
+  PROCUREMENT_SOURCE_IDS,
+  isProcurementQuestion,
+  orderByAuthority,
+  procurementBooksToCheck,
+} from "../rag/procurement.js";
+import {
   buildGeneralKnowledgeMessages,
   cleanGeneralKnowledgeAnswer,
   closestDocuments,
@@ -1433,6 +1441,7 @@ server.post(
       | "active_department"
       | "workspace_departments"
       | "playbook"
+      | "procurement_rulebooks"
       | "global" =
       "global";
 
@@ -1635,8 +1644,43 @@ server.post(
       sourceStickinessApplied = false;
     }
 
-    let retrieval =
-      usingPlaybook && playbookPages
+    // Procurement questions search the procurement rule books only, in their
+    // order of authority (ADR-093). Not when the officer asked about a named
+    // order, department or the order already under discussion.
+    let procurementSearch =
+      PROCUREMENT_RULEBOOKS_ENABLED &&
+      searchable &&
+      !usingPlaybook &&
+      (retrievalScope === "global" || retrievalScope === "workspace_departments") &&
+      isProcurementQuestion(`${query} ${searchQuestion}`);
+    let retrieval: RetrievalResponse | null = null;
+    if (procurementSearch) {
+      retrieval = await searchChat(
+        searchQuestion,
+        RAG_TOP_K + 3,
+        { sourceIds: PROCUREMENT_SOURCE_IDS },
+        {
+          expandNeighbors: true,
+          neighborRadius: RAG_NEIGHBOR_RADIUS,
+          signal: stop.signal,
+          preferAuthority: true,
+          expansions,
+          maxEvidencePages: Math.max(RAG_TOP_K, RAG_MAX_EVIDENCE_PAGES) + 3,
+        },
+      );
+      if (assessRelevance(retrieval.evidence, RAG_MIN_RELEVANCE).kept.length === 0) {
+        // Nothing in the rule books: search everything as usual.
+        procurementSearch = false;
+        retrieval = null;
+      } else {
+        retrievalScope = "procurement_rulebooks";
+        sourceStickinessApplied = false;
+      }
+    }
+
+    retrieval =
+      retrieval ??
+      (usingPlaybook && playbookPages
         ? playbookPages
         : await searchChat(
             searchQuestion,
@@ -1653,7 +1697,7 @@ server.post(
                 RAG_MAX_EVIDENCE_PAGES,
               ),
             },
-          );
+          ));
 
     // The conversation's order (or department) first; when none of its pages
     // is about the question, search the usual scope instead.
@@ -1709,8 +1753,14 @@ server.post(
     // answer can cite the book the officer asked about (ADR-091).
     const namedSourcesAdded: string[] = [];
     if (searchable && !usingPlaybook) {
-      const missing = missingNamedSources(namedSources(`${query} ${searchQuestion}`), retrieval.evidence);
-      for (const source of missing.slice(0, 2)) {
+      const asked = namedSources(`${query} ${searchQuestion}`);
+      if (procurementSearch) {
+        for (const book of procurementBooksToCheck(`${query} ${searchQuestion}`)) {
+          if (!asked.some((source) => source.name === book.name)) asked.push(book);
+        }
+      }
+      const missing = missingNamedSources(asked, retrieval.evidence);
+      for (const source of missing.slice(0, 3)) {
         try {
           const inBook = await searchChat(
             searchQuestion,
@@ -1732,6 +1782,8 @@ server.post(
         }
       }
     }
+
+    if (procurementSearch || usingPlaybook) retrieval = orderByAuthority(retrieval);
 
     // Relevance gate (src/rag/relevance.ts): drop pages that are not about the
     // question. The officer's departments are a preference, not a wall: when
@@ -2111,6 +2163,7 @@ server.post(
               ? `${query}\n(The same question with typos and grammar fixed: ${searchPlan.corrected})`
               : query,
             "",
+            ...(procurementSearch || usingPlaybook ? [PROCUREMENT_PROMPT, ""] : []),
             ...(usingPlaybook && playbookMatch
               ? [
                   "PLAYBOOK (how to answer this topic; checked notes, NOT evidence — cite only the pages below):",
@@ -2476,6 +2529,7 @@ server.post(
           modelFellBack: firstCompletion.fellBack,
           correctedQuestion: searchPlan.corrected,
           namedSourcesAdded: namedSourcesAdded.length ? namedSourcesAdded : undefined,
+          procurementRulebooks: procurementSearch || undefined,
           playbook: usingPlaybook && playbookMatch
             ? { id: playbookMatch.playbook.id, title: playbookMatch.playbook.title, reviewed: playbookMatch.playbook.reviewed }
             : undefined,

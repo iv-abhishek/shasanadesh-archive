@@ -69,7 +69,7 @@ class SearchFilters(BaseModel):
     source_id: str | None = Field(default=None, max_length=200)
     # Several orders (a suggested follow-up is answered from the orders the
     # previous answer cited, and only from them).
-    source_ids: list[str] | None = Field(default=None, max_length=8)
+    source_ids: list[str] | None = Field(default=None, max_length=16)
     # Source collections (documents.provider), e.g. ["shasanadesh-up", "upgov"].
     providers: list[str] | None = None
     date_from: str | None = Field(default=None, max_length=10)
