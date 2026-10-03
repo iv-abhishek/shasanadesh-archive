@@ -16,6 +16,7 @@ Do not place real secrets in this document.
 | `RAG_QUERY_EXPANSION_TIMEOUT_MS` | time limit for that rewording (default `6000`); on timeout the question is searched as asked |
 | `RAG_PLAYBOOKS` | `0` turns off topic playbooks (ADR-091); questions are then always searched |
 | `PLAYBOOK_DIR` | folder of playbook files (default `datasets/playbooks`) |
+| `RAG_LEXICAL_TIMEOUT_MS` | time limit for the keyword half of search (default `4000`); past it the meaning (vector) half answers alone (ADR-092) |
 | `RAG_CHAT_INCLUDE_ROUTINE` | `0` leaves confident routine (tier C) orders out of chat again (ADR-081) |
 | `CORS_ORIGINS` | optional comma-separated origins allowed to call the API directly; empty by default because browsers use the same-origin Next.js proxy |
 

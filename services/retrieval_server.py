@@ -14,6 +14,7 @@ from pydantic import BaseModel, Field
 from psycopg.rows import dict_row
 from sentence_transformers import CrossEncoder, SentenceTransformer
 from services.authority import authority_score, scores_are_probabilities
+from services.lexical import or_tsquery_sql, search_terms
 from services.neighbor_expansion import plan_neighbor_pages
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -50,6 +51,8 @@ HNSW_EF_SEARCH_MAX = 1000
 VECTOR_WEIGHT = 1.0
 LEXICAL_WEIGHT = 1.2
 PAGES_PER_SOURCE = int(os.getenv("RAG_PAGES_PER_SOURCE", "2"))
+# Keyword search gives up after this long; the vector half still answers (ADR-092).
+LEXICAL_TIMEOUT_MS = int(os.getenv("RAG_LEXICAL_TIMEOUT_MS", "4000"))
 
 
 
@@ -437,6 +440,18 @@ def pgvector_supports_iterative_scan(conn: psycopg.Connection) -> bool:
     return _ITERATIVE_SCAN
 
 
+_chunk_terms_ready = False
+
+
+def has_chunk_terms(conn: psycopg.Connection[Any]) -> bool:
+    """Whether migration 015 (stored chunk words) has run; checked until it has."""
+    global _chunk_terms_ready
+    if not _chunk_terms_ready:
+        row = conn.execute("SELECT to_regclass('public.chunk_terms') IS NOT NULL AS ready").fetchone()
+        _chunk_terms_ready = bool(row and row["ready"])
+    return _chunk_terms_ready
+
+
 def retrieve_hybrid(
     query: str,
     query_vector: str,
@@ -498,52 +513,46 @@ def retrieve_hybrid(
             vector_params,
         ).fetchall()
 
-        lexical_sql = (
-            base_select
-            + "("
-            + "CASE WHEN to_tsvector('simple', c.text_content) "
-            + "@@ plainto_tsquery('simple', %s) "
-            + "THEN ts_rank_cd("
-            + "to_tsvector('simple', c.text_content), "
-            + "plainto_tsquery('simple', %s)"
-            + ") ELSE 0 END "
-            + "+ similarity(c.text_content, %s) * 0.25"
-            + ") AS score "
-            + "FROM chunks c "
-            + "JOIN pages p ON p.source_id = c.source_id "
-            + "AND p.page_number = c.page_number "
-            + "JOIN documents d ON d.source_id = c.source_id "
-            + "WHERE ("
-            + "to_tsvector('simple', c.text_content) "
-            + "@@ plainto_tsquery('simple', %s) "
-            + "OR similarity(c.text_content, %s) > 0.01"
-            + ") "
-            + filter_sql
-            + " ORDER BY score DESC "
-            + "LIMIT %s"
-        )
-
-        lexical_params: list[Any] = [
-            query,
-            query,
-            query,
-            query,
-            query,
-            *filter_params,
-            candidate_count,
-        ]
-
-        # The lexical search scans every chunk (trigram similarity cannot use
-        # the index), seconds per query; the rewordings search by meaning only
-        # (ADR-090: 4 lexical scans took 54 s of a 60 s search on 3 Oct).
-        lexical_rows = (
-            conn.execute(
-                lexical_sql,
-                lexical_params,
-            ).fetchall()
-            if lexical
-            else []
-        )
+        # Keyword half (ADR-092): chunks containing ANY meaningful word of the
+        # question, found through a GIN full-text index (chunk_terms_idx, or chunks_fts_idx
+        # before migration 015) and
+        # ranked by how many of the words they hold, how close together.
+        terms = search_terms(query) if lexical else []
+        lexical_rows: list[dict[str, Any]] = []
+        if terms:
+            tsquery = or_tsquery_sql(len(terms))
+            # Stored words (migration 015) when present; otherwise parse each
+            # matching chunk again (same index for finding, slower ranking).
+            if has_chunk_terms(conn):
+                words_sql = "t.terms"
+                from_sql = "FROM chunk_terms t JOIN chunks c ON c.variant_chunk_id = t.variant_chunk_id "
+            else:
+                words_sql = "to_tsvector('simple', c.text_content)"
+                from_sql = "FROM chunks c "
+            lexical_sql = (
+                base_select
+                + "ts_rank_cd(" + words_sql + ", " + tsquery + ", 1) AS score "
+                + from_sql
+                + "JOIN pages p ON p.source_id = c.source_id "
+                + "AND p.page_number = c.page_number "
+                + "JOIN documents d ON d.source_id = c.source_id "
+                + "WHERE " + words_sql + " @@ " + tsquery + " "
+                + filter_sql
+                + " ORDER BY score DESC "
+                + "LIMIT %s"
+            )
+            lexical_params: list[Any] = [*terms, *terms, *filter_params, candidate_count]
+            try:
+                conn.execute(
+                    "SELECT set_config('statement_timeout', %s, true)",
+                    (str(LEXICAL_TIMEOUT_MS),),
+                )
+                lexical_rows = conn.execute(lexical_sql, lexical_params).fetchall()
+            except psycopg.errors.QueryCanceled:
+                # Too slow (very common words): answer from the vector half.
+                conn.rollback()
+                print(f"[retrieval] keyword search over {LEXICAL_TIMEOUT_MS} ms skipped: {terms}", flush=True)
+                lexical_rows = []
 
     vector_hits = [make_hit(row) for row in vector_rows]
     lexical_hits = [make_hit(row, lexical=True) for row in lexical_rows]

@@ -1503,3 +1503,31 @@ match).
 **Trade-off.** A playbook answer does not see department-specific orders on the same topic;
 the guidance tells the model to say these are the general rules when a department or order
 is named. Topics that need an order-by-order view should not get a playbook.
+
+## ADR-092 - Keyword search through an index (3 Oct 2026)
+
+**Problem.** The keyword half of hybrid search took 10-54 s. It asked for chunks containing
+*every* word of the question (`plainto_tsquery` ANDs them, so "what are the … as per GFR
+rules" almost never matched) or a trigram `similarity() > 0.01` — and a function call in the
+WHERE clause cannot use the trigram index, so every question scanned every chunk.
+
+**Decision.**
+- `services/lexical.py` cuts the question to its meaningful words (English and Hindi
+  stopwords out, nukta and zero-width joiners removed, at most 12). The query is an OR of
+  `plainto_tsquery('simple', word)`, so each word is parsed exactly like the indexed text.
+- Chunks are found through a GIN index and ranked with `ts_rank_cd` (normalised for length):
+  chunks holding more of the words, closer together, rank higher.
+- Migration 015 stores each chunk's parsed words in `chunk_terms` (GIN-indexed, kept in step
+  by triggers on `chunks`, deleted with the chunk), so ranking does not re-parse text. Before
+  the migration the existing `chunks_fts_idx` expression index is used.
+- The keyword query has its own time limit (`RAG_LEXICAL_TIMEOUT_MS`, default 4000); past
+  it, the vector half answers alone and the service logs the words.
+- Trigram similarity is no longer used in search: typos are fixed by query correction
+  (ADR-086), and meaning by the vector half.
+
+**Check.** `npm run debug:lexical -- "question"` shows the words, whether each Hindi word
+survives the parser intact, whether the plan uses the index, the time and the best chunks.
+`npm run test:lexical` tests the word list.
+
+**Next.** With keyword search fast, the English rewording could use it again (ADR-090 made
+rewordings vector-only); decide after an eval run.
