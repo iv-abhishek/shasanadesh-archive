@@ -86,8 +86,26 @@ export function hasEvidenceFromDepartments(evidence: RetrievalEvidence[], depart
 /** The model's agreed reply when none of the evidence answers the question. */
 export const NO_ANSWER_TOKEN = "NO_ANSWER_IN_EVIDENCE";
 
+/**
+ * The model's "not found": the token alone, or the token after prose that
+ * opens by saying the pages do not answer (3 Oct: four cited bullets on what
+ * the pages do not say, then NO_ANSWER_IN_EVIDENCE — the officer saw both).
+ * A real answer with a stray token is kept; the token is removed before
+ * display (withoutNoAnswerToken).
+ */
 export function isNoAnswer(draft: string): boolean {
-  return draft.includes(NO_ANSWER_TOKEN) && draft.replace(NO_ANSWER_TOKEN, "").trim().length < 160;
+  if (!draft.includes(NO_ANSWER_TOKEN)) return false;
+  const rest = draft.split(NO_ANSWER_TOKEN).join(" ").trim();
+  if (rest.length < 160) return true;
+  const first = sentencesOf(rest)[0] ?? "";
+  return NON_ANSWER_SENTENCE.test(first) || isProseNonAnswer(rest);
+}
+
+/** Never show the internal token. */
+export function withoutNoAnswerToken(answer: string): string {
+  return answer.includes(NO_ANSWER_TOKEN)
+    ? answer.split(NO_ANSWER_TOKEN).join("").replace(/\n{3,}/g, "\n\n").trim()
+    : answer;
 }
 
 // "The provided evidence does not contain …", "आदेशों में … कोई जानकारी नहीं दी
@@ -110,6 +128,14 @@ const NON_ANSWER_SENTENCE = new RegExp(
   "iu",
 );
 
+function sentencesOf(text: string): string[] {
+  return text
+    .replace(/\[S\d+[^\]]*\]/g, " ")
+    .split(/(?<=[.!?।])\s+|\n+/)
+    .map((sentence) => sentence.replace(/^[-*•\d.)\s]+/, "").trim())
+    .filter((sentence) => sentence.replace(/[\s.।]/g, "").length > 3);
+}
+
 /**
  * True when most of an answer only says the pages do not answer the question
  * (two or more sentences, a strict majority of them "not found"). One such
@@ -118,11 +144,7 @@ const NON_ANSWER_SENTENCE = new RegExp(
  */
 export function isProseNonAnswer(draft: string): boolean {
   if (draft.length > 1500) return false;
-  const sentences = draft
-    .replace(/\[S\d+[^\]]*\]/g, " ")
-    .split(/(?<=[.!?।])\s+|\n+/)
-    .map((sentence) => sentence.replace(/^[-*•\d.)\s]+/, "").trim())
-    .filter((sentence) => sentence.replace(/[\s.।]/g, "").length > 3);
+  const sentences = sentencesOf(draft);
   if (sentences.length < 2) return false;
   const nonAnswers = sentences.filter((sentence) => NON_ANSWER_SENTENCE.test(sentence)).length;
   return nonAnswers * 2 > sentences.length;

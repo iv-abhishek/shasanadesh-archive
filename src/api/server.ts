@@ -67,7 +67,8 @@ import {
   findExplicitDepartment,
   requestsGlobalScope,
 } from "../rag/intent-routing.js";
-import { assessRelevance, followUpNotCoveredMessage, hasEvidenceFromDepartments, isNoAnswer, isProseNonAnswer, noEvidenceMessage } from "../rag/relevance.js";
+import { expandSearchQuery } from "../rag/query-expansion.js";
+import { assessRelevance, followUpNotCoveredMessage, hasEvidenceFromDepartments, isNoAnswer, isProseNonAnswer, noEvidenceMessage, withoutNoAnswerToken } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
 import { asksWhatOrderSays, detectListingRequest, jurisdictionsInQuery, listOrders, type SubjectSearch } from "../rag/order-listing.js";
@@ -455,6 +456,8 @@ interface RetrievalOptions {
   maxEvidencePages?: number;
   /** Chat: rank rulebooks and general orders above specific ones (ADR-078). */
   preferAuthority?: boolean;
+  /** The question in official wording, English and Hindi (ADR-082). */
+  expansions?: string[];
 }
 
 type ProgressStage =
@@ -629,6 +632,8 @@ async function retrieve(
               options?.maxEvidencePages ?? 7,
             prefer_authority:
               options?.preferAuthority ?? false,
+            expansions:
+              options?.expansions ?? [],
           }),
         },
       );
@@ -1497,6 +1502,14 @@ server.post(
     const retrievalStartedAt =
       performance.now();
 
+    // The question in official wording (ADR-082), for normal questions only:
+    // a cited-order follow-up or an explicit order is searched as asked.
+    const expansions =
+      followSourceIds || explicitSourceId
+        ? []
+        : await expandSearchQuery(conversationPlan.retrievalQuery, stop.signal);
+    const expansionMs = performance.now() - retrievalStartedAt;
+
     let retrieval =
       await retrieve(
         conversationPlan
@@ -1508,6 +1521,7 @@ server.post(
           neighborRadius: RAG_NEIGHBOR_RADIUS,
           signal: stop.signal,
           preferAuthority: true,
+          expansions,
           maxEvidencePages: Math.max(
             RAG_TOP_K,
             RAG_MAX_EVIDENCE_PAGES,
@@ -1548,6 +1562,7 @@ server.post(
             neighborRadius: RAG_NEIGHBOR_RADIUS,
             signal: stop.signal,
             preferAuthority: true,
+          expansions,
             maxEvidencePages: Math.max(
               RAG_TOP_K,
               RAG_MAX_EVIDENCE_PAGES,
@@ -1602,6 +1617,7 @@ server.post(
             neighborRadius: RAG_NEIGHBOR_RADIUS,
             signal: stop.signal,
             preferAuthority: true,
+          expansions,
             maxEvidencePages: Math.max(
               RAG_TOP_K,
               RAG_MAX_EVIDENCE_PAGES,
@@ -1640,6 +1656,7 @@ server.post(
           neighborRadius: RAG_NEIGHBOR_RADIUS,
           signal: stop.signal,
           preferAuthority: true,
+          expansions,
           maxEvidencePages: Math.max(RAG_TOP_K, RAG_MAX_EVIDENCE_PAGES),
         },
       );
@@ -1691,6 +1708,8 @@ server.post(
         citations: [],
         timings: {
           retrievalMs: Math.round(retrievalMs),
+          expansionMs: Math.round(expansionMs),
+
           embeddingMs: retrieval.timings?.embedding_ms ?? null,
           hybridSearchMs: retrieval.timings?.hybrid_search_ms ?? null,
           rerankMs: retrieval.timings?.rerank_ms ?? null,
@@ -2093,7 +2112,7 @@ server.post(
 
       // No "(Note: numbers masked / verify on the original)" endings (ADR-080).
       finalAnswer =
-        stripVerificationNotes(finalAnswer);
+        withoutNoAnswerToken(stripVerificationNotes(finalAnswer));
 
       streamValidatedText(
         sendEvent,
@@ -2107,6 +2126,8 @@ server.post(
     const ragTimings = {
       retrievalMs:
         Math.round(retrievalMs),
+      expansionMs: Math.round(expansionMs),
+
       embeddingMs:
         retrieval.timings
           ?.embedding_ms ??

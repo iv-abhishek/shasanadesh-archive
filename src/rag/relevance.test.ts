@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { hasEvidenceFromDepartments } from "./relevance.js";
-import { assessRelevance, isNoAnswer, isProseNonAnswer, noEvidenceMessage, toRelevance } from "./relevance.js";
+import { assessRelevance, isNoAnswer, isProseNonAnswer, noEvidenceMessage, toRelevance, withoutNoAnswerToken } from "./relevance.js";
 import type { RetrievalEvidence } from "./types.js";
 
 const page = (label: string, sourceId: string, pageNumber: number, score: number, extra: Partial<RetrievalEvidence> = {}) =>
@@ -43,6 +43,8 @@ assert.ok(isNoAnswer("NO_ANSWER_IN_EVIDENCE"));
 assert.ok(isNoAnswer("  NO_ANSWER_IN_EVIDENCE.\n"));
 assert.ok(!isNoAnswer("The rule says X [S1 p.2]. ".repeat(10) + "NO_ANSWER_IN_EVIDENCE"));
 assert.match(noEvidenceMessage("hi", true), /सभी विभागों/);
+assert.ok(isNoAnswer("The provided evidence does not contain the clause.\n\n* The documents reference GFR rules [S2 p.103].\n\nNO_ANSWER_IN_EVIDENCE"));
+assert.equal(withoutNoAnswerToken("The rule says X [S1 p.2].\n\nNO_ANSWER_IN_EVIDENCE"), "The rule says X [S1 p.2].");
 assert.match(noEvidenceMessage("en", false), /could not find/);
 
 // Own-department evidence: any spelling of the officer's departments counts;

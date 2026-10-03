@@ -1305,3 +1305,27 @@ one university), so chat could not see them and said "not found".
 - Maternity leave: answered "the two-year gap still applies" from the Handbook page; the
   2 Sept 2026 order that removed it has garbled native text and no link to Rule 153(1).
   Next: links from orders to the rulebook rules they amend.
+
+## ADR-082 - Officers' words vs. the rulebook's words; no dead-end follow-ups (3 Oct 2026)
+
+"What are the service bid experience clause in GFR" got four cited bullets on what the
+pages do not say, then the raw `NO_ANSWER_IN_EVIDENCE`; the clicked suggestion then said
+"type the question yourself". The rule is in the archive (Manual for Procurement of
+Non-Consultancy Services 2025, pp. 106–109: experience of similar services — 3 × 40%,
+2 × 50% or 1 × 80% of the estimated cost), but none of its pages was retrieved: the
+officer's words ("experience clause", "GFR") are not the manual's words.
+
+- **Search wording:** before retrieval, one short call to the hosted answer model rewrites
+  the question as two search queries in official wording (English + Hindi,
+  `src/rag/query-expansion.ts`). The retrieval service searches the question and both
+  rewrites and merges the candidates; pages are still reranked against the question
+  itself, so the relevance gate and citations are unchanged. Not used for cited-order
+  follow-ups or an explicit order, nor with a local model. ~1.5–4 s; shown as "Search
+  wording" in the latency panel. `RAG_QUERY_EXPANSION=0` turns it off.
+- **The token is never shown:** NO_ANSWER_IN_EVIDENCE after prose that opens with "the
+  evidence does not contain …" is a "not found"; a stray token after a real answer is
+  removed (`withoutNoAnswerToken`).
+- **No dead-end follow-ups:** when a suggested question is not answered by the cited
+  orders, the web app asks it again as a new question over all orders instead of telling
+  the officer to retype it (nothing is saved for the first attempt). No suggestions are
+  offered after a "not found".

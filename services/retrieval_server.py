@@ -90,6 +90,9 @@ class SearchRequest(BaseModel):
     max_evidence_pages: int = Field(default=7, ge=1, le=16)
     # Chat sets this: rank rules and general orders above specific ones.
     prefer_authority: bool = False
+    # The question in official wording (ADR-082): extra candidate searches.
+    # Pages are still reranked against the question itself.
+    expansions: list[str] = Field(default_factory=list, max_length=3)
 
 
 class Evidence(BaseModel):
@@ -753,12 +756,14 @@ def search(body: SearchRequest, request: Request):
     reranker: CrossEncoder = request.app.state.reranker
 
     embedding_started_at = time.perf_counter()
-    query_embedding = embedder.encode(
-        [query],
+    expansions = [text.strip()[:300] for text in body.expansions if text and text.strip()][:3]
+    query_embeddings = embedder.encode(
+        [query, *expansions],
         prompt=QUERY_PROMPT,
         normalize_embeddings=True,
         convert_to_numpy=True,
-    )[0]
+    )
+    query_embedding = query_embeddings[0]
 
     embedding_ms = (
         time.perf_counter()
@@ -772,6 +777,16 @@ def search(body: SearchRequest, request: Request):
         body.candidate_count,
         body.filters,
     )
+    if expansions:
+        # Merge the candidate lists: a page found by several wordings rises.
+        merged: dict[str, Hit] = {hit.chunk_id: hit for hit in fused_hits}
+        for text, vector in zip(expansions, query_embeddings[1:]):
+            for hit in retrieve_hybrid(text, vector_literal(vector), body.candidate_count, body.filters):
+                if hit.chunk_id in merged:
+                    merged[hit.chunk_id].fused_score += hit.fused_score
+                else:
+                    merged[hit.chunk_id] = hit
+        fused_hits = sorted(merged.values(), key=lambda hit: hit.fused_score, reverse=True)
     hybrid_search_ms = (
         time.perf_counter()
         - hybrid_started_at

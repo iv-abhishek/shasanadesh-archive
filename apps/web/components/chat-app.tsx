@@ -81,6 +81,8 @@ interface Source {
 interface RagTimings {
   retrievalMs?: number;
   embeddingMs?: number | null;
+  /** Rewording the question into official search terms (ADR-082). */
+  expansionMs?: number | null;
   hybridSearchMs?: number | null;
   rerankMs?: number | null;
   hydrationMs?: number | null;
@@ -1887,6 +1889,12 @@ function TurnView({
             </summary>
 
             <div className="timing-grid">
+              {typeof turn.done.timings.expansionMs === "number" && turn.done.timings.expansionMs >= 1 ? (
+                <>
+                  <span>Search wording</span>
+                  <strong>{formatStageMs(turn.done.timings.expansionMs)}</strong>
+                </>
+              ) : null}
               <span>Retrieval</span>
               <strong>{formatStageMs(turn.done.timings.retrievalMs)}</strong>
               <span>Embedding</span>
@@ -2655,6 +2663,10 @@ export function ChatApp({
         "";
       let persistedSources:
         Source[] = [];
+      // A suggested follow-up the cited orders do not answer is asked again as
+      // a new question over all orders, instead of "type it yourself" (ADR-082).
+      let askAgainOverAllOrders = false;
+
       let persistedDone:
         DoneEvent | null =
         null;
@@ -2910,7 +2922,10 @@ export function ChatApp({
             buffer,
           );
         }
-        if (
+        if (options.followUp && (persistedDone as DoneEvent | null)?.noEvidence) {
+          askAgainOverAllOrders = true;
+          setTurns((current) => current.filter((turn) => turn.id !== id));
+        } else if (
           workspaceUserId &&
           persistedAnswer.trim()
         ) {
@@ -3054,6 +3069,7 @@ export function ChatApp({
       } finally {
         if (inFlightRef.current === controller) inFlightRef.current = null;
         setBusy(false);
+        if (askAgainOverAllOrders && !controller.signal.aborted) void ask(question, priorTurns);
       }
     };
 
