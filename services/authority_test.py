@@ -17,4 +17,8 @@ assert authority_score(0.90, "A", None, "superseded") < authority_score(0.80, "A
 # Unsure routine orders (C) come last among near-ties.
 assert authority_score(0.85, "C", None, None) < authority_score(0.80, "B", None, None)
 
+# A confident routine order ranks below an unsure one, but a clearly better match still wins.
+assert authority_score(0.85, "C", None, None, True, "high") < authority_score(0.85, "C", None, None, True, "low")
+assert authority_score(0.995, "C", None, None, True, "high") > authority_score(0.60, "A", None, None)
+
 print("authority ranking tests passed")

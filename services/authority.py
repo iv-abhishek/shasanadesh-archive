@@ -15,6 +15,10 @@ import os
 
 AUTHORITY_BONUS_A = float(os.getenv("RAG_AUTHORITY_BONUS_A", "1.0"))
 AUTHORITY_PENALTY_C = float(os.getenv("RAG_AUTHORITY_PENALTY_C", "1.0"))
+# Routine orders the classifier is sure about: still answerable when the
+# question is clearly about one ("Project Alankar boundary walls", "KGMU
+# retirement age"), never on a near-tie with a rule (ADR-081).
+AUTHORITY_PENALTY_C_CONFIDENT = float(os.getenv("RAG_AUTHORITY_PENALTY_C_CONFIDENT", "1.5"))
 SUPERSEDED_PENALTY = float(os.getenv("RAG_SUPERSEDED_PENALTY", "2.0"))
 RULEBOOK_PROVIDERS = ("core-rules", "up-fhb")
 
@@ -32,12 +36,17 @@ def as_logit(score: float, is_probability: bool = True) -> float:
     return score
 
 
-def authority_bonus(tier: str | None, provider: str | None, status: str | None) -> float:
+def authority_bonus(
+    tier: str | None,
+    provider: str | None,
+    status: str | None,
+    tier_confidence: str | None = None,
+) -> float:
     bonus = 0.0
     if provider in RULEBOOK_PROVIDERS or tier == "A":
         bonus += AUTHORITY_BONUS_A
     elif tier == "C":
-        bonus -= AUTHORITY_PENALTY_C
+        bonus -= AUTHORITY_PENALTY_C_CONFIDENT if tier_confidence == "high" else AUTHORITY_PENALTY_C
     if status == "superseded":
         bonus -= SUPERSEDED_PENALTY
     return bonus
@@ -49,5 +58,6 @@ def authority_score(
     provider: str | None,
     status: str | None,
     is_probability: bool = True,
+    tier_confidence: str | None = None,
 ) -> float:
-    return as_logit(rerank_score, is_probability) + authority_bonus(tier, provider, status)
+    return as_logit(rerank_score, is_probability) + authority_bonus(tier, provider, status, tier_confidence)

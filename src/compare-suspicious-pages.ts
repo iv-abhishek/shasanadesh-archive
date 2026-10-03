@@ -167,9 +167,24 @@ async function main() {
   // repeated runs work through the backlog instead of redoing the worst pages.
   const redo = process.argv.includes("--redo");
 
-  if (maxPages < 1 || maxPages > 500) {
-    throw new Error("--max must be between 1 and 500");
+  // An overnight backlog run may ask for thousands of pages (ADR-081).
+  if (maxPages < 1 || maxPages > 10000) {
+    throw new Error("--max must be between 1 and 10000");
   }
+
+  // General orders first: a policy whose annexure pages are scans without
+  // text (toy manufacturing policy: 19 of 20 pages blank) cannot answer.
+  const tierOf = new Map<string, string>();
+  try {
+    for (const line of (await readFile(path.resolve("data/corpus/classification.jsonl"), "utf8")).split("\n")) {
+      if (!line.trim()) continue;
+      const record = JSON.parse(line) as { sourceId: string; tier?: string };
+      if (record.tier) tierOf.set(record.sourceId, record.tier);
+    }
+  } catch {
+    // Without classification every page has the same priority.
+  }
+  const tierRank = (sourceId: string) => ({ A: 0, B: 1 } as Record<string, number>)[tierOf.get(sourceId) ?? ""] ?? 2;
 
   const entries = await readdir(documentsRoot, {
     withFileTypes: true,
@@ -236,6 +251,7 @@ async function main() {
 
   candidates.sort(
     (a, b) =>
+      tierRank(a.page.sourceId) - tierRank(b.page.sourceId) ||
       a.native.score - b.native.score ||
       a.page.sourceId.localeCompare(b.page.sourceId) ||
       a.page.pageNumber - b.page.pageNumber,

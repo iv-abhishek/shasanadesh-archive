@@ -1279,3 +1279,29 @@ then "fetch failed" for the rest), so only 18 cases count.
   NO_ANSWER or the prose detector fired (`noEvidenceReason`, plus a server log line with
   the draft start and the pages), to trace the toy-policy "not found". The eval's
   "rulebook or general order" rate now counts only the rule questions.
+
+## ADR-081 - Routine orders can still answer; blank pages get OCR first (3 Oct 2026)
+
+Evening eval after the model classification went live (86.0%): the Project Alankar
+boundary-wall order and the KGMU retirement-age order were relabelled C (a sanction;
+one university), so chat could not see them and said "not found".
+
+- **Routine orders take part in chat with a penalty** instead of being left out:
+  confident C −1.5, unsure C −1.0 (logit), against +1.0 for rulebooks and tier A
+  (`services/authority.py`). A question clearly about one routine order is answered from
+  it; on a near-tie the rule wins, and the prompt still treats SPECIFIC sources as
+  examples only. Most confident-C orders are not indexed at all (heavy steps skip them),
+  so this adds few pages. `RAG_CHAT_INCLUDE_ROUTINE=0` restores the old exclusion.
+- **Describing sources is not answering:** "स्रोत S1 में केवल …", "Sources S2 and S5 …"
+  count as non-answer sentences (metro fare answered with three cited "not about this").
+- **Blank pages:** the toy-policy order has text on page 1 only; pages 2–20 are scans
+  never OCR'd, because OCR is decided per document (≥ 100 bytes of native text = no
+  OCR). 249 indexed orders (172 tier A) have 2,532 such pages. `compare:suspicious`
+  already treats a blank page as a candidate; it now takes up to 10,000 pages per run and
+  does tier A, then B, first.
+- **Coverage:** of 11,196 tier-A orders only 3,045 are indexed for answers: 1,896 are
+  downloaded but not yet built (the next `sync:daily` does it) and 5,887 are not
+  downloaded yet (portal capture).
+- Maternity leave: answered "the two-year gap still applies" from the Handbook page; the
+  2 Sept 2026 order that removed it has garbled native text and no link to Rule 153(1).
+  Next: links from orders to the rulebook rules they amend.

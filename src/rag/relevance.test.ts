@@ -66,3 +66,9 @@ assert.equal(isProseNonAnswer("Maternity leave is 180 days [S1 p.2]. It may be t
 assert.equal(isProseNonAnswer("The order does not specify a time limit [S1 p.2]."), false);
 assert.match(noEvidenceMessage("en", true), /Uttar Pradesh and Government of India/);
 console.log("prose non-answer tests passed");
+
+// Sources described instead of an answer (metro fare, 3 Oct evening eval).
+assert.ok(isProseNonAnswer("उत्तर प्रदेश सरकार के द्वारा जारी शासन आदेशों में लखनऊ मेट्रो के यात्रा किराए के बारे में कोई जानकारी उपलब्ध नहीं है [S1 p.3], [S2 p.2], [S5 p.2]।\n\n* स्रोत S1 में केवल ई-रिक्शा के लिए अधिकतम किराया दर निर्धारित की गई है [S1 p.3]।\n* स्रोत S2 और S5 में सड़क सुरक्षा, शिक्षा संस्थानों के रोड सेफ्टी लैब के बारे में है [S2 p.2]।"));
+// A cited answer that merely names a source label is still an answer.
+assert.equal(isProseNonAnswer("* Leave is 180 days [S1 p.2].\n* It may be taken twice [S1 p.2].\n* Source S1 is the 2026 order [S1 p.1]."), false);
+console.log("source-description tests passed");

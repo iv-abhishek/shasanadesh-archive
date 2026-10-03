@@ -880,7 +880,9 @@ def search(body: SearchRequest, request: Request):
         # Rules and general orders first among near-ties (ADR-078).
         probabilities = scores_are_probabilities([hit.rerank_score for hit in pool])
         pool.sort(
-            key=lambda hit: authority_score(hit.rerank_score, hit.tier, hit.provider, hit.status, probabilities),
+            key=lambda hit: authority_score(
+                hit.rerank_score, hit.tier, hit.provider, hit.status, probabilities, hit.tier_confidence
+            ),
             reverse=True,
         )
     else:

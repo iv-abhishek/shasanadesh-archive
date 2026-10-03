@@ -141,6 +141,10 @@ const RAG_MIN_RELEVANCE = Math.min(
   Math.max(0, Number.parseFloat(process.env.RAG_MIN_RELEVANCE ?? "0.1") || 0),
 );
 
+// Routine (tier C) orders in chat retrieval, ranked below rules and general
+// orders (ADR-081). "0" leaves confident routine orders out of chat again.
+const RAG_CHAT_INCLUDE_ROUTINE = process.env.RAG_CHAT_INCLUDE_ROUTINE !== "0";
+
 const RAG_NEIGHBOR_RADIUS = Number.parseInt(
   process.env.RAG_NEIGHBOR_RADIUS ?? "1",
   10,
@@ -611,8 +615,11 @@ async function retrieve(
                 filters?.dateTo,
               verification_status:
                 filters?.verificationStatus,
+              // Chat ranks by authority (ADR-078/081): routine orders take part
+              // with a penalty, so one clearly asked about can still answer.
               include_routine:
-                filters?.includeRoutine ?? false,
+                filters?.includeRoutine ??
+                (options?.preferAuthority === true && RAG_CHAT_INCLUDE_ROUTINE),
             },
             expand_neighbors:
               options?.expandNeighbors ?? false,
