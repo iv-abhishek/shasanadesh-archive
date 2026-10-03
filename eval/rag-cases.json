@@ -717,5 +717,25 @@
     "allowFallback": false,
     "expectNoEvidence": true,
     "notes": "Outside scope (Delhi, not UP or central orders)."
+  },
+  {
+    "id": "gfr-service-experience-clause",
+    "query": "what are the service bid experience clause in GFR",
+    "language": "en",
+    "category": "rulebook",
+    "expectedChatSourceIdsAny": [
+      "core-rules-manual-non-consultancy-2025",
+      "core-rules-manual-goods-2024",
+      "core-rules-manual-consultancy-2025",
+      "core-rules-gfr-2017"
+    ],
+    "expectedTextIncludesAny": [
+      "similar",
+      "experience"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "expectGeneralSource": true,
+    "notes": "3 Oct: officer's words ('experience clause', 'GFR') vs the manual's ('experience of similar services', 40/50/80% of estimated cost, Non-Consultancy Manual 2025 pp.106-109). Answered 'not in evidence' + raw NO_ANSWER token (ADR-082)."
   }
 ]
