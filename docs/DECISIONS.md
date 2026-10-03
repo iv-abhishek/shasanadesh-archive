@@ -1191,3 +1191,26 @@ Report `data/eval/runs/2026-10-02T18-03-28-287Z.json`. (ADR-076 is reserved for 
   (the profile route needs a session, so each run made a new profile until the 5-profile
   limit refused them). Two expectations updated (medical probation is now scoped directly;
   the vague solar question accepts any PM-KUSUM order).
+
+## ADR-078 - Authority order: rules and general orders lead the answer (3 Oct 2026)
+
+Tiers (ADR-046) decided only what chat could see: confident C was left out, A and B were
+equal. In the 2 Oct baseline, B orders pushed out the rule that answered the question.
+
+- **Ranking:** chat retrieval sends `prefer_authority`; the retrieval service re-sorts the
+  reranked pool by reranker score (as a logit) + an authority bonus: rulebook or tier A +1.0,
+  B 0, low-confidence C −1.0, superseded −2.0 (`services/authority.py`; env
+  `RAG_AUTHORITY_BONUS_A`, `RAG_AUTHORITY_PENALTY_C`, `RAG_SUPERSEDED_PENALTY`). Near-ties go
+  to the rule; a clearly more relevant page still wins. `rerank_score_raw` is unchanged, so
+  the relevance gate is unaffected. The Search tab keeps pure relevance order.
+- **Prompt:** each evidence block carries `AUTHORITY=RULEBOOK | GENERAL | CONTEXT | SPECIFIC`;
+  the model answers from RULEBOOK/GENERAL first, uses CONTEXT to add, and a SPECIFIC order
+  only when asked about it or as one cited example. Source cards carry `authority`.
+- **C stays search-only:** confident C never feeds an answer but the order finder lists it.
+- **The unsorted middle:** 16,381 of 17,354 B orders are low-confidence "other" (KGMU
+  superannuation, Agniveer reservation, PM-KUSUM, COVID office instructions among them).
+  `classify:model` now uses the answer model's primary (OpenRouter), runs 6 at a time,
+  takes `--tier B`, reports tokens, and is told B is not "unsure" and that amending
+  orders are A.
+- **Eval:** cases can set `expectGeneralSource` (18 rule questions do); the report shows
+  "Answers citing a rulebook or general order" and each case's cited authorities.

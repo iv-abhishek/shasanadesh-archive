@@ -29,6 +29,12 @@ export interface RetrievalEvidence {
   jurisdiction_code?: string | null;
   /** "current" | "superseded" | "draft" | "historical". */
   status?: string | null;
+  /** ADR-046: A general, B useful in context, C routine/individual. */
+  tier?: "A" | "B" | "C" | null;
+  /** Classifier document type: rules, policy, guideline, sanction, … */
+  doc_type?: string | null;
+  /** Source collection; "core-rules" and "up-fhb" are rulebooks. */
+  provider?: string | null;
   retrieval_role?: "direct" | "neighbor";
   anchor_page_number?: number | null;
   selected_variant: "native" | "ocr";

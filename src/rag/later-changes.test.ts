@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { findLaterChanges, laterChangesPromptLine } from "./later-changes.js";
-import { buildEvidenceContext } from "./prompt.js";
+import { authorityLabel, buildEvidenceContext } from "./prompt.js";
 import type { RetrievalEvidence } from "./types.js";
 
 const evidence = (label: string, sourceId: string, goNumber: string | null, goDate: string | null) =>
@@ -57,6 +57,19 @@ const rows = [
 }
 
 console.log("later-changes tests passed");
+}
+
+// AUTHORITY line (ADR-078): what kind of document each source is.
+{
+  assert.equal(authorityLabel({ provider: "core-rules", tier: null }), "RULEBOOK");
+  assert.equal(authorityLabel({ provider: "shasanadesh-up", tier: "A" }), "GENERAL");
+  assert.equal(authorityLabel({ provider: "shasanadesh-up", tier: "B" }), "CONTEXT");
+  assert.equal(authorityLabel({ provider: "shasanadesh-up", tier: "C" }), "SPECIFIC");
+  assert.equal(authorityLabel({ provider: null, tier: null }), null);
+  const context = buildEvidenceContext([{ ...evidence("S1", "a", null, null), tier: "A" }, evidence("S2", "b", null, null)], new Map());
+  assert.match(context, /SOURCE S1[\s\S]*AUTHORITY=GENERAL/);
+  assert.equal((context.match(/AUTHORITY=/g) ?? []).length, 1);
+  console.log("authority label tests passed");
 }
 
 main().catch((error) => {

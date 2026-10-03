@@ -49,6 +49,11 @@ interface EvalCase {
   expectedChatSourceIdsAny?: string[];
   /** None of these providers may appear among the shown sources (e.g. "core-rules"). */
   forbiddenSourcePrefixes?: string[];
+  /**
+   * A rule question: the answer must cite a rulebook or a generally applicable
+   * order (AUTHORITY RULEBOOK or GENERAL), not only specific orders (ADR-078).
+   */
+  expectGeneralSource?: boolean;
 }
 
 interface SearchEvidence {
@@ -66,6 +71,8 @@ interface ChatSource {
   label: string;
   sourceId: string;
   pageNumber: number;
+  /** RULEBOOK / GENERAL / CONTEXT / SPECIFIC (ADR-078); null when unclassified. */
+  authority?: string | null;
   numericVerificationStatus?: string;
 }
 
@@ -111,6 +118,8 @@ interface CaseResult {
   repaired: boolean | null;
   usedQualitativeSalvage: boolean | null;
   usedFallback: boolean | null;
+  /** Kinds of document the answer cited (RULEBOOK, GENERAL, CONTEXT, SPECIFIC). */
+  citedAuthorities?: string[];
   model?: string;
   modelFellBack?: boolean;
   citationCount: number | null;
@@ -970,6 +979,22 @@ async function evaluateCase(
       chat.sources,
     );
 
+  const citedLabels = new Set(citations.map((citation) => citation.label));
+  const citedAuthorities = [
+    ...new Set(
+      chat.sources
+        .filter((source) => citedLabels.has(source.label))
+        .map((source) => source.authority ?? "UNCLASSIFIED"),
+    ),
+  ].sort();
+  if (
+    testCase.expectGeneralSource &&
+    citations.length > 0 &&
+    !citedAuthorities.some((kind) => kind === "RULEBOOK" || kind === "GENERAL")
+  ) {
+    failures.push(`cited no rulebook or general order (cited: ${citedAuthorities.join(", ") || "-"})`);
+  }
+
   if (
     testCase.requireCitation &&
     !testCase.expectNoEvidence &&
@@ -1039,6 +1064,7 @@ async function evaluateCase(
         ?.usedQualitativeSalvage ??
       null,
     usedFallback,
+    citedAuthorities,
     model: chat.done?.model,
     modelFellBack: chat.done?.modelFellBack,
     citationCount:
@@ -1300,6 +1326,12 @@ function buildSummary(
       results.filter((item) => !item.expectNoEvidence && item.noEvidence !== undefined).map((item) => item.noEvidence ?? null),
     ),
     shortenedRate: rate(results.map((item) => item.shortened ?? null)),
+    // Answers that cite a rulebook or a general order, among answers with citations.
+    generalSourceRate: rate(
+      results
+        .filter((item) => (item.citedAuthorities?.length ?? 0) > 0)
+        .map((item) => item.citedAuthorities!.some((kind) => kind === "RULEBOOK" || kind === "GENERAL")),
+    ),
     // Answers the fallback model wrote: a mixed run is not a fair model comparison.
     modelFellBackRate: rate(results.map((item) => item.modelFellBack ?? null)),
     models: [...new Set(results.map((item) => item.model).filter((model): model is string => Boolean(model)))],
@@ -1360,6 +1392,7 @@ function markdownReport(
     `| "Not found" answered correctly | ${pct(summary.notFoundCorrectRate)} |`,
     `| Wrong "not found" on answerable questions | ${pct(summary.falseNotFoundRate)} |`,
     `| Shortened answers | ${pct(summary.shortenedRate)} |`,
+    `| Answers citing a rulebook or general order | ${pct(summary.generalSourceRate)} |`,
     `| Answer model(s) | ${summary.models.join(", ") || "-"} |`,
     `| Written by the fallback model | ${pct(summary.modelFellBackRate)} |`,
     `| Searched beyond profile departments | ${pct(summary.scopeFallbackRate)} |`,

@@ -13,6 +13,7 @@ from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 from psycopg.rows import dict_row
 from sentence_transformers import CrossEncoder, SentenceTransformer
+from services.authority import authority_score, scores_are_probabilities
 from services.neighbor_expansion import plan_neighbor_pages
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
@@ -48,6 +49,7 @@ HNSW_EF_SEARCH_MIN = 100
 HNSW_EF_SEARCH_MAX = 1000
 VECTOR_WEIGHT = 1.0
 LEXICAL_WEIGHT = 1.2
+
 
 
 class SearchFilters(BaseModel):
@@ -86,6 +88,8 @@ class SearchRequest(BaseModel):
     expand_neighbors: bool = False
     neighbor_radius: int = Field(default=1, ge=0, le=2)
     max_evidence_pages: int = Field(default=7, ge=1, le=16)
+    # Chat sets this: rank rules and general orders above specific ones.
+    prefer_authority: bool = False
 
 
 class Evidence(BaseModel):
@@ -103,6 +107,11 @@ class Evidence(BaseModel):
     # ADR-064: IN (Government of India) / UP / later other states; current / superseded / draft.
     jurisdiction_code: str | None = None
     status: str | None = None
+    # ADR-046 tier (A general, B in context, C routine), the classifier's
+    # document type, and the source collection (core-rules / up-fhb = rulebook).
+    tier: str | None = None
+    doc_type: str | None = None
+    provider: str | None = None
     retrieval_role: str
     anchor_page_number: int | None
     selected_variant: str
@@ -142,6 +151,10 @@ class Hit:
     document_title: str | None = None
     jurisdiction_code: str | None = None
     status: str | None = None
+    tier: str | None = None
+    tier_confidence: str | None = None
+    doc_type: str | None = None
+    provider: str | None = None
     lexical_score: float | None = None
     fused_score: float = 0.0
     rerank_score: float = 0.0
@@ -213,6 +226,10 @@ def make_hit(row: dict[str, Any], lexical: bool = False) -> Hit:
         document_title=row.get("document_title"),
         jurisdiction_code=row.get("jurisdiction_code"),
         status=row.get("status"),
+        tier=row.get("tier"),
+        tier_confidence=row.get("tier_confidence"),
+        doc_type=row.get("doc_type"),
+        provider=row.get("provider"),
     )
     if lexical:
         hit.lexical_score = float(row["score"])
@@ -428,7 +445,8 @@ def retrieve_hybrid(
         "SELECT c.variant_chunk_id, c.variant_id, c.logical_page_id, c.source_id, "
         "c.page_number, c.variant_type, c.canonical, c.text_content, "
         "p.numeric_conflict, d.department, d.go_number, d.go_date, d.source_url, "
-        "d.jurisdiction_code, d.status, "
+        "d.jurisdiction_code, d.status, d.tier, d.doc_type, d.provider, "
+        "d.classification->>'confidence' AS tier_confidence, "
         "COALESCE(NULLIF(d.metadata->>'title', ''), NULLIF(d.metadata->'portal'->>'subject', '')) AS document_title, "
     )
 
@@ -580,6 +598,9 @@ def load_neighbor_hits(
                   d.source_url,
                   d.jurisdiction_code,
                   d.status,
+                  d.tier,
+                  d.doc_type,
+                  d.provider,
                   -- Portal captures carry the order's subject instead of a title.
                   COALESCE(
                     NULLIF(d.metadata->>'title', ''),
@@ -638,6 +659,9 @@ def load_neighbor_hits(
                     numeric_conflict=bool(row["numeric_conflict"]),
                     jurisdiction_code=row.get("jurisdiction_code"),
                     status=row.get("status"),
+                    tier=row.get("tier"),
+                    doc_type=row.get("doc_type"),
+                    provider=row.get("provider"),
                     department=row["department"],
                     go_number=row["go_number"],
                     go_date=(
@@ -702,6 +726,9 @@ def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
         legacy_font=bool(page_link and page_link["legacy_font"]),
         jurisdiction_code=hit.jurisdiction_code,
         status=hit.status,
+        tier=hit.tier,
+        doc_type=hit.doc_type,
+        provider=hit.provider,
         retrieval_role=hit.retrieval_role,
         anchor_page_number=hit.anchor_page_number,
         selected_variant=hit.variant_type,
@@ -849,7 +876,15 @@ def search(body: SearchRequest, request: Request):
     for hit, score in zip(pool, scores, strict=True):
         hit.rerank_score = float(score)
 
-    pool.sort(key=lambda hit: hit.rerank_score, reverse=True)
+    if body.prefer_authority:
+        # Rules and general orders first among near-ties (ADR-078).
+        probabilities = scores_are_probabilities([hit.rerank_score for hit in pool])
+        pool.sort(
+            key=lambda hit: authority_score(hit.rerank_score, hit.tier, hit.provider, hit.status, probabilities),
+            reverse=True,
+        )
+    else:
+        pool.sort(key=lambda hit: hit.rerank_score, reverse=True)
 
     selected: list[Hit] = []
     seen_pages: set[str] = set()

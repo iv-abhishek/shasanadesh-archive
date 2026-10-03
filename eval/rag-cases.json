@@ -17,7 +17,8 @@
     },
     "requireCitation": true,
     "allowFallback": false,
-    "notes": "OCR-only medical document. Exact risky numerics should not be exposed without verification."
+    "notes": "OCR-only medical document. Exact risky numerics should not be exposed without verification.",
+    "expectGeneralSource": true
   },
   {
     "id": "solar-pump-hindi",
@@ -67,7 +68,8 @@
     "notes": "26 Sept: profile without Medical and Health returned unrelated Agriculture pages (ADR-047). 2 Oct: the question names medical officers, so the finder scopes to Medical and Health directly; no fallback is needed, only the right rules.",
     "expectedChatSourceIdsAny": [
       "25#201#2#2020"
-    ]
+    ],
+    "expectGeneralSource": true
   },
   {
     "id": "solar-pump-mandatory-guidelines",
@@ -169,7 +171,8 @@
       ]
     },
     "requireCitation": true,
-    "allowFallback": false
+    "allowFallback": false,
+    "expectGeneralSource": true
   },
   {
     "id": "maternity-leave-restriction",
@@ -186,7 +189,8 @@
     },
     "requireCitation": true,
     "allowFallback": false,
-    "notes": "Native text layer has broken conjuncts (सूित); needs OCR for good retrieval."
+    "notes": "Native text layer has broken conjuncts (सूित); needs OCR for good retrieval.",
+    "expectGeneralSource": true
   },
   {
     "id": "startup-incubators",
@@ -205,7 +209,8 @@
       ]
     },
     "requireCitation": true,
-    "allowFallback": false
+    "allowFallback": false,
+    "expectGeneralSource": true
   },
   {
     "id": "deeptech-startups",
@@ -226,7 +231,8 @@
       ]
     },
     "requireCitation": true,
-    "allowFallback": false
+    "allowFallback": false,
+    "expectGeneralSource": true
   },
   {
     "id": "toy-manufacturing-policy",
@@ -237,7 +243,8 @@
       "69#182#6#2026"
     ],
     "requireCitation": true,
-    "allowFallback": false
+    "allowFallback": false,
+    "expectGeneralSource": true
   },
   {
     "id": "da-public-undertakings",
@@ -254,7 +261,8 @@
       ]
     },
     "requireCitation": true,
-    "allowFallback": false
+    "allowFallback": false,
+    "expectGeneralSource": true
   },
   {
     "id": "kgmu-superannuation",
@@ -297,7 +305,8 @@
       "4#46#1#2026"
     ],
     "requireCitation": true,
-    "allowFallback": false
+    "allowFallback": false,
+    "expectGeneralSource": true
   },
   {
     "id": "covid-office-guidelines",
@@ -330,7 +339,8 @@
       "20#162#3#2026"
     ],
     "requireCitation": true,
-    "allowFallback": false
+    "allowFallback": false,
+    "expectGeneralSource": true
   },
   {
     "id": "central-land-transfer",
@@ -351,7 +361,8 @@
       ]
     },
     "requireCitation": true,
-    "allowFallback": false
+    "allowFallback": false,
+    "expectGeneralSource": true
   },
   {
     "id": "departmental-enquiry-technical-ground",
@@ -374,7 +385,8 @@
       ]
     },
     "requireCitation": true,
-    "allowFallback": false
+    "allowFallback": false,
+    "expectGeneralSource": true
   },
   {
     "id": "fair-price-shop-margin",
@@ -517,7 +529,8 @@
     ],
     "requireCitation": true,
     "allowFallback": false,
-    "notes": "2 Oct: answered from Handbook fees + Registration Manual because rulebook pages pass every department filter (ADR-073). 'medical officers' must scope to Medical and Health."
+    "notes": "2 Oct: answered from Handbook fees + Registration Manual because rulebook pages pass every department filter (ADR-073). 'medical officers' must scope to Medical and Health.",
+    "expectGeneralSource": true
   },
   {
     "id": "seniority-medical-officers-hindi",
@@ -537,7 +550,8 @@
     ],
     "requireCitation": true,
     "allowFallback": false,
-    "notes": "Hindi cadre word (चिकित्साधिकारियों) → Medical and Health (ADR-073)."
+    "notes": "Hindi cadre word (चिकित्साधिकारियों) → Medical and Health (ADR-073).",
+    "expectGeneralSource": true
   },
   {
     "id": "followup-solar-competent-authority",
@@ -611,7 +625,8 @@
       "60",
       "sixty"
     ],
-    "notes": "FR 56 is in Financial Handbook Vol. II (Parts II–IV). Citation must link to the official budget.up.nic.in page."
+    "notes": "FR 56 is in Financial Handbook Vol. II (Parts II–IV). Citation must link to the official budget.up.nic.in page.",
+    "expectGeneralSource": true
   },
   {
     "id": "fhb-csr-qualifying-service",
@@ -627,7 +642,8 @@
       "अर्हकारी",
       "qualifying"
     ],
-    "notes": "Civil Service Regulations volume of the Handbook."
+    "notes": "Civil Service Regulations volume of the Handbook.",
+    "expectGeneralSource": true
   },
   {
     "id": "vittapath-leave-hindi",
@@ -644,7 +660,8 @@
       "अर्जित अवकाश",
       "अवकाश"
     ],
-    "notes": "Vitta Path chapters were Kruti Dev PDFs (ADR-070); the answer must be readable Unicode Hindi."
+    "notes": "Vitta Path chapters were Kruti Dev PDFs (ADR-070); the answer must be readable Unicode Hindi.",
+    "expectGeneralSource": true
   },
   {
     "id": "go-number-content-pm-kusum",
@@ -696,7 +713,8 @@
     ],
     "requireCitation": true,
     "allowFallback": false,
-    "notes": "IT and Electronics spellings (आई.टी. एवं इलेक्ट्रॉनिक्स / आईटी एवं …) merged in the registry."
+    "notes": "IT and Electronics spellings (आई.टी. एवं इलेक्ट्रॉनिक्स / आईटी एवं …) merged in the registry.",
+    "expectGeneralSource": true
   },
   {
     "id": "not-found-delhi-driving-licence",

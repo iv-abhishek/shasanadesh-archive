@@ -77,6 +77,15 @@ APPLICABILITY (JURISDICTION, STATUS)
 - STATUS=SUPERSEDED: the document was replaced; do not present its provisions as current.
 - STATUS=DRAFT: say that it is a draft, not a final rule.
 
+AUTHORITY (WHAT KIND OF DOCUMENT)
+- AUTHORITY=RULEBOOK: a rulebook, manual or handbook. AUTHORITY=GENERAL: an order, rule,
+  policy or guideline that applies generally. AUTHORITY=CONTEXT: applies in some situations
+  (a notification, a corrigendum, a scheme detail). AUTHORITY=SPECIFIC: about one person,
+  place, project, case or sanction.
+- Answer from RULEBOOK and GENERAL sources first; use CONTEXT sources to add to them.
+- Use a SPECIFIC source only when the question is about that order, or as one cited example
+  ("in one case, …"); never present it as the general rule.
+
 LATER CHANGES
 - LATER_CHANGES (when present) comes from the archive's links between orders, not from the
   page text. It says a later order superseded, amended, cancelled or corrected that source.
@@ -136,6 +145,17 @@ function clip(
   }
 
   return `${text.slice(0, maxChars)}\n[...page text clipped...]`;
+}
+
+/** What kind of document a source is, for the AUTHORITY line (ADR-078). */
+export function authorityLabel(
+  item: Pick<RetrievalEvidence, "tier" | "provider">,
+): string | null {
+  if (item.provider === "core-rules" || item.provider === "up-fhb") return "RULEBOOK";
+  if (item.tier === "A") return "GENERAL";
+  if (item.tier === "B") return "CONTEXT";
+  if (item.tier === "C") return "SPECIFIC";
+  return null;
 }
 
 /** How evidence blocks name a jurisdiction (ADR-064). */
@@ -205,6 +225,7 @@ export function buildEvidenceContext(
         `RETRIEVAL_ROLE=${item.retrieval_role ?? "direct"}`,
         `ANCHOR_PAGE=${item.anchor_page_number ?? "none"}`,
         `JURISDICTION=${jurisdictionLabel(item.jurisdiction_code)}`,
+        ...[authorityLabel(item)].filter(Boolean).map((label) => `AUTHORITY=${label}`),
         `DEPARTMENT=${item.department ?? "unknown"}`,
         `GO_NUMBER=${goNumberForGeneration}`,
         `GO_DATE=${goDateForGeneration}`,

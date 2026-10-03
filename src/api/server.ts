@@ -43,6 +43,7 @@ import {
   validateAnswer,
 } from "../rag/answer-validation.js";
 import {
+  authorityLabel,
   buildEvidenceContext,
   RAG_SYSTEM_PROMPT,
 } from "../rag/prompt.js";
@@ -446,6 +447,8 @@ interface RetrievalOptions {
   expandNeighbors?: boolean;
   neighborRadius?: number;
   maxEvidencePages?: number;
+  /** Chat: rank rulebooks and general orders above specific ones (ADR-078). */
+  preferAuthority?: boolean;
 }
 
 type ProgressStage =
@@ -615,6 +618,8 @@ async function retrieve(
               options?.neighborRadius ?? 1,
             max_evidence_pages:
               options?.maxEvidencePages ?? 7,
+            prefer_authority:
+              options?.preferAuthority ?? false,
           }),
         },
       );
@@ -1493,6 +1498,7 @@ server.post(
           expandNeighbors: true,
           neighborRadius: RAG_NEIGHBOR_RADIUS,
           signal: stop.signal,
+          preferAuthority: true,
           maxEvidencePages: Math.max(
             RAG_TOP_K,
             RAG_MAX_EVIDENCE_PAGES,
@@ -1532,6 +1538,7 @@ server.post(
             expandNeighbors: true,
             neighborRadius: RAG_NEIGHBOR_RADIUS,
             signal: stop.signal,
+            preferAuthority: true,
             maxEvidencePages: Math.max(
               RAG_TOP_K,
               RAG_MAX_EVIDENCE_PAGES,
@@ -1585,6 +1592,7 @@ server.post(
             expandNeighbors: true,
             neighborRadius: RAG_NEIGHBOR_RADIUS,
             signal: stop.signal,
+            preferAuthority: true,
             maxEvidencePages: Math.max(
               RAG_TOP_K,
               RAG_MAX_EVIDENCE_PAGES,
@@ -1622,6 +1630,7 @@ server.post(
           expandNeighbors: true,
           neighborRadius: RAG_NEIGHBOR_RADIUS,
           signal: stop.signal,
+          preferAuthority: true,
           maxEvidencePages: Math.max(RAG_TOP_K, RAG_MAX_EVIDENCE_PAGES),
         },
       );
@@ -1809,6 +1818,9 @@ server.post(
             item.jurisdiction_code ?? null,
           status:
             item.status ?? null,
+          // RULEBOOK / GENERAL / CONTEXT / SPECIFIC (ADR-078).
+          authority:
+            authorityLabel(item),
         }),
       ),
     );
