@@ -1366,3 +1366,24 @@ showed two sentences describing what the retrieved pages contain.
 - A bold run cut in half by salvage ("Context:** …") loses its stray markers.
 - "The retrieved / provided / cited page(s) …" sentences count as non-answers, so such a
   reply becomes the labelled general-knowledge answer (ADR-083).
+
+## ADR-085 - Two-column PDFs are read column by column (3 Oct 2026)
+
+"What is the criteria for mobilisation advance in GFR?" fell back to general knowledge
+(and it was wrong: "only for MSMEs"). GFR 2017 is printed in two columns; page text came
+from `pdftotext -layout` and was then whitespace-normalised, so the columns were
+interleaved line by line ("…safeguarding Rule 172 (2) Part payment to suppliers: the
+purchaser's interest…"). Rule 172 (advance payments: 30% of contract value to private
+firms, 40% to government agencies/PSUs) was unreadable to search and to the model.
+
+- `src/lib/columns.ts` finds a vertical gutter (a run of ≥ 3 spaces at the same position
+  on most lines, with text on both sides of many lines) and returns the left column, then
+  the right. A page whose halves have gutters of their own is a table and is not split.
+- Decided per document in `build:pages`: only when ≥ 40% of its pages have a gutter
+  (GFR 2017: 94 of 175 pages; the Vitta Path delegation schedule, 4 of 16, keeps its
+  table rows). Of 219 core-rule PDFs only GFR 2017 qualifies; UP orders are one column.
+- GFR 2017 pages rebuilt on 3 Oct; `sync:daily` carries them through variants, chunks,
+  `db:load` and embeddings.
+- The question's rule-style search passage (ADR-082 follow-up) now reads like the rule
+  ("interest-bearing mobilisation advance … bank guarantee"), which matches the Works
+  Manual 2025 §5.3.1 (10% of contract price, interest-bearing, against an unconditional BG).

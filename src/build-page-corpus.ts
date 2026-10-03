@@ -26,6 +26,7 @@ import {
   writeFile,
 } from "node:fs/promises";
 import path from "node:path";
+import { decolumn, findGutter } from "./lib/columns.js";
 import { promisify } from "node:util";
 import type { B2CaptureStorage } from "./storage/b2.js";
 import { saveDocumentMetadata } from "./storage/document-metadata.js";
@@ -181,11 +182,20 @@ async function buildForDocument(
   console.log(`\nBUILD ${metadata.sourceId} (${pages} pages)`);
 
   try {
+    // HTML sources are already text (one file per page); PDFs go through pdftotext.
+    const nativeRaws: string[] = [];
     for (let pageNumber = 1; pageNumber <= pages; pageNumber++) {
-      // HTML sources are already text (one file per page); PDFs go through pdftotext.
-      const nativeRaw = fromHtml
-        ? await readHtmlPage(documentDir, pageNumber)
-        : await extractNativePage(pdfPath, pageNumber);
+      nativeRaws.push(fromHtml ? await readHtmlPage(documentDir, pageNumber) : await extractNativePage(pdfPath, pageNumber));
+    }
+    // Two-column documents (GFR 2017) read column by column instead of
+    // interleaved line by line. Decided per document: only when at least 40%
+    // of its pages have a gutter, so a few table pages in a one-column
+    // document (delegation schedules) keep their rows (ADR-085).
+    const columnPages = fromHtml ? 0 : nativeRaws.filter((raw) => findGutter(raw) !== null).length;
+    const twoColumnDocument = !fromHtml && pages >= 3 && columnPages >= pages * 0.4;
+
+    for (let pageNumber = 1; pageNumber <= pages; pageNumber++) {
+      const nativeRaw = twoColumnDocument ? decolumn(nativeRaws[pageNumber - 1]) : nativeRaws[pageNumber - 1];
       let native = normalizeText(nativeRaw);
       // Legacy Kruti Dev text ("foŸkh; vf/kdkj") is converted exactly to
       // Unicode Hindi; it stays the native variant.
