@@ -71,6 +71,7 @@ import {
 import { expandSearchQuery } from "../rag/query-expansion.js";
 import { matchPlaybook, type PlaybookMatch, type PlaybookPage } from "../rag/playbooks.js";
 import { mergeNamedPages, missingNamedSources, namedSources } from "../rag/named-sources.js";
+import { WEB_EVIDENCE_PROMPT, logFoundLinks, searchOfficialWeb, webEvidence, type WebResult } from "../rag/web-search.js";
 import {
   amendmentPrompt,
   amendmentsFor,
@@ -1956,6 +1957,16 @@ server.post(
       const startedAt = performance.now();
       sendStatus("writing");
       const closest = closestDocuments(retrievedBeforeGate, 3, RAG_MIN_RELEVANCE);
+      // Official websites (ADR-096), searched while the draft is written; the
+      // English rewording searches better than Hindi.
+      const webSearchStartedAt = performance.now();
+      const webResultsPromise: Promise<WebResult[]> = searchOfficialWeb(
+        expansions.find((wording) => !/[\u0900-\u097F]/.test(wording) && wording.length < 200) ?? searchQuestion,
+        stop.signal,
+      ).catch((error) => {
+        if (!stop.signal.aborted) request.log.warn({ err: error }, "official web search failed");
+        return [];
+      });
       try {
         const completion = await generateCompletion(
           LLM_REQUEST_TIMEOUT_MS,
@@ -2066,6 +2077,91 @@ server.post(
         } catch (error) {
           if (stop.signal.aborted) throw error;
           request.log.warn({ err: error }, "second search failed; using the general-knowledge answer");
+        }
+
+        // Third layer (ADR-096): pages from official websites, cited and
+        // labelled; the general-knowledge answer only when they do not answer.
+        const webResults = await webResultsPromise;
+        const webSearchMs = performance.now() - webSearchStartedAt;
+        if (webResults.length) {
+          let usedInAnswer = false;
+          try {
+            const evidence = webEvidence(webResults);
+            sendStatus("writing");
+            const cited = await generateCompletion(
+              LLM_REQUEST_TIMEOUT_MS,
+              [
+                { role: "system", content: RAG_SYSTEM_PROMPT },
+                {
+                  role: "user",
+                  content: [
+                    "RESPONSE LANGUAGE:",
+                    responseLanguage === "hi" ? "Hindi" : "English",
+                    "",
+                    "CURRENT USER QUESTION:",
+                    searchPlan.corrected ? `${query}\n(The same question with typos and grammar fixed: ${searchPlan.corrected})` : query,
+                    "",
+                    WEB_EVIDENCE_PROMPT,
+                    "",
+                    "RETRIEVED EVIDENCE:",
+                    buildEvidenceContext(evidence, new Map()),
+                  ].join("\n"),
+                },
+              ],
+              LLM_TEMPERATURE,
+              answerTokenBudget(responseLanguage),
+              undefined,
+              stop.signal,
+            );
+            const draft = cited.text;
+            if (!isNoAnswer(draft) && !isProseNonAnswer(draft)) {
+              const numbersContext = `${query} ${searchQuestion}`;
+              let answer = draft;
+              let check = validateAnswer(answer, evidence, numbersContext);
+              let salvaged = false;
+              if (!check.ok) {
+                const salvage = buildQualitativeSalvage(answer, evidence, numbersContext);
+                const salvageCheck = salvage ? validateAnswer(salvage, evidence, numbersContext) : null;
+                if (salvageCheck?.ok) {
+                  answer = salvage;
+                  check = salvageCheck;
+                  salvaged = true;
+                }
+              }
+              if (check.ok) {
+                usedInAnswer = true;
+                sendEvent("sources", evidence.map((item) => sourceCard(item, new Map())));
+                streamValidatedText(sendEvent, withoutNoAnswerToken(stripVerificationNotes(answer)));
+                sendEvent("done", {
+                  ok: true,
+                  validated: true,
+                  webSearch: true,
+                  usedQualitativeSalvage: salvaged,
+                  correctedQuestion: searchPlan.corrected,
+                  noEvidenceReason: reason,
+                  retrievalScope: "official_web",
+                  citations: check.citations,
+                  model: cited.model,
+                  modelFellBack: cited.fellBack,
+                  timings: {
+                    expansionMs: Math.round(expansionMs),
+                    retrievalMs: Math.round(retrievalMs),
+                    searchPasses,
+                    webSearchMs: Math.round(webSearchMs),
+                    generationMs: Math.round(performance.now() - startedAt),
+                    totalMs: Math.round(performance.now() - retrievalStartedAt),
+                  },
+                });
+                request.log.info({ query, reason, pages: evidence.length }, "RAG chat: answered from official websites");
+                return true;
+              }
+            }
+          } catch (error) {
+            if (stop.signal.aborted) throw error;
+            request.log.warn({ err: error }, "official-website answer failed; using the general-knowledge answer");
+          } finally {
+            void logFoundLinks(searchQuestion, webResults, usedInAnswer).catch(() => undefined);
+          }
         }
 
         if (reason === "no_relevant_pages") sendEvent("sources", []);

@@ -20,6 +20,10 @@ Do not place real secrets in this document.
 | `RAG_PROCUREMENT_RULEBOOKS` | `0` stops searching procurement questions inside the procurement rule books first (ADR-093) |
 | `RAG_AMENDMENTS` | `0` turns off the amendment register (ADR-094): printed rules are then not linked to the GOs that changed them |
 | `AMENDMENT_DIR` | folder of amendment register files (default `datasets/amendments`) |
+| `TAVILY_API_KEY` | key for the live search of official websites (ADR-096); unset turns it off |
+| `RAG_WEB_SEARCH` | `0` turns off the live search of official websites |
+| `RAG_WEB_SEARCH_DAILY_CREDITS` | daily search credits (default `30`; one search = 2 credits, at most 2 searches per question) |
+| `RAG_WEB_SEARCH_MIN_SCORE` | minimum search relevance for a page to be used (default `0.4`) |
 | `RAG_CHAT_INCLUDE_ROUTINE` | `0` leaves confident routine (tier C) orders out of chat again (ADR-081) |
 | `CORS_ORIGINS` | optional comma-separated origins allowed to call the API directly; empty by default because browsers use the same-origin Next.js proxy |
 

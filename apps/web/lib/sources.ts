@@ -17,6 +17,7 @@ const COLLECTION_LABELS: Array<{ prefix: string; label: string }> = [
   { prefix: "uppolice-", label: "UP Police" },
   { prefix: "msme-", label: "Ministry of MSME" },
   { prefix: "submitted-", label: "Submitted link" },
+  { prefix: "web-", label: "Official website (live search)" },
 ];
 
 /** Archives the Search page can filter by (documents.provider values). */

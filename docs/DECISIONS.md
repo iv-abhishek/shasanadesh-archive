@@ -1620,3 +1620,41 @@ answer was not recognised as a non-answer.
   non-answer sentences make a non-answer.
 - Amendment register: FR 81-B earned-leave limit (180 → 240 → 300 days) added; the 2008 GO
   for 180-day maternity leave added to SR 153 (both `reviewed: false`).
+
+## ADR-096 - Live search of official websites before general knowledge (4 Oct 2026)
+
+**Decision.** When neither the archive nor the second search answers, one search of
+government websites runs (Tavily, `TAVILY_API_KEY`), started in parallel with the
+general-knowledge draft: UP sites (`up.gov.in`, `up.nic.in`) first, central sites
+(`gov.in`, `nic.in`) only if the UP sites give nothing; other states' sites, non-government
+sites and individual GeM bid files are dropped; results below a relevance score of 0.4 or
+under 200 characters are ignored. Accepted pages become evidence (`web-…` source ids,
+"Official website (live search)"), the answer is generated, cited and validated as usual,
+starts by saying it is from official websites, and says whether each point is a UP or a
+central rule. If the pages do not answer, the general-knowledge answer follows (ADR-083).
+
+- Our code makes the call (no model loop): about 4–5 s, 2 credits per search ("advanced";
+  "basic" found nothing for most rule questions in the 4 Oct test), at most 2 searches per
+  question; daily cap `RAG_WEB_SEARCH_DAILY_CREDITS` (default 30, inside the free 1,000 a
+  month). `RAG_WEB_SEARCH=0` turns it off.
+- Every link found is appended to `data/web-found/links.jsonl` (query, URL, UP or central,
+  used or not) for the crawler register (ADR-097).
+- Chosen over OpenRouter's web tool (model decides how often to search: 10 searches, 60 s,
+  no answer in the 4 Oct test), Google Programmable Search (closed to new users, ends
+  1 Jan 2027) and Brave (card and public attribution, domain filter unconfirmed).
+- Shasanadesh PDFs are not found by any web search (behind a search form and CAPTCHA, no
+  public links); the archive remains the only way to reach them.
+
+## ADR-097 - Own crawler of official websites, with admission and visibility rules (4 Oct 2026; plan)
+
+**Decision.** Build a crawler over a reviewed register of official sites (UP departments,
+directorates, districts, central ministries) that feeds the existing pipeline. Documents
+are classified by level, kind and tier; tenders, results, events and other notices are not
+admitted; budget releases are kept as records for listing questions; district documents are
+used only for district questions or district officers. Full rules: `docs/KNOWLEDGE_SOURCES.md`.
+Shasanadesh is not crawled (owner's capture every 15 days).
+
+**Order of work.** (1) Site register draft for review; (2) crawler v1 on UP department and
+directorate sites; (3) classification of level/kind and the admission filter; (4)
+visibility in search (district rule); (5) districts and central ministries; (6) weekly
+recrawl and a "new documents" digest.

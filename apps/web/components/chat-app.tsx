@@ -90,6 +90,8 @@ interface RagTimings {
   expansionMs?: number | null;
   /** How many archive searches the answer needed (ADR-088). */
   searchPasses?: number | null;
+  /** Live search of official websites (ADR-096). */
+  webSearchMs?: number | null;
   hybridSearchMs?: number | null;
   rerankMs?: number | null;
   hydrationMs?: number | null;
@@ -120,6 +122,8 @@ interface DoneEvent {
   generalKnowledge?: boolean;
   /** Found by a second search worded like the rule (ADR-089). */
   secondSearch?: boolean;
+  /** Answered from official government websites found by a live search (ADR-096). */
+  webSearch?: boolean;
   /** The question with typos and grammar fixed, as searched (ADR-086). */
   correctedQuestion?: string | null;
   /** Answered from a playbook's pinned pages instead of a search (ADR-091). */
@@ -1916,6 +1920,15 @@ function TurnView({
               </span>
             ) : null}
 
+            {turn.done.webSearch ? (
+              <span
+                className="badge badge-warning"
+                title="No archived order answered this. The answer is from official government websites found by a live search; open the linked pages to confirm."
+              >
+                {/[\u0900-\u097F]/.test(turn.question) ? "सरकारी वेबसाइट (लाइव खोज)" : "Official websites (live search)"}
+              </span>
+            ) : null}
+
             {turn.done.secondSearch ? (
               <span className="badge" title="The first search did not find the answer; a second search, worded like the rule, did.">
                 Second search
@@ -1975,6 +1988,12 @@ function TurnView({
                     {turn.done.playbook.id}
                     {turn.done.playbook.reviewed ? "" : " (not reviewed)"}
                   </strong>
+                </>
+              ) : null}
+              {typeof turn.done.timings.webSearchMs === "number" ? (
+                <>
+                  <span>Official web search</span>
+                  <strong>{formatStageMs(turn.done.timings.webSearchMs)}</strong>
                 </>
               ) : null}
               {turn.done.procurementRulebooks ? (
