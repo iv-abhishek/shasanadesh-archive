@@ -72,6 +72,7 @@ import {
 import { expandSearchQuery } from "../rag/query-expansion.js";
 import { matchPlaybook, type PlaybookMatch, type PlaybookPage } from "../rag/playbooks.js";
 import { mergeNamedPages, missingNamedSources, namedSources } from "../rag/named-sources.js";
+import { newRequestContext, recordUsage, requestContext } from "../rag/request-context.js";
 import { WEB_EVIDENCE_PROMPT, logFoundLinks, searchOfficialWeb, webEvidence, type WebResult } from "../rag/web-search.js";
 import {
   amendmentPrompt,
@@ -106,7 +107,7 @@ import { createPool } from "../db/client.js";
 import { officialOnly, stripNonGovernmentLinks } from "../lib/public-links.js";
 import type { Pool } from "pg";
 import { createDraftStreamer, stripThinking } from "../rag/draft-preview.js";
-import { clientFor, readLlmTargets, shouldFallBack, type LlmTarget } from "../rag/llm-targets.js";
+import { clientFor, readLlmTargets, reasoningFor, shouldFallBack, type LlmTarget } from "../rag/llm-targets.js";
 import {
   buildSuggestionMessages,
   fallbackSuggestions,
@@ -387,6 +388,11 @@ const ChatBodySchema = z.object({
   followSourceIds:
     z.array(z.string().trim().min(1).max(200))
       .max(8)
+      .optional(),
+  // Answer model for this question; used only with RAG_ALLOW_MODEL_OVERRIDE=1
+  // (model comparisons, ADR-100).
+  model:
+    z.string().trim().regex(/^[a-z0-9._-]+\/[a-z0-9._:-]+$/i).max(100)
       .optional(),
 });
 
@@ -726,7 +732,7 @@ async function generateCompletion(
   onDelta?: (text: string) => void,
   signal?: AbortSignal,
 ): Promise<{ text: string; truncated: boolean; model: string; fellBack: boolean }> {
-  const runOn = async (target: LlmTarget, onWritten: () => void) => {
+  const runOn = async (target: LlmTarget & { extraTokens?: number }, onWritten: () => void) => {
       // Stopped while waiting for the GPU: give the slot to the next question.
       signal?.throwIfAborted();
       const openai = clientFor(target, timeoutMs);
@@ -741,13 +747,16 @@ async function generateCompletion(
                 typeof openai.chat.completions.create
               >[0]["messages"],
             temperature,
-            max_tokens: maxTokens,
+            max_tokens: maxTokens + (target.extraTokens ?? 0),
             stream: true,
+            // Tokens and cost of the call (OpenRouter sends them in the last chunk).
+            ...(target.local ? {} : { stream_options: { include_usage: true }, usage: { include: true } }),
             ...target.extraBody,
           } as Parameters<typeof openai.chat.completions.create>[0],
           // Aborting closes the model stream, so the model stops writing.
           { signal }) as unknown as AsyncIterable<{
             choices: Array<{ delta?: { content?: string | null }; finish_reason?: string | null }>;
+            usage?: { prompt_tokens?: number; completion_tokens?: number; cost?: number } | null;
           }>;
       } catch (error) {
         if (error instanceof OpenAI.APIConnectionError && target.local) {
@@ -766,7 +775,8 @@ async function generateCompletion(
       let finishReason: string | null = null;
 
       for await (const chunk of upstream) {
-        const choice = chunk.choices[0];
+        if (chunk.usage) recordUsage(chunk.usage);
+        const choice = chunk.choices?.[0];
         const token = choice?.delta?.content;
 
         if (token) {
@@ -795,8 +805,26 @@ async function generateCompletion(
   };
 
   if (!LLM_TARGETS.length) throw new Error("No language model is configured (LLM_PROVIDER or LLM_BASE_URL/LLM_MODEL).");
+  // Model comparison (ADR-100): the question's override replaces the hosted
+  // primary and there is no fallback, so the result is that model's alone.
+  const override = requestContext.getStore()?.modelOverride;
+  const targets =
+    override && LLM_TARGETS[0] && !LLM_TARGETS[0].local
+      ? (() => {
+          const reasoning = reasoningFor(override);
+          return [
+            {
+              ...LLM_TARGETS[0],
+              model: override,
+              label: `OpenRouter ${override}`,
+              extraBody: { ...LLM_TARGETS[0].extraBody, ...reasoning.body },
+              extraTokens: reasoning.extraTokens,
+            },
+          ];
+        })()
+      : LLM_TARGETS;
   let lastError: unknown;
-  for (const [index, target] of LLM_TARGETS.entries()) {
+  for (const [index, target] of targets.entries()) {
     let written = false;
     try {
       const run = () => runOn(target, () => { written = true; });
@@ -806,9 +834,9 @@ async function generateCompletion(
       lastError = error;
       const worthy = shouldFallBack(error) || (error as { fallbackWorthy?: boolean }).fallbackWorthy === true;
       // Never stitch an answer from two models, and never retry a stop.
-      if (signal?.aborted || written || !worthy || index === LLM_TARGETS.length - 1) throw error;
+      if (signal?.aborted || written || !worthy || index === targets.length - 1) throw error;
       console.warn(
-        `Answer model ${target.label} failed (${error instanceof Error ? error.message : String(error)}); using ${LLM_TARGETS[index + 1].label}.`,
+        `Answer model ${target.label} failed (${error instanceof Error ? error.message : String(error)}); using ${targets[index + 1].label}.`,
       );
     }
   }
@@ -1064,6 +1092,9 @@ server.post(
           parsed.error.flatten(),
       });
     }
+
+    // Per-question context: model override (dev comparisons) and usage (ADR-100).
+    requestContext.enterWith(newRequestContext(parsed.data.model));
 
     const messages =
       parsed.data.messages as
@@ -1578,6 +1609,11 @@ server.post(
       data: unknown,
     ) => {
       if (reply.raw.destroyed || reply.raw.writableEnded) return;
+      // Every finished answer reports the model tokens and cost it used.
+      if (event === "done" && data && typeof data === "object") {
+        const usage = requestContext.getStore()?.usage;
+        if (usage?.calls) data = { ...(data as Record<string, unknown>), usage: { ...usage, costUsd: Number(usage.costUsd.toFixed(5)) } };
+      }
       reply.raw.write(
         `event: ${event}\n`,
       );

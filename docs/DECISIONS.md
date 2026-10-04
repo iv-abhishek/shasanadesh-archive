@@ -1693,3 +1693,23 @@ pipeline. New playbook `payment-terms` (GeM GTC clause 12 p.30, UP GeM GO p.13, 
 p.43, Goods Manual 6.3–6.4 pp.165–167); "payment terms", "payment to suppliers/sellers/
 contractors" and "advance/part/stage payment" count as procurement words. Live web search:
 25 s per call, a slow state search still lets the central one run, score floor 0.3.
+
+## ADR-100 - Model bake-off: per-question answer model (dev only) and cost per answer (4 Oct 2026)
+
+**Why.** Many recent fixes compensate for a small answer model (Qwen 3.6 35B-A3B, ~3B active).
+Before moving to an agent design, measure how much a stronger model changes the eval.
+
+**Decision.**
+- `RAG_ALLOW_MODEL_OVERRIDE=1` lets a chat request name its answer model (`model`, an
+  OpenRouter id). It replaces the hosted primary for that question only, with no fallback
+  (a comparison must not mix models). Off by default; never for users.
+- Reasoning: turned off where allowed (Qwen, GPT-5.6 Luna, DeepSeek); Gemini 3.x and Claude
+  refuse ("Reasoning is mandatory"), so they think at "low" effort, hidden, with 1,500 extra
+  tokens (`RAG_REASONING_REQUIRED_PREFIXES`).
+- Every done event now reports `usage` (calls, prompt and completion tokens, cost from
+  OpenRouter) for the whole question: first draft, repair, retries, web/general answers.
+- `npm run eval:ask -- --model <id> --label <name>`; `npm run eval:bakeoff -- --models a,b,…`
+  runs the eval per model and writes `data/eval/runs/bakeoff-<time>.md`: pass rate,
+  validated, fallback, salvage, wrong/right not-found, cited page, median time, cost per
+  question, tokens, and every answer side by side.
+- Retrieval and the rewording model stay the same, so only answer writing is compared.

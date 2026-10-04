@@ -97,6 +97,7 @@ interface DoneEvent {
   conversational?: boolean;
   /** Which model wrote the answer, and whether the primary failed first (ADR-075). */
   model?: string;
+  usage?: { calls: number; promptTokens: number; completionTokens: number; costUsd: number };
   modelFellBack?: boolean;
 }
 
@@ -126,6 +127,7 @@ interface CaseResult {
   /** Kinds of document the answer cited (RULEBOOK, GENERAL, CONTEXT, SPECIFIC). */
   citedAuthorities?: string[];
   model?: string;
+  usage?: { calls: number; promptTokens: number; completionTokens: number; costUsd: number };
   modelFellBack?: boolean;
   citationCount: number | null;
   expectedCitationPageHit: boolean | null;
@@ -157,6 +159,10 @@ interface CliOptions {
   searchOnly: boolean;
   topK: number;
   timeoutMs: number;
+  /** Answer model for every question (needs RAG_ALLOW_MODEL_OVERRIDE=1 on the API; ADR-100). */
+  model: string | null;
+  /** Report file name prefix instead of the timestamp alone. */
+  label: string | null;
 }
 
 const CITATION_RE =
@@ -187,6 +193,8 @@ function parseArgs(
         "1200000",
       10,
     ),
+    model: null,
+    label: null,
   };
 
   for (
@@ -198,6 +206,18 @@ function parseArgs(
 
     if (arg === "--search-only") {
       options.searchOnly = true;
+      continue;
+    }
+
+    if (arg === "--model" && argv[index + 1]) {
+      options.model = argv[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg === "--label" && argv[index + 1]) {
+      options.label = argv[index + 1].replace(/[^a-z0-9._-]+/gi, "-");
+      index += 1;
       continue;
     }
 
@@ -540,6 +560,7 @@ async function runChatTurn(
             content,
           })),
           ...(workspaceUserId ? { workspaceUserId } : {}),
+          ...(options.model ? { model: options.model } : {}),
           ...extraBody,
         }),
       },
@@ -1086,6 +1107,7 @@ async function evaluateCase(
     usedFallback,
     citedAuthorities,
     model: chat.done?.model,
+    usage: chat.done?.usage,
     modelFellBack: chat.done?.modelFellBack,
     citationCount:
       citations.length,
@@ -1360,6 +1382,16 @@ function buildSummary(
     // Answers the fallback model wrote: a mixed run is not a fair model comparison.
     modelFellBackRate: rate(results.map((item) => item.modelFellBack ?? null)),
     models: [...new Set(results.map((item) => item.model).filter((model): model is string => Boolean(model)))],
+    // Answer-model cost (OpenRouter-reported), per answered question (ADR-100).
+    totalCostUsd: Number(results.reduce((sum, item) => sum + (item.usage?.costUsd ?? 0), 0).toFixed(4)),
+    meanCostUsd: (() => {
+      const costs = results.map((item) => item.usage?.costUsd).filter((value): value is number => typeof value === "number");
+      return costs.length ? Number((costs.reduce((a, b) => a + b, 0) / costs.length).toFixed(5)) : null;
+    })(),
+    meanCompletionTokens: (() => {
+      const tokens = results.map((item) => item.usage?.completionTokens).filter((value): value is number => typeof value === "number");
+      return tokens.length ? Math.round(tokens.reduce((a, b) => a + b, 0) / tokens.length) : null;
+    })(),
     scopeFallbackRate: rate(results.map((item) => item.scopeFallback ?? null)),
     relevance: relevanceCalibration(results),
     medianChatMs:
@@ -1419,6 +1451,7 @@ function markdownReport(
     `| Shortened answers | ${pct(summary.shortenedRate)} |`,
     `| Answers citing a rulebook or general order | ${pct(summary.generalSourceRate)} |`,
     `| Answer model(s) | ${summary.models.join(", ") || "-"} |`,
+    `| Answer-model cost: total / per question | $${summary.totalCostUsd} / ${summary.meanCostUsd === null ? "-" : `$${summary.meanCostUsd}`} |`,
     `| Written by the fallback model | ${pct(summary.modelFellBackRate)} |`,
     `| Searched beyond profile departments | ${pct(summary.scopeFallbackRate)} |`,
     `| Best match: lowest answerable / highest not-found | ${summary.relevance.lowestAnswerable ?? "-"} / ${summary.relevance.highestUnanswerable ?? "-"} |`,
@@ -1711,12 +1744,14 @@ async function main():
       `Median chat:            ${ms(summary.medianChatMs)}`,
       `Answer model(s):        ${summary.models.join(", ") || "-"} (fallback wrote ${pct(summary.modelFellBackRate)})`,
     );
+    console.log(`Answer-model cost:      $${summary.totalCostUsd} total, ${summary.meanCostUsd === null ? "-" : `$${summary.meanCostUsd}`} per question, ${summary.meanCompletionTokens ?? "-"} tokens written`);
   }
 
   const runAt =
     new Date().toISOString();
 
   const safeStamp =
+    (options.label ? `${options.label}-` : "") +
     runAt.replace(
       /[:.]/g,
       "-",

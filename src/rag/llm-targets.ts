@@ -136,3 +136,20 @@ export function shouldFallBack(error: unknown): boolean {
   }
   return false;
 }
+
+/**
+ * Reasoning settings for a hosted model (ADR-100). Thinking is turned off
+ * where the provider allows it (Qwen, GPT-5.6 Luna, DeepSeek: faster, and
+ * the answer budget is not spent on thinking). Gemini 3.x and Claude
+ * Sonnet/Opus refuse that ("Reasoning is mandatory"), so they think briefly
+ * ("low", hidden) and get extra tokens for it.
+ */
+export function reasoningFor(model: string, env: NodeJS.ProcessEnv = process.env): { body: Record<string, unknown>; extraTokens: number } {
+  const mandatory = (env.RAG_REASONING_REQUIRED_PREFIXES ?? "google/gemini-3,anthropic/claude")
+    .split(",")
+    .map((prefix) => prefix.trim())
+    .filter(Boolean);
+  return mandatory.some((prefix) => model.startsWith(prefix))
+    ? { body: { reasoning: { effort: "low", exclude: true } }, extraTokens: 1500 }
+    : { body: { reasoning: { enabled: false } }, extraTokens: 0 };
+}

@@ -60,6 +60,7 @@
     "test:rag-safety": "npm run test:rag-validation && npm run test:rag-generation-safety && npm run test:local-gpu-queue && npm run test:numeric-tokens",
     "eval:rag": "tsx src/eval/run-rag-eval.ts",
     "eval:ask": "tsx src/eval/run-rag-eval.ts",
+    "eval:bakeoff": "node --env-file-if-exists=.env --import tsx src/eval/bakeoff.ts",
     "eval:rag:search": "tsx src/eval/run-rag-eval.ts --search-only",
     "web:install": "npm --prefix apps/web install",
     "web:dev": "npm --prefix apps/web run dev",
