@@ -337,6 +337,11 @@ async function main() {
       routine++;
       continue;
     }
+    // A crawled copy of an order already in the archive (ADR-103): cite the archived one.
+    if (!sourceId && (metadata as { duplicateOf?: unknown }).duplicateOf) {
+      routine++;
+      continue;
+    }
 
     const result = await buildForDocument(documentDir, metadata);
 

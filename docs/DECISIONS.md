@@ -1814,6 +1814,16 @@ upsbcc.in) wait for the owner to add them to the government host list.
 - Admission learnt from that run: office orders naming a person, "Sh X is appointed as
   DDO", medical reimbursement of named officers and "विज्ञापन संख्या" are dropped.
 
+- *Copies of archived orders.* Department sites repost GOs that Shasanadesh already holds.
+  After a crawled PDF is downloaded, `src/crawl/duplicates.ts` compares it with the archive
+  (read once per run): the same file or text, or the same serial number and date with at
+  least half the words shared, marks it `duplicateOf` the archived order — it is not
+  uploaded to B2 and not split into pages, so answers cite the archived copy (which carries
+  the portal's department, category and subject). Same number and date without readable
+  text (a scan) is only flagged `possibleDuplicateOf` and stays searchable.
+- Owner approved 81 register sites on 4 Oct 2026 (sites on non-government domains,
+  `coveredBy` sites and unreachable ones are skipped automatically).
+
 ## ADR-101 addendum - Claude Sonnet 5.5 is not used for escalation (4 Oct 2026)
 
 Bake-off on the same 55 cases: Sonnet 5.5 passed 81.8% (DeepSeek V4 Flash 85.5%, Qwen 3.8

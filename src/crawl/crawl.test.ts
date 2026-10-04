@@ -4,6 +4,7 @@ import { extractItems, formFields, looksLikeGoNumber, pagerOf, parseDayMonthYear
 import { siteHosts, visibilityFor, type CrawlSite } from "./register.js";
 import { crawlSourceId } from "../sources/crawl-sites.js";
 import { namesDistrict } from "./visibility.js";
+import { orderKey, overlap } from "./duplicates.js";
 
 const site: Pick<CrawlSite, "docTypes" | "level"> = { docTypes: ["go"], level: "state-hq" };
 
@@ -91,5 +92,12 @@ assert.match(crawlSourceId("uplc-gos", "https://uplc.up.gov.in/a.pdf"), /^crawl-
 assert.ok(namesDistrict("GeM orders issued by Lucknow district"));
 assert.ok(namesDistrict("प्रयागराज जनपद में अवमुक्त धनराशि"));
 assert.ok(!namesDistrict("earned leave limit under FR 81-B"));
+
+// Duplicates of archived orders: serial number + date, confirmed by shared words.
+assert.equal(orderKey("1342/नौ-4-2020-10ड0ब्लू/2016", "2020-08-18"), orderKey("१३४२/नौ-4-2020", "18/08/2020"));
+assert.equal(orderKey("no number", "2020-08-18"), null);
+const order = "उत्तर प्रदेश शासन नगर विकास अनुभाग चार संख्या 1342 लखनऊ दिनांक 18 अगस्त 2020 अधिसूचना पालिका केन्द्रीयित पशु चिकित्सा सेवा संवर्ग नियमावली संशोधन राज्यपाल महोदय सहर्ष स्वीकृति प्रदान करते हैं";
+assert.ok(overlap(order, order + " प्रतिलिपि निम्नलिखित को सूचनार्थ") > 0.9);
+assert.equal(overlap(order, "short text"), 0);
 
 console.log("crawl tests passed");

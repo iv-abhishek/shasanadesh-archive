@@ -35,6 +35,7 @@ import { listSourceAdapters } from "./sources/registry.js";
 import { politeFetch } from "./sources/http.js";
 import { diskSpaceProblem } from "./storage/local-disk.js";
 import { isGovernmentHost } from "./lib/government-hosts.js";
+import { findDuplicate } from "./crawl/duplicates.js";
 
 const execFileAsync = promisify(execFile);
 const MAX_PDF_BYTES = 500_000_000;
@@ -301,8 +302,8 @@ async function ingestOne(
         await writeFile(metadataPath, JSON.stringify(existingMetadata, null, 2) + "\n");
         console.log("UPDATED listing details of " + record.sourceId);
       }
-      if (!b2Enabled) {
-        console.log("SKIP " + record.sourceId);
+      if (!b2Enabled || existingMetadata.duplicateOf) {
+        console.log("SKIP " + record.sourceId + (existingMetadata.duplicateOf ? " | copy of an archived order" : ""));
         return "skipped";
       }
       const existingPdf = await readFile(pdfPath);
@@ -367,6 +368,18 @@ async function ingestOne(
         hasNativeText: text.bytes > 20,
       },
     };
+    // Crawled copies of orders the archive already holds are kept as a link
+    // only: not uploaded, not split into pages (ADR-103).
+    if (adapter.id.startsWith("crawl-")) {
+      const verdict = await findDuplicate(metadata, await readFile(textPath, "utf8").catch(() => ""));
+      if (verdict?.kind === "possible") metadata.possibleDuplicateOf = { sourceId: verdict.of, reason: verdict.reason };
+      if (verdict && verdict.kind !== "possible") {
+        metadata.duplicateOf = { sourceId: verdict.of, reason: verdict.reason };
+        await writeFile(metadataPath, JSON.stringify(metadata, null, 2) + "\n");
+        console.log("DUPLICATE " + record.sourceId + " of " + verdict.of + " (" + verdict.reason + ")");
+        return "downloaded";
+      }
+    }
     await writeFile(metadataPath, JSON.stringify(metadata, null, 2) + "\n");
     if (b2Enabled) {
       const storage = await persistB2(adapter, record.sourceId, response.bytes, metadataPath, metadata);
