@@ -38,6 +38,8 @@ if (existsSync("data/documents")) {
 const cases: Array<[string, string | null]> = [
   ["Are the PSU exempted from EMD as per GeM GTC", "bid-security-emd"],
   ["bid security amount as per GFR", "bid-security-emd"],
+  ["Payment terms guideline in GFR and Manual of Procurement of Goods", "payment-terms"],
+  ["payment to sellers on GeM within how many days", "payment-terms"],
   ["what are the service bid experience clause in GFR", "bidder-experience-criteria"],
   ["जेम पर ईएमडी कितनी ली जाएगी", "bid-security-emd"],
   ["performance security percentage on GeM for UP departments", "performance-security"],

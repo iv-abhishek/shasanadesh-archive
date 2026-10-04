@@ -286,3 +286,13 @@ console.log("jurisdiction/topic filter tests passed");
   assert.ok(list("21.09.2026 के शासनादेश"));
   console.log("3 Oct routing tests passed");
 }
+
+// 4 Oct: a question about a rulebook is answered, not listed as orders.
+{
+  assert.equal(list("Payment terms guideline in GRF and Manual of Procurement of Goods ?"), null);
+  assert.equal(list("Payment terms guideline in GFR"), null);
+  assert.equal(list("GeM GTC guidelines on EMD"), null);
+  // An explicit order request still lists.
+  assert.notEqual(list("Order for nomination of UPLC and UPDESCO"), null);
+  console.log("rulebook-question routing tests passed");
+}

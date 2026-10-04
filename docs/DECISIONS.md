@@ -1627,7 +1627,7 @@ answer was not recognised as a non-answer.
 government websites runs (Tavily, `TAVILY_API_KEY`), started in parallel with the
 general-knowledge draft: UP sites (`up.gov.in`, `up.nic.in`) first, central sites
 (`gov.in`, `nic.in`) only if the UP sites give nothing; other states' sites, non-government
-sites and individual GeM bid files are dropped; results below a relevance score of 0.4 or
+sites and individual GeM bid files are dropped; results below a relevance score of 0.3 (lowered from 0.4 on 4 Oct: relevant UP GOs on uplc.up.gov.in scored 0.35) or
 under 200 characters are ignored. Accepted pages become evidence (`web-…` source ids,
 "Official website (live search)"), the answer is generated, cited and validated as usual,
 starts by saying it is from official websites, and says whether each point is a UP or a
@@ -1682,3 +1682,14 @@ recrawl and a "new documents" digest.
   for a partial answer from those pages; a second "not found" stands.
 - Hindi non-answer patterns ("प्रमाण पत्रों में … उल्लेख नहीं", "प्रमाण पत्र S1 …") and
   "experience clause(s)" playbook triggers added.
+
+## ADR-099 - Rulebook questions are answered, not listed; payment-terms playbook (4 Oct 2026)
+
+"Payment terms guideline in GRF and Manual of Procurement of Goods" was routed to the order
+list (topic "procurement" + "guideline") and listed Make in India and DBT orders. A question
+that names a rulebook (GFR — also the common typo "GRF" — GeM GTC, DFPR, a procurement
+manual) and has no order word, GO number, quotes or "find" verb now goes to the answer
+pipeline. New playbook `payment-terms` (GeM GTC clause 12 p.30, UP GeM GO p.13, GFR Rule 172
+p.43, Goods Manual 6.3–6.4 pp.165–167); "payment terms", "payment to suppliers/sellers/
+contractors" and "advance/part/stage payment" count as procurement words. Live web search:
+25 s per call, a slow state search still lets the central one run, score floor 0.3.

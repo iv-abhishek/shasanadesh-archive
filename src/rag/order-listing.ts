@@ -21,6 +21,7 @@ import { browseDocuments, type BrowseRequest } from "../documents/browse.js";
 import { TOPIC_NAMES, topicsInQuery } from "../classify/topics.js";
 import { normalizeDigits, parseReferenceDate } from "../relations/extract.js";
 import { termVariants } from "../lib/finder-glossary.js";
+import { namedSources } from "./named-sources.js";
 
 export interface ListingRequest {
   /** "recent": list by date only. "find": look for particular orders (ADR-058). */
@@ -397,6 +398,10 @@ export function detectListingRequest(query: string, today = todayIn()): ListingR
   const findVerb = FIND_VERB.test(lower.trim());
   const explicit = Boolean(goNumber || phrases.length || patterns.length || findVerb);
   if (CONTENT_QUESTION.test(lower) && !explicit) return null;
+  // A question about a rulebook ("payment terms guideline in GFR and the
+  // Manual of Procurement of Goods") is answered from its pages, not listed
+  // as orders (4 Oct: listed DBT and Make in India orders instead).
+  if (!explicit && !hasOrderWord && namedSources(text).length > 0) return null;
   // "GeM guidelines", "central procurement rules": documents by topic, even without "order".
   const asksForDocuments = narrowed && /\b(?:guidelines?|rules|manuals?|policy|policies|circulars?|instructions)\b|दिशा-?निर्देश|नियमावली|नियम|नीति/i.test(lower);
   // "Agriculture, 15.09.2023": a department and a date and nothing else is a

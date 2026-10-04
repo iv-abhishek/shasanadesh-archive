@@ -79,6 +79,8 @@ const PROCUREMENT_WORDS = new RegExp(
     String.raw`\bempanel(ment|led)?\b`,
     String.raw`\bproprietary\b`,
     String.raw`\bmobili[sz]ation advance\b`,
+    String.raw`\bpayment terms?\b|\bterms of payment\b|\bpayments?\s+to\s+(?:suppliers?|sellers?|vendors?|contractors?)\b`,
+    String.raw`\b(?:advance|part|stage|milestone)\s+payments?\b`,
     String.raw`\bgtc\b`,
     String.raw`\boutsourc(e|ing)\b`,
     "निविदा",

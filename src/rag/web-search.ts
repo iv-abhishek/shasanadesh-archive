@@ -22,8 +22,8 @@ import type { RetrievalEvidence } from "./types.js";
 
 export const WEB_SEARCH_ENABLED = process.env.RAG_WEB_SEARCH !== "0" && Boolean(process.env.TAVILY_API_KEY);
 const DAILY_CREDITS = Math.max(0, Number.parseInt(process.env.RAG_WEB_SEARCH_DAILY_CREDITS ?? "30", 10) || 0);
-const TIMEOUT_MS = Math.max(2000, Number.parseInt(process.env.RAG_WEB_SEARCH_TIMEOUT_MS ?? "12000", 10) || 12000);
-const MIN_SCORE = Number.parseFloat(process.env.RAG_WEB_SEARCH_MIN_SCORE ?? "0.4") || 0.4;
+const TIMEOUT_MS = Math.max(2000, Number.parseInt(process.env.RAG_WEB_SEARCH_TIMEOUT_MS ?? "25000", 10) || 25000);
+const MIN_SCORE = Number.parseFloat(process.env.RAG_WEB_SEARCH_MIN_SCORE ?? "0.3") || 0.3;
 const FOUND_LOG = path.resolve(process.env.WEB_FOUND_LOG ?? "data/web-found/links.jsonl");
 const MAX_PAGE_CHARS = 6000;
 
@@ -123,7 +123,13 @@ export function acceptResults(results: TavilyResult[], minScore = MIN_SCORE): We
  */
 export async function searchOfficialWeb(query: string, signal?: AbortSignal): Promise<WebResult[]> {
   if (!WEB_SEARCH_ENABLED) return [];
-  const state = acceptResults(await tavily(`Uttar Pradesh ${query}`, UP_DOMAINS, signal));
+  // A slow or failed state search still lets the central search run.
+  const state = await tavily(`Uttar Pradesh ${query}`, UP_DOMAINS, signal)
+    .then((results) => acceptResults(results))
+    .catch((error) => {
+      if (signal?.aborted) throw error;
+      return [] as WebResult[];
+    });
   if (state.length) return state;
   return acceptResults(await tavily(query, CENTRAL_DOMAINS, signal));
 }

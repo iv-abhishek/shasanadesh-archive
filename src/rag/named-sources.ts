@@ -29,7 +29,7 @@ const NAMED: Array<NamedSource & { pattern: RegExp; unless?: RegExp }> = [
   },
   {
     name: "GFR 2017",
-    pattern: /\bgfrs?\b|general financial rules?|जी\.?\s?एफ\.?\s?आर|जीएफआर|सामान्य वित्तीय नियम/iu,
+    pattern: /\bgfrs?\b|\bgrf\b|general financial rules?|जी\.?\s?एफ\.?\s?आर|जीएफआर|सामान्य वित्तीय नियम/iu,
     sourceIds: [
       "core-rules-gfr-2017",
       "core-rules-gfr-rule-151-amendment-2026",

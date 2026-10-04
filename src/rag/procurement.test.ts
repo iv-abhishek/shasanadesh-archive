@@ -17,6 +17,7 @@ for (const q of [
   "निविदादाता का पूर्व अनुभव",
   "कोटेशन से क्रय की सीमा",
   "outsourcing manpower through GeM",
+  "Payment terms guideline in GFR",
 ]) assert.ok(isProcurementQuestion(q), q);
 for (const q of ["maternity leave for teachers", "DA rate from July 2025", "transfer policy 2025", "gift to officers"])
   assert.ok(!isProcurementQuestion(q), q);
