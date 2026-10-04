@@ -59,11 +59,20 @@ async function main(): Promise<void> {
       ["--env-file-if-exists=.env", "--import", "tsx", "src/eval/run-rag-eval.ts", "--model", model, "--label", label, ...passThrough],
       { stdio: "inherit" },
     );
-    if (run.status !== 0) {
-      console.error(`${model}: eval failed (exit ${run.status}); skipping`);
+    // The eval exits 1 when any case fails; only a missing report is a failed run.
+    const reportPath = await latestReport(label).catch(() => null);
+    if (!reportPath) {
+      console.error(`${model}: eval did not finish (exit ${run.status}); skipping`);
       continue;
     }
-    const report = JSON.parse(await readFile(await latestReport(label), "utf8")) as Report;
+    const report = JSON.parse(await readFile(reportPath, "utf8")) as Report;
+    const used = (report.summary.models as string[] | undefined) ?? [];
+    if (!used.some((name) => name.endsWith(model))) {
+      throw new Error(
+        `${model}: answers were written by ${used.join(", ") || "an unknown model"}. ` +
+          "Set RAG_ALLOW_MODEL_OVERRIDE=1 in .env, restart the API (npm run dev:all -- --restart=api) and run the bake-off again.",
+      );
+    }
     if ((report.summary.modelFellBackRate ?? 0) > 0) console.warn(`${model}: some answers came from the fallback model`);
     reports.push({ model, report });
   }

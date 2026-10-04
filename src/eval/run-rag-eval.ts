@@ -904,6 +904,8 @@ async function evaluateCase(
     );
 
   if (chat.error) {
+    // A model comparison against an API that ignores the model is useless: stop.
+    if (/RAG_ALLOW_MODEL_OVERRIDE/.test(chat.error)) throw new Error(chat.error);
     failures.push(
       `chat error: ${chat.error}`,
     );
@@ -1617,6 +1619,9 @@ async function main():
         error instanceof Error
           ? error.message
           : String(error);
+
+      // A model comparison against an API that ignores the model is useless: stop.
+      if (/RAG_ALLOW_MODEL_OVERRIDE/.test(message)) throw error;
 
       results.push({
         id:

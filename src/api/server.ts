@@ -72,7 +72,7 @@ import {
 import { expandSearchQuery } from "../rag/query-expansion.js";
 import { matchPlaybook, type PlaybookMatch, type PlaybookPage } from "../rag/playbooks.js";
 import { mergeNamedPages, missingNamedSources, namedSources } from "../rag/named-sources.js";
-import { newRequestContext, recordUsage, requestContext } from "../rag/request-context.js";
+import { modelOverrideAllowed, newRequestContext, recordUsage, requestContext } from "../rag/request-context.js";
 import { WEB_EVIDENCE_PROMPT, logFoundLinks, searchOfficialWeb, webEvidence, type WebResult } from "../rag/web-search.js";
 import {
   amendmentPrompt,
@@ -1094,6 +1094,12 @@ server.post(
     }
 
     // Per-question context: model override (dev comparisons) and usage (ADR-100).
+    // A comparison asking for a model must not silently get the default one.
+    if (parsed.data.model && !modelOverrideAllowed()) {
+      return reply.code(400).send({
+        error: "Choosing the answer model is turned off. Set RAG_ALLOW_MODEL_OVERRIDE=1 in .env and restart the API.",
+      });
+    }
     requestContext.enterWith(newRequestContext(parsed.data.model));
 
     const messages =
