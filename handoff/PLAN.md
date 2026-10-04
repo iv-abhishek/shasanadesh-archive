@@ -20,6 +20,18 @@ and regional text, answering and solving problems from evidence, learning from d
 (docs/RULES.md); robots.txt obeyed; CAPTCHAs never automated; central + UP now, other
 states later. Hosting is not a blocker (public documents, cited by URL); pilot on the Mac.
 
+### Owner's remaining tasks (Abhishek; added 4 Oct 2026)
+
+- [ ] **Review the amendment register** `datasets/amendments/*.md` (ADR-094): check each GO
+      number, date and "what changed" against the GO, add its archived page when ingested,
+      then set `reviewed: true`. Open items: SR 153 maternity (confirm the 08.12.2008 GO
+      text); FR 81-B earned leave (confirm GO सा-4-392/दस-94-203-86 and its date).
+- [ ] **Name more out-of-date rules** for the register (earned leave, TA on transfer,
+      pay fixation, retirement …); Claude finds the pages.
+- [ ] **Review the playbooks** `datasets/playbooks/*.md` (ADR-091) and set `reviewed: true`.
+- [ ] Restart all after each code drop (`npm run dev:all -- --restart=all`) and re-run
+      `npm run eval:ask`.
+
 ### A. Finish the product on the Mac (in this order)
 
 1. **Corpus batch 2**: ingest the 70 new catalogue entries (complete Make in India, MSE,
