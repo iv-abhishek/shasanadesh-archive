@@ -971,6 +971,8 @@ server.get(
         LLM_MODEL ?? null,
       llmFallback:
         LLM_TARGETS[1]?.label ?? null,
+      // Model comparisons may choose the answer model per question (ADR-100).
+      modelOverrideAllowed: modelOverrideAllowed(),
       answerValidation:
         "citation-and-numeric-safety-v1",
       localGpuQueue:
