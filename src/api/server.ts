@@ -15,6 +15,7 @@
  */
 
 import { hiddenProviders } from "../crawl/visibility.js";
+import { withOfficialTerms } from "../rag/official-terms.js";
 import cors from "@fastify/cors";
 import { registerDocumentRoutes } from "../documents/routes.js";
 import Fastify from "fastify";
@@ -629,7 +630,8 @@ async function retrieve(
               "application/json",
           },
           body: JSON.stringify({
-            query,
+            // Official Hindi/English terms the question lacks, for keyword search (ADR-104).
+            query: withOfficialTerms(query),
             top_k: topK,
             candidate_count: options?.candidateCount ?? 50,
             // More wordings bring more candidates; rerank a few more of them.

@@ -1,0 +1,5 @@
+# GPU machine for train/finetune_reranker.py (same versions as the Mac's retrieval service)
+sentence-transformers==6.1.0
+transformers==5.17.0
+datasets
+accelerate

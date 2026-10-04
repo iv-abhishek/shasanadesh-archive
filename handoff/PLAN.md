@@ -32,6 +32,10 @@ states later. Hosting is not a blocker (public documents, cited by URL); pilot o
 - [ ] **Approve crawl sites** (ADR-103): read the latest `data/crawl/check-*.md` (or run
       `npm run crawl:check -- --priority 2`), set `"approved": true` in
       `datasets/crawl/sites.json`, then `caffeinate -i npm run crawl` overnight.
+- [ ] **Review the official-term glossary** `datasets/glossary/official-terms.json` (ADR-104):
+      correct any Hindi term UP orders do not use, then set `reviewed: true`.
+- [ ] **GPU runs** (docs/GPU_RUNBOOK.md): reranker data → train on Jarvislabs A100;
+      PaddleOCR-VL trial on 20 scans, then the backlog.
 - [ ] **Decide the six non-.gov.in sites** (awasbandhu.in, upsrlm.org, upprd.in, uppcl.org,
       upneda.org.in, upsbcc.in): add the official ones to `GOVERNMENT_EXCEPTIONS` in
       `src/lib/government-hosts.ts` and `apps/web/lib/government-hosts.ts`.

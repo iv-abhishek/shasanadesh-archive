@@ -1849,3 +1849,37 @@ path; four more non-answer sentence patterns; agent details on every reply type.
 $0.0044 per question (classic $0.0005); median reply 45 s (classic 28 s). Decision after a
 re-run: switch on if it passes ≥ classic.
 
+## ADR-104 - Own-data reranker, PaddleOCR-VL on a rented GPU, official-term glossary (5 Oct 2026)
+
+**Why.** Every answer model failed the same questions because search did not bring the right
+page; the reranker (Qwen3-Reranker-0.6B) has never seen UP order wording. Tesseract garbles
+scanned Hindi GOs, and the crawl adds many more scans. English questions miss Hindi orders in
+keyword search (and "अर्जित छुट्टी" misses "उपार्जित अवकाश").
+
+**Decision.**
+- *Reranker training data* (`src/train/reranker-data.ts`): a stratified sample of searchable
+  pages (rulebooks 35%, orders 55%, other collections 10%; eval documents excluded), three
+  questions per page from DeepSeek (English, Hindi, short keyword search), wrong pages from
+  the current search ranked near the right one, with a model check that drops "wrong" pages
+  that also answer. Train/dev split by document. Fine-tuned on a rented GPU with
+  sentence-transformers' CrossEncoderTrainer (`train/finetune_reranker.py`, same library
+  versions and the same instruction as the retrieval service), kept only if dev MRR@10 rises
+  and then `npm run eval:ask` agrees. Switched by `RERANKER_MODEL=models/…` (undo: remove it).
+- *OCR*: `npm run ocr:export` → `train/ocr_paddle.py` (PaddleOCR-VL, 0.9B, Devanagari) →
+  `npm run ocr:import`, which keeps Tesseract's pages (`ocr-pages-tesseract/`,
+  `ocr.previous`) and writes a side-by-side `compare.md`; `npm run ocr:rollback` restores.
+  A 20-document trial comes first.
+- *GPU*: Jarvislabs (India region, INR, per-minute); A100 40GB for training, L4 for OCR.
+  IndiaAI Mission compute later, once Kennisor has DPIIT recognition. Runbook:
+  docs/GPU_RUNBOOK.md.
+- *IndicXlit / IndicTrans2 — not adopted.* Tested 5 Oct: the existing query rewrite already
+  turns romanized Hindi ("upaarjit avkash ki adhiktam seema") into Devanagari and English
+  wordings, so transliteration adds nothing; the IndicXlit package no longer installs
+  (fairseq build fails on current Python). IndicTrans2 is a gated download (needs a Hugging
+  Face account and accepted licence) and translates literally ("earned leave" → "अर्जित
+  अवकाश"), the same mistake the rewrite makes. What was missing is the *official* term, so:
+- *Official-term glossary* (`datasets/glossary/official-terms.json`, 49 entries, reviewed:
+  false): a question using one side gets the other side's official term added to the search
+  text (at most 4), e.g. "earned leave" + "उपार्जित अवकाश", "अर्जित छुट्टी" + "earned leave;
+  उपार्जित अवकाश". The answer prompt still sees the officer's own words.
+
