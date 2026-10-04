@@ -55,3 +55,21 @@ user agent with contact; no CAPTCHA or login pages (Shasanadesh stays with the o
 capture); PDFs fetched once (they do not change); listing pages re-checked on a schedule.
 Links found by the live web search (layer 3) are logged in `data/web-found/links.jsonl`
 and reviewed for the register, so the archive grows from the questions officers ask.
+
+## Running the crawler (ADR-103)
+
+Run on the Mac (Indian connection; many UP sites refuse foreign IPs):
+
+```
+npm run crawl:check -- --priority 1        # read listing pages only; report in data/crawl/
+# review the report, set "approved": true for the sites to keep in datasets/crawl/sites.json
+caffeinate -i npm run crawl                # download and archive approved sites (incremental)
+npm run sync:daily -- --ingest             # or let the daily sync pick them up, then process
+```
+
+Site fields beyond ADR-097: `docLinkPattern` (document links not ending in .pdf),
+`followPattern` (index pages to follow one level), `maxPages` (default 20), `fileHosts`,
+`coveredBy` (a dedicated adapter already reads the site). A site on a domain outside
+.gov.in / .nic.in is refused until its host is added to `src/lib/government-hosts.ts` and
+`apps/web/lib/government-hosts.ts`.
+

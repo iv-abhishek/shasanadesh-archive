@@ -11,6 +11,8 @@
  *   - never follow a redirect off the adapter's allowlisted hosts
  *   - never request a path that the host's robots.txt disallows for us
  *   - never go below CRAWL_DELAY_MS (minimum 3 s) between requests to one host
+ *   - plain http only for hosts a reviewed register lists with an http:// URL
+ *     (some UP sites redirect HTTPS to HTTP or serve an expired certificate)
  *
  * See docs/CONFIGURATION.md (crawl settings) and docs/DECISIONS.md (ADR-044).
  */
@@ -116,15 +118,18 @@ export interface PoliteFetchOptions {
   accept?: string;
   timeoutMs?: number;
   userAgent?: string;
+  /** Hosts that may be fetched over plain http (subset of allowedHosts). */
+  httpHosts?: readonly string[];
 }
 
-export function assertAllowedUrl(value: string, allowedHosts: readonly string[]): URL {
+export function assertAllowedUrl(value: string, allowedHosts: readonly string[], httpHosts: readonly string[] = []): URL {
   const url = new URL(value);
   // Rulebook §2: never fetch from a private site, whatever an adapter allows.
   if (!isGovernmentHost(url.hostname)) {
     throw new PolicyError(`Refusing ${url.href}: ${url.hostname} is not a government site (docs/RULES.md §2)`);
   }
-  if (url.protocol !== "https:" || !allowedHosts.includes(url.hostname)) {
+  const protocolOk = url.protocol === "https:" || (url.protocol === "http:" && httpHosts.includes(url.hostname));
+  if (!protocolOk || !allowedHosts.includes(url.hostname)) {
     throw new PolicyError(`Refusing ${url.href}: not an HTTPS URL on ${allowedHosts.join(", ")}`);
   }
   return url;
@@ -132,7 +137,7 @@ export function assertAllowedUrl(value: string, allowedHosts: readonly string[])
 
 /** Fetch one official URL under the archive's crawl policy. */
 export async function politeFetch(value: string, options: PoliteFetchOptions): Promise<Response> {
-  const url = assertAllowedUrl(value, options.allowedHosts);
+  const url = assertAllowedUrl(value, options.allowedHosts, options.httpHosts);
   const rules = await robotsFor(url.origin);
   if (!robotsAllows(rules, url.pathname + url.search)) {
     throw new PolicyError(`robots.txt on ${url.host} disallows ${url.pathname}`);
@@ -153,6 +158,6 @@ export async function politeFetch(value: string, options: PoliteFetchOptions): P
   });
 
   // Redirects are followed by fetch; re-check where we ended up.
-  assertAllowedUrl(response.url || url.href, options.allowedHosts);
+  assertAllowedUrl(response.url || url.href, options.allowedHosts, options.httpHosts);
   return response;
 }

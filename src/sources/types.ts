@@ -43,5 +43,7 @@ export interface SourceAdapter {
   collection: string;
   displayName: string;
   allowedHosts: readonly string[];
+  /** Hosts this adapter may fetch over plain http (reviewed register entries only). */
+  httpHosts?: readonly string[];
   discover(): Promise<SourceDocument[]>;
 }

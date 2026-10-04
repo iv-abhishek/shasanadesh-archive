@@ -1756,3 +1756,45 @@ finds nothing. Status lines show each tool step; the latency panel shows rounds 
 request (or `npm run eval:ask -- --pipeline agent|classic`) chooses per question for A/B.
 Live check (fake archive, real DeepSeek): 5 rounds, ~8 s, chose GTC p.19 + GFR p.42 with a
 correct note. Models sometimes send list arguments as JSON strings; the tools accept both.
+
+## ADR-103 - Crawler v1: one generic adapter per approved site, run from the Mac (4 Oct 2026)
+
+**Why.** Many UP sites (NIC, UP CMS) refuse or time out for foreign IPs, and several send an
+incomplete certificate chain or an expired certificate. The owner's Mac is on an Indian
+connection (Jio, UP) and reaches them; a hosted crawler would need an Indian server first.
+
+**Decision.**
+- `datasets/crawl/sites.json` stays the register (ADR-097). `src/sources/crawl-sites.ts`
+  turns every site with `"approved": true` (and no `coveredBy`) into an ordinary source
+  adapter `crawl-<site id>`, so `ingest-source.ts` downloads, hashes, archives (B2) and the
+  daily sync processes them like any other collection. sourceId = `crawl-<site>-<12 hex of
+  the document URL>`.
+- One generic reader (`src/crawl/extract.ts`) instead of per-site parsers: every document
+  link (.pdf, or the site's `docLinkPattern`) is read with its table row — subject = the
+  longest meaningful cell, date = the first date, GO number = the cell that looks like one
+  (also "number / date" cells). Pagination: plain `?page=` links, ASP.NET GridView
+  postbacks (the form is posted back for Page$2, Page$3 … as a click would), and index
+  pages named by `followPattern`; at most `maxPages` (default 20) listing pages per run.
+- Admission before download (`src/crawl/admission.ts`): tenders, recruitment results,
+  events/press notes, RTI lists, orders about named individuals and seniority lists are
+  dropped with a reason; a rule, GO or guideline *about* tenders or recruitment is kept;
+  budget releases are kept as records; district notices are dropped. Kind, level and
+  visibility travel in `sourceRecord.crawl`.
+- Visibility (`src/crawl/visibility.ts`): approved district/division sites are left out of
+  search (`exclude_providers`) unless the question names a UP district.
+- Network: politeFetch gains `httpHosts` — plain http only for hosts the register writes
+  with `http://`. `datasets/crawl/extra-ca.pem` adds the Sectigo DV R36 intermediate that
+  uppwd.gov.in, ehrms.upsdc.gov.in and upsrlm.org leave out (browsers fetch it themselves;
+  Node does not); verification stays on. Expired certificates are not bypassed.
+- `npm run crawl:check -- <ids> | --priority N | --all [--pages N]` reads listing pages only
+  and writes `data/crawl/check-<time>.md/.json` for the owner's review; `npm run crawl`
+  ingests approved sites; `npm run sync:daily -- --ingest` includes them.
+
+**First check (4 Oct 2026, from the Mac, 3–4 listing pages each).** Urban Development 776
+documents (761 kept, 755 GO numbers), Panchayati Raj 578 (571), NHM 792, UPLC 40, PWD 30
+of 218, Basic Education 23, DoE procurement OMs 31 (newest 22 Jul 2026), DC-MSME 43,
+Gazette 30 per 3 pages, eHRMS 3. Not usable now: Samaj Kalyan (lists no GOs), State Tax
+(certificate expired), Treasuries (TLS reset), Irrigation (timeout), Invest UP policies
+(robots.txt disallows), UP HED and Agriculture (listing URL to correct). Six sites on
+non-government domains (awasbandhu.in, upsrlm.org, upprd.in, uppcl.org, upneda.org.in,
+upsbcc.in) wait for the owner to add them to the government host list.

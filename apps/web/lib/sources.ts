@@ -18,6 +18,7 @@ const COLLECTION_LABELS: Array<{ prefix: string; label: string }> = [
   { prefix: "msme-", label: "Ministry of MSME" },
   { prefix: "submitted-", label: "Submitted link" },
   { prefix: "web-", label: "Official website (live search)" },
+  { prefix: "crawl-", label: "Department website" },
 ];
 
 /** Archives the Search page can filter by (documents.provider values). */

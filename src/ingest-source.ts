@@ -6,6 +6,7 @@
  *   each PDF it lists. Usage:
  *     npm run ingest:source -- <adapter-id> [--limit N] [--force]
  *     npm run ingest:sources            (every registered adapter in turn)
+ *     npm run crawl                     (approved sites of the crawl register)
  *
  * Invariants:
  *   - documents live in data/documents/<sourceId>/ and archive/<collection>/ in
@@ -107,13 +108,17 @@ async function extractText(pdfPath: string, textPath: string): Promise<{
   }
 }
 
+function protocolAllowed(url: URL, adapter: SourceAdapter): boolean {
+  return url.protocol === "https:" || (url.protocol === "http:" && (adapter.httpHosts ?? []).includes(url.hostname));
+}
+
 function assertOfficialDownload(url: string, adapter: SourceAdapter): URL {
   const parsed = new URL(url);
   // Rulebook §2 (docs/RULES.md): government sources only.
   if (!isGovernmentHost(parsed.hostname)) {
     throw new Error(`Refusing ${url}: ${parsed.hostname} is not a government site (docs/RULES.md §2)`);
   }
-  if (parsed.protocol !== "https:" || !adapter.allowedHosts.includes(parsed.hostname)) {
+  if (!protocolAllowed(parsed, adapter) || !adapter.allowedHosts.includes(parsed.hostname)) {
     throw new Error("Refusing download outside the adapter's HTTPS allowlist: " + url);
   }
   return parsed;
@@ -128,11 +133,12 @@ async function downloadPdf(record: SourceDocument, adapter: SourceAdapter): Prom
   assertOfficialDownload(record.downloadUrl, adapter);
   const response = await politeFetch(record.downloadUrl, {
     allowedHosts: adapter.allowedHosts,
+    httpHosts: adapter.httpHosts,
     accept: "application/pdf,application/octet-stream;q=0.9,*/*;q=0.5",
     timeoutMs: 120_000,
   });
   const finalUrl = new URL(response.url || record.downloadUrl);
-  if (finalUrl.protocol !== "https:" || !adapter.allowedHosts.includes(finalUrl.hostname) || !isGovernmentHost(finalUrl.hostname)) {
+  if (!protocolAllowed(finalUrl, adapter) || !adapter.allowedHosts.includes(finalUrl.hostname) || !isGovernmentHost(finalUrl.hostname)) {
     throw new Error("PDF download redirected outside the adapter's HTTPS allowlist: " + finalUrl.href);
   }
   if (!response.ok) throw new Error("PDF request returned HTTP " + response.status);
@@ -449,13 +455,20 @@ async function runAdapter(adapter: SourceAdapter, force: boolean, limit: number 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
   const all = args.includes("--all");
+  // --crawl: every approved site of the crawl register (datasets/crawl/sites.json).
+  const crawlOnly = args.includes("--crawl");
   const sourceName = args.find((argument, index) => !argument.startsWith("--") && args[index - 1] !== "--limit");
-  if (!sourceName && !all) {
+  if (!sourceName && !all && !crawlOnly) {
     throw new Error("Usage: npm run ingest:source -- <source-id> [--limit N] [--force]   or   --all");
   }
   const force = args.includes("--force");
   const limit = parseLimit(args);
-  const adapters = all ? listSourceAdapters() : [getSourceAdapter(sourceName!)];
+  const adapters = crawlOnly
+    ? listSourceAdapters().filter((adapter) => adapter.id.startsWith("crawl-"))
+    : all
+      ? listSourceAdapters()
+      : [getSourceAdapter(sourceName!)];
+  if (crawlOnly && !adapters.length) console.log("No approved sites in datasets/crawl/sites.json yet (run npm run crawl:check first).");
 
   let failed = 0;
   for (const adapter of adapters) {

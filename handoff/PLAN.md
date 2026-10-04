@@ -29,6 +29,12 @@ states later. Hosting is not a blocker (public documents, cited by URL); pilot o
 - [ ] **Name more out-of-date rules** for the register (earned leave, TA on transfer,
       pay fixation, retirement …); Claude finds the pages.
 - [ ] **Review the playbooks** `datasets/playbooks/*.md` (ADR-091) and set `reviewed: true`.
+- [ ] **Approve crawl sites** (ADR-103): read the latest `data/crawl/check-*.md` (or run
+      `npm run crawl:check -- --priority 2`), set `"approved": true` in
+      `datasets/crawl/sites.json`, then `caffeinate -i npm run crawl` overnight.
+- [ ] **Decide the six non-.gov.in sites** (awasbandhu.in, upsrlm.org, upprd.in, uppcl.org,
+      upneda.org.in, upsbcc.in): add the official ones to `GOVERNMENT_EXCEPTIONS` in
+      `src/lib/government-hosts.ts` and `apps/web/lib/government-hosts.ts`.
 - [ ] Restart all after each code drop (`npm run dev:all -- --restart=all`) and re-run
       `npm run eval:ask`.
 

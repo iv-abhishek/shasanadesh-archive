@@ -14,6 +14,7 @@
  * This file avoids top-level await because the current project compiles as CommonJS.
  */
 
+import { hiddenProviders } from "../crawl/visibility.js";
 import cors from "@fastify/cors";
 import { registerDocumentRoutes } from "../documents/routes.js";
 import Fastify from "fastify";
@@ -655,6 +656,11 @@ async function retrieve(
                 filters?.sourceIds,
               providers:
                 filters?.providers,
+              // Crawled district sites only when the question names a district (ADR-103).
+              exclude_providers:
+                filters?.sourceId || filters?.sourceIds?.length
+                  ? undefined
+                  : hiddenProviders(query, filters?.providers),
               date_from:
                 filters?.dateFrom,
               date_to:

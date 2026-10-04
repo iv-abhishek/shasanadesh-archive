@@ -72,6 +72,8 @@ class SearchFilters(BaseModel):
     source_ids: list[str] | None = Field(default=None, max_length=16)
     # Source collections (documents.provider), e.g. ["shasanadesh-up", "upgov"].
     providers: list[str] | None = None
+    # Collections left out (crawled district sites for a headquarters question, ADR-103).
+    exclude_providers: list[str] | None = Field(default=None, max_length=60)
     date_from: str | None = Field(default=None, max_length=10)
     date_to: str | None = Field(default=None, max_length=10)
     verification_status: str | None = Field(default=None, max_length=40)
@@ -336,6 +338,12 @@ def build_filter_clause(filters: SearchFilters) -> tuple[str, list[Any]]:
         if providers:
             clauses.append("d.provider = ANY(%s)")
             params.append(providers)
+
+    if filters.exclude_providers:
+        excluded = [item.strip() for item in filters.exclude_providers if item.strip()]
+        if excluded:
+            clauses.append("NOT (d.provider = ANY(%s))")
+            params.append(excluded)
 
     if filters.date_from:
         clauses.append("d.go_date >= %s::date")
