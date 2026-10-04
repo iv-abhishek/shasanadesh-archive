@@ -101,3 +101,8 @@ export function mergeNamedPages(
   }));
   return { ...retrieval, evidence };
 }
+
+/** Every rulebook the agent may search by name (ADR-102). */
+export function namedRulebooks(): NamedSource[] {
+  return NAMED.map(({ name, sourceIds }) => ({ name, sourceIds }));
+}

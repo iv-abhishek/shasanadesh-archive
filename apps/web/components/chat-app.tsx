@@ -128,6 +128,16 @@ interface DoneEvent {
   correctedQuestion?: string | null;
   /** Answered from a playbook's pinned pages instead of a search (ADR-091). */
   playbook?: { id: string; title: string; reviewed: boolean } | null;
+  /** The research agent's work (ADR-102). */
+  agent?: {
+    steps: number;
+    stoppedBy: string;
+    answerable: boolean | null;
+    note: string | null;
+    usedWeb: boolean;
+    ms: number;
+    tools: Array<{ tool: string; found: number; ms: number; error?: string }>;
+  };
   /** Rulebooks named in the question and searched separately (ADR-091). */
   namedSourcesAdded?: string[];
   /** Searched the procurement rule books in order of authority (ADR-093). */
@@ -1994,6 +2004,21 @@ function TurnView({
                 <>
                   <span>Official web search</span>
                   <strong>{formatStageMs(turn.done.timings.webSearchMs)}</strong>
+                </>
+              ) : null}
+              {turn.done.agent ? (
+                <>
+                  <span>Research</span>
+                  <strong>
+                    {formatStageMs(turn.done.agent.ms)} · {turn.done.agent.steps} {turn.done.agent.steps === 1 ? "round" : "rounds"} ·{" "}
+                    {Object.entries(
+                      turn.done.agent.tools
+                        .filter((t) => t.tool !== "finish")
+                        .reduce<Record<string, number>>((acc, t) => ({ ...acc, [t.tool]: (acc[t.tool] ?? 0) + 1 }), {}),
+                    )
+                      .map(([tool, n]) => `${tool.replace(/_/g, " ")} ×${n}`)
+                      .join(", ") || "no tools"}
+                  </strong>
                 </>
               ) : null}
               {turn.done.procurementRulebooks ? (

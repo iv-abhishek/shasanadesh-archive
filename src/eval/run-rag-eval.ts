@@ -98,6 +98,7 @@ interface DoneEvent {
   /** Which model wrote the answer, and whether the primary failed first (ADR-075). */
   model?: string;
   usage?: { calls: number; promptTokens: number; completionTokens: number; costUsd: number };
+  agent?: { steps: number; stoppedBy: string; answerable: boolean | null; ms: number; tools: Array<{ tool: string; found: number }> };
   modelFellBack?: boolean;
 }
 
@@ -128,6 +129,7 @@ interface CaseResult {
   citedAuthorities?: string[];
   model?: string;
   usage?: { calls: number; promptTokens: number; completionTokens: number; costUsd: number };
+  agent?: { steps: number; stoppedBy: string; answerable: boolean | null; ms: number; tools: Array<{ tool: string; found: number }> };
   modelFellBack?: boolean;
   citationCount: number | null;
   expectedCitationPageHit: boolean | null;
@@ -163,6 +165,8 @@ interface CliOptions {
   model: string | null;
   /** Report file name prefix instead of the timestamp alone. */
   label: string | null;
+  /** "agent" or "classic" retrieval (needs RAG_ALLOW_MODEL_OVERRIDE=1; ADR-102). */
+  pipeline: "agent" | "classic" | null;
 }
 
 const CITATION_RE =
@@ -195,6 +199,7 @@ function parseArgs(
     ),
     model: null,
     label: null,
+    pipeline: null,
   };
 
   for (
@@ -211,6 +216,12 @@ function parseArgs(
 
     if (arg === "--model" && argv[index + 1]) {
       options.model = argv[index + 1];
+      index += 1;
+      continue;
+    }
+
+    if (arg === "--pipeline" && (argv[index + 1] === "agent" || argv[index + 1] === "classic")) {
+      options.pipeline = argv[index + 1] as "agent" | "classic";
       index += 1;
       continue;
     }
@@ -561,6 +572,7 @@ async function runChatTurn(
           })),
           ...(workspaceUserId ? { workspaceUserId } : {}),
           ...(options.model ? { model: options.model } : {}),
+          ...(options.pipeline ? { pipeline: options.pipeline } : {}),
           ...extraBody,
         }),
       },
@@ -1110,6 +1122,7 @@ async function evaluateCase(
     citedAuthorities,
     model: chat.done?.model,
     usage: chat.done?.usage,
+    agent: chat.done?.agent,
     modelFellBack: chat.done?.modelFellBack,
     citationCount:
       citations.length,

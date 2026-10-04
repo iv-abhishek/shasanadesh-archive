@@ -73,7 +73,10 @@ import { expandSearchQuery } from "../rag/query-expansion.js";
 import { matchPlaybook, type PlaybookMatch, type PlaybookPage } from "../rag/playbooks.js";
 import { mergeNamedPages, missingNamedSources, namedSources } from "../rag/named-sources.js";
 import { modelOverrideAllowed, newRequestContext, recordUsage, requestContext } from "../rag/request-context.js";
-import { WEB_EVIDENCE_PROMPT, logFoundLinks, searchOfficialWeb, webEvidence, type WebResult } from "../rag/web-search.js";
+import { research, type ResearchResult } from "../agent/research.js";
+import { AGENT_ENABLED, AGENT_RULEBOOK_NAMES, researchDeps } from "../agent/server-tools.js";
+import { amendmentsFor as amendmentsForQuestion } from "../rag/amendments.js";
+import { WEB_EVIDENCE_PROMPT, WEB_SEARCH_ENABLED, logFoundLinks, searchOfficialWeb, webEvidence, type WebResult } from "../rag/web-search.js";
 import {
   amendmentPrompt,
   amendmentsFor,
@@ -394,6 +397,9 @@ const ChatBodySchema = z.object({
   model:
     z.string().trim().regex(/^[a-z0-9._-]+\/[a-z0-9._:-]+$/i).max(100)
       .optional(),
+  // "agent" or "classic" retrieval for this question; honoured only with
+  // RAG_ALLOW_MODEL_OVERRIDE=1 (pipeline comparisons, ADR-102).
+  pipeline: z.enum(["agent", "classic"]).optional(),
 });
 
 const SearchFiltersSchema = z.object({
@@ -1493,6 +1499,7 @@ server.post(
       | "workspace_departments"
       | "playbook"
       | "procurement_rulebooks"
+      | "agent"
       | "global" =
       "global";
 
@@ -1668,11 +1675,16 @@ server.post(
     // A topic playbook (ADR-091) answers from its own checked pages: no search,
     // and no rewording call when the question already matches as typed.
     const searchable = !followSourceIds && !explicitSourceId;
+    // Research agent (ADR-102): the model searches with tools instead of one
+    // fixed search; the answer is still written, cited and checked as below.
+    const agentMode =
+      searchable &&
+      (parsed.data.pipeline && modelOverrideAllowed() ? parsed.data.pipeline === "agent" : AGENT_ENABLED);
     let playbookMatch: PlaybookMatch | null = searchable
       ? matchPlaybook(conversationPlan.retrievalQuery) ?? matchPlaybook(query)
       : null;
     const searchPlan =
-      !searchable || playbookMatch
+      !searchable || playbookMatch || agentMode
         ? { corrected: null, expansions: [] as string[] }
         : await expandSearchQuery(conversationPlan.retrievalQuery, stop.signal);
     if (!playbookMatch && searchPlan.corrected) playbookMatch = matchPlaybook(searchPlan.corrected);
@@ -1694,7 +1706,8 @@ server.post(
           return null;
         })
       : null;
-    const usingPlaybook = Boolean(playbookPages && playbookPages.evidence.length > 0);
+    // In agent mode the playbook's pages are handed to the agent, open, instead.
+    const usingPlaybook = !agentMode && Boolean(playbookPages && playbookPages.evidence.length > 0);
     if (usingPlaybook) {
       retrievalScope = "playbook";
       sourceStickinessApplied = false;
@@ -1703,9 +1716,11 @@ server.post(
     // Procurement questions search the procurement rule books only, in their
     // order of authority (ADR-093). Not when the officer asked about a named
     // order, department or the order already under discussion.
+    const procurementQuestion = isProcurementQuestion(`${query} ${searchQuestion}`);
     let procurementSearch =
       PROCUREMENT_RULEBOOKS_ENABLED &&
       searchable &&
+      !agentMode &&
       !usingPlaybook &&
       (retrievalScope === "global" || retrievalScope === "workspace_departments") &&
       isProcurementQuestion(`${query} ${searchQuestion}`);
@@ -1734,8 +1749,74 @@ server.post(
       }
     }
 
+    let agentResult: ResearchResult | null = null;
+    if (agentMode) {
+      const hints: string[] = [];
+      if (playbookMatch) {
+        hints.push(
+          `Topic playbook "${playbookMatch.playbook.title}": its checked pages are already open below; add others only if needed. Guidance: ${playbookMatch.playbook.guidance.replace(/\s+/g, " ").slice(0, 700)}`,
+        );
+      }
+      if (procurementQuestion) {
+        hints.push(
+          "Procurement question. Order of authority: UP GeM orders > GeM GTC > GFR 2017 > MoF procurement manuals > UP Procurement Manual 2016. Use scope=procurement or sources=[…] to search them.",
+        );
+      }
+      const named = namedSources(`${query} ${conversationPlan.retrievalQuery}`);
+      if (named.length) hints.push(`The question names: ${named.map((book) => book.name).join(", ")} (use sources=[…]).`);
+      for (const entry of amendmentsForQuestion([], undefined, `${query} ${conversationPlan.retrievalQuery}`)) {
+        hints.push(
+          `Amendment on record: ${entry.rule} — printed at ${entry.rulePages.map((p) => `${p.sourceId} p.${p.pageNumber}`).join(", ")}; current position at ${entry.currentPages.map((p) => `${p.sourceId} p.${p.pageNumber}`).join(", ") || "—"}. Open both.`,
+        );
+      }
+      if (workspaceProfile?.departments.length) {
+        hints.push(`The officer works in: ${workspaceProfile.departments.slice(0, 6).join(", ")} (a preference, not a limit).`);
+      }
+      if (conversationPlan.contextualized) {
+        hints.push(`Earlier questions in this conversation: ${conversationPlan.priorUserQuestions.slice(-3).join(" | ")}`);
+      }
+      agentResult = await research(
+        {
+          question: conversationPlan.retrievalQuery === query ? query : `${query}\n(In context: ${conversationPlan.retrievalQuery})`,
+          language: responseLanguage,
+          today: new Date().toISOString().slice(0, 10),
+          hints,
+          rulebookNames: AGENT_RULEBOOK_NAMES,
+          preloaded: playbookPages?.evidence,
+        },
+        researchDeps({
+          retrieve: (q, topK, filters, options) => searchChat(q, topK, filters, options),
+          fetchPages: fetchPlaybookPages,
+          searchSubjects,
+          pool: getRelationsPool,
+          webSearch: WEB_SEARCH_ENABLED
+            ? async (q) => webEvidence(await searchOfficialWeb(q, stop.signal))
+            : undefined,
+          minRelevance: RAG_MIN_RELEVANCE,
+          targets: LLM_TARGETS,
+          timeoutMs: LLM_REQUEST_TIMEOUT_MS,
+          signal: stop.signal,
+          onStatus: (label) => sendEvent("status", { stage: "searching", label }),
+        }),
+      );
+      retrievalScope = "agent";
+      sourceStickinessApplied = false;
+      request.log.info(
+        { query, steps: agentResult.steps, stoppedBy: agentResult.stoppedBy, tools: agentResult.trace.map((t) => `${t.tool}:${t.found}`), pages: agentResult.evidence.length, ms: Math.round(agentResult.ms) },
+        "research agent",
+      );
+    }
+
     let retrieval: RetrievalResponse =
-      procurementRetrieval ??
+      agentResult
+        ? {
+            query: searchQuestion,
+            embedding_model: "research-agent",
+            reranker_model: "research-agent",
+            scores_are_raw_logits: false,
+            evidence: agentResult.evidence,
+          }
+        : procurementRetrieval ??
       (usingPlaybook && playbookPages
         ? playbookPages
         : await searchChat(
@@ -1808,7 +1889,7 @@ server.post(
     // the pages found: search inside it and put its best pages first, so the
     // answer can cite the book the officer asked about (ADR-091).
     const namedSourcesAdded: string[] = [];
-    if (searchable && !usingPlaybook) {
+    if (searchable && !usingPlaybook && !agentMode) {
       const asked = namedSources(`${query} ${searchQuestion}`);
       if (procurementSearch) {
         for (const book of procurementBooksToCheck(`${query} ${searchQuestion}`)) {
@@ -1839,7 +1920,7 @@ server.post(
       }
     }
 
-    if (procurementSearch || usingPlaybook) retrieval = orderByAuthority(retrieval);
+    if (procurementSearch || usingPlaybook || (agentMode && procurementQuestion)) retrieval = orderByAuthority(retrieval);
 
     // Relevance gate (src/rag/relevance.ts): drop pages that are not about the
     // question. The officer's departments are a preference, not a wall: when
@@ -1847,7 +1928,8 @@ server.post(
     // A suggested follow-up keeps every page found in the cited orders: the
     // question is about those orders, and the model says when they do not
     // answer it (no widening to other orders).
-    let relevance = followSourceIds || usingPlaybook
+    // Pages the agent chose (ADR-102) are kept like a playbook's.
+    let relevance = followSourceIds || usingPlaybook || agentMode
       ? {
           kept: retrieval.evidence,
           dropped: 0,
@@ -2335,8 +2417,9 @@ server.post(
               ? `${query}\n(The same question with typos and grammar fixed: ${searchPlan.corrected})`
               : query,
             "",
-            ...(procurementSearch || usingPlaybook ? [PROCUREMENT_PROMPT, ""] : []),
-            ...(usingPlaybook && playbookMatch
+            ...(procurementSearch || usingPlaybook || (agentMode && procurementQuestion) ? [PROCUREMENT_PROMPT, ""] : []),
+            ...(retrieval.evidence.some((item) => item.provider === "web-official") ? [WEB_EVIDENCE_PROMPT, ""] : []),
+            ...((usingPlaybook || agentMode) && playbookMatch
               ? [
                   "PLAYBOOK (how to answer this topic; checked notes, NOT evidence — cite only the pages below):",
                   `Topic: ${playbookMatch.playbook.title}`,
@@ -2745,7 +2828,18 @@ server.post(
           amendments: amendmentEntries.length
             ? amendmentEntries.map((entry) => ({ id: entry.id, rule: entry.rule, reviewed: entry.reviewed }))
             : undefined,
-          playbook: usingPlaybook && playbookMatch
+          agent: agentResult
+            ? {
+                steps: agentResult.steps,
+                stoppedBy: agentResult.stoppedBy,
+                answerable: agentResult.answerable,
+                note: agentResult.note,
+                usedWeb: agentResult.usedWeb,
+                ms: Math.round(agentResult.ms),
+                tools: agentResult.trace.map((t) => ({ tool: t.tool, found: t.found, ms: t.ms, ...(t.error ? { error: t.error } : {}) })),
+              }
+            : undefined,
+          playbook: (usingPlaybook || (agentMode && playbookPages?.evidence.length)) && playbookMatch
             ? { id: playbookMatch.playbook.id, title: playbookMatch.playbook.title, reviewed: playbookMatch.playbook.reviewed }
             : undefined,
           ok: true,

@@ -1727,3 +1727,32 @@ same retrieval cases (solar pump, Project Alankar, KGMU): the ceiling is search,
 answers), then the local MLX model. Each hosted target gets its own reasoning setting
 (`reasoningFor`). No hardware purchase for now. Users are individuals for now: providers'
 data policies are not restricted unless a government department asks.
+
+## ADR-102 - Research agent: the model searches with tools; the answer is still checked (4 Oct 2026)
+
+**Why.** The fixed pipeline (reword → one search → rerank → write) needed a hand-written rule
+for every miss: named rulebooks, procurement scope, playbook routing, second search. Every
+bake-off model failed the same questions because that one search brought the wrong order.
+
+**Decision.** `src/agent/research.ts`: a bounded tool-calling loop (5 rounds, 10 tool calls,
+45 s) run on the answer model (DeepSeek V4 Flash, Qwen 3.8 Flash backup). Tools:
+- `search_pages(query, scope=all|rulebooks|procurement|orders, sources=[named rulebooks],
+  department, dates)` — the hybrid search with filters; only pages above the relevance gate.
+- `find_orders(about | go_number, department, dates)` — subject-meaning search and GO
+  numbers, then `open_pages` to read them.
+- `open_pages(["P3" | "<source> p.N" | "<source>"])` — exact pages, the next page of a rule.
+- `check_changes(tags)` — later orders that amend/supersede/cancel, and the amendment register.
+- `search_official_web(query)` — only when the archive has nothing (ADR-096).
+- `finish(pages, answerable, note)` — the last round may only call this.
+Pages are registered once (P1, P2 …, full text kept server-side; the model sees snippets),
+then renumbered S1… for the writer. Hints in the system prompt replace routing code: the
+matched playbook (its pages preloaded), the procurement order of authority, rulebooks named
+in the question, amendment register entries, the officer's departments, earlier questions.
+Phase 2 is unchanged: the usual writer, validator, citation fixer, repair and salvage, the
+amendment and procurement prompts, and the general-knowledge/web fallbacks when the agent
+finds nothing. Status lines show each tool step; the latency panel shows rounds and tools.
+
+**Switch.** `RAG_AGENT=1` turns it on for everyone; with `RAG_ALLOW_MODEL_OVERRIDE=1` a
+request (or `npm run eval:ask -- --pipeline agent|classic`) chooses per question for A/B.
+Live check (fake archive, real DeepSeek): 5 rounds, ~8 s, chose GTC p.19 + GFR p.42 with a
+correct note. Models sometimes send list arguments as JSON strings; the tools accept both.

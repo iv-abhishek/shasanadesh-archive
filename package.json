@@ -81,6 +81,7 @@
     "test:query-expansion": "tsx src/rag/query-expansion.test.ts",
     "test:general-knowledge": "tsx src/rag/general-knowledge.test.ts",
     "test:web-search": "tsx src/rag/web-search.test.ts",
+    "test:agent": "tsx src/agent/research.test.ts",
     "test:llm-targets": "tsx src/rag/llm-targets.test.ts && tsx src/rag/request-context.test.ts",
     "test:amendments": "tsx src/rag/amendments.test.ts",
     "test:playbooks": "tsx src/rag/playbooks.test.ts && tsx src/rag/named-sources.test.ts && tsx src/rag/procurement.test.ts",
