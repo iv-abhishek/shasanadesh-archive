@@ -1798,3 +1798,33 @@ Gazette 30 per 3 pages, eHRMS 3. Not usable now: Samaj Kalyan (lists no GOs), St
 (robots.txt disallows), UP HED and Agriculture (listing URL to correct). Six sites on
 non-government domains (awasbandhu.in, upsrlm.org, upprd.in, uppcl.org, upneda.org.in,
 upsbcc.in) wait for the owner to add them to the government host list.
+
+**Addendum (same day).**
+- *Site discovery from the national directory.* `npm run crawl:discover` reads IGOD
+  (igod.gov.in: UP departments, directorates, boards, commissions, schemes, and the Union
+  ministries; districts only with `--districts`), opens each new site's home page, follows
+  links that name orders (शासनादेश, GOs, circulars, notifications, acts/rules), tests up to
+  three with the listing reader, and adds sites with a working listing to the register with
+  `"approved": false` and `"source": "igod"`. First run: 191 sites listed, 29 added (e.g.
+  Appointment & Personnel 1,494 circulars, Administrative Reforms 138 GOs, Secondary
+  Education, Khadi Board, Sainik Kalyan, Cane, Cooperative, MoEFCC, MoFPI, MoD). IGOD lists
+  a few other states' portals under UP; those hosts are skipped.
+- igod.gov.in sends the wrong Let's Encrypt intermediate; `extra-ca.pem` now also holds
+  YR2 and Root YR (cross-signed by ISRG Root X1).
+- Admission learnt from that run: office orders naming a person, "Sh X is appointed as
+  DDO", medical reimbursement of named officers and "विज्ञापन संख्या" are dropped.
+
+## ADR-101 addendum - Claude Sonnet 5.5 is not used for escalation (4 Oct 2026)
+
+Bake-off on the same 55 cases: Sonnet 5.5 passed 81.8% (DeepSeek V4 Flash 85.5%, Qwen 3.8
+Flash 87.3%), 90.7% validated, 12.2% fallback, median answer 46 s, $0.0365 per question
+(about 70× DeepSeek). It wrote the longest answers (864 tokens) and failed more validation.
+No escalation tier for now; the ceiling is still search (shared failures across models).
+
+## ADR-102 addendum - Agent searches rerank fewer pages (4 Oct 2026)
+
+The agent runs 2–6 searches per question and each waits for the single local reranker, so
+the A/B eval was slow. Agent searches now score 12 pages (40 candidates) instead of 24/50
+(`RAG_AGENT_RERANK_COUNT`), and a search repeated word for word in a later round is served
+from the same request's cache.
+

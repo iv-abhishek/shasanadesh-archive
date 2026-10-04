@@ -91,6 +91,7 @@
     "ingest:source": "NODE_EXTRA_CA_CERTS=datasets/crawl/extra-ca.pem node --env-file-if-exists=.env --import tsx src/ingest-source.ts",
     "ingest:sources": "NODE_EXTRA_CA_CERTS=datasets/crawl/extra-ca.pem node --env-file-if-exists=.env --import tsx src/ingest-source.ts --all",
     "crawl:check": "NODE_EXTRA_CA_CERTS=datasets/crawl/extra-ca.pem node --env-file-if-exists=.env --import tsx src/crawl/check.ts",
+    "crawl:discover": "NODE_EXTRA_CA_CERTS=datasets/crawl/extra-ca.pem node --env-file-if-exists=.env --import tsx src/crawl/discover.ts",
     "crawl": "NODE_EXTRA_CA_CERTS=datasets/crawl/extra-ca.pem node --env-file-if-exists=.env --import tsx src/ingest-source.ts --crawl",
     "ingest:handbook": "node --env-file-if-exists=.env --import tsx src/ingest-handbook.ts",
     "ingest:lgd": "node --env-file-if-exists=.env scripts/ingest-lgd.mjs",

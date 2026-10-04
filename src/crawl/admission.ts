@@ -46,12 +46,17 @@ interface Rule {
 // Order matters: the first matching rule names the reason.
 const DROP: Rule[] = [
   { reason: "tender", pattern: /\b(e-?tender( notice)?s?|tender (notice|document|for|no\.?)|nit|rfp|rfq|eoi|expression of interest|bid document|corrigendum.{0,40}\b(tender|nit|bid|rfp)|quotations?|auction notice)\b|निविदा (सूचना|आमंत्रण|प्रपत्र)|ई-निविदा|अल्पकालीन निविदा|कोटेशन|नीलामी (सूचना|विज्ञप्ति)|ई-टेंडर/i },
-  { reason: "recruitment/exam", pattern: /\b(recruitment|vacanc(y|ies)|admit card|merit list|answer key|result|interview|walk-?in|shortlisted|selection list|exam(ination)? (schedule|date|centre))\b|भर्ती (विज्ञापन|सूचना)|रिक्तियों? (का|की|हेतु) विज्ञापन|प्रवेश पत्र|मेरिट (सूची|लिस्ट)|परीक्षा परिणाम|परिणाम घोषित|साक्षात्कार|चयन सूची|उत्तर कुंजी/i },
+  { reason: "recruitment/exam", pattern: /\b(recruitment|vacanc(y|ies)|admit card|merit list|answer key|result|interview|walk-?in|shortlisted|selection list|exam(ination)? (schedule|date|centre))\b|भर्ती (विज्ञापन|सूचना)|विज्ञापन संख्या|रिक्तियों? (का|की|हेतु) विज्ञापन|प्रवेश पत्र|मेरिट (सूची|लिस्ट)|परीक्षा परिणाम|परिणाम घोषित|साक्षात्कार|चयन सूची|उत्तर कुंजी/i },
   { reason: "event/press", pattern: /\b(press (release|note)|photo gallery|news ?letter|celebration|workshop on|webinar|invitation|programme schedule)\b|प्रेस विज्ञप्ति|समारोह|आमंत्रण|कार्यशाला का आयोजन|फोटो/i },
   { reason: "RTI list", pattern: /\b(rti (reply|application|appeal)s?|right to information.*(list|reply))\b|जन सूचना अधिकारी की सूची/i },
   {
     reason: "individual personnel order",
     pattern: /\b(transfer(red)?|posting|suspension|suspended|reinstatement|relieving|charge handed|attachment) (order )?(of|in respect of) (shri|smt|sri|mr|ms|dr)\b|(श्री|श्रीमती|सुश्री|डॉ0?)\s*\S+.*(का|के|की) (स्थानान्तरण|स्थानांतरण|तैनाती|निलम्बन|निलंबन|सम्बद्धीकरण|कार्यमुक्त)|(स्थानान्तरण|स्थानांतरण|तैनाती|निलम्बन|निलंबन) (आदेश )?(श्री|श्रीमती|सुश्री)/i,
+  },
+  {
+    reason: "individual personnel order",
+    // "Sh X, Under Secretary is appointed as DDO", "कार्यालय आदेश – श्री … की तैनाती", medical reimbursement of named officers.
+    pattern: /^(sh|shri|sri|smt|ms|mr|dr)\.?\s+[A-Z][a-z]+|(office order|कार्यालय आदेश).{0,80}(श्री|सुश्री|श्रीमती|shri|smt|ms\.|mr\.)|medical reimbursement (given|sanctioned|granted) to|चिकित्सा (प्रतिपूर्ति|व्यय).{0,40}(श्री|श्रीमती)/i,
   },
   { reason: "seniority/gradation list", pattern: /\b(seniority|gradation) list\b|ज्येष्ठता सूची|वरिष्ठता सूची|पदोन्नति सूची/i },
   { reason: "leave/court case of an individual", pattern: /\b(writ petition|contempt|w\.?p\.? ?no)\b.*\b(shri|smt)\b|अवमानना याचिका/i },

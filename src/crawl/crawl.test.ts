@@ -73,6 +73,10 @@ assert.equal(admit(item("सहायक अध्यापक भर्ती �
 assert.equal(admit(item("उत्तर प्रदेश अधीनस्थ सेवा भर्ती नियमावली 2026"), site).admitted, true);
 assert.equal(admit(item("श्री राम कुमार, सहायक अभियन्ता का स्थानान्तरण"), site).reason, "individual personnel order");
 assert.equal(admit(item("Annual Transfer Policy of Government Officers/Employees Year-2024-25"), site).admitted, true);
+assert.equal(admit(item("Sh Jagannath Prasad Srivastava , Under Secretary is appointed as DDO"), site).reason, "individual personnel order");
+assert.equal(admit(item("कार्यालय आदेश (07-09-2026) – श्री दीपक की तैनाती"), site).reason, "individual personnel order");
+assert.equal(admit(item("विज्ञापन संख्या-01/2021 (प्रशिक्षित स्नातक), विषय-हिन्दी"), site).reason, "recruitment/exam");
+assert.equal(admit(item("Medical reimbursement rules for State Government employees"), site).admitted, true);
 assert.equal(kindOf("वित्तीय वर्ष 2026-27 में धनराशि अवमुक्त किये जाने के सम्बन्ध में", site), "budget-release");
 assert.equal(admit(item("जिला स्तरीय बैठक की सूचना"), { docTypes: ["notice"], level: "district" }).reason, "district notice");
 

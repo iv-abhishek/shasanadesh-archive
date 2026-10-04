@@ -54,7 +54,7 @@ export function filtersFor(options: { scope: SearchScope; sources?: string[]; de
 }
 
 export interface ServerToolDeps {
-  retrieve(query: string, topK: number, filters: AgentSearchFilters, options: { signal?: AbortSignal; expandNeighbors: boolean; preferAuthority: boolean; maxEvidencePages: number }): Promise<{ evidence: RetrievalEvidence[] }>;
+  retrieve(query: string, topK: number, filters: AgentSearchFilters, options: { signal?: AbortSignal; expandNeighbors: boolean; preferAuthority: boolean; maxEvidencePages: number; rerankCount?: number; candidateCount?: number }): Promise<{ evidence: RetrievalEvidence[] }>;
   fetchPages(question: string, pages: PageRef[], signal?: AbortSignal): Promise<{ evidence: RetrievalEvidence[] }>;
   searchSubjects: SubjectSearch;
   pool(): Pool;
@@ -108,22 +108,38 @@ async function callModel(deps: ServerToolDeps, messages: AgentMessage[], tools: 
   throw lastError ?? new Error("No hosted model for the research agent.");
 }
 
+// The agent searches several times per question and every search waits for the
+// one local reranker; score fewer pages each time (chat's single search uses 24).
+const AGENT_RERANK_COUNT = Math.max(6, Math.min(24, Number(process.env.RAG_AGENT_RERANK_COUNT ?? 12) || 12));
+
 export function researchDeps(deps: ServerToolDeps): ResearchDeps {
+  // The model often repeats a search word for word in a later round.
+  const searches = new Map<string, Promise<RetrievalEvidence[]>>();
   return {
     signal: deps.signal,
     onStatus: deps.onStatus,
     callModel: (messages, tools, options) => callModel(deps, messages, tools, options),
 
-    async search(query, options) {
-      const response = await deps.retrieve(query, 6, filtersFor(options), {
-        signal: deps.signal,
-        expandNeighbors: false,
-        preferAuthority: true,
-        maxEvidencePages: 6,
-      });
-      // Only pages that pass the usual relevance gate are worth the model's attention.
-      const relevance = toRelevance(response.evidence.map((item) => item.rerank_score_raw));
-      return response.evidence.filter((_, i) => relevance[i] >= deps.minRelevance);
+    search(query, options) {
+      const key = JSON.stringify([query.trim().toLowerCase(), filtersFor(options)]);
+      const cached = searches.get(key);
+      if (cached) return cached;
+      const pending = (async () => {
+        const response = await deps.retrieve(query, 6, filtersFor(options), {
+          signal: deps.signal,
+          expandNeighbors: false,
+          preferAuthority: true,
+          maxEvidencePages: 6,
+          rerankCount: AGENT_RERANK_COUNT,
+          candidateCount: 40,
+        });
+        // Only pages that pass the usual relevance gate are worth the model's attention.
+        const relevance = toRelevance(response.evidence.map((item) => item.rerank_score_raw));
+        return response.evidence.filter((_, i) => relevance[i] >= deps.minRelevance);
+      })();
+      searches.set(key, pending);
+      pending.catch(() => searches.delete(key));
+      return pending;
     },
 
     async openPages(question, pages) {

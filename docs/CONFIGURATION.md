@@ -27,6 +27,7 @@ Do not place real secrets in this document.
 | `RAG_WEB_SEARCH_TIMEOUT_MS` | time limit per web search (default `25000`) |
 | `OPENROUTER_FALLBACK_MODEL` | second OpenRouter model, tried when the first fails before writing (ADR-101; e.g. `qwen/qwen3.8-flash`) |
 | `RAG_AGENT` | `1` answers with the research agent (tool-calling search, ADR-102); off by default until it wins the eval |
+| `RAG_AGENT_RERANK_COUNT` | pages the reranker scores per agent search (default `12`; chat's single search uses `RAG_RERANK_COUNT`, 24). The agent searches several times and every search waits for the one local reranker |
 | `RAG_ALLOW_MODEL_OVERRIDE` | `1` lets a chat request choose its answer model (model comparisons only; ADR-100). Leave unset in use |
 | `RAG_REASONING_REQUIRED_PREFIXES` | model id prefixes that cannot turn thinking off (default `google/gemini-3,anthropic/claude,openai/gpt-oss`); they think at low effort |
 | `RAG_CHAT_INCLUDE_ROUTINE` | `0` leaves confident routine (tier C) orders out of chat again (ADR-081) |

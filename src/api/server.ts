@@ -499,6 +499,9 @@ interface RetrievalOptions {
   preferAuthority?: boolean;
   /** The question in official wording, English and Hindi (ADR-082). */
   expansions?: string[];
+  /** Pages the reranker scores (the research agent asks for fewer: it searches several times). */
+  rerankCount?: number;
+  candidateCount?: number;
 }
 
 type ProgressStage =
@@ -628,11 +631,11 @@ async function retrieve(
           body: JSON.stringify({
             query,
             top_k: topK,
-            candidate_count: 50,
+            candidate_count: options?.candidateCount ?? 50,
             // More wordings bring more candidates; rerank a few more of them.
-            rerank_count: options?.expansions?.length
+            rerank_count: options?.rerankCount ?? (options?.expansions?.length
               ? Math.min(100, RAG_RERANK_COUNT + 12)
-              : RAG_RERANK_COUNT,
+              : RAG_RERANK_COUNT),
             filters: {
               department:
                 filters?.department,
