@@ -7,6 +7,10 @@ triggers:
   - prior experience
   - previous experience
   - experience criteria
+  - experience clause
+  - experience clauses
+  - experience condition
+  - experience conditions
   - experience criterion
   - experience requirement
   - experience of bidder

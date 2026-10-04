@@ -1658,3 +1658,27 @@ Shasanadesh is not crawled (owner's capture every 15 days).
 directorate sites; (3) classification of level/kind and the admission filter; (4)
 visibility in search (district rule); (5) districts and central ministries; (6) weekly
 recrawl and a "new documents" digest.
+
+## ADR-098 - Re-cite figures to the page that prints them; second look at a wrong "not found" (4 Oct 2026)
+
+**Eval 4 Oct 07:08:** 76.4% (from 71.2%); "not found" correct 100%. Remaining causes:
+- Figures cited to the wrong page ("unsupported") ended in the generic fallback (Vitta Path
+  leave, quotation limit).
+- "Maximum earned leave" found FHB p.304, not p.71, so the amendment register did not apply.
+- The model replied NO_ANSWER although the toy-policy order itself was the best match (0.996).
+- A Hindi non-answer ("उपलब्ध प्रमाण पत्रों में … उल्लेख नहीं है। प्रमाण पत्र S1 और S5 …") was
+  not recognised; "experience clause in GFR" missed the experience playbook.
+
+**Decision.**
+- `addMissingCitations` (before validation): a sentence whose figure is uncited or not on
+  its cited page gets the citation of the evidence page that prints every one of its figures
+  reliably and shares at least 3 words with it. A figure on no page is left for repair.
+  The done event reports `citationsAdded` and `firstValidationExcerpts` (the failing
+  sentences), recorded by the eval.
+- Amendment entries may list question `triggers` (+ `context`); a matching question brings
+  the entry's pages in whatever the search found.
+- When the first draft is a non-answer, the best relevance is ≥ 0.9 and a direct page's
+  document title shares two distinctive words with the question, the model is asked once
+  for a partial answer from those pages; a second "not found" stands.
+- Hindi non-answer patterns ("प्रमाण पत्रों में … उल्लेख नहीं", "प्रमाण पत्र S1 …") and
+  "experience clause(s)" playbook triggers added.

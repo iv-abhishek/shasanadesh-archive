@@ -599,3 +599,64 @@ export function buildConservativeFallback(
     "The source card below opens the full order; take dates, amounts and numbers from the original page.",
   ].join(" ");
 }
+
+const CONTENT_WORD_RE = /[\p{L}\p{M}]{4,}/gu;
+
+function contentWords(text: string): Set<string> {
+  return new Set((stripCitations(text).toLowerCase().match(CONTENT_WORD_RE) ?? []).map((word) => word.normalize("NFC")));
+}
+
+/**
+ * Put the right citation on figures the model cited to the wrong page, or not
+ * at all (ADR-098). A sentence whose figure fails validation gets the citation
+ * of the evidence page that prints every one of its figures reliably and
+ * shares the most words with it (at least 3). Nothing is invented: the figure
+ * must already be on that page; otherwise the sentence is left for the repair.
+ * Returns the answer with citations added, and how many were added.
+ */
+export function addMissingCitations(
+  answer: string,
+  evidence: RetrievalEvidence[],
+  question = "",
+): { answer: string; added: number } {
+  const named = namedNumbers(evidence, question);
+  const evidenceByKey = new Map(evidence.map((item) => [citationKey(item.label, item.page_number), item]));
+  const pageWords = new Map(evidence.map((item) => [item, contentWords(`${item.selected_page_text} ${item.canonical_page_text}`)]));
+  const units = claimUnitsByLine(answer);
+  let out = answer;
+  let cursor = 0;
+  let added = 0;
+
+  units.forEach((entry, index) => {
+    const unit = withoutListMarker(entry.text);
+    const at = out.indexOf(entry.text, cursor);
+    if (at < 0) return;
+    cursor = at + entry.text.length;
+    const issue = numericUnitIssue(unit, unitCitationsWithLine(units, index), evidenceByKey, named);
+    if (!issue || (issue.code !== "uncited_numeric_claim" && issue.code !== "unsupported_numeric_claim")) return;
+
+    const digits = digitGroups(stripCitations(unit)).filter((group) => !named.has(group)).join(" ");
+    const words = contentWords(unit);
+    let best: { item: RetrievalEvidence; overlap: number } | null = null;
+    for (const item of evidence) {
+      if (item.retrieval_role === "neighbor" && !item.selected_page_text) continue;
+      const reliable = !isRiskyNumericEvidence(item) || variantsAgreeOn(digits, item);
+      if (!reliable || !numbersSupportedBy(digits, [item])) continue;
+      const onPage = pageWords.get(item) ?? new Set<string>();
+      const overlap = [...words].filter((word) => onPage.has(word)).length;
+      if (overlap >= 3 && (!best || overlap > best.overlap)) best = { item, overlap };
+    }
+    if (!best) return;
+
+    const citation = `[${best.item.label} p.${best.item.page_number}]`;
+    // Before the closing full stop / danda when there is one, else at the end.
+    const fixed = /[.।!?]\s*$/u.test(entry.text)
+      ? entry.text.replace(/\s*([.।!?])\s*$/u, ` ${citation}$1`)
+      : `${entry.text} ${citation}`;
+    out = `${out.slice(0, at)}${fixed}${out.slice(at + entry.text.length)}`;
+    cursor = at + fixed.length;
+    added++;
+  });
+
+  return { answer: out, added };
+}

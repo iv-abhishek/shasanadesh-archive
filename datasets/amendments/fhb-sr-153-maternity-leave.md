@@ -13,6 +13,12 @@ amended_by:
   - जी-2-2017/दस-2008-216/79 | 2008-12-08 | | period of maternity leave for confinement raised to 180 days (Vitta Path 2011 p.9 states 180 days)
 # 4 Oct: the 08.12.2008 GO was identified by the owner (via web research); check
 # its text before setting reviewed: true. Add its archived page when ingested.
+triggers:
+  - maternity leave
+  - maternity
+  - प्रसूति अवकाश
+  - मातृत्व अवकाश
+  - प्रसूति
 reviewed: false
 ---
 The printed rule (FHB p.183) gives "three months" and a limit of three times in service;

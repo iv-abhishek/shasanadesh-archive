@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { stripVerificationNotes,
+  addMissingCitations,
   buildQualitativeSalvage,
   validateAnswer,
 } from "./answer-validation.js";
@@ -338,4 +339,23 @@ console.log(
   );
   if (!kept.includes("10 per cent") || kept.includes("7 instalments")) throw new Error(`salvage should keep 10% and drop 7: ${kept}`);
   console.log("line-citation, variant-agreement and figure-keeping salvage tests passed");
+}
+
+// ADR-098: a figure cited to the wrong page gets the page that prints it.
+{
+  const page = (label: string, page_number: number, text: string) =>
+    ({ label, page_number, source_id: `doc-${label}`, selected_page_text: text, canonical_page_text: text, numeric_verification_status: "native_primary" }) as never;
+  const s1 = page("S1", 3, "Purchase of goods without quotation: general conditions for the purchase committee and the buyer.");
+  const s2 = page("S2", 155, "Purchase of goods without quotation up to the value of Rs 50,000 on each occasion may be made by the competent authority.");
+  const wrong = "• Goods may be purchased without quotation up to Rs 50,000 on each occasion [S1 p.3].";
+  const fixed = addMissingCitations(wrong, [s1, s2]);
+  if (fixed.added !== 1 || !fixed.answer.includes("[S2 p.155]")) throw new Error(`should add S2: ${fixed.answer}`);
+  if (!validateAnswer(fixed.answer, [s1, s2]).ok) throw new Error("re-cited answer should validate");
+  // A figure on no page stays as it is (left for the repair).
+  const invented = "• The limit is Rs 75,000 for each purchase of goods without quotation [S1 p.3].";
+  if (addMissingCitations(invented, [s1, s2]).added !== 0) throw new Error("must not cite a page without the figure");
+  // Too few shared words: no citation added.
+  const unrelated = "• Fees are Rs 50,000 [S1 p.3].";
+  if (addMissingCitations(unrelated, [s1, s2]).added !== 0) throw new Error("needs at least 3 shared words");
+  console.log("citation correction tests passed");
 }

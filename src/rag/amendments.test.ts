@@ -96,3 +96,12 @@ assert.throws(() => parseAmendment("---\nid: x\nrule: R\nrule_pages:\n  - b p.1\
 assert.throws(() => parseAmendment("---\nid: x\nrule: R\nrule_pages:\n  - b p.1\namended_by:\n  - 1/2020 | 1.1.2020 | |\n---\n"), /YYYY-MM-DD/);
 
 console.log(`amendment register tests passed (${entries.length} entries)`);
+
+// Question triggers bring an entry in even when the search found other pages.
+{
+  const found = amendmentsFor([ev("up-fhb-vol2", 304)], undefined, "maximum earned leave that can be accumulated");
+  assert.deepEqual(found.map((e) => e.id), ["fr-81b-earned-leave-limit"]);
+  assert.deepEqual(amendmentsFor([ev("x", 1)], undefined, "earned leave encashment procedure").map((e) => e.id), [], "earned leave alone is not the limit");
+  assert.deepEqual(amendmentsFor([ev("x", 1)], undefined, "महिला कर्मचारी को प्रसूति अवकाश कितने दिन").map((e) => e.id), ["fhb-sr-153-maternity-leave"]);
+  console.log("amendment trigger tests passed");
+}

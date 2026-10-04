@@ -119,10 +119,10 @@ const NON_ANSWER_SENTENCE = new RegExp(
     String.raw`\bthere\s+is\s+no\s+(?:specific\s+)?information\b`,
     "कोई\\s+(?:विशिष्ट\\s+|स्पष्ट\\s+|संबंधित\\s+)?जानकारी\\s+(?:नहीं|उपलब्ध\\s+नहीं)",
     "जानकारी\\s+(?:नहीं\\s+(?:दी|मिली|है)|उपलब्ध\\s+नहीं)",
-    "(?:साक्ष्य|प्रमाण|दस्तावेज़ों|दस्तावेजों|पृष्ठों)\\s+में\\s+[^।]*?(?:उल्लेख|जानकारी|प्रावधान)\\s+नहीं",
+    "(?:साक्ष्य|साक्ष्यों|प्रमाण|प्रमाण\\s*पत्रों|दस्तावेज़ों|दस्तावेजों|पृष्ठों|आदेशों)\\s+में\\s+[^।]*?(?:उल्लेख|जानकारी|प्रावधान)\\s+नहीं",
     // Describing the sources instead of answering: "स्रोत S1 में केवल ई-रिक्शा …",
     // "Sources S2 and S5 concern road safety …" (metro fare, 3 Oct eval).
-    String.raw`(?:^|\s)(?:स्रोत|sources?)\s+S\d`,
+    String.raw`(?:^|\s)(?:स्रोत|sources?|प्रमाण\s*पत्र|प्रमाण|साक्ष्य|evidence)\s+S\d`,
     // "The retrieved page from … contains only …" (3 Oct, consultancy manual).
     String.raw`\bthe\s+(?:retrieved|provided|given|supplied|cited)\s+(?:page|pages|documents?|evidence|excerpts?|orders?|sources?)\b`,
     "प्रस्तुत\\s+(?:प्रमाण|साक्ष्य|स्रोत)",
@@ -182,3 +182,23 @@ export function noEvidenceMessage(language: "en" | "hi", searchedAllDepartments:
     " Ask again with the department, scheme name or GO number, or use order search to find orders by subject words.",
   ].join("");
 }
+
+/**
+ * True when a direct evidence page belongs to a document whose title shares
+ * at least two distinctive words with the question ("खिलौना … नीति-2025"):
+ * the question is about that document, so "not found" deserves a second look.
+ */
+export function evidenceNamesTheQuestion(evidence: RetrievalEvidence[], question: string): boolean {
+  const words = (text: string) =>
+    new Set((text.normalize("NFC").toLowerCase().match(/[\p{L}\p{M}]{4,}/gu) ?? []).filter((word) => !TITLE_STOPWORDS.has(word)));
+  const asked = words(question);
+  return evidence.some((item) => {
+    if (item.retrieval_role === "neighbor" || !item.document_title) return false;
+    const title = words(item.document_title);
+    return [...asked].filter((word) => title.has(word)).length >= 2;
+  });
+}
+
+const TITLE_STOPWORDS = new Set([
+  "उत्तर", "प्रदेश", "सम्बन्ध", "संबंध", "शासनादेश", "आदेश", "order", "orders", "government", "pradesh", "uttar", "what", "does", "about", "under", "with",
+]);

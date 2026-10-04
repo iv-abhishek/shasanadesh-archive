@@ -84,6 +84,8 @@ interface DoneEvent {
   usedQualitativeSalvage?: boolean;
   citations?: string[];
   firstValidationIssues?: string[];
+  firstValidationExcerpts?: string[];
+  citationsAdded?: number;
   repairValidationIssues?: string[];
   noEvidence?: boolean;
   /** no_relevant_pages | model_found_no_answer | model_prose_non_answer */
@@ -129,6 +131,8 @@ interface CaseResult {
   expectedCitationPageHit: boolean | null;
   internalPlaceholderLeak: boolean | null;
   firstValidationIssues: string[];
+  firstValidationExcerpts?: string[];
+  citationsAdded?: number;
   repairValidationIssues: string[];
   answer: string | null;
   error: string | null;
@@ -1091,6 +1095,8 @@ async function evaluateCase(
       chat.done
         ?.firstValidationIssues ??
       [],
+    firstValidationExcerpts: chat.done?.firstValidationExcerpts ?? [],
+    citationsAdded: chat.done?.citationsAdded ?? 0,
     repairValidationIssues:
       chat.done
         ?.repairValidationIssues ??

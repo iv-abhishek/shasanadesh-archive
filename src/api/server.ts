@@ -43,6 +43,7 @@ import {
   buildConservativeFallback,
   stripVerificationNotes,
   validateAnswer,
+  addMissingCitations,
 } from "../rag/answer-validation.js";
 import {
   authorityLabel,
@@ -95,7 +96,7 @@ import {
   closestDocumentsFooter,
   GENERAL_KNOWLEDGE_ENABLED,
 } from "../rag/general-knowledge.js";
-import { assessRelevance, followUpNotCoveredMessage, hasEvidenceFromDepartments, isNoAnswer, isProseNonAnswer, noEvidenceMessage, withoutNoAnswerToken } from "../rag/relevance.js";
+import { assessRelevance, followUpNotCoveredMessage, hasEvidenceFromDepartments, isNoAnswer, isProseNonAnswer, evidenceNamesTheQuestion, noEvidenceMessage, withoutNoAnswerToken } from "../rag/relevance.js";
 import { trimIncompleteAnswer } from "../rag/truncation.js";
 import { findLaterChanges, type LaterChange } from "../rag/later-changes.js";
 import { asksWhatOrderSays, detectListingRequest, jurisdictionsInQuery, listOrders, type SubjectSearch } from "../rag/order-listing.js";
@@ -2208,7 +2209,8 @@ server.post(
     // A rule whose printed text was changed by a GO (ADR-094): bring in the
     // other side (printed rule, current position, archived amending GO) so the
     // answer shows both, each cited. A failure only loses the extra pages.
-    let amendmentEntries = amendmentsFor(retrieval.evidence);
+    const amendmentQuestion = `${query} ${searchQuestion}`;
+    let amendmentEntries = amendmentsFor(retrieval.evidence, undefined, amendmentQuestion);
     if (amendmentEntries.length) {
       const extra = missingPages(amendmentEntries, retrieval.evidence);
       if (extra.length) {
@@ -2220,7 +2222,7 @@ server.post(
           request.log.warn({ err: error }, "amendment pages unavailable");
         }
       }
-      amendmentEntries = amendmentsFor(retrieval.evidence);
+      amendmentEntries = amendmentsFor(retrieval.evidence, undefined, amendmentQuestion);
     }
     const ruleAmendments = cardAmendments(amendmentEntries, responseLanguage);
     const amendmentBlock = amendmentPrompt(amendmentEntries, retrieval.evidence, responseLanguage);
@@ -2374,8 +2376,44 @@ server.post(
 
     draftStreamer?.finish();
 
-    const firstDraft =
+    let firstDraft =
       firstCompletion.text;
+
+    // The model said "not found" although a page of the very document the
+    // question names is among the best matches (toy policy, 4 Oct eval:
+    // relevance 0.996, NO_ANSWER). Ask once more for what these pages do say
+    // (ADR-098); a second "not found" stands.
+    if (
+      (isNoAnswer(firstDraft) || isProseNonAnswer(firstDraft)) &&
+      relevance.best >= 0.9 &&
+      evidenceNamesTheQuestion(retrieval.evidence, `${query} ${searchQuestion}`)
+    ) {
+      try {
+        const retry = await generateCompletion(
+          LLM_REQUEST_TIMEOUT_MS,
+          [
+            ...generatorMessages,
+            { role: "assistant", content: firstDraft },
+            {
+              role: "user",
+              content:
+                "The pages above include the document the question is about (see its title). Answer from what these pages say about the question, even if they cover only part of it; say plainly which part they do not cover. Cite every point. Reply NO_ANSWER_IN_EVIDENCE only if none of the pages says anything relevant.",
+            },
+          ],
+          LLM_TEMPERATURE,
+          tokenBudget,
+          undefined,
+          stop.signal,
+        );
+        if (!isNoAnswer(retry.text) && !isProseNonAnswer(retry.text)) {
+          request.log.info({ query }, "not-found draft replaced by a partial answer");
+          firstDraft = retry.text;
+        }
+      } catch (error) {
+        if (stop.signal.aborted) throw error;
+        request.log.warn({ err: error }, "partial-answer retry failed");
+      }
+    }
 
       const generationMs =
       performance.now() -
@@ -2402,11 +2440,14 @@ server.post(
       return;
     }
 
+    // Figures cited to the wrong page (or not at all) get the citation of the
+    // evidence page that prints them, before validation (ADR-098).
+    const recited = addMissingCitations(firstDraft, retrieval.evidence, `${query} ${conversationPlan.retrievalQuery}`);
     const firstValidation =
-        validateCurrentAnswer(firstDraft);
+        validateCurrentAnswer(recited.answer);
 
       let finalAnswer =
-        firstDraft;
+        recited.answer;
 
       // True when the answer shown was shortened at the token limit.
       let shortened =
@@ -2436,7 +2477,7 @@ server.post(
       if (!finalValidation.ok) {
         const preRepairSalvage =
           buildQualitativeSalvage(
-            firstDraft,
+            recited.answer,
             retrieval.evidence,
             `${query} ${conversationPlan.retrievalQuery}`,
           );
@@ -2468,13 +2509,13 @@ server.post(
             ...generatorMessages,
             {
               role: "assistant",
-              content: firstDraft,
+              content: recited.answer,
             },
             {
               role: "user",
               content:
                 buildAnswerRepairInstruction(
-                  firstDraft,
+                  recited.answer,
                   firstValidation,
                 ),
             },
@@ -2674,6 +2715,11 @@ server.post(
             firstValidation.issues.map(
               (issue) => issue.code,
             ),
+          // The failing sentences, for the eval report (ADR-098).
+          firstValidationExcerpts: firstValidation.issues
+            .map((issue) => `${issue.code}: ${(issue.excerpt ?? "").slice(0, 200)}`)
+            .slice(0, 6),
+          citationsAdded: recited.added || undefined,
           repairValidationIssues,
           // Salvage and fallback texts are built whole, never shortened.
           shortened:

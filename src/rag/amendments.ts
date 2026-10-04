@@ -18,6 +18,10 @@
  *     - core-rules-up-vitta-path-09-leave-rules p.9
  *   amended_by:               (GO number | date | source-id p.N or blank | what changed)
  *     - G-4-484/X-90-216-79 | 1990-05-03 | | limit of three maternity leaves removed
+ *   triggers:                 (optional: question words that bring the entry in
+ *     - maternity leave         even when the search found other pages)
+ *   context:                  (optional: one of these must also be in the question)
+ *     - limit
  *   reviewed: false
  *   ---
  *   Notes for the answer (optional).
@@ -29,6 +33,7 @@
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { matchedTriggers } from "./playbooks.js";
 import type { RetrievalEvidence } from "./types.js";
 
 export interface RegisterPage {
@@ -51,6 +56,8 @@ export interface AmendmentEntry {
   rulePages: RegisterPage[];
   currentPages: RegisterPage[];
   amendedBy: AmendingOrder[];
+  triggers: string[];
+  context: string[];
   reviewed: boolean;
   notes: string;
 }
@@ -115,6 +122,8 @@ export function parseAmendment(text: string, fileName = "amendment"): AmendmentE
     rulePages,
     currentPages: items("current_pages").map((ref) => parsePage(ref, fileName)),
     amendedBy,
+    triggers: items("triggers").map((item) => item.replace(/^["']|["']$/g, "")),
+    context: items("context").map((item) => item.replace(/^["']|["']$/g, "")),
     reviewed: scalar("reviewed") === "true",
     notes: match[2].trim(),
   };
@@ -144,12 +153,18 @@ function entryPages(entry: AmendmentEntry): RegisterPage[] {
   ];
 }
 
-/** Register entries touched by the evidence (a rule page, a current page or an amending GO). */
-export function amendmentsFor(evidence: RetrievalEvidence[], entries = loadAmendments()): AmendmentEntry[] {
+/**
+ * Register entries touched by the evidence (a rule page, a current page or an
+ * amending GO), or named by the question (the entry's triggers): the search
+ * may find other pages on the subject ("maximum earned leave" found FHB p.304,
+ * not p.71 where the limit is printed; 4 Oct eval).
+ */
+export function amendmentsFor(evidence: RetrievalEvidence[], entries = loadAmendments(), question = ""): AmendmentEntry[] {
   if (!AMENDMENTS_ENABLED) return [];
   const pages = new Set(evidence.map((item) => key(item.source_id, item.page_number)));
   const amendingSources = new Set(evidence.map((item) => item.source_id));
   return entries.filter((entry) => {
+    if (question && matchedTriggers(question, entry.triggers, entry.context).length) return true;
     if (entryPages(entry).some((page) => pages.has(key(page.sourceId, page.pageNumber)))) return true;
     // Any page of a separate amending GO links it; an amendment printed inside
     // the rulebook itself links only through its own page (checked above).

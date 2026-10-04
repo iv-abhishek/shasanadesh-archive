@@ -132,6 +132,14 @@ function contains(haystack: string, phrase: string): boolean {
   return needle.trim().length > 0 && haystack.includes(needle);
 }
 
+/** Matched triggers of a question (whole words; context words required when given). */
+export function matchedTriggers(question: string, triggers: string[], context: string[] = []): string[] {
+  if (!question.trim() || !triggers.length) return [];
+  const text = normalizeForMatch(question);
+  if (context.length && !context.some((word) => contains(text, word))) return [];
+  return triggers.filter((trigger) => contains(text, trigger));
+}
+
 export interface PlaybookMatch {
   playbook: Playbook;
   score: number;
