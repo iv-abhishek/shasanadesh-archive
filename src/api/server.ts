@@ -1759,6 +1759,19 @@ server.post(
     }
 
     let agentResult: ResearchResult | null = null;
+    // Shown in the latency panel and recorded by the eval on every kind of reply.
+    const agentSummary = () =>
+      agentResult
+        ? {
+            steps: agentResult.steps,
+            stoppedBy: agentResult.stoppedBy,
+            answerable: agentResult.answerable,
+            note: agentResult.note,
+            usedWeb: agentResult.usedWeb,
+            ms: Math.round(agentResult.ms),
+            tools: agentResult.trace.map((t) => ({ tool: t.tool, found: t.found, ms: t.ms, ...(t.error ? { error: t.error } : {}) })),
+          }
+        : undefined;
     if (agentMode) {
       const hints: string[] = [];
       if (playbookMatch) {
@@ -1938,9 +1951,11 @@ server.post(
     // question is about those orders, and the model says when they do not
     // answer it (no widening to other orders).
     // Pages the agent chose (ADR-102) are kept like a playbook's.
+    // An agent that finished with answerable=false found nothing that answers:
+    // go straight to the "not found" / general-knowledge path (agent eval, 4 Oct).
     let relevance = followSourceIds || usingPlaybook || agentMode
       ? {
-          kept: retrieval.evidence,
+          kept: agentResult?.answerable === false ? [] : retrieval.evidence,
           dropped: 0,
           best: assessRelevance(retrieval.evidence, RAG_MIN_RELEVANCE).best,
         }
@@ -2053,6 +2068,7 @@ server.post(
       streamValidatedText(sendEvent, text);
       sendEvent("done", {
         ok: true,
+        agent: agentSummary(),
         validated: true,
         noEvidence: true,
         noEvidenceReason: reason,
@@ -2183,6 +2199,7 @@ server.post(
                 streamValidatedText(sendEvent, withoutNoAnswerToken(stripVerificationNotes(answer)));
                 sendEvent("done", {
                   ok: true,
+                  agent: agentSummary(),
                   validated: true,
                   secondSearch: true,
                   usedQualitativeSalvage: salvaged,
@@ -2270,6 +2287,7 @@ server.post(
                 streamValidatedText(sendEvent, withoutNoAnswerToken(stripVerificationNotes(answer)));
                 sendEvent("done", {
                   ok: true,
+                  agent: agentSummary(),
                   validated: true,
                   webSearch: true,
                   usedQualitativeSalvage: salvaged,
@@ -2304,6 +2322,7 @@ server.post(
         streamValidatedText(sendEvent, body + closestDocumentsFooter(closest, responseLanguage));
         sendEvent("done", {
           ok: true,
+          agent: agentSummary(),
           validated: false,
           generalKnowledge: true,
           correctedQuestion: searchPlan.corrected,
@@ -2837,17 +2856,7 @@ server.post(
           amendments: amendmentEntries.length
             ? amendmentEntries.map((entry) => ({ id: entry.id, rule: entry.rule, reviewed: entry.reviewed }))
             : undefined,
-          agent: agentResult
-            ? {
-                steps: agentResult.steps,
-                stoppedBy: agentResult.stoppedBy,
-                answerable: agentResult.answerable,
-                note: agentResult.note,
-                usedWeb: agentResult.usedWeb,
-                ms: Math.round(agentResult.ms),
-                tools: agentResult.trace.map((t) => ({ tool: t.tool, found: t.found, ms: t.ms, ...(t.error ? { error: t.error } : {}) })),
-              }
-            : undefined,
+          agent: agentSummary(),
           playbook: (usingPlaybook || (agentMode && playbookPages?.evidence.length)) && playbookMatch
             ? { id: playbookMatch.playbook.id, title: playbookMatch.playbook.title, reviewed: playbookMatch.playbook.reviewed }
             : undefined,

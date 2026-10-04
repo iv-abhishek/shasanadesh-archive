@@ -129,6 +129,12 @@ const NON_ANSWER_SENTENCE = new RegExp(
     // "उपलब्ध प्रमाण केवल ई-रिक्शा … से संबंधित हैं", "The available orders only concern …".
     "उपलब्ध\\s+(?:प्रमाण|साक्ष्य|आदेश|दस्तावेज़|दस्तावेज)\\s+(?:केवल|मुख्य\\s+रूप\\s+से)",
     String.raw`\bthe\s+available\s+(?:evidence|orders?|documents?|pages?)\s+(?:only|mainly|mostly)\b`,
+    // Agent eval, 4 Oct: "None of the retrieved pages contain …", "no document provides …",
+    // "It does not address …", "उपलब्ध साक्ष्य … से संबंधित नहीं है".
+    String.raw`\bnone\s+of\s+the\s+(?:retrieved\s+|provided\s+|available\s+|given\s+|cited\s+)?(?:pages?|documents?|evidence|orders?|sources?)\b`,
+    String.raw`\bno\s+(?:document|page|order|source|evidence)s?\s+(?:here\s+)?(?:provides?|contains?|mentions?|covers?|addresses?|specifies|gives?)\b`,
+    String.raw`^(?:it|this|they|these)\s+(?:does|do)\s+not\s+(?:address|cover|contain|mention|provide|specify|deal\s+with|relate\s+to)\b`,
+    "(?:साक्ष्य|प्रमाण|दस्तावेज़|दस्तावेज|आदेश|पृष्ठ)\\S*\\s+[^।]*?(?:से\\s+संबंधित|के\\s+बारे\\s+में)\\s+नहीं\\s+(?:है|हैं)",
   ].join("|"),
   "iu",
 );

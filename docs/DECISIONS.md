@@ -1838,3 +1838,14 @@ the A/B eval was slow. Agent searches now score 12 pages (40 candidates) instead
 (`RAG_AGENT_RERANK_COUNT`), and a search repeated word for word in a later round is served
 from the same request's cache.
 
+**First A/B (4 Oct 2026, 55 cases, DeepSeek V4 Flash both sides).** Agent 83.6% vs classic
+85.5% pass — but validated 98.2% (94.5%), expected page cited 87.5% (81.3%), fallback 2.3%,
+and it solved both solar-pump cases and the medical-officers seniority case that every
+classic run missed. It lost all three out-of-scope questions (passport, income tax, Delhi
+licence): it finished with unrelated pages and the writer said so in prose the detector did
+not know ("None of the retrieved pages contain …", "उपलब्ध साक्ष्य … से संबंधित नहीं है").
+Fixes: answerable=false from the agent goes straight to the not-found / general-knowledge
+path; four more non-answer sentence patterns; agent details on every reply type. Cost
+$0.0044 per question (classic $0.0005); median reply 45 s (classic 28 s). Decision after a
+re-run: switch on if it passes ≥ classic.
+
