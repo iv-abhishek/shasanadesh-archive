@@ -25,6 +25,7 @@ Do not place real secrets in this document.
 | `RAG_WEB_SEARCH_DAILY_CREDITS` | daily search credits (default `30`; one search = 2 credits, at most 2 searches per question) |
 | `RAG_WEB_SEARCH_MIN_SCORE` | minimum search relevance for a page to be used (default `0.3`) |
 | `RAG_WEB_SEARCH_TIMEOUT_MS` | time limit per web search (default `25000`) |
+| `OPENROUTER_FALLBACK_MODEL` | second OpenRouter model, tried when the first fails before writing (ADR-101; e.g. `qwen/qwen3.8-flash`) |
 | `RAG_ALLOW_MODEL_OVERRIDE` | `1` lets a chat request choose its answer model (model comparisons only; ADR-100). Leave unset in use |
 | `RAG_REASONING_REQUIRED_PREFIXES` | model id prefixes that cannot turn thinking off (default `google/gemini-3,anthropic/claude,openai/gpt-oss`); they think at low effort |
 | `RAG_CHAT_INCLUDE_ROUTINE` | `0` leaves confident routine (tier C) orders out of chat again (ADR-081) |

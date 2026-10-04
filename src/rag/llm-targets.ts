@@ -3,9 +3,11 @@
  *
  * Primary and fallback, both OpenAI-compatible:
  *   - LLM_PROVIDER=openrouter: OpenRouter (key OPENROUTER_API_KEY, model
- *     OPENROUTER_MODEL, default qwen/qwen3.6-35b-a3b), Qwen's thinking turned
- *     off (reasoning.enabled=false). A model server in LLM_BASE_URL/LLM_MODEL
- *     (the local MLX Qwen that dev:all starts) becomes the fallback, unless
+ *     OPENROUTER_MODEL, default qwen/qwen3.6-35b-a3b; ADR-101: DeepSeek V4
+ *     Flash), thinking off where the model allows it (reasoningFor). An
+ *     optional second OpenRouter model, OPENROUTER_FALLBACK_MODEL (Qwen 3.8
+ *     Flash), is tried next; then a model server in LLM_BASE_URL/LLM_MODEL
+ *     (the local MLX Qwen that dev:all starts), unless
  *     LLM_FALLBACK_BASE_URL/LLM_FALLBACK_MODEL name another.
  *   - otherwise: LLM_BASE_URL/LLM_MODEL as before, with an optional
  *     LLM_FALLBACK_BASE_URL/LLM_FALLBACK_MODEL.
@@ -18,6 +20,8 @@ import OpenAI from "openai";
 
 export interface LlmTarget {
   name: "primary" | "fallback";
+  /** Extra output tokens for models that must think before answering (ADR-100). */
+  extraTokens?: number;
   label: string;
   baseURL: string;
   apiKey: string;
@@ -83,25 +87,30 @@ export function readLlmTargets(env: NodeJS.ProcessEnv = process.env): LlmTarget[
 
   if ((env.LLM_PROVIDER ?? "").trim().toLowerCase() === "openrouter") {
     const key = env.OPENROUTER_API_KEY?.trim();
+    const hosted = (name: LlmTarget["name"], model: string): LlmTarget => {
+      // Thinking off where the model allows it; brief and hidden where it must think.
+      const reasoning = reasoningFor(model, env);
+      return {
+        name,
+        label: `OpenRouter ${model}`,
+        baseURL: OPENROUTER_BASE_URL,
+        apiKey: key!,
+        model,
+        extraBody: { ...reasoning.body, ...extra },
+        extraTokens: reasoning.extraTokens,
+        headers: { "HTTP-Referer": env.APP_PUBLIC_URL?.trim() || "http://localhost:3000", "X-Title": "Sandarbh" },
+        local: false,
+      };
+    };
     const model = env.OPENROUTER_MODEL?.trim() || DEFAULT_OPENROUTER_MODEL;
-    const primary: LlmTarget | null = key
-      ? {
-          name: "primary",
-          label: `OpenRouter ${model}`,
-          baseURL: OPENROUTER_BASE_URL,
-          apiKey: key,
-          model,
-          // Qwen3.x thinks before answering unless told not to (slow, costly).
-          extraBody: { reasoning: { enabled: false }, ...extra },
-          headers: { "HTTP-Referer": env.APP_PUBLIC_URL?.trim() || "http://localhost:3000", "X-Title": "Sandarbh" },
-          local: false,
-        }
-      : null;
+    const primary: LlmTarget | null = key ? hosted("primary", model) : null;
     if (!primary) console.warn("LLM_PROVIDER=openrouter but OPENROUTER_API_KEY is not set: using LLM_BASE_URL only.");
+    const hostedFallbackModel = env.OPENROUTER_FALLBACK_MODEL?.trim();
+    const hostedFallback = key && hostedFallbackModel && hostedFallbackModel !== model ? hosted("fallback", hostedFallbackModel) : null;
     const fallback =
       fallbackExplicit ?? plainTarget("fallback", env.LLM_BASE_URL, env.LLM_MODEL, env.LLM_API_KEY, {});
     if (!primary) return fallback ? [{ ...fallback, name: "primary" }] : [];
-    return fallback ? [primary, fallback] : [primary];
+    return [primary, ...(hostedFallback ? [hostedFallback] : []), ...(fallback ? [fallback] : [])];
   }
 
   const primary = plainTarget("primary", env.LLM_BASE_URL, env.LLM_MODEL, env.LLM_API_KEY, extra);

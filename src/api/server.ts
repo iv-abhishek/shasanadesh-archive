@@ -732,7 +732,7 @@ async function generateCompletion(
   onDelta?: (text: string) => void,
   signal?: AbortSignal,
 ): Promise<{ text: string; truncated: boolean; model: string; fellBack: boolean }> {
-  const runOn = async (target: LlmTarget & { extraTokens?: number }, onWritten: () => void) => {
+  const runOn = async (target: LlmTarget, onWritten: () => void) => {
       // Stopped while waiting for the GPU: give the slot to the next question.
       signal?.throwIfAborted();
       const openai = clientFor(target, timeoutMs);

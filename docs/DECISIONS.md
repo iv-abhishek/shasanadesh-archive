@@ -1713,3 +1713,17 @@ Before moving to an agent design, measure how much a stronger model changes the 
   validated, fallback, salvage, wrong/right not-found, cited page, median time, cost per
   question, tokens, and every answer side by side.
 - Retrieval and the rewording model stay the same, so only answer writing is compared.
+
+## ADR-101 - Answer model: DeepSeek V4 Flash, Qwen 3.8 Flash as hosted backup (4 Oct 2026)
+
+**Bake-off (ADR-100), 55 cases, same retrieval:** Qwen 3.8 Flash 87.3% ($0.0010/question),
+DeepSeek V4 Flash 85.5% ($0.0005, best validated 94.5%, least salvage 9%), Gemini 3.8 Flash
+85.5% ($0.0065), gpt-oss-120b 74.5% (17.9% fallback), Qwen 3.6 78–87% over six runs
+(noise ±5 points), Mistral Large 3 not scored (provider rate limits). Every model failed the
+same retrieval cases (solar pump, Project Alankar, KGMU): the ceiling is search, not the model.
+
+**Decision (owner).** `OPENROUTER_MODEL=deepseek/deepseek-v4-flash`,
+`OPENROUTER_FALLBACK_MODEL=qwen/qwen3.8-flash` (different provider: one outage does not stop
+answers), then the local MLX model. Each hosted target gets its own reasoning setting
+(`reasoningFor`). No hardware purchase for now. Users are individuals for now: providers'
+data policies are not restricted unless a government department asks.
