@@ -26,7 +26,7 @@ Do not place real secrets in this document.
 | `RAG_WEB_SEARCH_MIN_SCORE` | minimum search relevance for a page to be used (default `0.3`) |
 | `RAG_WEB_SEARCH_TIMEOUT_MS` | time limit per web search (default `25000`) |
 | `RAG_ALLOW_MODEL_OVERRIDE` | `1` lets a chat request choose its answer model (model comparisons only; ADR-100). Leave unset in use |
-| `RAG_REASONING_REQUIRED_PREFIXES` | model id prefixes that cannot turn thinking off (default `google/gemini-3,anthropic/claude`); they think at low effort |
+| `RAG_REASONING_REQUIRED_PREFIXES` | model id prefixes that cannot turn thinking off (default `google/gemini-3,anthropic/claude,openai/gpt-oss`); they think at low effort |
 | `RAG_CHAT_INCLUDE_ROUTINE` | `0` leaves confident routine (tier C) orders out of chat again (ADR-081) |
 | `CORS_ORIGINS` | optional comma-separated origins allowed to call the API directly; empty by default because browsers use the same-origin Next.js proxy |
 
