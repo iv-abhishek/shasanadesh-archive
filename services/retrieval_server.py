@@ -129,6 +129,9 @@ class Evidence(BaseModel):
     matched_chunk_text: str
     selected_page_text: str
     canonical_page_text: str
+    # Other extractions of the page (native/OCR) when its numbers conflict, so
+    # the API can accept a figure that every extraction prints the same way.
+    other_variant_texts: list[str] = []
 
 
 class SearchResponse(BaseModel):
@@ -718,6 +721,17 @@ def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
 
     selected_text = selected["text_content"] if selected else hit.text
     canonical_text = canonical["text_content"] if canonical else selected_text
+    other_texts: list[str] = []
+    if hit.numeric_conflict:
+        other_texts = [
+            row["text_content"]
+            for row in conn.execute(
+                "SELECT text_content FROM page_variants "
+                "WHERE source_id=%s AND page_number=%s AND variant_id<>%s",
+                (hit.source_id, hit.page_number, hit.variant_id),
+            ).fetchall()
+            if row["text_content"] and row["text_content"] not in (selected_text, canonical_text)
+        ]
 
     # HTML sources (UP Financial Handbook) keep one official URL per page in
     # documents.metadata.pageUrls; PDFs link to the page with #page=N.
@@ -760,6 +774,7 @@ def hydrate(conn: psycopg.Connection, hit: Hit, label: str) -> Evidence:
         matched_chunk_text=hit.text,
         selected_page_text=selected_text,
         canonical_page_text=canonical_text,
+        other_variant_texts=other_texts,
     )
 
 

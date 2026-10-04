@@ -8,6 +8,7 @@
  * never presented as validated. Titles of the closest archived documents are
  * given to the model as hints and listed under the answer for checking.
  */
+import { toRelevance } from "./relevance.js";
 import type { RetrievalEvidence } from "./types.js";
 
 export const GENERAL_KNOWLEDGE_ENABLED = process.env.RAG_GENERAL_KNOWLEDGE !== "0";
@@ -18,10 +19,18 @@ export interface ClosestDocument {
 }
 
 /** Up to three distinct documents among the retrieved pages, best first. */
-export function closestDocuments(evidence: RetrievalEvidence[], limit = 3): ClosestDocument[] {
+/**
+ * Archive documents worth checking. Only pages that passed the relevance gate
+ * (`minRelevance`) qualify: when nothing was relevant, listing the nearest
+ * unrelated orders (an excise policy under a passport question, 4 Oct eval)
+ * looks careless, so the list is left out.
+ */
+export function closestDocuments(evidence: RetrievalEvidence[], limit = 3, minRelevance = 0): ClosestDocument[] {
   const seen = new Set<string>();
   const out: ClosestDocument[] = [];
-  for (const item of evidence) {
+  const relevance = toRelevance(evidence.map((item) => item.rerank_score_raw));
+  for (const [index, item] of evidence.entries()) {
+    if (relevance[index] < minRelevance) continue;
     if (item.retrieval_role === "neighbor" || seen.has(item.source_id)) continue;
     seen.add(item.source_id);
     const title = (item.document_title ?? "").replace(/\s+/g, " ").trim();

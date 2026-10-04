@@ -18,6 +18,32 @@ triggers:
   - सूक्ष्म एवं लघु
   - सूक्ष्म व लघु
   - एमएसएमई
+context:
+  - bid
+  - bids
+  - bidder
+  - bidders
+  - tender
+  - tenders
+  - procurement
+  - purchase
+  - emd
+  - earnest money
+  - bid security
+  - performance security
+  - epbg
+  - experience
+  - turnover
+  - gem
+  - quotation
+  - निविदा
+  - क्रय
+  - खरीद
+  - जेम
+  - ईएमडी
+  - अनुभव
+  - टर्नओवर
+  - सिक्योरिटी
 pages:
   - core-rules-gem-gtc-4-0 p.18
   - core-rules-gem-gtc-4-0 p.19

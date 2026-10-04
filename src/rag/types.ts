@@ -46,6 +46,8 @@ export interface RetrievalEvidence {
   matched_chunk_text: string;
   selected_page_text: string;
   canonical_page_text: string;
+  /** Text of the page's other extractions (native/OCR), sent for pages with a numeric conflict. */
+  other_variant_texts?: string[];
 }
 
 export interface RetrievalResponse {

@@ -149,11 +149,15 @@ export function amendmentsFor(evidence: RetrievalEvidence[], entries = loadAmend
   if (!AMENDMENTS_ENABLED) return [];
   const pages = new Set(evidence.map((item) => key(item.source_id, item.page_number)));
   const amendingSources = new Set(evidence.map((item) => item.source_id));
-  return entries.filter(
-    (entry) =>
-      entryPages(entry).some((page) => pages.has(key(page.sourceId, page.pageNumber))) ||
-      entry.amendedBy.some((order) => order.page && amendingSources.has(order.page.sourceId)),
-  );
+  return entries.filter((entry) => {
+    if (entryPages(entry).some((page) => pages.has(key(page.sourceId, page.pageNumber)))) return true;
+    // Any page of a separate amending GO links it; an amendment printed inside
+    // the rulebook itself links only through its own page (checked above).
+    const bookSources = new Set([...entry.rulePages, ...entry.currentPages].map((page) => page.sourceId));
+    return entry.amendedBy.some(
+      (order) => order.page && !bookSources.has(order.page.sourceId) && amendingSources.has(order.page.sourceId),
+    );
+  });
 }
 
 /** Pages of the matched entries that are not in the evidence yet (rule first, then current, then GOs). */
@@ -247,7 +251,8 @@ export function cardAmendments(entries: AmendmentEntry[], language: "hi" | "en")
       const goSourceId = order.page?.sourceId ?? null;
       const note = { rule, goNumber: order.goNumber, goDate: order.goDate, goSourceId };
       for (const sourceId of ruleSources) add(sourceId, { direction: "amended_by", ...note });
-      if (goSourceId) add(goSourceId, { direction: "amends", ...note });
+      // An amendment printed inside the same rulebook (its corrigenda) is not a separate order.
+      if (goSourceId && !ruleSources.has(goSourceId)) add(goSourceId, { direction: "amends", ...note });
     }
   }
   return out;

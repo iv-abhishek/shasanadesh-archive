@@ -46,6 +46,15 @@ assert.ok(maternity);
 assert.deepEqual(amendmentsFor([ev("up-fhb-vol2", 183)]).map((e) => e.id), [maternity.id]);
 assert.deepEqual(amendmentsFor([ev("core-rules-up-vitta-path-09-leave-rules", 9)]).map((e) => e.id), [maternity.id]);
 assert.deepEqual(amendmentsFor([ev("up-fhb-vol2", 90)]), []);
+// Earned leave: the printed rule, the 1992 amendment printed in the same book, and the current page.
+assert.deepEqual(amendmentsFor([ev("up-fhb-vol2", 302)]).map((e) => e.id), ["fr-81b-earned-leave-limit"]);
+assert.deepEqual(amendmentsFor([ev("core-rules-up-vitta-path-09-leave-rules", 4)]).map((e) => e.id), ["fr-81b-earned-leave-limit"]);
+const el = entries.find((e) => e.id === "fr-81b-earned-leave-limit")!;
+assert.deepEqual(
+  cardAmendments([el], "en").get("up-fhb-vol2")?.map((n) => n.direction),
+  ["amended_by", "amended_by"],
+  "the rulebook's own corrigenda page is not marked as a separate amending order",
+);
 assert.deepEqual(
   missingPages([maternity], [ev("up-fhb-vol2", 183)]).map((p) => `${p.sourceId} p.${p.pageNumber}`),
   ["core-rules-up-vitta-path-09-leave-rules p.9", "core-rules-up-vitta-path-09-leave-rules p.10"],

@@ -126,6 +126,9 @@ const NON_ANSWER_SENTENCE = new RegExp(
     // "The retrieved page from … contains only …" (3 Oct, consultancy manual).
     String.raw`\bthe\s+(?:retrieved|provided|given|supplied|cited)\s+(?:page|pages|documents?|evidence|excerpts?|orders?|sources?)\b`,
     "प्रस्तुत\\s+(?:प्रमाण|साक्ष्य|स्रोत)",
+    // "उपलब्ध प्रमाण केवल ई-रिक्शा … से संबंधित हैं", "The available orders only concern …".
+    "उपलब्ध\\s+(?:प्रमाण|साक्ष्य|आदेश|दस्तावेज़|दस्तावेज)\\s+(?:केवल|मुख्य\\s+रूप\\s+से)",
+    String.raw`\bthe\s+available\s+(?:evidence|orders?|documents?|pages?)\s+(?:only|mainly|mostly)\b`,
   ].join("|"),
   "iu",
 );
@@ -149,7 +152,10 @@ export function isProseNonAnswer(draft: string): boolean {
   const sentences = sentencesOf(draft);
   if (sentences.length < 2) return false;
   const nonAnswers = sentences.filter((sentence) => NON_ANSWER_SENTENCE.test(sentence)).length;
-  return nonAnswers * 2 > sentences.length;
+  // "Not in the orders. The available orders only cover X:" followed by a list
+  // about X is a non-answer however long the list (metro fare, 4 Oct eval).
+  const opensWithTwo = NON_ANSWER_SENTENCE.test(sentences[0]) && NON_ANSWER_SENTENCE.test(sentences[1]);
+  return opensWithTwo || nonAnswers * 2 > sentences.length;
 }
 
 /** A suggested follow-up the cited orders do not answer (they are the only ones searched). */

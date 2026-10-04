@@ -59,6 +59,10 @@ const cases: Array<[string, string | null]> = [
   ["turnover limit for GST registration", null],
   ["festival advance to employees", null],
   ["maternity leave rules for state employees", null],
+  // Startup policy questions are not procurement relaxations (4 Oct eval).
+  ["what support is given to deeptech startups under the startup policy", null],
+  ["incentives for incubators under UP startup policy 2026", null],
+  ["EMD exemption for startups", "startup-mse-relaxations"],
 ];
 for (const [question, expected] of cases) {
   const match = matchPlaybook(question, books);

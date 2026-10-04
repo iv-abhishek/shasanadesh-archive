@@ -10,10 +10,9 @@ current_pages:
 amended_by:
   - G-4-484/X-90-216-79 | 1990-05-03 | | limit of three maternity leaves in the whole service removed (Vitta Path 2011 p.10; FHB p.183 footnote)
   - जी-4-394-दस-216-79 | 1990-06-04 | | cited with Fundamental Rule 101 and Subsidiary Rule 153 (Vitta Path 2011 p.10)
-# TO CONFIRM before review: the GO that raised the period of maternity leave for
-# confinement to 180 days (Vitta Path 2011 p.9 states 180 days; FHB p.183 still
-# prints "three months"). Add it here with its number and date, and its archived
-# page if available.
+  - जी-2-2017/दस-2008-216/79 | 2008-12-08 | | period of maternity leave for confinement raised to 180 days (Vitta Path 2011 p.9 states 180 days)
+# 4 Oct: the 08.12.2008 GO was identified by the owner (via web research); check
+# its text before setting reviewed: true. Add its archived page when ingested.
 reviewed: false
 ---
 The printed rule (FHB p.183) gives "three months" and a limit of three times in service;

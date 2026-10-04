@@ -894,16 +894,17 @@ async function evaluateCase(
     chat.done?.validated ??
     null;
 
-  if (validated !== true) {
+  // A general-knowledge answer (ADR-083) is the app saying "not in the
+  // archive" while still helping: right for out-of-archive questions, a miss
+  // for questions the archive answers. It has no pages to validate against.
+  const generalKnowledge = (chat.done as { generalKnowledge?: boolean } | null)?.generalKnowledge ?? false;
+
+  if (validated !== true && !generalKnowledge) {
     failures.push(
       "answer was not validated",
     );
   }
 
-  // A general-knowledge answer (ADR-083) is the app saying "not in the
-  // archive" while still helping: right for out-of-archive questions, a miss
-  // for questions the archive answers.
-  const generalKnowledge = (chat.done as { generalKnowledge?: boolean } | null)?.generalKnowledge ?? false;
   const noEvidence = (chat.done?.noEvidence ?? false) || generalKnowledge;
   const answerWords =
     (chat.answer.replace(CITATION_RE, "").match(/[\p{L}\p{M}]+/gu) ?? []).length;

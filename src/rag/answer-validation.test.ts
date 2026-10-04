@@ -304,3 +304,38 @@ console.log(
   assert.ok(!buildQualitativeSalvage("**Context:** The rules apply to central entities [S1 p.1].\n**Scope** They cover all services [S1 p.1].", riskyEvidence).includes("*"));
   console.log("named-number and salvage-floor tests passed");
 }
+
+// 4 Oct: line-level citations, variant agreement, and salvage keeping valid figures.
+{
+  const validate = validateAnswer;
+  const salvage = buildQualitativeSalvage;
+  const page = (label: string, page_number: number, text: string, extra: Record<string, unknown> = {}) =>
+    ({
+      label,
+      page_number,
+      source_id: `doc-${label}`,
+      selected_page_text: text,
+      canonical_page_text: text,
+      numeric_verification_status: "native_primary",
+      ...extra,
+    }) as never;
+  const works = page("S1", 132, "mobilisation advance at 10 (ten) per cent of the contract price, interest-bearing");
+  // A bullet whose citation comes after its second sentence covers the first.
+  const twoSentences = validate("• Mobilisation advance is 10 per cent of the contract price. It is interest-bearing [S1 p.132].", [works]);
+  if (!twoSentences.ok) throw new Error(`line citation should cover the bullet: ${JSON.stringify(twoSentences.issues)}`);
+  // A conflict page is still reliable for numbers that both extractions print.
+  const gem = page("S2", 14, "टनओवर 30% (तीस तशत) 2017/", {
+    numeric_verification_status: "conflict",
+    other_variant_texts: ["टर्नओवर 30% (तीस प्रतिशत) 207/"],
+  });
+  if (!validate("Average turnover must be at least 30% of the estimated cost [S2 p.14].", [gem]).ok)
+    throw new Error("numbers agreed by both extractions should pass");
+  if (validate("The rule dates from 2017 [S2 p.14].", [gem]).ok) throw new Error("a number read differently must still fail");
+  // Salvage keeps a valid cited figure and drops the unsupported one.
+  const kept = salvage(
+    "• Mobilisation advance is 10 per cent of the contract price [S1 p.132].\n• It is recovered in 7 instalments [S1 p.132].\n• It is given for capital-intensive works [S1 p.132].",
+    [works],
+  );
+  if (!kept.includes("10 per cent") || kept.includes("7 instalments")) throw new Error(`salvage should keep 10% and drop 7: ${kept}`);
+  console.log("line-citation, variant-agreement and figure-keeping salvage tests passed");
+}

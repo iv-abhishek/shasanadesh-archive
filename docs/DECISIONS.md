@@ -1590,3 +1590,33 @@ period to 180 days is still to be confirmed and added.
 
 **Next.** Proposed entries extracted automatically from "(संशोधन) नियमावली" GOs ("नियम-N के
 स्थान पर … रख दिया जायेगा") into the same register, for review.
+
+## ADR-095 - Keep correct figures: line-level citations, agreed numbers, targeted repair (4 Oct 2026)
+
+**Problem.** The 3 Oct evening eval fell to 71.2% (from 86%). Most new failures were answers
+that lost the figures officers asked for: 40/50/80% experience, 30% turnover, 10%
+mobilisation advance. Three causes:
+1. A bullet with two sentences and one citation at its end failed as "uncited" for the
+   first sentence.
+2. Pages with a numeric conflict anywhere (the UP GeM GO: "2017" read as "207" in OCR) made
+   every figure on them "unsafe", even "30%" printed identically by both extractions.
+3. Any numeric issue switched the repair to "strict qualitative mode" (remove every
+   figure), and the salvage dropped every sentence with a number.
+Also: the startup playbook caught startup-policy questions; not-found questions answered
+from general knowledge were scored "not validated"; the general-knowledge answer listed
+unrelated "closest documents"; a "not in the orders; the available orders only cover X"
+answer was not recognised as a non-answer.
+
+**Decision.**
+- A sentence without a citation is covered by the next citation on the same line.
+- The retrieval service sends the page's other extractions for numeric-conflict pages
+  (`other_variant_texts`); a figure printed the same way by two extractions is reliable.
+- Repair is targeted: fix or reword only the failing sentences, keep every correct, cited
+  figure; strict qualitative mode only for leaked placeholders.
+- Salvage keeps sentences with figures that pass validation and drops only failing ones.
+- Startup playbook needs a procurement word (bid, tender, EMD, experience, turnover, GeM,
+  निविदा, क्रय …). Eval: general-knowledge answers are not required to be "validated".
+  Closest documents are listed only if they passed the relevance gate. Two opening
+  non-answer sentences make a non-answer.
+- Amendment register: FR 81-B earned-leave limit (180 → 240 → 300 days) added; the 2008 GO
+  for 180-day maternity leave added to SR 153 (both `reviewed: false`).

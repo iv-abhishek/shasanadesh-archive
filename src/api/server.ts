@@ -1955,7 +1955,7 @@ server.post(
       if (!primary || primary.local) return false;
       const startedAt = performance.now();
       sendStatus("writing");
-      const closest = closestDocuments(retrievedBeforeGate);
+      const closest = closestDocuments(retrievedBeforeGate, 3, RAG_MIN_RELEVANCE);
       try {
         const completion = await generateCompletion(
           LLM_REQUEST_TIMEOUT_MS,

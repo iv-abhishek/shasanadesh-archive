@@ -898,5 +898,20 @@
     "requireCitation": true,
     "allowFallback": false,
     "notes": "ADR-094, Hindi."
+  },
+  {
+    "id": "amendment-earned-leave-limit",
+    "query": "maximum earned leave that can be accumulated by UP government employees",
+    "language": "en",
+    "category": "amendment",
+    "expectedChatSourceIdsAny": [
+      "core-rules-up-vitta-path-09-leave-rules"
+    ],
+    "expectedTextIncludesAny": [
+      "300"
+    ],
+    "requireCitation": true,
+    "allowFallback": false,
+    "notes": "ADR-094: FHB FR 81-B p.71 prints 180 days; 240 from 1987 (p.302); current 300 days (Vitta Path p.4)."
   }
 ]

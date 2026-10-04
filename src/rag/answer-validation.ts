@@ -158,27 +158,117 @@ function isCitationOnly(text: string): boolean {
 }
 
 /**
- * Split an answer into claim units (sentences / lines). Models often put the
- * citation after the full stop — "…दी गई है। [S1 p.1]" — so a citation-only
- * fragment belongs to the sentence before it. Without this, the sentence looked
- * uncited and the salvage pass kept bare "[S1 p.1]" bullets (26 Sept).
+ * Split an answer into claim units (sentences within lines). Models often put
+ * the citation after the full stop — "…दी गई है। [S1 p.1]" — so a citation-only
+ * fragment belongs to the sentence before it (26 Sept).
+ *
+ * Each unit keeps the line (bullet or paragraph line) it belongs to. A
+ * bullet often holds two sentences and one citation at its end ("… 10 per
+ * cent of the contract price. It is interest-bearing [S2 p.132]"): the
+ * earlier sentence is covered by the citation later in the same line
+ * (4 Oct eval: such sentences failed as uncited and every figure was dropped).
  */
-function claimUnits(text: string): string[] {
-  const parts = text
-    .split(/(?<=[.!?।])\s+|\n+/u)
-    .map((part) => part.trim())
-    .filter(Boolean);
-
-  const units: string[] = [];
-  for (const part of parts) {
-    const bare = part.replace(/^\s*(?:[-–—•*]+|\d+[.)])\s*/, "");
-    if (units.length > 0 && isCitationOnly(bare)) {
-      units[units.length - 1] = `${units[units.length - 1]} ${bare}`;
-    } else {
-      units.push(part);
+function claimUnitsByLine(text: string): Array<{ text: string; line: number }> {
+  const units: Array<{ text: string; line: number }> = [];
+  text.split(/\n+/u).forEach((lineText, line) => {
+    const parts = lineText
+      .split(/(?<=[.!?।])\s+/u)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    for (const part of parts) {
+      const bare = part.replace(/^\s*(?:[-–—•*]+|\d+[.)])\s*/, "");
+      if (units.length > 0 && isCitationOnly(bare)) {
+        units[units.length - 1].text = `${units[units.length - 1].text} ${bare}`;
+      } else {
+        units.push({ text: part, line });
+      }
     }
-  }
+  });
   return units;
+}
+
+/** Citations a unit relies on: its own, else those of the next cited unit on the same line. */
+function unitCitationsWithLine(
+  units: Array<{ text: string; line: number }>,
+  index: number,
+): Array<{ raw: string; label: string; pageNumber: number }> {
+  const own = extractCitations(units[index].text);
+  if (own.length) return own;
+  for (let next = index + 1; next < units.length && units[next].line === units[index].line; next++) {
+    const later = extractCitations(units[next].text);
+    if (later.length) return later;
+  }
+  return [];
+}
+
+/**
+ * True when every number of the claim is printed on the page in at least two
+ * different text extractions (native text and OCR). A page flagged for a
+ * numeric conflict somewhere (often just a page number or a garbled year) is
+ * still reliable for the numbers both extractions agree on (4 Oct: "30%" on
+ * the UP GeM GO page was refused because "2017" read as "207" elsewhere).
+ */
+function variantsAgreeOn(digits: string, item: RetrievalEvidence): boolean {
+  const needed = digitGroups(digits);
+  if (!needed.length) return true;
+  const texts = [...new Set([item.selected_page_text, item.canonical_page_text, ...(item.other_variant_texts ?? [])].filter(Boolean))];
+  const holding = texts.filter((text) => {
+    const groups = new Set(digitGroups(text));
+    return needed.every((group) => groups.has(group));
+  });
+  return holding.length >= 2;
+}
+
+/** The problem with one numeric claim unit, or null when it is cited, safe and supported. */
+function numericUnitIssue(
+  unit: string,
+  unitCitations: Array<{ label: string; pageNumber: number }>,
+  evidenceByKey: Map<string, RetrievalEvidence>,
+  named: Set<string>,
+): AnswerValidationIssue | null {
+  const withoutCitations = stripCitations(unit);
+  if (!hasNumericClaim(withoutCitations, named)) return null;
+
+  if (unitCitations.length === 0) {
+    return {
+      code: "uncited_numeric_claim",
+      message: "A numeric claim must have a source-page citation in the same sentence or line.",
+      excerpt: unit.slice(0, 240),
+    };
+  }
+
+  const citedEvidence = unitCitations
+    .map((citation) => evidenceByKey.get(citationKey(citation.label, citation.pageNumber)))
+    .filter((item): item is RetrievalEvidence => Boolean(item));
+
+  // The sentence explicitly flags the value as needing verification.
+  if (CAUTION_RE.test(unit)) return null;
+
+  const claimDigits = digitGroups(withoutCitations).filter((group) => !named.has(group)).join(" ");
+  const safeCitedEvidence = citedEvidence.filter(
+    (item) => !isRiskyNumericEvidence(item) || variantsAgreeOn(claimDigits, item),
+  );
+
+  if (citedEvidence.length > 0 && safeCitedEvidence.length === 0) {
+    return {
+      code: "unsafe_numeric_claim",
+      message:
+        "A numeric claim relies only on OCR-conflicted or OCR-only-unverified evidence and is stated without an explicit source-page verification warning.",
+      excerpt: unit.slice(0, 240),
+    };
+  }
+
+  // Citing one reliable page is not enough: the numbers themselves must
+  // appear on a reliable cited page. Otherwise the value may have come from
+  // a risky page cited alongside it, or been produced by the model.
+  if (safeCitedEvidence.length > 0 && !numbersSupportedBy(claimDigits, safeCitedEvidence)) {
+    return {
+      code: "unsupported_numeric_claim",
+      message: "A numeric value does not appear on any cited page with reliable (native-text) numerics.",
+      excerpt: unit.slice(0, 240),
+    };
+  }
+  return null;
 }
 
 export function validateAnswer(
@@ -250,89 +340,12 @@ export function validateAnswer(
     }
   }
 
-  for (const rawUnit of claimUnits(trimmed)) {
-    const unit = withoutListMarker(rawUnit);
-    const withoutCitations =
-      stripCitations(unit);
-
-    if (!hasNumericClaim(withoutCitations, named)) {
-      continue;
-    }
-
-    const unitCitations =
-      extractCitations(unit);
-
-    if (unitCitations.length === 0) {
-      issues.push({
-        code: "uncited_numeric_claim",
-        message:
-          "A numeric claim must have a source-page citation in the same sentence or line.",
-        excerpt: unit.slice(0, 240),
-      });
-
-      continue;
-    }
-
-    const citedEvidence =
-      unitCitations
-        .map((citation) =>
-          evidenceByKey.get(
-            citationKey(
-              citation.label,
-              citation.pageNumber,
-            ),
-          ),
-        )
-        .filter(
-          (
-            item,
-          ): item is RetrievalEvidence =>
-            Boolean(item),
-        );
-
-    if (CAUTION_RE.test(unit)) {
-      // The sentence explicitly flags the value as needing verification.
-      continue;
-    }
-
-    const safeCitedEvidence =
-      citedEvidence.filter(
-        (item) =>
-          !isRiskyNumericEvidence(item),
-      );
-
-    if (
-      citedEvidence.length > 0 &&
-      safeCitedEvidence.length === 0
-    ) {
-      issues.push({
-        code: "unsafe_numeric_claim",
-        message:
-          "A numeric claim relies only on OCR-conflicted or OCR-only-unverified evidence and is stated without an explicit source-page verification warning.",
-        excerpt: unit.slice(0, 240),
-      });
-
-      continue;
-    }
-
-    // Citing one reliable page is not enough: the numbers themselves must
-    // appear on a reliable cited page. Otherwise the value may have come from
-    // a risky page cited alongside it, or been produced by the model.
-    if (
-      safeCitedEvidence.length > 0 &&
-      !numbersSupportedBy(
-        digitGroups(withoutCitations).filter((group) => !named.has(group)).join(" "),
-        safeCitedEvidence,
-      )
-    ) {
-      issues.push({
-        code: "unsupported_numeric_claim",
-        message:
-          "A numeric value does not appear on any cited page with reliable (native-text) numerics.",
-        excerpt: unit.slice(0, 240),
-      });
-    }
-  }
+  const units = claimUnitsByLine(trimmed);
+  units.forEach((rawUnit, index) => {
+    const unit = withoutListMarker(rawUnit.text);
+    const issue = numericUnitIssue(unit, unitCitationsWithLine(units, index), evidenceByKey, named);
+    if (issue) issues.push(issue);
+  });
 
   return {
     ok: issues.length === 0,
@@ -357,13 +370,13 @@ export function buildAnswerRepairInstruction(
     )
     .join("\n");
 
+  // Only a leaked placeholder calls for dropping every figure. A figure that
+  // is uncited or not on its cited page is fixed where it stands; the other
+  // figures stay (4 Oct eval: one bad number made the repair remove the
+  // 40/50/80% and 30% that officers asked for).
   const strictQualitativeMode =
     validation.issues.some(
-      (issue) =>
-        issue.code === "unsafe_numeric_claim" ||
-        issue.code === "unsupported_numeric_claim" ||
-        issue.code === "uncited_numeric_claim" ||
-        issue.code === "internal_placeholder",
+      (issue) => issue.code === "internal_placeholder",
     );
 
   const strictRules =
@@ -378,8 +391,12 @@ export function buildAnswerRepairInstruction(
           "- Every substantive paragraph or bullet must contain at least one valid citation.",
         ]
       : [
-          "NORMAL REPAIR MODE:",
-          "- Keep a numeric claim only when it has a valid same-sentence citation and satisfies the evidence-status rules.",
+          "TARGETED REPAIR MODE:",
+          "- Change only the sentences quoted under VALIDATION FAILURES; copy every other sentence unchanged, figures included.",
+          "- uncited_numeric_claim: add, in the same sentence, the citation of the evidence page that states that figure.",
+          "- unsupported_numeric_claim: the figure is not on the page cited. Cite the page that does state it, or replace only that figure with words (e.g. 'the prescribed percentage').",
+          "- unsafe_numeric_claim: cite a page whose text states the figure clearly, or replace only that figure with words.",
+          "- Never invent a figure; never drop a correct, cited figure.",
         ];
 
   return [
@@ -449,9 +466,11 @@ export function buildQualitativeSalvage(
     );
 
   const kept: string[] = [];
+  const evidenceByKey = new Map(evidence.map((item) => [citationKey(item.label, item.page_number), item]));
+  const units = claimUnitsByLine(answer);
 
-  for (const rawUnit of claimUnits(answer)) {
-    const unit = withoutListMarker(rawUnit);
+  for (const [index, rawUnitEntry] of units.entries()) {
+    const unit = withoutListMarker(rawUnitEntry.text);
 
     if (INTERNAL_PLACEHOLDER_RE.test(unit)) {
       continue;
@@ -462,12 +481,17 @@ export function buildQualitativeSalvage(
 
     if ((withoutCitations.match(/[\p{L}\p{M}]+/gu) ?? []).length >= 3) wordedUnits++;
 
-    if (hasNumericClaim(withoutCitations, named)) {
+    // A figure stays when it is cited (here or later on its line) to a page
+    // that prints it reliably; anything else with a number goes.
+    if (
+      hasNumericClaim(withoutCitations, named) &&
+      numericUnitIssue(unit, unitCitationsWithLine(units, index), evidenceByKey, named)
+    ) {
       continue;
     }
 
     const hasValidCitation =
-      extractCitations(unit).some(
+      unitCitationsWithLine(units, index).some(
         (citation) =>
           allowedCitations.has(
             citationKey(
