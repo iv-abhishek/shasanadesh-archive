@@ -262,7 +262,8 @@ export function sharedWords(a: string, b: string): number {
 }
 
 async function negativesStep(): Promise<void> {
-  const concurrency = option("--concurrency", 2);
+  // One search at a time: the local models run on one GPU (the service also serialises them).
+  const concurrency = option("--concurrency", 1);
   const rows = (await readJsonl<QuestionRow>(QUESTIONS)).filter((row) => !row.skip);
   const done = new Set((await readJsonl<MinedRow>(MINED)).map((row) => `${row.sourceId}|${row.pageNumber}|${row.query}`));
   const pages = new Map((await readPages()).map((page) => [`${page.sourceId}|${page.pageNumber}`, page.text]));

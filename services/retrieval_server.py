@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import threading
 import time
 from collections import defaultdict
 from contextlib import asynccontextmanager
@@ -20,6 +21,21 @@ from services.neighbor_expansion import plan_neighbor_pages
 DATABASE_URL = os.environ.get("DATABASE_URL")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "Qwen/Qwen3-Embedding-0.6B")
 RERANKER_MODEL = os.getenv("RERANKER_MODEL", "Qwen/Qwen3-Reranker-0.6B")
+
+# One model call at a time. FastAPI runs these endpoints in a thread pool, and
+# two requests running the models together on Apple's GPU (MPS) crash Python
+# ("Python quit unexpectedly", 5 Oct 2026, training-data search with 2 workers).
+MODEL_LOCK = threading.Lock()
+
+
+def locked_predict(model, pairs, **kwargs):
+    with MODEL_LOCK:
+        return model.predict(pairs, **kwargs)
+
+
+def locked_encode(model, texts, **kwargs):
+    with MODEL_LOCK:
+        return model.encode(texts, **kwargs)
 
 QUERY_PROMPT = (
     "Instruct: Given a Hindi or English question about Uttar Pradesh government "
@@ -857,7 +873,7 @@ def pages(body: PagesRequest, request: Request):
         rerank_started_at = time.perf_counter()
         if hits:
             reranker: CrossEncoder = request.app.state.reranker
-            scores = reranker.predict(
+            scores = locked_predict(reranker,
                 [(body.query, hit.text[:4000]) for hit in hits],
                 batch_size=RERANK_BATCH_SIZE,
                 show_progress_bar=False,
@@ -889,7 +905,7 @@ def search(body: SearchRequest, request: Request):
 
     embedding_started_at = time.perf_counter()
     expansions = [text.strip()[:700] for text in body.expansions if text and text.strip()][:4]
-    query_embeddings = embedder.encode(
+    query_embeddings = locked_encode(embedder,
         [query, *expansions],
         prompt=QUERY_PROMPT,
         normalize_embeddings=True,
@@ -996,7 +1012,7 @@ def search(body: SearchRequest, request: Request):
         )
 
     rerank_started_at = time.perf_counter()
-    scores = reranker.predict(
+    scores = locked_predict(reranker,
         [(query, hit.text) for hit in pool],
         batch_size=RERANK_BATCH_SIZE,
         show_progress_bar=False,
@@ -1145,7 +1161,7 @@ class SubjectHit(BaseModel):
 def subject_search(body: SubjectSearchRequest, request: Request):
     """Orders whose subject line is closest in meaning to the query (cosine similarity)."""
     embedder: SentenceTransformer = request.app.state.embedder
-    query_vector = embedder.encode(
+    query_vector = locked_encode(embedder,
         [body.query.strip()],
         prompt=SUBJECT_QUERY_PROMPT,
         normalize_embeddings=True,
