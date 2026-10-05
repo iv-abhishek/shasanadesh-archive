@@ -381,12 +381,25 @@ async function exportStep(): Promise<void> {
   console.log(`Copy data/train/reranker-train.jsonl, reranker-dev.jsonl and train/finetune_reranker.py to the GPU machine (docs/GPU_RUNBOOK.md).`);
 }
 
+/** Everything the GPU needs in one file: questions, pages, instruction, scripts (docs/GPU_RUNBOOK.md). */
+async function packStep(): Promise<void> {
+  const { execFile } = await import("node:child_process");
+  const { promisify } = await import("node:util");
+  await writeFile(path.join(DIR, "rerank_instruction.txt"), rerankInstruction(await readFile(path.resolve("services/retrieval_server.py"), "utf8")) + "\n");
+  const files = ["data/train/questions.jsonl", "data/train/rerank_instruction.txt", "data/corpus/retrieval-pages.jsonl", "train"];
+  await promisify(execFile)("tar", ["-czf", "sandarbh-train.tgz", "--exclude", "__pycache__", ...files]);
+  const rows = (await readJsonl<QuestionRow>(QUESTIONS)).filter((row) => !row.skip);
+  console.log(`sandarbh-train.tgz written (${rows.length} pages, ${rows.reduce((sum, row) => sum + row.questions.length, 0)} questions).`);
+  console.log("Upload it to the GPU machine, then: tar -xzf sandarbh-train.tgz && bash train/run_gpu.sh");
+}
+
 async function main(): Promise<void> {
   const step = process.argv[2];
   if (step === "questions") return questionsStep();
   if (step === "negatives") return negativesStep();
   if (step === "export") return exportStep();
-  throw new Error("Usage: reranker-data.ts questions [--pages N] | negatives | export");
+  if (step === "pack") return packStep();
+  throw new Error("Usage: reranker-data.ts questions [--pages N] | negatives | export | pack");
 }
 
 if (process.argv[1]?.endsWith("reranker-data.ts")) {

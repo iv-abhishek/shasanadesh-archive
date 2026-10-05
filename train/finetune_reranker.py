@@ -52,6 +52,7 @@ def main() -> None:
     parser.add_argument("--batch", type=int, default=8, help="questions per step (each with 5 wrong pages)")
     parser.add_argument("--max-length", type=int, default=1536, help="tokens per question+page pair")
     parser.add_argument("--dev-limit", type=int, default=800)
+    parser.add_argument("--max-steps", type=int, default=-1, help="smoke test only")
     args = parser.parse_args()
 
     data = Path(args.data)
@@ -80,16 +81,22 @@ def main() -> None:
     print(f"training on {len(train)} questions")
 
     # The five mined wrong pages per question, plus other questions' pages in the batch.
+    # Saves memory on long Hindi pages. Enabled on the inner Qwen model: the
+    # trainer's own switch passes arguments this sentence-transformers model rejects.
+    inner = model[0].model
+    inner.config.use_cache = False
+    inner.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+
     loss = MultipleNegativesRankingLoss(model, num_negatives=4)
     training_args = CrossEncoderTrainingArguments(
         output_dir=str(out / "checkpoints"),
         num_train_epochs=args.epochs,
+        max_steps=args.max_steps,
         per_device_train_batch_size=args.batch,
         learning_rate=args.lr,
-        warmup_ratio=0.1,
+        warmup_steps=0.1,  # a float is a ratio in Transformers v5
         lr_scheduler_type="cosine",
         bf16=torch.cuda.is_available(),
-        gradient_checkpointing=True,
         logging_steps=20,
         eval_strategy="no",
         save_strategy="no",

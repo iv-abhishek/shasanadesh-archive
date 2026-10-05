@@ -28,3 +28,6 @@ apps/web/public/translit/
 
 # Fine-tuned models copied back from the GPU (docs/GPU_RUNBOOK.md)
 models/
+
+# GPU bundles (npm run train:pack, run_gpu.sh output)
+*.tgz

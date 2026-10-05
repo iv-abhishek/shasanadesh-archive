@@ -12,25 +12,21 @@ Delete the instance when done (storage bills while paused). Nothing here needs y
 
 ## 1. Reranker
 
-On the Mac (services running for step b):
+On the Mac (questions are already written; nothing else needs the search service):
 
 ```
-npm run train:questions -- --pages 5000      # ~1–2 h, ~$1–3 of DeepSeek; resumable
-npm run train:negatives                       # needs the retrieval service; ~3–5 h; resumable
-npm run train:export                          # writes data/train/*.jsonl + summary.json
-tar -czf train-data.tgz data/train/reranker-train.jsonl data/train/reranker-dev.jsonl \
-    data/train/rerank_instruction.txt train/finetune_reranker.py train/requirements-gpu.txt
+npm run train:pack            # → sandarbh-train.tgz (questions, searchable pages, scripts; ~40 MB)
 ```
 
-On the GPU (upload `train-data.tgz` through the Jarvislabs file browser or `scp`):
+On the GPU (upload `sandarbh-train.tgz` with the Jarvislabs file browser or `scp`):
 
 ```
-tar -xzf train-data.tgz
-pip install -r train/requirements-gpu.txt
-python train/finetune_reranker.py --data data/train --out out/sandarbh-reranker-v1
-# prints "MRR@10 before → after"; continue only if it says "better"
-tar -czf sandarbh-reranker-v1.tgz -C out sandarbh-reranker-v1
+tar -xzf sandarbh-train.tgz
+export OPENROUTER_API_KEY=...   # optional: DeepSeek checks near-miss pages (~$1–2); skip to use a score rule
+bash train/run_gpu.sh           # mines wrong pages on the GPU, trains, prints "MRR@10 before → after"
 ```
+
+Continue only if it says "better". Download `sandarbh-reranker-v1.tgz` (≈1.2 GB), then delete the instance.
 
 Back on the Mac:
 
@@ -38,8 +34,11 @@ Back on the Mac:
 mkdir -p models && tar -xzf sandarbh-reranker-v1.tgz -C models
 # .env:  RERANKER_MODEL=models/sandarbh-reranker-v1   (to undo: delete the line)
 npm run dev:all -- --restart=all
-npm run eval:ask -- --label reranker-v1      # compare with the last eval
+npm run eval:ask -- --pipeline hybrid --label reranker-v1   # compare with the last hybrid eval
 ```
+
+(`npm run train:negatives` + `train:export` still work on the Mac but take 3–5 hours with the
+search service running; the GPU does the same search in minutes.)
 
 ## 2. PaddleOCR-VL
 

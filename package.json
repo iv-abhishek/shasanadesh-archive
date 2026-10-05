@@ -83,6 +83,7 @@
     "test:web-search": "tsx src/rag/web-search.test.ts",
     "train:questions": "node --env-file-if-exists=.env --import tsx src/train/reranker-data.ts questions",
     "train:negatives": "node --env-file-if-exists=.env --import tsx src/train/reranker-data.ts negatives",
+    "train:pack": "node --env-file-if-exists=.env --import tsx src/train/reranker-data.ts pack",
     "train:export": "node --env-file-if-exists=.env --import tsx src/train/reranker-data.ts export",
     "ocr:export": "node --env-file-if-exists=.env --import tsx src/train/ocr-batch.ts export",
     "ocr:import": "node --env-file-if-exists=.env --import tsx src/train/ocr-batch.ts import",
