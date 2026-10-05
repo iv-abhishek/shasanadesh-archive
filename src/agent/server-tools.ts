@@ -20,6 +20,8 @@ import type { SubjectSearch } from "../rag/order-listing.js";
 import type { AgentMessage, OrderHit, PageRef, ResearchDeps, SearchScope, ToolSpec } from "./research.js";
 
 export const AGENT_ENABLED = process.env.RAG_AGENT === "1";
+/** Classic first; the agent retries only answers that would end in "not found" or the generic fallback (default on). */
+export const AGENT_RESCUE = process.env.RAG_AGENT_RESCUE !== "0";
 
 const RULEBOOK_PROVIDERS = ["core-rules", "up-fhb", "doe-gfr"];
 const ORDER_PROVIDERS = ["shasanadesh-up", "upgov", "invest-up", "uppolice", "gov-cms-msme"];

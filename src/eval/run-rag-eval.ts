@@ -98,7 +98,7 @@ interface DoneEvent {
   /** Which model wrote the answer, and whether the primary failed first (ADR-075). */
   model?: string;
   usage?: { calls: number; promptTokens: number; completionTokens: number; costUsd: number };
-  agent?: { steps: number; stoppedBy: string; answerable: boolean | null; ms: number; tools: Array<{ tool: string; found: number }> };
+  agent?: { steps: number; stoppedBy: string; answerable: boolean | null; ms: number; tools: Array<{ tool: string; found: number }>; rescue?: string };
   modelFellBack?: boolean;
 }
 
@@ -129,7 +129,7 @@ interface CaseResult {
   citedAuthorities?: string[];
   model?: string;
   usage?: { calls: number; promptTokens: number; completionTokens: number; costUsd: number };
-  agent?: { steps: number; stoppedBy: string; answerable: boolean | null; ms: number; tools: Array<{ tool: string; found: number }> };
+  agent?: { steps: number; stoppedBy: string; answerable: boolean | null; ms: number; tools: Array<{ tool: string; found: number }>; rescue?: string };
   modelFellBack?: boolean;
   citationCount: number | null;
   expectedCitationPageHit: boolean | null;
@@ -166,7 +166,7 @@ interface CliOptions {
   /** Report file name prefix instead of the timestamp alone. */
   label: string | null;
   /** "agent" or "classic" retrieval (needs RAG_ALLOW_MODEL_OVERRIDE=1; ADR-102). */
-  pipeline: "agent" | "classic" | null;
+  pipeline: "agent" | "classic" | "hybrid" | null;
 }
 
 const CITATION_RE =
@@ -220,8 +220,8 @@ function parseArgs(
       continue;
     }
 
-    if (arg === "--pipeline" && (argv[index + 1] === "agent" || argv[index + 1] === "classic")) {
-      options.pipeline = argv[index + 1] as "agent" | "classic";
+    if (arg === "--pipeline" && ["agent", "classic", "hybrid"].includes(argv[index + 1])) {
+      options.pipeline = argv[index + 1] as "agent" | "classic" | "hybrid";
       index += 1;
       continue;
     }
@@ -1741,6 +1741,13 @@ async function main():
     console.log(
       `Fallback rate:          ${pct(summary.fallbackRate)}`,
     );
+
+    const rescued = results.filter((result) => result.agent?.rescue);
+    if (rescued.length) {
+      console.log(
+        `Agent rescues:          ${rescued.length} (${rescued.filter((result) => result.passed).length} passed)`,
+      );
+    }
 
     console.log(
       `Expected citation page: ${pct(summary.expectedCitationPageHitRate)}`,

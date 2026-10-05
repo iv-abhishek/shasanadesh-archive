@@ -76,7 +76,14 @@ import { matchPlaybook, type PlaybookMatch, type PlaybookPage } from "../rag/pla
 import { mergeNamedPages, missingNamedSources, namedSources } from "../rag/named-sources.js";
 import { modelOverrideAllowed, newRequestContext, recordUsage, requestContext } from "../rag/request-context.js";
 import { research, type ResearchResult } from "../agent/research.js";
-import { AGENT_ENABLED, AGENT_RULEBOOK_NAMES, researchDeps } from "../agent/server-tools.js";
+import { AGENT_ENABLED, AGENT_RESCUE, AGENT_RULEBOOK_NAMES, researchDeps } from "../agent/server-tools.js";
+
+/** Thrown inside a classic pass to hand the question to the research agent (ADR-102 rescue). */
+class RescueWithAgent extends Error {
+  constructor(readonly reason: string) {
+    super(`rescue: ${reason}`);
+  }
+}
 import { amendmentsFor as amendmentsForQuestion } from "../rag/amendments.js";
 import { WEB_EVIDENCE_PROMPT, WEB_SEARCH_ENABLED, logFoundLinks, searchOfficialWeb, webEvidence, type WebResult } from "../rag/web-search.js";
 import {
@@ -401,7 +408,7 @@ const ChatBodySchema = z.object({
       .optional(),
   // "agent" or "classic" retrieval for this question; honoured only with
   // RAG_ALLOW_MODEL_OVERRIDE=1 (pipeline comparisons, ADR-102).
-  pipeline: z.enum(["agent", "classic"]).optional(),
+  pipeline: z.enum(["agent", "classic", "hybrid"]).optional(),
 });
 
 const SearchFiltersSchema = z.object({
@@ -1660,7 +1667,13 @@ server.post(
         label: progressLabel(stage, responseLanguage, detail),
       });
 
-    try {
+    // Classic search first. When it would end in "not found" or the generic
+    // "could not produce a checked summary", the research agent gets one more
+    // try before the officer sees that (ADR-102 rescue).
+    const requestedPipeline = parsed.data.pipeline && modelOverrideAllowed() ? parsed.data.pipeline : null;
+    const initialScope = retrievalScope;
+    const runPass = async (forceAgent: boolean): Promise<void> => {
+    retrievalScope = initialScope;
     let sourceStickinessApplied =
       retrievalScope ===
         "active_source" ||
@@ -1689,8 +1702,9 @@ server.post(
     // Research agent (ADR-102): the model searches with tools instead of one
     // fixed search; the answer is still written, cited and checked as below.
     const agentMode =
-      searchable &&
-      (parsed.data.pipeline && modelOverrideAllowed() ? parsed.data.pipeline === "agent" : AGENT_ENABLED);
+      searchable && (forceAgent || (requestedPipeline ? requestedPipeline === "agent" : AGENT_ENABLED));
+    const rescueAvailable =
+      searchable && !agentMode && (requestedPipeline ? requestedPipeline === "hybrid" : AGENT_RESCUE);
     let playbookMatch: PlaybookMatch | null = searchable
       ? matchPlaybook(conversationPlan.retrievalQuery) ?? matchPlaybook(query)
       : null;
@@ -1772,6 +1786,7 @@ server.post(
             usedWeb: agentResult.usedWeb,
             ms: Math.round(agentResult.ms),
             tools: agentResult.trace.map((t) => ({ tool: t.tool, found: t.found, ms: t.ms, ...(t.error ? { error: t.error } : {}) })),
+            ...(forceAgent ? { rescue: rescueReason } : {}),
           }
         : undefined;
     if (agentMode) {
@@ -2054,7 +2069,7 @@ server.post(
       retrievalScope === "global";
 
     // "Not found" is an answer, not an error: no citations, no source cards.
-    const sendNoEvidence = (
+    const sendNoEvidenceOnce = (
       reason: "no_relevant_pages" | "model_found_no_answer" | "model_prose_non_answer",
       generationMs = 0,
     ) => {
@@ -2098,6 +2113,10 @@ server.post(
         "RAG chat: no evidence",
       );
     };
+    const sendNoEvidence = (...args: Parameters<typeof sendNoEvidenceOnce>) => {
+      if (rescueAvailable && !stop.signal.aborted) throw new RescueWithAgent(String(args[0]));
+      sendNoEvidenceOnce(...args);
+    };
 
     // No archived page answers: answer from general knowledge, clearly
     // marked, instead of a dead end (ADR-083). Not for a cited-order
@@ -2105,6 +2124,7 @@ server.post(
     const answerFromGeneralKnowledge = async (
       reason: "no_relevant_pages" | "model_found_no_answer" | "model_prose_non_answer",
     ): Promise<boolean> => {
+      if (rescueAvailable && !stop.signal.aborted) throw new RescueWithAgent(reason);
       if (!GENERAL_KNOWLEDGE_ENABLED || followSourceIds || explicitSourceId) return false;
       const primary = readLlmTargets()[0];
       if (!primary || primary.local) return false;
@@ -2752,6 +2772,7 @@ server.post(
       }
 
       if (!finalValidation.ok) {
+        if (rescueAvailable && !stop.signal.aborted) throw new RescueWithAgent("generic_fallback");
         usedFallback = true;
 
         finalAnswer =
@@ -2890,6 +2911,23 @@ server.post(
             Number(relevance.best.toFixed(3)),
         },
       );
+    };
+    let rescueReason: string | null = null;
+    try {
+      try {
+        await runPass(false);
+      } catch (error) {
+        if (!(error instanceof RescueWithAgent) || stop.signal.aborted) throw error;
+        rescueReason = error.reason;
+        request.log.info({ query, reason: error.reason }, "classic search found no checked answer; retrying with the research agent");
+        // The unchecked preview of the first draft is withdrawn before the second try.
+        sendEvent("draft_reset", {});
+        sendEvent("status", {
+          stage: "searching",
+          label: responseLanguage === "hi" ? "नियमों और आदेशों में और गहराई से खोज रहे हैं" : "Searching the rules and orders more thoroughly",
+        });
+        await runPass(true);
+      }
     } catch (error) {
       if (stop.signal.aborted) {
         request.log.info({ query }, "answer stopped by the user");

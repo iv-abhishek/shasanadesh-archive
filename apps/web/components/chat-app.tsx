@@ -2893,6 +2893,12 @@ export function ChatApp({
               return;
             }
 
+            // The server is trying again (classic search → research agent): drop the old preview.
+            if (parsed.event === "draft_reset") {
+              update((turn) => ({ ...turn, draft: undefined }));
+              return;
+            }
+
             if (
               parsed.event === "draft" &&
               parsed.data &&

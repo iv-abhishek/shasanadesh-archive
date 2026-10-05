@@ -1883,3 +1883,15 @@ keyword search (and "अर्जित छुट्टी" misses "उपार
   text (at most 4), e.g. "earned leave" + "उपार्जित अवकाश", "अर्जित छुट्टी" + "earned leave;
   उपार्जित अवकाश". The answer prompt still sees the officer's own words.
 
+## ADR-102 addendum - Agent as a rescue, not the default (5 Oct 2026)
+
+Second A/B after the not-found fixes: agent 85.5% = classic 85.5%; out-of-scope 4/4; but
+47 s median vs 28 s and 9× the cost, and it lost four cases classic answers (incubators,
+COVID office rules, maternity leave, medical-officer seniority) while winning four.
+**Decision:** classic stays the default. When a classic pass would end in "not found" /
+general knowledge or the generic "could not produce a checked summary", the request is run
+again with the research agent before anything is sent (`RAG_AGENT_RESCUE`, default on; `0`
+turns it off). The draft preview is withdrawn (`draft_reset` event) and the status line says
+it is searching more thoroughly. Only the failing ~10–15% of questions pay the extra time.
+Eval: `--pipeline hybrid` measures it; the summary counts agent rescues.
+
