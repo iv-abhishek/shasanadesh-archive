@@ -33,6 +33,7 @@ import { preservePreviousCapture } from "./lib/capture-history.js";
 import { PDFINFO_BIN, PDFTOTEXT_BIN, crawlDelayMs } from "./lib/tool-config.js";
 import { listSourceAdapters } from "./sources/registry.js";
 import { politeFetch } from "./sources/http.js";
+import { embeddedPdfUrl } from "./sources/html.js";
 import { diskSpaceProblem } from "./storage/local-disk.js";
 import { isGovernmentHost } from "./lib/government-hosts.js";
 import { findDuplicate } from "./crawl/duplicates.js";
@@ -125,20 +126,20 @@ function assertOfficialDownload(url: string, adapter: SourceAdapter): URL {
   return parsed;
 }
 
-async function downloadPdf(record: SourceDocument, adapter: SourceAdapter): Promise<{
+async function downloadPdf(record: SourceDocument, adapter: SourceAdapter, url = record.downloadUrl, viaViewer = false): Promise<{
   bytes: Buffer;
   status: number;
   contentType: string | null;
   finalUrl: string;
 }> {
-  assertOfficialDownload(record.downloadUrl, adapter);
-  const response = await politeFetch(record.downloadUrl, {
+  assertOfficialDownload(url, adapter);
+  const response = await politeFetch(url, {
     allowedHosts: adapter.allowedHosts,
     httpHosts: adapter.httpHosts,
     accept: "application/pdf,application/octet-stream;q=0.9,*/*;q=0.5",
     timeoutMs: 120_000,
   });
-  const finalUrl = new URL(response.url || record.downloadUrl);
+  const finalUrl = new URL(response.url || url);
   if (!protocolAllowed(finalUrl, adapter) || !adapter.allowedHosts.includes(finalUrl.hostname) || !isGovernmentHost(finalUrl.hostname)) {
     throw new Error("PDF download redirected outside the adapter's HTTPS allowlist: " + finalUrl.href);
   }
@@ -150,7 +151,10 @@ async function downloadPdf(record: SourceDocument, adapter: SourceAdapter): Prom
   const bytes = Buffer.from(await response.arrayBuffer());
   if (bytes.byteLength > MAX_PDF_BYTES) throw new Error("PDF is larger than the 500 MB per-document ingestion limit.");
   if (bytes.subarray(0, 5).toString("ascii") !== "%PDF-") {
-    throw new Error("Download response is not a PDF (received " + (response.headers.get("content-type") ?? "unknown content type") + ").");
+    const type = response.headers.get("content-type") ?? "";
+    const embedded = !viaViewer && /html/i.test(type) ? embeddedPdfUrl(bytes.toString("utf8"), finalUrl.href) : null;
+    if (embedded) return downloadPdf(record, adapter, embedded, true);
+    throw new Error("Download response is not a PDF (received " + (type || "unknown content type") + ").");
   }
   return {
     bytes,

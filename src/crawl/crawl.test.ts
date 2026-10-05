@@ -101,3 +101,11 @@ assert.ok(overlap(order, order + " प्रतिलिपि निम्न�
 assert.equal(overlap(order, "short text"), 0);
 
 console.log("crawl tests passed");
+
+import { embeddedPdfUrl } from "../sources/html.js";
+assert.equal(
+  embeddedPdfUrl('<object data="/pblc_pg/DocFileForms/GOFile.ashx?id=4583" type="application/pdf" width="1200px">', "https://panchayatiraj.up.nic.in/pblc_pg/DocFileForms/ViewDoc.aspx?id=4583"),
+  "https://panchayatiraj.up.nic.in/pblc_pg/DocFileForms/GOFile.ashx?id=4583",
+);
+assert.equal(embeddedPdfUrl('<iframe src="https://www.youtube.com/embed/x"></iframe>', "https://a.up.gov.in/"), null);
+console.log("viewer page tests passed");

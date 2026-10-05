@@ -85,3 +85,26 @@ export function guessLanguage(title: string): "hi" | "en" | "mixed" | "unknown" 
   if (hasLatin) return "en";
   return "unknown";
 }
+
+/**
+ * The PDF a viewer page embeds (<object data>, <embed src>, <iframe src>), e.g.
+ * Panchayati Raj "ViewDoc.aspx?id=N" → "GOFile.ashx?id=N". Only the link the
+ * page itself shows is followed.
+ */
+export function embeddedPdfUrl(html: string, pageUrl: string): string | null {
+  const tags = html.match(/<(?:object|embed|iframe)\b[^>]*>/gi) ?? [];
+  for (const tag of tags) {
+    const value = tag.match(/\b(?:data|src)\s*=\s*["']([^"']+)["']/i)?.[1];
+    if (!value) continue;
+    const isPdf = /type\s*=\s*["']application\/pdf/i.test(tag) || /\.pdf(\?|#|$)|\.ashx\?|getfile|download/i.test(value);
+    if (!isPdf) continue;
+    try {
+      const url = new URL(value.replace(/&amp;/g, "&"), pageUrl);
+      url.hash = "";
+      return url.href;
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
