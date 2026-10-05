@@ -267,11 +267,20 @@ async function negativesStep(): Promise<void> {
   const done = new Set((await readJsonl<MinedRow>(MINED)).map((row) => `${row.sourceId}|${row.pageNumber}|${row.query}`));
   const pages = new Map((await readPages()).map((page) => [`${page.sourceId}|${page.pageNumber}`, page.text]));
   const todo = rows.flatMap((row) => row.questions.map((question) => ({ row, question }))).filter(({ row, question }) => !done.has(`${row.sourceId}|${row.pageNumber}|${question.q}`));
-  console.log(`${todo.length} questions to search (${done.size} done). The retrieval service must be running.`);
+  // The search service must answer before hours of work start (5 Oct: every search failed silently).
+  const health = await fetch(`${RETRIEVAL}/health`, { signal: AbortSignal.timeout(10_000) }).catch(() => null);
+  if (!health?.ok) {
+    throw new Error(`The retrieval service is not answering at ${RETRIEVAL}. Start it (npm run dev:all) and wait for "models ready", then run this again.`);
+  }
+  console.log(`${todo.length} questions to search (${done.size} done).`);
   const target = primaryTarget();
   const openai = clientFor(target, 60_000);
   let count = 0;
+  let failed = 0;
+  let failedInARow = 0;
+  let stopped = false;
   await pool(todo, concurrency, async ({ row, question }) => {
+    if (stopped) return;
     try {
       const positive = pages.get(`${row.sourceId}|${row.pageNumber}`) ?? "";
       const hits = await search(question.q);
@@ -310,12 +319,20 @@ async function negativesStep(): Promise<void> {
         droppedAsAlsoAnswering: dropped,
       };
       await appendFile(MINED, JSON.stringify(mined) + "\n");
+      failedInARow = 0;
     } catch (error) {
-      if (count < 5) console.warn(`  ${question.q.slice(0, 60)}: ${error instanceof Error ? error.message : error}`);
+      failed++;
+      failedInARow++;
+      if (failed <= 5) console.warn(`  ${question.q.slice(0, 60)}: ${error instanceof Error ? error.message : error}`);
+      if (failedInARow >= 20 && !stopped) {
+        stopped = true;
+        console.error(`\nStopped: 20 searches in a row failed (last: ${error instanceof Error ? error.message : error}). Is the retrieval service still running? Run again to continue.`);
+      }
     }
     if (++count % 200 === 0) console.log(`  ${count}/${todo.length}`);
   });
-  console.log(`Done. ${MINED}`);
+  console.log(`${stopped ? "Stopped" : "Done"}: ${count - failed} questions mined, ${failed} failed. ${MINED}`);
+  if (failed) process.exitCode = 1;
 }
 
 /** The reranker instruction exactly as services/retrieval_server.py defines it. */
@@ -328,6 +345,7 @@ export function rerankInstruction(source: string): string {
 async function exportStep(): Promise<void> {
   await writeFile(path.join(DIR, "rerank_instruction.txt"), rerankInstruction(await readFile(path.resolve("services/retrieval_server.py"), "utf8")) + "\n");
   const mined = await readJsonl<MinedRow>(MINED);
+  if (!mined.length) throw new Error("data/train/mined.jsonl is empty: run npm run train:negatives (with the retrieval service running) first.");
   const pages = new Map((await readPages()).map((page) => [`${page.sourceId}|${page.pageNumber}`, page.text.slice(0, MAX_TEXT)]));
   const isDev = (sourceId: string) => hash(`dev|${sourceId}`) % 100 < 8;
   const train: string[] = [];
