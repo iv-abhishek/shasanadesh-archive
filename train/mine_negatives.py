@@ -98,12 +98,13 @@ def main() -> None:
     parser.add_argument("--pages", default="data/corpus/retrieval-pages.jsonl")
     parser.add_argument("--embedder", default="Qwen/Qwen3-Embedding-0.6B")
     parser.add_argument("--reranker", default="Qwen/Qwen3-Reranker-0.6B")
-    parser.add_argument("--dense", type=int, default=30)
-    parser.add_argument("--keyword", type=int, default=20)
+    parser.add_argument("--dense", type=int, default=15)
+    parser.add_argument("--keyword", type=int, default=10)
     parser.add_argument("--negatives", type=int, default=5)
-    parser.add_argument("--max-tokens", type=int, default=1024, help="tokens per page for embedding (the reranker reads 2x)")
+    parser.add_argument("--max-tokens", type=int, default=512, help="tokens per page for embedding (the reranker reads 2x)")
     parser.add_argument("--limit-pages", type=int, default=0, help="smoke test only")
     parser.add_argument("--limit-questions", type=int, default=0, help="smoke test only")
+    parser.add_argument("--no-judge", action="store_true", help="run without the DeepSeek check (the model's real mistakes are then left out)")
     parser.add_argument("--judge-model", default=os.environ.get("OPENROUTER_MODEL", "deepseek/deepseek-v4-flash"))
     args = parser.parse_args()
     data = Path(args.data)
@@ -135,7 +136,7 @@ def main() -> None:
         keep = [i for i, key in enumerate(keys) if key in needed or i < args.limit_pages]
         keys, texts = [keys[i] for i in keep], [texts[i] for i in keep]
     index = {key: position for position, key in enumerate(keys)}
-    print(f"{len(texts)} pages")
+    print(f"{len(texts)} pages", flush=True)
 
     questions = []
     with open(data / "questions.jsonl", encoding="utf-8") as handle:
@@ -175,7 +176,12 @@ def main() -> None:
     )
 
     key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+    if not key and not args.no_judge:
+        # v1 (6 Oct) ran without it: every wrong page ranked above the right one was
+        # left out, so the model trained only on cases it already got right.
+        raise SystemExit("Set OPENROUTER_API_KEY (DeepSeek checks near-miss pages), or pass --no-judge.")
     pool = ThreadPoolExecutor(max_workers=16) if key else None
+    candidates_file = (data / "candidates.jsonl").open("w", encoding="utf-8")
     train_rows: list[str] = []
     dev_rows: list[str] = []
     positive_ranks: list[int] = []
@@ -197,7 +203,8 @@ def main() -> None:
             ]
             candidate_lists.append(candidates)
             pairs.extend((item["q"], texts[position]) for position in candidates)
-        scores = reranker.predict(pairs, batch_size=32, prompt_name="query", show_progress_bar=False)
+        # The reranker returns raw logits (they can be negative); compare as probabilities.
+        scores = 1 / (1 + np.exp(-np.asarray(reranker.predict(pairs, batch_size=32, prompt_name="query", show_progress_bar=False), dtype=np.float64)))
         cursor = 0
         checks = []
         for item, candidates in zip(chunk, candidate_lists):
@@ -214,7 +221,9 @@ def main() -> None:
                     uncertain.append(position)
                 else:
                     chosen.append(position)
-            item["chosen"], item["uncertain"] = chosen, uncertain[:3] if pool else []
+            item["chosen"], item["uncertain"] = chosen, uncertain[:4] if pool else []
+            item["ranked"] = [(position, float(score)) for position, score in ranked[:30]]
+            item["positive_score"] = positive_score
             for position in item["uncertain"]:
                 checks.append((item, position, pool.submit(judge, item["q"], texts[position], key, args.judge_model)))
         for item, position, future in checks:
@@ -222,27 +231,43 @@ def main() -> None:
             try:
                 if future.result():
                     dropped += 1
+                    item.setdefault("answers_too", []).append(position)
                     continue
             except Exception:
+                item.setdefault("unchecked", []).append(position)
                 continue
             item.setdefault("confirmed", []).append(position)
         for item in chunk:
+            source_id = keys[item["pos"]][0]
+            positive = texts[item["pos"]]
+            excluded = set(item.get("answers_too", [])) | set(item.get("unchecked", []))
+            # Everything kept for later re-filtering, so this GPU step never has to run again.
+            candidates_file.write(json.dumps({
+                "q": item["q"], "lang": item["lang"], "style": item["style"],
+                "positive": list(keys[item["pos"]]), "positiveScore": item["positive_score"],
+                "ranked": [[*keys[position], score] for position, score in item["ranked"]],
+                "answersToo": [list(keys[position]) for position in item.get("answers_too", [])],
+            }, ensure_ascii=False) + "\n")
+            if is_dev(source_id):
+                # The test keeps the model's real competition: the highest-scoring other
+                # pages, minus copies and pages DeepSeek says also answer.
+                hardest = [position for position, _ in item["ranked"] if position not in excluded and shared(texts[position], positive) < 0.6][: args.negatives]
+                if len(hardest) >= 2:
+                    dev_rows.append(json.dumps({"query": item["q"], "positive": [positive], "negative": [texts[position] for position in hardest], "lang": item["lang"], "style": item["style"]}, ensure_ascii=False))
+                continue
             negatives = (item.get("confirmed", []) + item["chosen"])[: args.negatives]
             if len(negatives) < 2:
                 continue
-            source_id = keys[item["pos"]][0]
-            positive = texts[item["pos"]]
             negative_texts = [texts[position] for position in negatives]
-            if is_dev(source_id):
-                dev_rows.append(json.dumps({"query": item["q"], "positive": [positive], "negative": negative_texts, "lang": item["lang"], "style": item["style"]}, ensure_ascii=False))
-            elif not any(is_dev(keys[position][0]) for position in negatives):
+            if not any(is_dev(keys[position][0]) for position in negatives):
                 record = {"query": item["q"], "positive": positive}
                 for number in range(args.negatives):
                     record[f"negative_{number + 1}"] = negative_texts[number % len(negative_texts)]
                 train_rows.append(json.dumps(record, ensure_ascii=False))
-        if (start // batch) % 20 == 0:
-            print(f"{start + len(chunk)}/{len(questions)} questions · {judged} checked · {dropped} also answered")
+        if (start // batch) % 5 == 0:
+            print(f"{time.strftime('%H:%M')} {start + len(chunk)}/{len(questions)} questions · {judged} checked · {dropped} also answered", flush=True)
 
+    candidates_file.close()
     (data / "reranker-train.jsonl").write_text("\n".join(train_rows) + "\n", encoding="utf-8")
     (data / "reranker-dev.jsonl").write_text("\n".join(dev_rows) + "\n", encoding="utf-8")
     ranks = np.array(positive_ranks)

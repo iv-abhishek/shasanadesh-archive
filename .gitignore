@@ -31,3 +31,4 @@ models/
 
 # GPU bundles (npm run train:pack, run_gpu.sh output)
 *.tgz
+.venv-ocr/

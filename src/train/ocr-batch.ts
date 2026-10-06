@@ -10,6 +10,10 @@
  *     npm run ocr:export -- --limit 20            pick scanned documents → data/ocr-batch/<name>/
  *     (GPU) python train/ocr_paddle.py --batch <folder>
  *     npm run ocr:import -- data/ocr-batch/<name>  write the text back, keep Tesseract's for comparison
+ *   or on the Mac, no GPU (PP-OCRv5 Hindi reader, ~5-15 s a page):
+ *     npm run ocr:setup                            once: .venv-ocr with PaddleOCR (Python 3.12)
+ *     npm run ocr:local -- --batch data/ocr-batch/<name>
+ *     npm run ocr:import -- data/ocr-batch/<name> --engine ppocr
  *     npm run sync:daily                           rebuild pages and search for those documents
  *
  * Invariants:
@@ -79,7 +83,7 @@ async function exportBatch(): Promise<void> {
       continue;
     }
     const scanned = (metadata.text?.bytes ?? 0) < 100 || metadata.text?.hasNativeText === false;
-    if (!scanned || metadata.ocr?.engine === "paddleocr-vl" || metadata.duplicateOf) continue;
+    if (!scanned || String(metadata.ocr?.engine ?? "").startsWith("paddleocr") || metadata.duplicateOf) continue;
     if (!all && gate.skips(metadata.sourceId)) continue;
     await copyFile(path.join(dir, "original.pdf"), path.join(folder, "pdfs", `${entry.name}.pdf`)).catch(() => null);
     picked.push({ dir: entry.name, sourceId: metadata.sourceId, pages: metadata.pdf?.pages ?? null, previousEngine: metadata.ocr?.engine ?? null });
@@ -90,13 +94,19 @@ async function exportBatch(): Promise<void> {
   console.log(`Next: tar -czf ${name}.tgz -C data/ocr-batch ${name}  and copy it to the GPU (docs/GPU_RUNBOOK.md).`);
 }
 
+const isPaddle = (engine: unknown) => String(engine ?? "").startsWith("paddleocr");
+
 async function importBatch(): Promise<void> {
   const folder = path.resolve(process.argv[3] ?? "");
+  // out/ = PaddleOCR-VL (GPU); out-ppocr/ = PP-OCRv5 Hindi reader (CPU, also on the Mac).
+  const engineOption = option("--engine") ?? "vl";
+  const outDir = engineOption === "ppocr" ? "out-ppocr" : "out";
+  const engineName = engineOption === "ppocr" ? "paddleocr-ppocrv5-hi" : "paddleocr-vl";
   const manifest = (await readFile(path.join(folder, "manifest.jsonl"), "utf8")).split("\n").filter(Boolean).map((line) => JSON.parse(line) as ManifestRow);
-  const report: string[] = [`# PaddleOCR-VL vs Tesseract — ${path.basename(folder)}`, ""];
+  const report: string[] = [`# PaddleOCR vs Tesseract — ${path.basename(folder)}`, ""];
   let imported = 0;
   for (const row of manifest) {
-    const resultFile = path.join(folder, "out", `${row.dir}.txt`);
+    const resultFile = path.join(folder, outDir, `${row.dir}.txt`);
     const combined = await readFile(resultFile, "utf8").catch(() => null);
     if (!combined) continue;
     const pages = splitPages(combined);
@@ -107,7 +117,7 @@ async function importBatch(): Promise<void> {
     const pagesDir = path.join(dir, "ocr-pages");
     const keptDir = path.join(dir, "ocr-pages-tesseract");
     const oldFirst = await readFile(path.join(pagesDir, pageFile(1)), "utf8").catch(() => "");
-    if (metadata.ocr?.engine && metadata.ocr.engine !== "paddleocr-vl") {
+    if (metadata.ocr?.engine && !isPaddle(metadata.ocr.engine)) {
       await rm(keptDir, { recursive: true, force: true });
       await rename(pagesDir, keptDir).catch(() => null);
       await rename(path.join(dir, "ocr.txt"), path.join(dir, "ocr-tesseract.txt")).catch(() => null);
@@ -120,16 +130,16 @@ async function importBatch(): Promise<void> {
     metadata.ocr = {
       required: true,
       completed: true,
-      engine: "paddleocr-vl",
+      engine: engineName,
       textBytes: Buffer.byteLength(text, "utf8"),
       textSha256: text.length ? sha256(text) : null,
       normalizedTextSha256: normalized.length ? sha256(normalized) : null,
       pagesProcessed: pages.size,
-      ...(metadata.ocr?.engine && metadata.ocr.engine !== "paddleocr-vl" ? { previous: metadata.ocr } : {}),
+      ...(metadata.ocr?.engine && !isPaddle(metadata.ocr.engine) ? { previous: metadata.ocr } : {}),
     };
     await saveDocumentMetadata(metadataPath, metadata as Parameters<typeof saveDocumentMetadata>[1]);
     imported++;
-    report.push(`## ${row.sourceId}`, "", "**Tesseract, page 1**", "", "```", oldFirst.slice(0, 600).trim() || "(none)", "```", "", "**PaddleOCR-VL, page 1**", "", "```", (pages.get(1) ?? "").slice(0, 600), "```", "");
+    report.push(`## ${row.sourceId}`, "", "**Tesseract, page 1**", "", "```", oldFirst.slice(0, 600).trim() || "(none)", "```", "", `**${engineName}, page 1**`, "", "```", (pages.get(1) ?? "").slice(0, 600), "```", "");
   }
   const reportFile = path.join(folder, "compare.md");
   await writeFile(reportFile, report.join("\n"));
@@ -145,7 +155,7 @@ async function rollback(): Promise<void> {
     const dir = path.join(ROOT, row.dir);
     const metadataPath = path.join(dir, "metadata.json");
     const metadata = JSON.parse(await readFile(metadataPath, "utf8")) as Record<string, any>;
-    if (metadata.ocr?.engine !== "paddleocr-vl" || !metadata.ocr.previous) continue;
+    if (!isPaddle(metadata.ocr?.engine) || !metadata.ocr.previous) continue;
     await rm(path.join(dir, "ocr-pages"), { recursive: true, force: true });
     await rename(path.join(dir, "ocr-pages-tesseract"), path.join(dir, "ocr-pages")).catch(() => null);
     await rename(path.join(dir, "ocr-tesseract.txt"), path.join(dir, "ocr.txt")).catch(() => null);
@@ -161,7 +171,7 @@ async function main(): Promise<void> {
   if (step === "export") return exportBatch();
   if (step === "import") return importBatch();
   if (step === "rollback") return rollback();
-  throw new Error("Usage: ocr-batch.ts export [--limit N] [--name X] [--all] | import <batch folder> | rollback <batch folder>");
+  throw new Error("Usage: ocr-batch.ts export [--limit N] [--name X] [--all] | import <batch folder> [--engine vl|ppocr] | rollback <batch folder>");
 }
 
 if (process.argv[1]?.endsWith("ocr-batch.ts")) {

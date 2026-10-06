@@ -1895,3 +1895,26 @@ turns it off). The draft preview is withdrawn (`draft_reset` event) and the stat
 it is searching more thoroughly. Only the failing ~10–15% of questions pay the extra time.
 Eval: `--pipeline hybrid` measures it; the summary counts agent rescues.
 
+## ADR-104 addendum - First GPU run, and what changed for v2 (6 Oct 2026)
+
+- **Run v1** (A100-80GB, Jarvislabs, about ₹1,150): reading 38,254 pages took 9 min; scoring
+  the candidates took 355 min (full pages at 2,048 tokens: far slower than estimated); training
+  870 steps ≈ 2 h. The current reranker puts the right page **first for 37%** of the
+  questions and in the top 4 for 59% — the clearest measure yet that ranking is the bottleneck.
+- **Flaw in v1:** without the DeepSeek check, every wrong page scoring ≥ 95% of the right one
+  was left out, which removed exactly the cases the model gets wrong; the dev test was built
+  the same way, so its "before" MRR (0.864) is flattering. The rule also compared raw logits.
+- **v2 (`train/run_gpu.sh`):** OPENROUTER_API_KEY required (or `--no-judge`); scores turned
+  into probabilities first; near misses DeepSeek says do not answer become training negatives;
+  the dev test uses the model's real top competitors; every scored candidate list is saved
+  (`candidates.jsonl.gz`) so re-filtering never needs the GPU again; 512-token pages for
+  finding candidates, 1,024 for scoring and training; progress printed as it happens.
+- **OCR:** PaddleOCR-VL hung with no output while sharing the GPU with training (the VL worker
+  never returned page 1). `ocr_paddle.py` now has a per-page time limit and a second engine:
+  **PP-OCRv5 Hindi** (devanagari_PP-OCRv5_mobile_rec), small enough for CPU. On two trial GOs
+  it read the GO number (संख्या:-2093/24-पी-2-2022-1(121)/04), years, dates and clause numbers
+  correctly where Tesseract gave "BeAT:-2093/24-H-2-2022-(2)/04", "i966", "04.0.2023";
+  it still drops some conjuncts (वियुत, गुसा). About 15 s a page on 2 CPU cores; PaddlePaddle
+  ships macOS arm64 wheels, so it runs on the Mac: `npm run ocr:setup`, `npm run ocr:local --
+  --batch …`, `npm run ocr:import -- … --engine ppocr`.
+

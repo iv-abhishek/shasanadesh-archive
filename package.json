@@ -87,6 +87,8 @@
     "train:export": "node --env-file-if-exists=.env --import tsx src/train/reranker-data.ts export",
     "ocr:export": "node --env-file-if-exists=.env --import tsx src/train/ocr-batch.ts export",
     "ocr:import": "node --env-file-if-exists=.env --import tsx src/train/ocr-batch.ts import",
+    "ocr:setup": "bash scripts/setup-ocr-venv.sh",
+    "ocr:local": ".venv-ocr/bin/python train/ocr_paddle.py --engine ppocr",
     "ocr:rollback": "node --env-file-if-exists=.env --import tsx src/train/ocr-batch.ts rollback",
     "test:terms": "tsx src/rag/official-terms.test.ts",
     "test:train": "tsx src/train/reranker-data.test.ts",

@@ -50,7 +50,7 @@ def main() -> None:
     parser.add_argument("--epochs", type=float, default=1.0)
     parser.add_argument("--lr", type=float, default=1e-5)
     parser.add_argument("--batch", type=int, default=8, help="questions per step (each with 5 wrong pages)")
-    parser.add_argument("--max-length", type=int, default=1536, help="tokens per question+page pair")
+    parser.add_argument("--max-length", type=int, default=1024, help="tokens per question+page pair")
     parser.add_argument("--dev-limit", type=int, default=800)
     parser.add_argument("--max-steps", type=int, default=-1, help="smoke test only")
     args = parser.parse_args()
