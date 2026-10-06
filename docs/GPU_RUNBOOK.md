@@ -5,7 +5,7 @@ per-minute billing). Pick a PyTorch template (CUDA 12.x, Python 3.10–3.12).
 
 | Job | GPU | Expected time | Cost (approx.) |
 |---|---|---|---|
-| Reranker fine-tune (~15k questions) | A100 40GB | 2–4 h | ₹250–400 |
+| Reranker fine-tune (~12k questions) | A100-80GB (40GB if free) | 2–3 h (v1 took 8 h at full page length) | ₹300–450 |
 | PaddleOCR-VL, 1,000 scanned pages | L4 24GB or A100 | 1–2 h | ₹50–200 |
 
 Delete the instance when done (storage bills while paused). Nothing here needs your API keys.
@@ -22,17 +22,17 @@ On the GPU (upload `sandarbh-train.tgz` with the Jarvislabs file browser or `scp
 
 ```
 tar -xzf sandarbh-train.tgz
-export OPENROUTER_API_KEY=...   # optional: DeepSeek checks near-miss pages (~$1–2); skip to use a score rule
+export OPENROUTER_API_KEY=...   # required: DeepSeek checks near-miss pages (~$2–4)
 bash train/run_gpu.sh           # mines wrong pages on the GPU, trains, prints "MRR@10 before → after"
 ```
 
-Continue only if it says "better". Download `sandarbh-reranker-v1.tgz` (≈1.2 GB), then delete the instance.
+Continue only if it says "better". Download `sandarbh-reranker-v2.tgz` (≈1.2 GB), then delete the instance.
 
 Back on the Mac:
 
 ```
-mkdir -p models && tar -xzf sandarbh-reranker-v1.tgz -C models
-# .env:  RERANKER_MODEL=models/sandarbh-reranker-v1   (to undo: delete the line)
+mkdir -p models && tar -xzf sandarbh-reranker-v2.tgz -C models
+# .env:  RERANKER_MODEL=models/sandarbh-reranker-v2   (to undo: delete the line)
 npm run dev:all -- --restart=all
 npm run eval:ask -- --pipeline hybrid --label reranker-v1   # compare with the last hybrid eval
 ```
@@ -40,7 +40,14 @@ npm run eval:ask -- --pipeline hybrid --label reranker-v1   # compare with the l
 (`npm run train:negatives` + `train:export` still work on the Mac but take 3–5 hours with the
 search service running; the GPU does the same search in minutes.)
 
-## 2. PaddleOCR-VL
+## 2. OCR
+
+Cheapest first: PP-OCRv5 Hindi on the Mac, no GPU (`npm run ocr:setup` once, then
+`npm run ocr:local -- --batch data/ocr-batch/ocr-trial` and
+`npm run ocr:import -- data/ocr-batch/ocr-trial --engine ppocr`). PaddleOCR-VL below needs the GPU to
+itself (it hung when sharing it with training on 6 Oct); test one document first with `--limit 1`.
+
+### PaddleOCR-VL
 
 On the Mac:
 
