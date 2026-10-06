@@ -163,9 +163,15 @@ function sentencesOf(text: string): string[] {
  * sentence beside real content is a normal answer: "the order sets no time
  * limit, but …".
  */
+// The line the website prompt asks for ("This answer is based on official
+// government websites, not on the archived orders.") is neither an answer nor a
+// "not found", so it is not counted (income tax slabs, 6 Oct eval).
+const WEB_PREFACE = /official\s+government\s+websites|सरकारी\s+वेबसाइटों/iu;
+
 export function isProseNonAnswer(draft: string): boolean {
   if (draft.length > 1500) return false;
-  const sentences = sentencesOf(draft);
+  const all = sentencesOf(draft);
+  const sentences = all.length && WEB_PREFACE.test(all[0]) && !NON_ANSWER_SENTENCE.test(all[0]) ? all.slice(1) : all;
   if (sentences.length < 2) return false;
   const nonAnswers = sentences.filter((sentence) => NON_ANSWER_SENTENCE.test(sentence)).length;
   // "Not in the orders. The available orders only cover X:" followed by a list

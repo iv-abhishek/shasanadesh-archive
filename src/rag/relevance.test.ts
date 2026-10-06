@@ -88,3 +88,9 @@ assert.ok(isProseNonAnswer("Based on official government websites (not the archi
 assert.equal(isProseNonAnswer("यह आदेश सभी राज्य कर्मचारियों पर लागू है [S1 p.1]। मातृत्व अवकाश 180 दिन का है [S1 p.2]। यह दो बार लिया जा सकता है [S1 p.2]।"), false);
 assert.equal(isProseNonAnswer("The order applies to all state employees [S1 p.1]. The limit is 300 days of earned leave [S1 p.2]. Encashment is allowed at retirement [S2 p.4]."), false);
 console.log("rescue not-found tests passed");
+
+// Website answer that only describes unrelated pages, after the website line (income tax, 6 Oct).
+assert.ok(isProseNonAnswer("This answer is based on official government websites, not on the archived orders.\n\n- The retrieved pages are from the Uttar Pradesh State Tax Department website and concern GST circulars, officer postings, seniority lists, and departmental notices [S1 p.1] [S2 p.1] [S3 p.1] [S4 p.1] [S5 p.1].\n- None of the pages contain income tax slab rates for FY 2026-27. Income tax slabs are set by the Government of India (central government), and no such information appears in the retrieved Uttar Pradesh state tax department pages."));
+// A real website answer keeps its website line and stays an answer.
+assert.equal(isProseNonAnswer("This answer is based on official government websites, not on the archived orders.\n\n- Passport renewal is applied for online on the Passport Seva portal [S1 p.1].\n- An appointment is booked at a Passport Seva Kendra [S1 p.1]."), false);
+console.log("website-line tests passed");
