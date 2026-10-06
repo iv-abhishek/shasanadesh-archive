@@ -135,6 +135,16 @@ const NON_ANSWER_SENTENCE = new RegExp(
     String.raw`\bno\s+(?:document|page|order|source|evidence)s?\s+(?:here\s+)?(?:provides?|contains?|mentions?|covers?|addresses?|specifies|gives?)\b`,
     String.raw`^(?:it|this|they|these)\s+(?:does|do)\s+not\s+(?:address|cover|contain|mention|provide|specify|deal\s+with|relate\s+to)\b`,
     "(?:साक्ष्य|प्रमाण|दस्तावेज़|दस्तावेज|आदेश|पृष्ठ)\\S*\\s+[^।]*?(?:से\\s+संबंधित|के\\s+बारे\\s+में)\\s+नहीं\\s+(?:है|हैं)",
+    // Hybrid eval, 6 Oct (the rescue agent's not-found answers): "उपलब्ध दस्तावेज़
+    // निम्नलिखित विषयों से संबंधित हैं:", "… से संबंधित हैं, न कि पासपोर्ट …",
+    // "उत्तर इन साक्ष्यों में उपलब्ध नहीं है", "the retrieved page does not answer
+    // your question", "The only retrieved page is …".
+    "(?:उपलब्ध|प्रस्तुत)\\s+(?:प्रमाण|साक्ष्य|आदेश|दस्तावेज़|दस्तावेज|पृष्ठ)\\S*\\s+(?:निम्नलिखित|इन)\\s+विषयों",
+    "से\\s+संबंधित\\s+(?:है|हैं),?\\s+न\\s+कि",
+    "(?:साक्ष्य|प्रमाण|दस्तावेज़|दस्तावेज|आदेश|पृष्ठ)\\S*\\s+में\\s+(?:उपलब्ध\\s+नहीं|नहीं\\s+(?:है|हैं|दिया|दी))",
+    String.raw`\b(?:do(?:es)?\s+not|doesn't|don't)\s+answer\s+(?:your|the|this)\s+question`,
+    String.raw`\bthe\s+only\s+(?:retrieved|provided|available|cited)\s+(?:page|document|order|source)\b`,
+    String.raw`\bthe\s+available\s+(?:evidence|orders?|documents?|pages?)\s+(?:relate|pertain|refer)\s+to\s+the\s+following\b`,
   ].join("|"),
   "iu",
 );

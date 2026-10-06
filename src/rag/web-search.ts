@@ -171,7 +171,7 @@ export const WEB_EVIDENCE_PROMPT = [
   "OFFICIAL WEBSITE RESULTS: no archived order or rulebook page answered this, so the pages below come from a live search of government websites. They are official but not checked by us.",
   "- Start the answer with one short line saying it is based on official government websites, not on the archived orders.",
   "- For each point, say whose rule it is: Uttar Pradesh government, or Government of India (a central rule applies to UP staff only if a UP order adopts it — say so when the page is central).",
-  "- Cite each point to its page as usual; if the pages do not answer the question, reply NO_ANSWER.",
+  "- Cite each point to its page as usual; if the pages do not answer the question, reply NO_ANSWER_IN_EVIDENCE.",
 ].join("\n");
 
 /** Record links found, for the crawler to review and add to the archive. */
